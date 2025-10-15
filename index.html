@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>POS - Alpha</title>
+    <!-- Link your existing stylesheet -->
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+        /* Minimal layout helpers to ensure good UX even without the user's CSS */
+        :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;--gap:12px}
+        body{margin:0;display:flex;flex-direction:column;min-height:100vh;background:#f6f7fb;color:#111}
+        header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:#0b5; color:#fff}
+        header .brand{display:flex;gap:12px;align-items:center}
+        main{display:flex;flex:1;gap:var(--gap);padding:var(--gap);flex-wrap:wrap}
+        .panel{background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+        .catalog{flex:1 1 620px;min-width:320px;display:flex;flex-direction:column;gap:12px}
+        .cart{width:360px;min-width:280px;display:flex;flex-direction:column;gap:12px}
+        .search-row{display:flex;gap:8px}
+        input[type="search"],input[type="number"],select{padding:10px;border:1px solid #ddd;border-radius:8px;flex:1}
+        button{padding:10px 12px;border-radius:8px;border:0;background:#0b5;color:#fff;cursor:pointer}
+        button.ghost{background:transparent;color:#0b5;border:1px solid #0b5}
+        .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+        .product{display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #eee;border-radius:8px;align-items:stretch}
+        .product img{width:100%;height:110px;object-fit:cover;border-radius:6px;background:#fafafa}
+        .product .meta{display:flex;justify-content:space-between;align-items:center}
+        .cart-items{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow:auto;padding-right:4px}
+        .cart-item{display:flex;gap:8px;align-items:center;justify-content:space-between;border-radius:6px;padding:8px;background:#fafafa}
+        .qty-controls{display:inline-flex;gap:6px;align-items:center}
+        .summary{display:flex;flex-direction:column;gap:6px;padding-top:8px;border-top:1px dashed #eee}
+        .pay-row{display:flex;gap:8px;align-items:center}
+        .sr-only{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+        @media (max-width:920px){main{flex-direction:column} .cart{width:auto}}
+    </style>
+</head>
+<body>
+    <header role="banner" aria-label="POS header">
+        <div class="brand">
+            <div style="width:48px;height:48px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#0b5;font-weight:700">AX</div>
+            <div>
+                <div style="font-weight:700">Alpha POS</div>
+                <div style="font-size:12px;opacity:.9">Fast. Accessible. Reliable.</div>
+            </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center">
+            <div style="font-size:14px">Store: Demo</div>
+            <button class="ghost" id="toggle-high-contrast" title="Toggle high contrast">Contrast</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Catalog / Search -->
+        <section class="panel catalog" aria-labelledby="catalog-title">
+            <h2 id="catalog-title">Products</h2>
+
+            <div class="search-row" role="search" aria-label="Product search">
+                <input id="search" type="search" placeholder="Search products, press / to focus" aria-label="Search products" autocomplete="off" />
+                <select id="category" aria-label="Filter by category">
+                    <option value="">All categories</option>
+                    <option>Food</option>
+                    <option>Beverage</option>
+                    <option>Accessories</option>
+                </select>
+                <button id="clear-search" class="ghost" title="Clear search">Clear</button>
+            </div>
+
+            <div class="products" id="products" aria-live="polite" aria-atomic="false">
+                <!-- Example product cards (replace or populate dynamically) -->
+                <article class="product" data-id="p1" data-name="Cappuccino" data-price="3.50" tabindex="0" role="button" aria-pressed="false">
+                    <img alt="Cappuccino" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23cbd5e1' font-size='20'%3ECappuccino%3C/text%3E%3C/svg%3E">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <strong>Cappuccino</strong>
+                        <div style="color:#0b5;font-weight:700">$3.50</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <small style="opacity:.7">Coffee • 250ml</small>
+                        <button class="add-btn" style="margin-left:auto" aria-label="Add Cappuccino to cart">Add</button>
+                    </div>
+                </article>
+
+                <article class="product" data-id="p2" data-name="Espresso" data-price="2.00" tabindex="0" role="button" aria-pressed="false">
+                    <img alt="Espresso" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23cbd5e1' font-size='20'%3EEspresso%3C/text%3E%3C/svg%3E">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <strong>Espresso</strong>
+                        <div style="color:#0b5;font-weight:700">$2.00</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <small style="opacity:.7">Coffee • 60ml</small>
+                        <button class="add-btn" style="margin-left:auto" aria-label="Add Espresso to cart">Add</button>
+                    </div>
+                </article>
+
+                <article class="product" data-id="p3" data-name="Sparkling Water" data-price="1.25" tabindex="0" role="button" aria-pressed="false">
+                    <img alt="Sparkling Water" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23cbd5e1' font-size='18'%3ESparkling%20Water%3C/text%3E%3C/svg%3E">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <strong>Sparkling Water</strong>
+                        <div style="color:#0b5;font-weight:700">$1.25</div>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                        <small style="opacity:.7">500ml</small>
+                        <button class="add-btn" style="margin-left:auto" aria-label="Add Sparkling Water to cart">Add</button>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+        <!-- Cart / Payment -->
+        <aside class="panel cart" aria-labelledby="cart-title">
+            <h2 id="cart-title">Cart</h2>
+
+            <div class="cart-items" id="cart" aria-live="polite">
+                <div style="opacity:.7">Cart is empty</div>
+            </div>
+
+            <div class="summary" aria-hidden="false">
+                <div style="display:flex;justify-content:space-between">
+                    <div>Subtotal</div><div id="subtotal">$0.00</div>
+                </div>
+                <div style="display:flex;justify-content:space-between">
+                    <div>Tax (8%)</div><div id="tax">$0.00</div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-weight:700;font-size:18px">
+                    <div>Total</div><div id="total">$0.00</div>
+                </div>
+            </div>
+
+            <div style="padding-top:8px;border-top:1px dashed #eee;display:flex;flex-direction:column;gap:8px">
+                <div class="pay-row">
+                    <label for="tender" class="sr-only">Payment type</label>
+                    <select id="tender" aria-label="Payment type">
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                    </select>
+                    <input id="tender-amount" type="number" min="0" step="0.01" placeholder="Amount paid" aria-label="Amount paid" />
+                    <button id="checkout">Checkout</button>
+                </div>
+
+                <div style="display:flex;gap:8px">
+                    <button id="clear-cart" class="ghost">Clear</button>
+                    <button id="save-cart" class="ghost">Save</button>
+                    <button id="print-receipt" class="ghost">Print</button>
+                </div>
+            </div>
+
+            <div aria-live="polite" class="sr-only" id="aria-announcer"></div>
+        </aside>
+    </main>
+
+    <!-- Receipt Modal -->
+    <div id="receipt-modal" role="dialog" aria-modal="true" aria-labelledby="receipt-title" hidden>
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;padding:20px">
+            <div style="background:#fff;padding:16px;border-radius:8px;max-width:720px;width:100%">
+                <h3 id="receipt-title">Receipt</h3>
+                <pre id="receipt" style="white-space:pre-wrap"></pre>
+                <div style="display:flex;gap:8px;justify-content:flex-end">
+                    <button id="close-receipt">Close</button>
+                    <button id="do-print">Print</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lightweight POS behavior: add/remove/update cart, calculate totals, keyboard shortcuts, accessibility
+        (function(){
+            const productsEl = document.getElementById('products');
+            const cartEl = document.getElementById('cart');
+            const subtotalEl = document.getElementById('subtotal');
+            const taxEl = document.getElementById('tax');
+            const totalEl = document.getElementById('total');
+            const announcer = document.getElementById('aria-announcer');
+            const searchInput = document.getElementById('search');
+            const category = document.getElementById('category');
+
+            const TAX_RATE = 0.08;
+            let cart = JSON.parse(localStorage.getItem('alpha_pos_cart') || '{}');
+
+            function format(n){ return '$' + n.toFixed(2); }
+            function save(){ localStorage.setItem('alpha_pos_cart', JSON.stringify(cart)); }
+
+            function getProductData(el){
+                return {
+                    id: el.dataset.id,
+                    name: el.dataset.name,
+                    price: parseFloat(el.dataset.price)
+                };
+            }
+
+            function renderCart(){
+                cartEl.innerHTML = '';
+                const ids = Object.keys(cart);
+                if(ids.length === 0){
+                    cartEl.innerHTML = '<div style="opacity:.7">Cart is empty</div>';
+                } else {
+                    ids.forEach(id => {
+                        const item = cart[id];
+                        const row = document.createElement('div');
+                        row.className = 'cart-item';
+                        row.innerHTML = `
+                            <div style="flex:1">
+                                <div style="font-weight:700">${item.name}</div>
+                                <div style="opacity:.7">${format(item.price)} × <span>${item.qty}</span></div>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end">
+                                <div style="font-weight:700">${format(item.price * item.qty)}</div>
+                                <div style="display:flex;gap:6px;margin-top:6px">
+                                    <button class="qty dec" aria-label="Decrease ${item.name}">−</button>
+                                    <button class="qty inc" aria-label="Increase ${item.name}">+</button>
+                                    <button class="remove" aria-label="Remove ${item.name}" title="Remove">✕</button>
+                                </div>
+                            </div>
+                        `;
+                        // Attach handlers
+                        row.querySelector('.inc').addEventListener('click', ()=> updateQty(id, item.qty+1));
+                        row.querySelector('.dec').addEventListener('click', ()=> updateQty(id, item.qty-1));
+                        row.querySelector('.remove').addEventListener('click', ()=> delete cart[id] && save() && renderCart());
+                        cartEl.appendChild(row);
+                    });
+                }
+                updateTotals();
+            }
+
+            function updateTotals(){
+                const items = Object.values(cart);
+                const subtotal = items.reduce((s,i)=> s + i.price * i.qty, 0);
+                const tax = subtotal * TAX_RATE;
+                const total = subtotal + tax;
+                subtotalEl.textContent = format(subtotal);
+                taxEl.textContent = format(tax);
+                totalEl.textContent = format(total);
+                announcer.textContent = `Total ${format(total)}. ${items.length} items.`;
+                save();
+            }
+
+            function updateQty(id, qty){
+                if(qty <= 0){ delete cart[id]; }
+                else { cart[id].qty = qty; }
+                renderCart();
+            }
+
+            productsEl.addEventListener('click', (e)=>{
+                const btn = e.target.closest('.add-btn, .product');
+                if(!btn) return;
+                const card = btn.closest('.product');
+                const p = getProductData(card);
+                if(!cart[p.id]) cart[p.id] = { ...p, qty: 0 };
+                cart[p.id].qty++;
+                renderCart();
+                card.setAttribute('aria-pressed','true');
+            });
+
+            // keyboard: / focus search, Esc clear focus, Ctrl+Enter checkout
+            document.addEventListener('keydown', (e)=>{
+                if(e.key === '/' && document.activeElement !== searchInput){ e.preventDefault(); searchInput.focus(); }
+                if(e.key === 'Escape'){ document.activeElement.blur(); }
+                if(e.key === 'Enter' && e.ctrlKey){ e.preventDefault(); document.getElementById('checkout').click(); }
+            });
+
+            // search and filter
+            function filterProducts(){
+                const q = searchInput.value.trim().toLowerCase();
+                const cat = category.value;
+                document.querySelectorAll('.product').forEach(card=>{
+                    const name = card.dataset.name.toLowerCase();
+                    const matchesQ = q === '' || name.includes(q);
+                    const matchesCat = !cat || (card.dataset.category || '').toLowerCase().includes(cat.toLowerCase()) || cat === '';
+                    card.style.display = matchesQ && matchesCat ? '' : 'none';
+                });
+            }
+            searchInput.addEventListener('input', filterProducts);
+            category.addEventListener('change', filterProducts);
+            document.getElementById('clear-search').addEventListener('click', ()=>{ searchInput.value=''; category.value=''; filterProducts(); searchInput.focus(); });
+
+            // checkout and receipt
+            document.getElementById('checkout').addEventListener('click', ()=>{
+                const total = Object.values(cart).reduce((s,i)=> s + i.price * i.qty, 0) * (1 + TAX_RATE);
+                if(total <= 0) { alert('Cart is empty'); return; }
+                const tenderType = document.getElementById('tender').value;
+                const tenderAmount = parseFloat(document.getElementById('tender-amount').value) || 0;
+                const change = Math.max(0, tenderAmount - total);
+                // Build receipt text
+                let receipt = 'Alpha POS — Receipt\\n';
+                receipt += '----------------------------\\n';
+                Object.values(cart).forEach(i => { receipt += `${i.name} x${i.qty}  ${format(i.price * i.qty)}\\n`; });
+                receipt += '----------------------------\\n';
+                receipt += `Subtotal: ${subtotalEl.textContent}\\nTax: ${taxEl.textContent}\\nTotal: ${totalEl.textContent}\\n`;
+                receipt += `Paid (${tenderType}): ${format(tenderAmount)}\\nChange: ${format(change)}\\n`;
+                receipt += '\\nThank you!';
+                document.getElementById('receipt').textContent = receipt;
+                document.getElementById('receipt-modal').hidden = false;
+                document.getElementById('close-receipt').focus();
+                // Optionally clear cart after checkout:
+                cart = {};
+                renderCart();
+            });
+
+            document.getElementById('close-receipt').addEventListener('click', ()=> {
+                document.getElementById('receipt-modal').hidden = true;
+            });
+            document.getElementById('do-print').addEventListener('click', ()=> {
+                // simple print of receipt content
+                const printWindow = window.open('', '', 'width=400,height=600');
+                printWindow.document.write('<pre>' + document.getElementById('receipt').textContent + '</pre>');
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+                printWindow.close();
+            });
+
+            // utility actions
+            document.getElementById('clear-cart').addEventListener('click', ()=> { if(confirm('Clear cart?')){ cart = {}; renderCart(); } });
+            document.getElementById('save-cart').addEventListener('click', ()=> { save(); alert('Cart saved locally'); });
+            document.getElementById('print-receipt').addEventListener('click', ()=> { document.getElementById('do-print').click(); });
+
+            document.getElementById('toggle-high-contrast').addEventListener('click', ()=>{
+                document.documentElement.classList.toggle('high-contrast');
+                const on = document.documentElement.classList.contains('high-contrast');
+                alert('High contrast ' + (on ? 'enabled' : 'disabled'));
+            });
+
+            // init
+            renderCart();
+            filterProducts();
+        })();
+    </script>
+</body>
+</html>

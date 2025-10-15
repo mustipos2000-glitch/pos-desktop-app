@@ -1,0 +1,10 @@
+dist
+/dist/*
+/node_modules
+/node_modules/*
+*.log
+.DS_Store
+.vscode
+*.exe
+*.dll
+*.pdb
