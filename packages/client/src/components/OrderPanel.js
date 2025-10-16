@@ -1,9 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './OrderPanel.css';
+import ReceiptModal from './ReceiptModal';
 
 const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
+  const [showReceipt, setShowReceipt] = useState(false);
+
   const calculateTotal = () => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
+
+  const handleCashPayment = () => {
+    if (cart.length === 0) {
+      alert('Cart is empty!');
+      return;
+    }
+    setShowReceipt(true);
+  };
+
+  const handleShowReceipt = () => {
+    if (cart.length === 0) {
+      alert('Cart is empty!');
+      return;
+    }
+    setShowReceipt(true);
+  };
+
+  const handlePrintReceipt = () => {
+    window.print();
   };
 
   return (
@@ -59,7 +82,7 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
         <button className="action-icon-btn note">
           📝
         </button>
-        <button className="action-icon-btn receipt">
+        <button className="action-icon-btn receipt" onClick={handleShowReceipt}>
           🧾
         </button>
       </div>
@@ -86,10 +109,19 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
         <button className="payment-btn card">
           💳 Card
         </button>
-        <button className="payment-btn cash">
+        <button className="payment-btn cash" onClick={handleCashPayment}>
           💵 Cash
         </button>
       </div>
+
+      {showReceipt && (
+        <ReceiptModal
+          cart={cart}
+          total={calculateTotal()}
+          onClose={() => setShowReceipt(false)}
+          onPrint={handlePrintReceipt}
+        />
+      )}
     </div>
   );
 };
