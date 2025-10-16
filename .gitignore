@@ -1,10 +1,51 @@
-dist
-/dist/*
-/node_modules
-/node_modules/*
-*.log
+# Dependencies
+node_modules/
+packages/*/node_modules/
+
+# Build outputs
+dist/
+build/
+packages/*/dist/
+packages/*/build/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS files
 .DS_Store
-.vscode
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Electron
+out/
 *.exe
-*.dll
-*.pdb
+*.dmg
+*.app
+
+# Database
+*.db
+*.sqlite
+database/
+
+# Misc
+.cache/
+coverage/
+*.log
+
+*.md

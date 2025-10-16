@@ -1,0 +1,294 @@
+.admin-panel {
+  height: 100vh;
+  background: #1a1d2e;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-header {
+  background: #252a3f;
+  padding: 20px 30px;
+  border-bottom: 1px solid #2d3348;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-header-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.back-btn {
+  background: #3d4461;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.back-btn:hover {
+  background: #4a5170;
+}
+
+.admin-header h1 {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.admin-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 5px;
+  padding: 20px 30px 0;
+  background: #1a1d2e;
+}
+
+.admin-tabs button {
+  background: transparent;
+  color: #8b92b0;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.admin-tabs button.active {
+  background: #252a3f;
+  color: #fff;
+}
+
+.admin-tabs button:hover:not(.active) {
+  background: #1f2333;
+  color: #fff;
+}
+
+.admin-body {
+  flex: 1;
+  background: #252a3f;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.admin-section {
+  max-width: 1200px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.add-btn {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.add-btn:hover {
+  background: #059669;
+}
+
+.products-table {
+  background: #2d3348;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.products-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.products-table th {
+  background: #1a1d2e;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  color: #8b92b0;
+}
+
+.products-table td {
+  padding: 15px;
+  border-top: 1px solid #3d4461;
+  font-size: 14px;
+}
+
+.delete-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.category-card {
+  background: #2d3348;
+  padding: 20px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.delete-btn-small {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.delete-btn-small:hover {
+  background: #dc2626;
+}
+
+.settings-form {
+  background: #2d3348;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 600px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #8b92b0;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  background: #1a1d2e;
+  border: 1px solid #3d4461;
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #10b981;
+}
+
+.save-btn {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.save-btn:hover {
+  background: #059669;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #2d3348;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.modal h3 {
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.cancel-btn {
+  background: #3d4461;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.cancel-btn:hover {
+  background: #4a5170;
+}
