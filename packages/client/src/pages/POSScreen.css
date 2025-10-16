@@ -1,0 +1,12 @@
+.pos-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #1a1d2e;
+}
+
+.pos-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
