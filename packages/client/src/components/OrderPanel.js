@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './OrderPanel.css';
 import ReceiptModal from './ReceiptModal';
 
@@ -23,6 +23,11 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
       return;
     }
     setShowReceipt(true);
+  };
+
+  const handleCloseReceipt = () => {
+    setShowReceipt(false);
+    onClearCart();
   };
 
   const handlePrintReceipt = () => {
@@ -118,7 +123,7 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
         <ReceiptModal
           cart={cart}
           total={calculateTotal()}
-          onClose={() => setShowReceipt(false)}
+          onClose={handleCloseReceipt}
           onPrint={handlePrintReceipt}
         />
       )}
