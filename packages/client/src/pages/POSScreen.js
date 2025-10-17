@@ -5,7 +5,7 @@ import ProductGrid from '../components/ProductGrid';
 import OrderPanel from '../components/OrderPanel';
 import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
-import './POSScreen.css';
+import './css/POSScreen.css';
 
 const POSScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState('Starter');

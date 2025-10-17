@@ -78,16 +78,16 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
       </div>
 
       <div className="order-actions">
-        <button className="action-icon-btn trash" onClick={onClearCart}>
+        <button className="action-icon-btn trash" onClick={onClearCart} title="Clear Cart">
           🗑️
         </button>
-        <button className="action-icon-btn cart">
+        <button className="action-icon-btn cart" title="Save Cart">
           🛒
         </button>
-        <button className="action-icon-btn note">
+        <button className="action-icon-btn note" title="Add Note">
           📝
         </button>
-        <button className="action-icon-btn receipt" onClick={handleShowReceipt}>
+        <button className="action-icon-btn receipt" onClick={handleShowReceipt} title="View Receipt">
           🧾
         </button>
       </div>
@@ -108,14 +108,14 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
       </div>
 
       <div className="payment-actions">
-        <button className="payment-btn drawer">
-          💳 Drawer
+        <button className="payment-btn drawer" title="Open Drawer">
+          Drawer
         </button>
-        <button className="payment-btn card">
-          💳 Card
+        <button className="payment-btn card" title="Card Payment">
+          Card
         </button>
-        <button className="payment-btn cash" onClick={handleCashPayment}>
-          💵 Cash
+        <button className="payment-btn cash" onClick={handleCashPayment} title="Cash Payment">
+          Cash
         </button>
       </div>
 
