@@ -14,6 +14,13 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/users', usersRouter);
 
+// Import routes
+const apiRoutes = require('./routes/api');
+
+// Mount API routes
+app.use('/api', apiRoutes);
+
+// Test routes
 app.get('/api/hello', (req, res) => {
   res.json({
     message: 'Hello from Node.js Backend! 🎉',
