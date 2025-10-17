@@ -92,7 +92,7 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
         </button>
       </div>
 
-      <div className="numpad">
+      <div className="numpad" id='order-numpad'>
         <button className="num-btn clear">C</button>
         <button className="num-btn">7</button>
         <button className="num-btn">8</button>

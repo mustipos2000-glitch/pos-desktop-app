@@ -151,14 +151,16 @@
 }
 
 .numpad {
-  display: grid;
+  /* display: grid; */
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   padding: 6px 8px;
   background: #252945;
   border-bottom: 1px solid #2a2e47;
 }
-
+#order-numpad{
+  display: grid;
+}
 .num-btn {
   background: #3d4461;
   color: #e5e7eb;
