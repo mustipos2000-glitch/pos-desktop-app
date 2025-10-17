@@ -104,3 +104,48 @@
 .fullscreen-btn:hover {
   color: #fff;
 }
+
+.current-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: 15px;
+  padding-right: 15px;
+  border-right: 1px solid #3d4461;
+}
+
+.user-avatar-topbar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-avatar-topbar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.user-name-topbar {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background: #dc2626;
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import './ProductGrid.css';
+import './css/ProductGrid.css';
 
 const ProductGrid = ({ products, onAddToCart }) => {
   return (

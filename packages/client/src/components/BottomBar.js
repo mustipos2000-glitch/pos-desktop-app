@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './BottomBar.css';
+import './css/BottomBar.css';
 
 const BottomBar = ({ onOpenSettings }) => {
   const navigate = useNavigate();
@@ -19,7 +19,7 @@ const BottomBar = ({ onOpenSettings }) => {
       <button className="bottom-btn icon-btn">⚙️</button>
       <button className="bottom-btn">Drawer</button>
       <button className="bottom-btn">💳 Card</button>
-      <button className="bottom-btn cash">💵 Cash</button>
+      {/* <button className="bottom-btn cash">💵 Cash</button> */}
     </div>
   );
 };
