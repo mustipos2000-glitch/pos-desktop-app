@@ -49,3 +49,4 @@ coverage/
 *.log
 
 *.md
+package-lock.json
