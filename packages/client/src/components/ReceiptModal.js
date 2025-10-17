@@ -1,5 +1,5 @@
 import React from 'react';
-import './ReceiptModal.css';
+import './css/ReceiptModal.css';
 
 const ReceiptModal = ({ cart, total, onClose, onPrint }) => {
   const currentDate = new Date().toLocaleString();

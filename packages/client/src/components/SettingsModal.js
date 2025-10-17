@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './SettingsModal.css';
+import './css/SettingsModal.css';
 
 const SettingsModal = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('general');

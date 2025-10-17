@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import './OrderPanel.css';
+import './css/OrderPanel.css';
 import ReceiptModal from './ReceiptModal';
 
 const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
