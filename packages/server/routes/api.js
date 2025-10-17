@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const CategoryController = require('../controllers/CategoryController');
+// Import users routes
+const userRoutes = require('./users');
+
+// User routes
+router.use('/users', userRoutes);
 
 // Category routes
 router.get('/categories', CategoryController.getAllCategories);

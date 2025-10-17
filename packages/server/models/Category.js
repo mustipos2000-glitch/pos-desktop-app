@@ -1,8 +1,7 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./database.sqlite');
+const db = require('../config/database');
 
 // Create categories table if not exists
-db.run(`
+db.exec(`
   CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -12,41 +11,31 @@ db.run(`
 `);
 
 class Category {
-  static getAll(callback) {
+  static getAll() {
     const sql = 'SELECT * FROM categories';
-    db.all(sql, [], callback);
+    return db.prepare(sql).all();
   }
 
-  static getById(id, callback) {
+  static getById(id) {
     const sql = 'SELECT * FROM categories WHERE id = ?';
-    db.get(sql, [id], callback);
+    return db.prepare(sql).get(id);
   }
 
-  static create(name, next_course = 0, in_web_shop = 0, callback) {
+  static create(name, next_course = 0, in_web_shop = 0) {
     const sql = 'INSERT INTO categories (name, next_course, in_web_shop) VALUES (?, ?, ?)';
-    db.run(sql, [name, next_course, in_web_shop], function(err) {
-      if (err) {
-        callback(err);
-        return;
-      }
-      callback(null, { id: this.lastID, name, next_course, in_web_shop });
-    });
+    const result = db.prepare(sql).run(name, next_course, in_web_shop);
+    return { id: result.lastInsertRowid, name, next_course, in_web_shop };
   }
 
-  static update(id, name, next_course = 0, in_web_shop = 0, callback) {
+  static update(id, name, next_course = 0, in_web_shop = 0) {
     const sql = 'UPDATE categories SET name = ?, next_course = ?, in_web_shop = ? WHERE id = ?';
-    db.run(sql, [name, next_course, in_web_shop, id], function(err) {
-      if (err) {
-        callback(err);
-        return;
-      }
-      callback(null, { id, name, next_course, in_web_shop });
-    });
+    db.prepare(sql).run(name, next_course, in_web_shop, id);
+    return { id, name, next_course, in_web_shop };
   }
 
-  static delete(id, callback) {
+  static delete(id) {
     const sql = 'DELETE FROM categories WHERE id = ?';
-    db.run(sql, [id], callback);
+    return db.prepare(sql).run(id);
   }
 }
 
