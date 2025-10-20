@@ -1,13 +1,50 @@
 import React, { useState, useEffect } from 'react';
+import './css/ProductManager.css';
 
 const ProductManager = () => {
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Coca-Cola', price: 23.09, category: 'Starter' },
-    { id: 2, name: 'Orange Juice', price: 3.00, category: 'Starter' },
-  ]);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', category: '' });
+  const [showEditProduct, setShowEditProduct] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  // Form state for product data
+  const [productForm, setProductForm] = useState({
+    name: '',
+    button_name: '',
+    production_name: '',
+    price: '',
+    vat_takeout: '',
+    vat_eat_in: '',
+    barcode: '',
+    category_id: '',
+    addition_type: '',
+    display_index: '',
+    in_web_shop: false,
+    printer1: '',
+    printer2: '',
+    printer3: '',
+    image: ''
+  });
+  
+  // State for file inputs
+  const [imageFile, setImageFile] = useState(null);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/api/products');
+      const result = await response.json();
+      setProducts(result.data || []);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError('Failed to fetch products');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -20,29 +57,226 @@ const ProductManager = () => {
   };
 
   useEffect(() => {
+    fetchProducts();
     fetchCategories();
   }, []);
 
-  const handleAddProduct = () => {
-    if (newProduct.name && newProduct.price && newProduct.category) {
-      setProducts([...products, { ...newProduct, id: Date.now(), price: parseFloat(newProduct.price) }]);
-      setNewProduct({ name: '', price: '', category: '' });
-      setShowAddProduct(false);
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setProductForm({
+      ...productForm,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+  
+  // Handle file input changes separately
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    setImageFile(file);
+    
+    // Store file name for display purposes
+    if (file) {
+      setProductForm({
+        ...productForm,
+        image: file.name
+      });
+    } else {
+      setProductForm({
+        ...productForm,
+        image: ''
+      });
     }
   };
 
-  const handleDeleteProduct = (id) => {
-    setProducts(products.filter(p => p.id !== id));
+  const resetForm = () => {
+    setProductForm({
+      name: '',
+      button_name: '',
+      production_name: '',
+      price: '',
+      vat_takeout: '',
+      vat_eat_in: '',
+      barcode: '',
+      category_id: '',
+      addition_type: '',
+      display_index: '',
+      in_web_shop: false,
+      printer1: '',
+      printer2: '',
+      printer3: '',
+      image: ''
+    });
+    setImageFile(null);
+  };
+
+  const handleAddProduct = async () => {
+    // Validate required fields
+    if (!productForm.name) {
+      setError('Product name is required');
+      return;
+    }
+
+    try {
+      // Create FormData object to handle file uploads
+      const formData = new FormData();
+      
+      // Append all product data to FormData
+      formData.append('name', productForm.name);
+      formData.append('button_name', productForm.button_name || '');
+      formData.append('production_name', productForm.production_name || '');
+      formData.append('price', parseFloat(productForm.price) || 0);
+      formData.append('vat_takeout', parseFloat(productForm.vat_takeout) || 0);
+      formData.append('vat_eat_in', parseFloat(productForm.vat_eat_in) || 0);
+      formData.append('barcode', productForm.barcode || '');
+      formData.append('category_id', productForm.category_id ? parseInt(productForm.category_id) : '');
+      formData.append('addition_type', productForm.addition_type || '');
+      formData.append('display_index', parseInt(productForm.display_index) || 0);
+      formData.append('in_web_shop', productForm.in_web_shop ? 1 : 0);
+      formData.append('printer1', productForm.printer1 || '');
+      formData.append('printer2', productForm.printer2 || '');
+      formData.append('printer3', productForm.printer3 || '');
+      
+      // Append image file if selected
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const response = await fetch('http://localhost:5000/api/products', {
+        method: 'POST',
+        body: formData, // Send FormData instead of JSON
+      });
+
+      if (response.ok) {
+        // Refresh the product list
+        await fetchProducts();
+        resetForm();
+        setShowAddProduct(false);
+        setError('');
+      } else {
+        const errorResult = await response.json();
+        setError(errorResult.error || 'Failed to create product');
+      }
+    } catch (error) {
+      console.error('Error creating product:', error);
+      setError('Failed to create product');
+    }
+  };
+
+  const handleEditProduct = (product) => {
+    setCurrentProduct(product);
+    setProductForm({
+      name: product.name || '',
+      button_name: product.button_name || '',
+      production_name: product.production_name || '',
+      price: product.price || '',
+      vat_takeout: product.vat_takeout || '',
+      vat_eat_in: product.vat_eat_in || '',
+      barcode: product.barcode || '',
+      category_id: product.category_id || '',
+      addition_type: product.addition_type || '',
+      display_index: product.display_index || '',
+      in_web_shop: product.in_web_shop === 1,
+      printer1: product.printer1 || '',
+      printer2: product.printer2 || '',
+      printer3: product.printer3 || '',
+      image: product.image || ''
+    });
+    setImageFile(null); // Reset file input
+    setShowEditProduct(true);
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!productForm.name) {
+      setError('Product name is required');
+      return;
+    }
+
+    try {
+      // Create FormData object to handle file uploads
+      const formData = new FormData();
+      
+      // Append all product data to FormData
+      formData.append('name', productForm.name);
+      formData.append('button_name', productForm.button_name || '');
+      formData.append('production_name', productForm.production_name || '');
+      formData.append('price', parseFloat(productForm.price) || 0);
+      formData.append('vat_takeout', parseFloat(productForm.vat_takeout) || 0);
+      formData.append('vat_eat_in', parseFloat(productForm.vat_eat_in) || 0);
+      formData.append('barcode', productForm.barcode || '');
+      formData.append('category_id', productForm.category_id ? parseInt(productForm.category_id) : '');
+      formData.append('addition_type', productForm.addition_type || '');
+      formData.append('display_index', parseInt(productForm.display_index) || 0);
+      formData.append('in_web_shop', productForm.in_web_shop ? 1 : 0);
+      formData.append('printer1', productForm.printer1 || '');
+      formData.append('printer2', productForm.printer2 || '');
+      formData.append('printer3', productForm.printer3 || '');
+      
+      // Append image file if selected
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
+
+      const response = await fetch(`http://localhost:5000/api/products/${currentProduct.id}`, {
+        method: 'PUT',
+        body: formData, // Send FormData instead of JSON
+      });
+
+      if (response.ok) {
+        // Refresh the product list
+        await fetchProducts();
+        resetForm();
+        setShowEditProduct(false);
+        setCurrentProduct(null);
+        setError('');
+      } else {
+        const errorResult = await response.json();
+        setError(errorResult.error || 'Failed to update product');
+      }
+    } catch (error) {
+      console.error('Error updating product:', error);
+      setError('Failed to update product');
+    }
+  };
+
+  const handleDeleteProduct = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh the product list
+        fetchProducts();
+      } else {
+        const errorResult = await response.json();
+        setError(errorResult.error || 'Failed to delete product');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      setError('Failed to delete product');
+    }
+  };
+
+  // Get category name by ID for display
+  const getCategoryName = (categoryId) => {
+    const category = categories.find(cat => cat.id === categoryId);
+    return category ? category.name : 'Unknown';
   };
 
   return (
     <div className="admin-section">
       <div className="section-header">
         <h2>Manage Products</h2>
-        <button className="add-btn" onClick={() => setShowAddProduct(true)}>
+        <button className="add-btn" onClick={() => {
+          resetForm();
+          setShowAddProduct(true);
+        }}>
           + Add Product
         </button>
       </div>
+      
+      {error && <div className="error-message">{error}</div>}
+      {loading && <div className="loading">Loading...</div>}
       
       <div className="products-table">
         <table>
@@ -50,8 +284,13 @@ const ProductManager = () => {
             <tr>
               <th>ID</th>
               <th>Name</th>
+              <th>Button Name</th>
               <th>Price</th>
+              <th>VAT Takeout</th>
+              <th>VAT Eat-in</th>
               <th>Category</th>
+              <th>Display Index</th>
+              <th>Image</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -60,9 +299,23 @@ const ProductManager = () => {
               <tr key={product.id}>
                 <td>{product.id}</td>
                 <td>{product.name}</td>
-                <td>${product.price.toFixed(2)}</td>
-                <td>{product.category}</td>
+                <td>{product.button_name || '-'}</td>
+                <td>${parseFloat(product.price).toFixed(2)}</td>
+                <td>{product.vat_takeout}%</td>
+                <td>{product.vat_eat_in}%</td>
+                <td>{getCategoryName(product.category_id)}</td>
+                <td>{product.display_index}</td>
                 <td>
+                  {product.image ? (
+                    <img src={`http://localhost:5000${product.image}`} alt={product.name} style={{ maxWidth: '50px', maxHeight: '50px' }} />
+                  ) : (
+                    'No Image'
+                  )}
+                </td>
+                <td>
+                  <button className="edit-btn" onClick={() => handleEditProduct(product)}>
+                    Edit
+                  </button>
                   <button className="delete-btn" onClick={() => handleDeleteProduct(product.id)}>
                     Delete
                   </button>
@@ -73,42 +326,351 @@ const ProductManager = () => {
         </table>
       </div>
 
+      {/* Add Product Modal */}
       {showAddProduct && (
         <div className="modal-overlay" onClick={() => setShowAddProduct(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h3>Add New Product</h3>
-            <div className="form-group">
-              <label>Product Name</label>
-              <input
-                type="text"
-                value={newProduct.name}
-                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-              />
+            <div className="form-container">
+              <div className="form-group">
+                <label>Product Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={productForm.name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Button Name</label>
+                <input
+                  type="text"
+                  name="button_name"
+                  value={productForm.button_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Production Name</label>
+                <input
+                  type="text"
+                  name="production_name"
+                  value={productForm.production_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price"
+                  value={productForm.price}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>VAT Takeout (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="vat_takeout"
+                  value={productForm.vat_takeout}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>VAT Eat-in (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="vat_eat_in"
+                  value={productForm.vat_eat_in}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Barcode</label>
+                <input
+                  type="text"
+                  name="barcode"
+                  value={productForm.barcode}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  name="category_id"
+                  value={productForm.category_id}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Addition Type</label>
+                <input
+                  type="text"
+                  name="addition_type"
+                  value={productForm.addition_type}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              {/* <div className="form-group">
+                <label>Display Index</label>
+                <input
+                  type="number"
+                  name="display_index"
+                  value={productForm.display_index}
+                  onChange={handleInputChange}
+                />
+              </div> */}
+              
+              {/* <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="in_web_shop"
+                    checked={productForm.in_web_shop}
+                    onChange={handleInputChange}
+                  />
+                  Available in Web Shop
+                </label>
+              </div>
+              
+              <div className="form-group">
+                <label>Printer 1</label>
+                <input
+                  type="text"
+                  name="printer1"
+                  value={productForm.printer1}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Printer 2</label>
+                <input
+                  type="text"
+                  name="printer2"
+                  value={productForm.printer2}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Printer 3</label>
+                <input
+                  type="text"
+                  name="printer3"
+                  value={productForm.printer3}
+                  onChange={handleInputChange}
+                />
+              </div> */}
+              
+              <div className="form-group">
+                <label>Image</label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                {productForm.image && <small>Selected: {productForm.image}</small>}
+              </div>
+              
+              <div className="modal-actions full-width">
+                <button className="cancel-btn" onClick={() => setShowAddProduct(false)}>Cancel</button>
+                <button className="add-btn" onClick={handleAddProduct}>Add Product</button>
+              </div>
             </div>
-            <div className="form-group">
-              <label>Price</label>
-              <input
-                type="number"
-                step="0.01"
-                value={newProduct.price}
-                onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
-              />
-            </div>
-            <div className="form-group">
-              <label>Category</label>
-              <select
-                value={newProduct.category}
-                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
-              >
-                <option value="">Select Category</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.name}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowAddProduct(false)}>Cancel</button>
-              <button className="add-btn" onClick={handleAddProduct}>Add Product</button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {showEditProduct && (
+        <div className="modal-overlay" onClick={() => setShowEditProduct(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3>Edit Product</h3>
+            <div className="form-container">
+              <div className="form-group">
+                <label>Product Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={productForm.name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Button Name</label>
+                <input
+                  type="text"
+                  name="button_name"
+                  value={productForm.button_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Production Name</label>
+                <input
+                  type="text"
+                  name="production_name"
+                  value={productForm.production_name}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price"
+                  value={productForm.price}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>VAT Takeout (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="vat_takeout"
+                  value={productForm.vat_takeout}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>VAT Eat-in (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="vat_eat_in"
+                  value={productForm.vat_eat_in}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Barcode</label>
+                <input
+                  type="text"
+                  name="barcode"
+                  value={productForm.barcode}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  name="category_id"
+                  value={productForm.category_id}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Select Category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Addition Type</label>
+                <input
+                  type="text"
+                  name="addition_type"
+                  value={productForm.addition_type}
+                  onChange={handleInputChange}
+                />
+              </div>
+{/*               
+              <div className="form-group">
+                <label>Display Index</label>
+                <input
+                  type="number"
+                  name="display_index"
+                  value={productForm.display_index}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    name="in_web_shop"
+                    checked={productForm.in_web_shop}
+                    onChange={handleInputChange}
+                  />
+                  Available in Web Shop
+                </label>
+              </div>
+              
+              <div className="form-group">
+                <label>Printer 1</label>
+                <input
+                  type="text"
+                  name="printer1"
+                  value={productForm.printer1}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Printer 2</label>
+                <input
+                  type="text"
+                  name="printer2"
+                  value={productForm.printer2}
+                  onChange={handleInputChange}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Printer 3</label>
+                <input
+                  type="text"
+                  name="printer3"
+                  value={productForm.printer3}
+                  onChange={handleInputChange}
+                />
+              </div> */}
+              
+              <div className="form-group">
+                <label>Image</label>
+                <input
+                  type="file"
+                  name="image"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
+                {productForm.image && <small>Current/Selected: {productForm.image}</small>}
+              </div>
+              
+              <div className="modal-actions full-width">
+                <button className="cancel-btn" onClick={() => setShowEditProduct(false)}>Cancel</button>
+                <button className="save-btn" onClick={handleUpdateProduct}>Update Product</button>
+              </div>
             </div>
           </div>
         </div>

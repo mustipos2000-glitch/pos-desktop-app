@@ -13,40 +13,45 @@ const POSScreen = () => {
   const [cart, setCart] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch categories from backend
+  // Fetch categories and products from backend
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await ApiService.getCategories();
-        const categoryNames = response.data.map(category => category.name);
+        
+        // Fetch categories
+        const categoryResponse = await ApiService.getCategories();
+        const categoryNames = categoryResponse.data.map(category => category.name);
         setCategories(categoryNames);
         
         // Set first category as default selected
         if (categoryNames.length > 0) {
-          setSelectedCategory(categoryNames);
+          setSelectedCategory(categoryNames[0]);
         }
+        
+        // Fetch products
+        const productResponse = await ApiService.getProducts();
+        // Map products to match the expected format
+        const formattedProducts = productResponse.data.map(product => ({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          category: product.category_name || 'Uncategorized',
+          image: product.image || '📦',
+          color: '#3b82f6' // Default color, can be customized
+        }));
+        setProducts(formattedProducts);
       } catch (error) {
-        console.error('Failed to fetch categories:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchCategories();
+    fetchData();
   }, []);
-
-  const products = [
-    { id: 1, name: 'Coca-Cola', price: 23.09, category: 'Starter', image: '🥤', color: '#dc2626' },
-    { id: 2, name: 'Orange Juice', price: 3.00, category: 'Starter', image: '🧃', color: '#f59e0b' },
-    { id: 3, name: 'Espresso', price: 2.00, category: 'Starter', image: '☕', color: '#78350f' },
-    { id: 4, name: 'Virgin Mojito', price: 4.50, category: 'Starter', image: '🍹', color: '#10b981' },
-    { id: 5, name: 'Iced Tea', price: 3.50, category: 'Starter', image: '🧊', color: '#3b82f6' },
-    { id: 6, name: 'koffie met slagroom en', price: 0.09, category: 'test cat', image: '☕', color: '#92400e' },
-    { id: 7, name: 'cappuccino', price: 33.00, category: 'test cat', image: '☕', color: '#dc2626' },
-    { id: 8, name: 'musli', price: 6.99, category: 'test cat', image: '🥣', color: '#10b981' },
-  ];
 
   const addToCart = (product) => {
     const existingItem = cart.find(item => item.id === product.id);
@@ -78,7 +83,7 @@ const POSScreen = () => {
       <div className="pos-screen">
         <TopBar />
         <div className="pos-main" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div>Loading categories...</div>
+          <div>Loading data...</div>
         </div>
         <BottomBar onOpenSettings={() => setShowSettings(true)} />
       </div>

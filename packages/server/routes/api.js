@@ -30,7 +30,6 @@ router.get('/products/:id', ProductController.getProductById);
 // ✅ if you're uploading image + text form-data
 router.post('/products', upload.single('image'), ProductController.createProduct);
 router.put('/products/:id', upload.single('image'), ProductController.updateProduct);
-
 router.delete('/products/:id', ProductController.deleteProduct);
 
 // Order routes
