@@ -96,8 +96,8 @@
 
 .receipt-item-details {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  flex-direction: row;
+  gap: .5rem;
   flex: 1;
 }
 

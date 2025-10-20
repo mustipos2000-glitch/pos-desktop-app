@@ -1,7 +1,16 @@
 import React from 'react';
 import './css/Sidebar.css';
+import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
+   const navigate = useNavigate();
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  
+    const handleLogout = () => {
+      localStorage.removeItem('currentUser');
+      navigate('/');
+    };
+
   return (
     <div className="sidebar">
       <div className="sidebar-scroll">
@@ -16,8 +25,15 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
         ))}
       </div>
       <div className="sidebar-nav">
-        <button className="nav-btn">▲</button>
-        <button className="nav-btn">▼</button>
+         {currentUser.name && (
+          <div className="flex">
+            <div className='user-name-topbar'>
+              <span className="">{currentUser.name} ({currentUser.role})</span>
+            </div>
+            <button className="logout-btn" onClick={handleLogout}>Log Out</button>
+          </div>
+        )}
+        {/* <button className="nav-btn">Back</button> */}
       </div>
     </div>
   );

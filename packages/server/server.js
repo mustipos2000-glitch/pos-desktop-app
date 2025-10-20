@@ -1,7 +1,6 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const usersRouter = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -11,9 +10,6 @@ app.use('/uploads', express.static('uploads'));
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Routes
-app.use('/api/users', usersRouter);
 
 // Import routes
 const apiRoutes = require('./routes/api');
