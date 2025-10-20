@@ -1,15 +1,5 @@
 const db = require('../config/database');
 
-// Create categories table if not exists
-db.exec(`
-  CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    next_course INTEGER DEFAULT 0,
-    in_web_shop INTEGER DEFAULT 0
-  )
-`);
-
 class Category {
   static getAll() {
     const sql = 'SELECT * FROM categories';
