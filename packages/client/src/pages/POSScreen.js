@@ -1,25 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import TopBar from '../components/TopBar';
 import Sidebar from '../components/Sidebar';
 import ProductGrid from '../components/ProductGrid';
 import OrderPanel from '../components/OrderPanel';
 import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
+import ApiService from '../services/api';
 import './css/POSScreen.css';
 
 const POSScreen = () => {
-  const [selectedCategory, setSelectedCategory] = useState('Starter');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [cart, setCart] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    'Starter',
-    'test cat',
-    'alcohol',
-    'hoofd gerecht vlees vis kip durum',
-    'Dessert',
-    'Drinks'
-  ];
+  // Fetch categories from backend
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        const response = await ApiService.getCategories();
+        const categoryNames = response.data.map(category => category.name);
+        setCategories(categoryNames);
+        
+        // Set first category as default selected
+        if (categoryNames.length > 0) {
+          setSelectedCategory(categoryNames);
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const products = [
     { id: 1, name: 'Coca-Cola', price: 23.09, category: 'Starter', image: '🥤', color: '#dc2626' },
@@ -56,6 +72,18 @@ const POSScreen = () => {
   const clearCart = () => {
     setCart([]);
   };
+
+  if (loading) {
+    return (
+      <div className="pos-screen">
+        <TopBar />
+        <div className="pos-main" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div>Loading categories...</div>
+        </div>
+        <BottomBar onOpenSettings={() => setShowSettings(true)} />
+      </div>
+    );
+  }
 
   return (
     <div className="pos-screen">

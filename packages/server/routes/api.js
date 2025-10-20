@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const CategoryController = require('../controllers/CategoryController');
-// Import users routes
-const userRoutes = require('./users');
+const UserController = require('../controllers/UserController');
 
 // User routes
-router.use('/users', userRoutes);
+router.get('/users', UserController.getAllUsers);
+router.get('/users/:id', UserController.getUserById);
+router.post('/users', UserController.createUser);
+router.put('/users/:id', UserController.updateUser);
+router.delete('/users/:id', UserController.deleteUser);
+router.post('/users/verify', UserController.verifyPincode);
 
 // Category routes
 router.get('/categories', CategoryController.getAllCategories);
