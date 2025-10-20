@@ -25,9 +25,9 @@ class Product {
     static create(product) {
         const sql = `INSERT INTO products (
       name, button_name, production_name, price, vat_takeout, vat_eat_in,
-      barcode, category_id, addition_type, display_index, parent_id, in_web_shop,
+      barcode, category_id, addition_type, display_index, in_web_shop,
       printer1, printer2, printer3, image
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`;
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const params = [
             product.name,
@@ -40,12 +40,11 @@ class Product {
             product.category_id || null,
             product.addition_type || null,
             product.display_index || 0,
-            product.parent_id || null,
             product.in_web_shop || 0,
             product.printer1 || null,
             product.printer2 || null,
             product.printer3 || null,
-            product.image || null // ✅ added
+            product.image || null
         ];
 
         const result = db.prepare(sql).run(...params);
@@ -55,8 +54,8 @@ class Product {
     static update(id, product) {
         const sql = `UPDATE products SET
       name = ?, button_name = ?, production_name = ?, price = ?, vat_takeout = ?, vat_eat_in = ?,
-      barcode = ?, category_id = ?, addition_type = ?, display_index = ?, parent_id = ?, in_web_shop = ?,
-      printer1 = ?, printer2 = ?, printer3 = ?,  image = ?
+      barcode = ?, category_id = ?, addition_type = ?, display_index = ?, in_web_shop = ?,
+      printer1 = ?, printer2 = ?, printer3 = ?, image = ?
       WHERE id = ?`;
 
         const params = [
@@ -70,12 +69,11 @@ class Product {
             product.category_id || null,
             product.addition_type || null,
             product.display_index || 0,
-            product.parent_id || null,
             product.in_web_shop || 0,
             product.printer1 || null,
             product.printer2 || null,
             product.printer3 || null,
-             product.image || null,
+            product.image || null,
             id
         ];
 

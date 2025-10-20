@@ -1,5 +1,7 @@
 const Product = require('../models/Product');
 const db = require('../config/database');
+const fs = require('fs');
+const path = require('path');
 
 
 const ProductController = {
@@ -69,6 +71,12 @@ const ProductController = {
                 return res.status(400).json({ error: 'Name is required' });
             }
 
+            // Check if product exists
+            const existingProduct = Product.getById(id);
+            if (!existingProduct) {
+                return res.status(404).json({ error: 'Product not found' });
+            }
+
             // ✅ Validate category existence if category_id provided
             if (payload.category_id) {
                 const category = db
@@ -96,6 +104,7 @@ const ProductController = {
                 // keep old image if not uploading new one
                 payload.image = existingProduct.image;
             }
+            
             const product = Product.update(id, payload);
             res.status(200).json({ message: 'Product updated successfully', data: product });
         } catch (err) {

@@ -50,4 +50,5 @@ coverage/
 
 *.md
 package-lock.json
-package-lock.json
+
+uploads/
