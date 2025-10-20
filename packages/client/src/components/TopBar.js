@@ -1,15 +1,15 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import './css/TopBar.css';
 
 const TopBar = () => {
-  const navigate = useNavigate();
-  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  // const navigate = useNavigate();
+  // const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
 
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser');
-    navigate('/');
-  };
+  // const handleLogout = () => {
+  //   localStorage.removeItem('currentUser');
+  //   navigate('/');
+  // };
 
   return (
     <div className="top-bar">
@@ -20,7 +20,7 @@ const TopBar = () => {
         </button>
         <button className="tab-btn">
           <span className="icon">📋</span>
-          Orders (9)
+          Orders (0)
         </button>
       </div>
       <div className="top-bar-center">
@@ -28,7 +28,7 @@ const TopBar = () => {
         <button className="action-btn kitchen">Send To Kitchen</button>
       </div>
       <div className="top-bar-right">
-        {currentUser.name && (
+        {/* {currentUser.name && (
           <div className="current-user">
             <div className="user-avatar-topbar" style={{ backgroundColor: currentUser.avatar_color }}>
               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -38,7 +38,7 @@ const TopBar = () => {
             <span className="user-name-topbar">{currentUser.name}</span>
             <button className="logout-btn" onClick={handleLogout}>Logout</button>
           </div>
-        )}
+        )} */}
         <button className="filter-btn">Order</button>
         <button className="filter-btn">Room</button>
         <button className="filter-btn">Table</button>
