@@ -66,6 +66,34 @@ try {
   }
 }
 
+// Create orders table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tax REAL DEFAULT 0,
+    status TEXT DEFAULT 'pending',
+    note TEXT,
+    sub_total REAL DEFAULT 0,
+    total REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+// Create order_details table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS order_details (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    product_id INTEGER NOT NULL,
+    qty REAL DEFAULT 0,
+    total REAL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
+    FOREIGN KEY(product_id) REFERENCES products(id)
+  )
+`);
+
+
 // Insert default admin user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
 if (userCount.count === 0) {
