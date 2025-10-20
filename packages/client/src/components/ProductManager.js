@@ -307,7 +307,7 @@ const ProductManager = () => {
                 <td>{product.display_index}</td>
                 <td>
                   {product.image ? (
-                    <img src={`http://localhost:5000${product.image}`} alt={product.name} style={{ maxWidth: '100px', maxHeight: '100px' }} />
+                    <img src={`http://localhost:5000${product.image}`} alt={product.name} style={{ maxWidth: '50px', maxHeight: '50px' }} />
                   ) : (
                     'No Image'
                   )}

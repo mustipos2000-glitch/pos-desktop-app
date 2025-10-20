@@ -53,6 +53,35 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Product methods
+  static async getProducts() {
+    return this.request('/products');
+  }
+
+  static async getProductById(id) {
+    return this.request(`/products/${id}`);
+  }
+
+  static async createProduct(productData) {
+    return this.request('/products', {
+      method: 'POST',
+      body: JSON.stringify(productData),
+    });
+  }
+
+  static async updateProduct(id, productData) {
+    return this.request(`/products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(productData),
+    });
+  }
+
+  static async deleteProduct(id) {
+    return this.request(`/products/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default ApiService;
