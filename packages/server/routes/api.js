@@ -4,6 +4,8 @@ const router = express.Router();
 const CategoryController = require('../controllers/CategoryController');
 const UserController = require('../controllers/UserController');
 const ProductController = require('../controllers/ProductController');
+const OrderController = require('../controllers/OrderController');
+
 
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
 
@@ -30,6 +32,13 @@ router.post('/products', upload.single('image'), ProductController.createProduct
 router.put('/products/:id', upload.single('image'), ProductController.updateProduct);
 
 router.delete('/products/:id', ProductController.deleteProduct);
+
+// Order routes
+router.get('/orders', OrderController.getAllOrders);
+router.get('/orders/:id', OrderController.getOrderById);
+router.post('/orders', OrderController.createOrder);
+router.put('/orders/:id', OrderController.updateOrder);
+router.delete('/orders/:id', OrderController.deleteOrder);
 
 // Example API routes
 router.get('/products', (req, res) => {
