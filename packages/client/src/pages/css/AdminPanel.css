@@ -405,3 +405,86 @@
   border-color: white;
   box-shadow: 0 0 0 2px #2d3348, 0 0 0 4px white;
 }
+
+/* Category Manager Specific Styles */
+.categories-table {
+  background: #2d3348;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.categories-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.categories-table th {
+  background: #1a1d2e;
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 14px;
+  color: #8b92b0;
+}
+
+.categories-table td {
+  padding: 15px;
+  border-top: 1px solid #3d4461;
+  font-size: 14px;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 40px;
+  color: #8b92b0;
+  font-size: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #8b92b0;
+  font-style: italic;
+}
+
+.id-cell {
+  font-family: monospace;
+  color: #8b92b0;
+  font-weight: 600;
+}
+
+.text-cell {
+  font-weight: 500;
+}
+
+/* .status-cell {
+  text-align: left;
+} */
+
+/* .status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+  background: #10b981;
+  color: #fff;
+}
+
+.status-badge.inactive {
+  background: #374151;
+  color: #9ca3af;
+} */
+
+.actions-cell {
+  text-align: center !important;
+}
+
+.actions-cell .edit-btn {
+  margin-right: 8px;
+}
