@@ -176,8 +176,8 @@ const CategoryManager = () => {
               <tr>
                 <th className="order-header"></th>
                 <th>Category Name</th>
-                <th>Next Course</th>
-                <th>Web Shop</th>
+                {/* <th>Next Course</th> */}
+                {/* <th>Web Shop</th> */}
                 <th className='actions-cell'>Actions</th>
               </tr>
             </thead>
@@ -210,18 +210,16 @@ const CategoryManager = () => {
                       </button>
                     </td>
                     <td className="">{category.name || 'Unnamed Category'}</td>
-                    <td className="">
+                    {/* <td className="">
                       <span className="">
                         {category.next_course || null}
                       </span>
-                    </td>
-                    <td className="">
-                      {/* <span className={`status-badge ${category.in_web_shop ? 'active' : 'inactive'}`}> */}
-                      {/* {category.in_web_shop ? 'Available' : 'Hidden'} */}
+                    </td> */}
+                    {/* <td className="">
                       <span className="">
                         {category.in_web_shop}
                       </span>
-                    </td>
+                    </td> */}
                     <td className="actions-cell">
                       <IconButton
                         icon="✏️"
@@ -258,7 +256,7 @@ const CategoryManager = () => {
               />
             </div>
 
-            <div className="form-group">
+            {/* <div className="form-group">
               <label>
                 Next Course
               </label>
@@ -268,9 +266,9 @@ const CategoryManager = () => {
                 onChange={(e) => setCategoryForm({ ...categoryForm, next_course: e.target.checked ? 1 : 0 })}
               />
 
-            </div>
+            </div> */}
 
-            <div className="form-group">
+            {/* <div className="form-group">
               <label>
                 Available in Web Shop
               </label>
@@ -280,7 +278,7 @@ const CategoryManager = () => {
                 onChange={(e) => setCategoryForm({ ...categoryForm, in_web_shop: e.target.checked ? 1 : 0 })}
               />
 
-            </div>
+            </div> */}
 
             <div className="modal-actions">
               <button className="cancel-btn" onClick={() => setShowAddCategory(false)}>
