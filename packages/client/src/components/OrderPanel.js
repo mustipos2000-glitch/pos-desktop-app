@@ -68,10 +68,17 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
 
   const handleCloseReceipt = () => {
     setShowReceipt(false);
-    onClearCart();
+    // onClearCart();
   };
 
   const handlePrintReceipt = () => {
+    setShowReceipt(false);
+    onClearCart();
+    // Reset discount input and state
+    setDiscount(0);
+    if (discountInputRef.current) {
+      discountInputRef.current.value = '';
+    }
     window.print();
   };
 
