@@ -21,17 +21,17 @@ const POSScreen = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch categories
         const categoryResponse = await ApiService.getCategories();
         const categoryNames = categoryResponse.data.map(category => category.name);
         setCategories(categoryNames);
-        
+
         // Set first category as default selected
         if (categoryNames.length > 0) {
           setSelectedCategory(categoryNames[0]);
         }
-        
+
         // Fetch products
         const productResponse = await ApiService.getProducts();
         // Map products to match the expected format
@@ -92,24 +92,26 @@ const POSScreen = () => {
 
   return (
     <div className="pos-screen">
-      <TopBar />
-      <div className="pos-main">
-        <Sidebar
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-        <ProductGrid
-          products={products.filter(p => p.category === selectedCategory)}
-          onAddToCart={addToCart}
-        />
-        <OrderPanel
-          cart={cart}
-          onUpdateQuantity={updateQuantity}
-          onClearCart={clearCart}
-        />
+      <div className="pos-left-section">
+        <TopBar />
+        <div className="pos-main">
+          <Sidebar
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+          />
+          <ProductGrid
+            products={products.filter(p => p.category === selectedCategory)}
+            onAddToCart={addToCart}
+          />
+        </div>
+        <BottomBar onOpenSettings={() => setShowSettings(true)} />
       </div>
-      <BottomBar onOpenSettings={() => setShowSettings(true)} />
+      <OrderPanel
+        cart={cart}
+        onUpdateQuantity={updateQuantity}
+        onClearCart={clearCart}
+      />
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
     </div>
   );

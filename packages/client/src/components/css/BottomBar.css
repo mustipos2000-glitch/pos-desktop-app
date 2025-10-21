@@ -7,11 +7,10 @@
 }
 
 .bottom-btn {
-  background: #252a3f;
+  background: #3d4461;
   color: #8b92b0;
   border: none;
-  padding: 12px;
-
+  padding: 6px 16px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -20,30 +19,6 @@
 }
 
 .bottom-btn:hover {
-  background: #3d4461;
+  background: #8b92b0;
   color: #fff;
-}
-
-.bottom-btn.admin {
-  background: #3d4461;
-  color: #fff;
-}
-
-.bottom-btn.settings {
-  background: #3d4461;
-  color: #fff;
-}
-
-.bottom-btn.cash {
-  background: #10b981;
-  color: #fff;
-  margin-left: auto;
-}
-
-.bottom-btn.cash:hover {
-  background: #059669;
-}
-
-.bottom-btn.icon-btn {
-  padding: 12px 16px;
 }

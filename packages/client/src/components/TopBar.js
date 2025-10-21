@@ -24,8 +24,8 @@ const TopBar = () => {
         </button>
       </div>
       <div className="top-bar-center">
-        <button className="action-btn hold">On Hold</button>
-        <button className="action-btn kitchen">Send To Kitchen</button>
+        <button className="tab-btn">On Hold</button>
+        <button className="tab-btn">Send To Kitchen</button>
       </div>
       <div className="top-bar-right">
         {/* {currentUser.name && (

@@ -16,7 +16,7 @@ const BottomBar = ({ onOpenSettings }) => {
       <button className="bottom-btn">Eat In</button>
       <button className="bottom-btn">New Return</button>
       <button className="bottom-btn">Customer</button>
-      <button className="bottom-btn icon-btn">⚙️</button>
+      {/* <button className="bottom-btn icon-btn">⚙️</button> */}
       <button className="bottom-btn">Drawer</button>
       <button className="bottom-btn">💳 Card</button>
       {/* <button className="bottom-btn cash">💵 Cash</button> */}
