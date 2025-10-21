@@ -45,7 +45,6 @@
 .user-avatar {
   width: 120px;
   height: 120px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,7 +79,6 @@
 
 .pincode-content {
   background: white;
-  border-radius: 20px;
   padding: 40px;
   width: 450px;
   position: relative;
@@ -101,7 +99,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
   transition: all 0.2s;
 }
 
@@ -113,7 +110,6 @@
 .selected-user-avatar {
   width: 100px;
   height: 100px;
-  border-radius: 50%;
   margin: 0 auto 20px;
   display: flex;
   align-items: center;
@@ -145,7 +141,6 @@
   width: 50px;
   height: 50px;
   border: 2px solid #cbd5e1;
-  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -183,7 +178,6 @@
   height: 32px;
   border: none;
   background: #f1f5f9;
-  border-radius: 10px;
   font-size: 24px;
   font-weight: 500;
   color: #1e293b;

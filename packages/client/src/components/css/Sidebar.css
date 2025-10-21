@@ -25,15 +25,13 @@
 
 .sidebar-scroll::-webkit-scrollbar-thumb {
   background: #3d4461;
-  border-radius: 3px;
 }
 
 .category-btn {
   background: transparent;
   color: #8b92b0;
   border: 2px solid transparent;
-  padding: 12px 15px;
-  border-radius: 8px;
+  padding: 2px 8px;
   cursor: pointer;
   font-size: 13px;
   text-align: left;
@@ -63,9 +61,9 @@
 }
 
 .category-btn.active {
-  background: transparent;
+  background: #252a3f;
   color: #fff;
-  border-color: #10b981;
+  /* border-color: #10b981; */
 }
 
 .sidebar-nav {

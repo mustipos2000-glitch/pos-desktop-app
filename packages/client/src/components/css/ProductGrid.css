@@ -20,20 +20,18 @@
 
 .product-grid::-webkit-scrollbar-thumb {
   background: #3d4461;
-  border-radius: 4px;
 }
 
 .product-card {
   background: #2d3348;
   border: 2px solid transparent;
-  border-radius: 8px;
   padding: 8px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-width: 7rem;
+  gap: 2px;
+  max-width: 6rem;
 }
 
 .product-card:hover {
@@ -44,7 +42,6 @@
 .product-image {
   max-width: 6rem;
   height: 3rem;
-  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,7 +53,6 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 8px;
 }
 
 .product-emoji {

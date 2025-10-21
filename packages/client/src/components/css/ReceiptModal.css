@@ -13,7 +13,6 @@
 
 .receipt-modal {
   background: #fff;
-  border-radius: 12px;
   width: 400px;
   max-height: 80vh;
   overflow: hidden;
@@ -52,7 +51,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
   transition: all 0.2s;
 }
 
@@ -155,7 +153,6 @@
 .receipt-btn {
   padding: 12px 20px;
   border: none;
-  border-radius: 8px;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
