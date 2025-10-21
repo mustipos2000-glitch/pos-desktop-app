@@ -13,6 +13,41 @@ const UserLoginScreen = () => {
     fetchUsers();
   }, []);
 
+  // New useEffect for handling keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedUser) return;
+      
+      // Handle numeric keys (0-9)
+      if (/[0-9]/.test(e.key)) {
+        e.preventDefault();
+        handlePincodeInput(e.key);
+      }
+      // Handle Backspace key
+      else if (e.key === 'Backspace') {
+        e.preventDefault();
+        if (pincode.length > 0) {
+          setPincode(pincode.slice(0, -1));
+        }
+      }
+      // Handle Enter key for verification
+      else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (pincode.length === 4) {
+          handleVerifyPincode();
+        }
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+    
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedUser, pincode]);
+
   const fetchUsers = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/users');
@@ -33,7 +68,7 @@ const UserLoginScreen = () => {
     if (value === 'clear') {
       setPincode('');
       setError('');
-    } else {
+    } else if (pincode.length < 4) {
       setPincode(pincode + value);
     }
   };
@@ -85,7 +120,7 @@ const UserLoginScreen = () => {
             >
               <div className="user-avatar" style={{ backgroundColor: user.avatar_color }}>
                 <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                 </svg>
               </div>
               <div className="user-name">{user.name}</div>
@@ -98,11 +133,11 @@ const UserLoginScreen = () => {
             <button className="close-btn" onClick={() => setSelectedUser(null)}>×</button>
             <div className="selected-user-avatar" style={{ backgroundColor: selectedUser.avatar_color }}>
               <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
               </svg>
             </div>
             <div className="user-name-large">{selectedUser.name}</div>
-            
+
             <div className="pincode-display">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className={`pin-dot ${i < pincode.length ? 'filled' : ''}`}>
@@ -114,7 +149,7 @@ const UserLoginScreen = () => {
             {error && <div className="error-message">{error}</div>}
 
             <div className="numpad">
-                <div className="numpad-row">
+              <div className="numpad-row">
                 <button onClick={() => handlePincodeInput('1')}>1</button>
                 <button onClick={() => handlePincodeInput('2')}>2</button>
                 <button onClick={() => handlePincodeInput('3')}>3</button>
@@ -124,7 +159,7 @@ const UserLoginScreen = () => {
                 <button onClick={() => handlePincodeInput('5')}>5</button>
                 <button onClick={() => handlePincodeInput('6')}>6</button>
               </div>
-                          <div className="numpad-row">
+              <div className="numpad-row">
                 <button onClick={() => handlePincodeInput('7')}>7</button>
                 <button onClick={() => handlePincodeInput('8')}>8</button>
                 <button onClick={() => handlePincodeInput('9')}>9</button>
