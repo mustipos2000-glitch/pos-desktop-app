@@ -118,6 +118,18 @@
   font-size: 15px;
 }
 
+.receipt-summary {
+  margin: 15px 0;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #4b5563;
+}
+
 .receipt-total {
   display: flex;
   justify-content: space-between;

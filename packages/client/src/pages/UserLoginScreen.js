@@ -114,20 +114,20 @@ const UserLoginScreen = () => {
             {error && <div className="error-message">{error}</div>}
 
             <div className="numpad">
-              <div className="numpad-row">
-                <button onClick={() => handlePincodeInput('7')}>7</button>
-                <button onClick={() => handlePincodeInput('8')}>8</button>
-                <button onClick={() => handlePincodeInput('9')}>9</button>
+                <div className="numpad-row">
+                <button onClick={() => handlePincodeInput('1')}>1</button>
+                <button onClick={() => handlePincodeInput('2')}>2</button>
+                <button onClick={() => handlePincodeInput('3')}>3</button>
               </div>
               <div className="numpad-row">
                 <button onClick={() => handlePincodeInput('4')}>4</button>
                 <button onClick={() => handlePincodeInput('5')}>5</button>
                 <button onClick={() => handlePincodeInput('6')}>6</button>
               </div>
-              <div className="numpad-row">
-                <button onClick={() => handlePincodeInput('1')}>1</button>
-                <button onClick={() => handlePincodeInput('2')}>2</button>
-                <button onClick={() => handlePincodeInput('3')}>3</button>
+                          <div className="numpad-row">
+                <button onClick={() => handlePincodeInput('7')}>7</button>
+                <button onClick={() => handlePincodeInput('8')}>8</button>
+                <button onClick={() => handlePincodeInput('9')}>9</button>
               </div>
               <div className="numpad-row">
                 <button onClick={() => handlePincodeInput('clear')} className="clear-btn">Clear</button>

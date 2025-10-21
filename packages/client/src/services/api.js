@@ -82,6 +82,35 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Order methods
+  static async getOrders() {
+    return this.request('/orders');
+  }
+
+  static async getOrderById(id) {
+    return this.request(`/orders/${id}`);
+  }
+
+  static async createOrder(orderData) {
+    return this.request('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  static async updateOrder(id, orderData) {
+    return this.request(`/orders/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  static async deleteOrder(id) {
+    return this.request(`/orders/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default ApiService;
