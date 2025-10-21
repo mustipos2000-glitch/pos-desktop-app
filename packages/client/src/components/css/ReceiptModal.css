@@ -138,10 +138,6 @@
   margin-top: 10px;
 }
 
-.receipt-total-amount {
-  color: #10b981;
-}
-
 .receipt-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
