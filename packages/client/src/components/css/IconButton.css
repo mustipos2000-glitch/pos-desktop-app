@@ -1,0 +1,24 @@
+.icon-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 16px;
+}
+
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.icon-button.edit {
+  color: #f59e0b;
+}
+
+.icon-button.delete {
+  color: #ef4444;
+}

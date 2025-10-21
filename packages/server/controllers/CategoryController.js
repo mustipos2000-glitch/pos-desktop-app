@@ -66,6 +66,42 @@ const CategoryController = {
         } catch (err) {
             res.status(500).json({ error: 'Internal server error' });
         }
+    },
+
+    moveUp: (req, res) => {
+        try {
+            const id = req.params.id;
+            const result = Category.moveUp(id);
+
+            if (!result) {
+                return res.status(400).json({ error: 'Cannot move up' });
+            }
+
+            res.json({
+                message: 'Category moved up successfully',
+                data: result
+            });
+        } catch (err) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
+
+    moveDown: (req, res) => {
+        try {
+            const id = req.params.id;
+            const result = Category.moveDown(id);
+
+            if (!result) {
+                return res.status(400).json({ error: 'Cannot move down' });
+            }
+
+            res.json({
+                message: 'Category moved down successfully',
+                data: result
+            });
+        } catch (err) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
     }
 };
 

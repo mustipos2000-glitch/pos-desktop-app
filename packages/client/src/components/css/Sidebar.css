@@ -51,10 +51,11 @@
 .logout-btn {
   border: none;
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.7rem;
   cursor: pointer;
   padding: 0.5rem;
   margin-left: 1rem;
+  width:93px;
 }
 .category-btn:hover {
   background: #252a3f;
@@ -69,7 +70,7 @@
 
 .sidebar-nav {
   padding: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0rem;
 }
 
 .nav-btn {
@@ -86,4 +87,8 @@
 .nav-btn:hover {
   background: #3d4461;
   color: #fff;
+}
+
+.RoleName{
+  font-size: 12px;
 }

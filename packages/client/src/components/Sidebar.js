@@ -28,7 +28,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
          {currentUser.name && (
           <div className="flex">
             <div className='user-name-topbar'>
-              <span className="">{currentUser.name} ({currentUser.role})</span>
+              <span className="RoleName">{currentUser.name} ({currentUser.role})</span>
             </div>
             <button className="logout-btn" onClick={handleLogout}>Log Out</button>
           </div>

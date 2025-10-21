@@ -23,6 +23,8 @@ router.get('/categories/:id', CategoryController.getCategoryById);
 router.post('/categories', CategoryController.createCategory);
 router.put('/categories/:id', CategoryController.updateCategory);
 router.delete('/categories/:id', CategoryController.deleteCategory);
+router.post('/categories/:id/move-up', CategoryController.moveUp);
+router.post('/categories/:id/move-down', CategoryController.moveDown);
 
 // Product routes
 router.get('/products', ProductController.getAllProducts);
@@ -38,23 +40,5 @@ router.get('/orders/:id', OrderController.getOrderById);
 router.post('/orders', OrderController.createOrder);
 router.put('/orders/:id', OrderController.updateOrder);
 router.delete('/orders/:id', OrderController.deleteOrder);
-
-// Example API routes
-router.get('/products', (req, res) => {
-  res.json({
-    products: [
-      { id: 1, name: 'Product 1', price: 10.99 },
-      { id: 2, name: 'Product 2', price: 20.99 }
-    ]
-  });
-});
-
-router.post('/orders', (req, res) => {
-  const order = req.body;
-  res.status(201).json({
-    message: 'Order created successfully',
-    order
-  });
-});
 
 module.exports = router;
