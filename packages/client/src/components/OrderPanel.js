@@ -4,9 +4,13 @@ import ReceiptModal from './ReceiptModal';
 
 const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
   const [showReceipt, setShowReceipt] = useState(false);
+  const [discount, setDiscount] = useState(0);
 
   const calculateTotal = () => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  };
+  const calculateTax = () => {
+    return cart.reduce((sum, item) => sum + (item.price * item.quantity * 0.12), 0);
   };
 
   const handleCashPayment = () => {
@@ -72,12 +76,29 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
         )}
       </div>
 
-      <div className="order-total">
-        <span>Total</span>
-        <span className="total-amount">{calculateTotal().toFixed(2)}</span>
+      <div className="total">
+        <span>Gross Total</span>
+        <span className="amount">{calculateTotal().toFixed(2)}</span>
+      </div>
+      <div className="total">
+        <span>Tax 12%</span>
+        <span className="amount">{calculateTax().toFixed(2)}</span>
+      </div>
+      <div className="total">
+        <span>Discount</span>
+        <input type='number' className="discount" placeholder="0" min="0" step="1" 
+          onChange={(e) => {
+            const newDiscount = parseFloat(e.target.value) || 0;
+            setDiscount(newDiscount);
+          }}
+        />
+      </div>
+      <div className="total">
+        <span>Net Total</span>
+        <span className="amount">{(calculateTotal() + calculateTax()).toFixed(2) - discount  }</span>
       </div>
 
-      <div className="order-actions">
+      {/* <div className="order-actions">
         <button className="action-icon-btn trash" onClick={onClearCart} title="Clear Cart">
           🗑️
         </button>
@@ -90,7 +111,7 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
         <button className="action-icon-btn receipt" onClick={handleShowReceipt} title="View Receipt">
           🧾
         </button>
-      </div>
+      </div> */}
 
       <div className="numpad" id='order-numpad'>
         <button className="num-btn clear">C</button>
