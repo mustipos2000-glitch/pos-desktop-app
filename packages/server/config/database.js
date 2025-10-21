@@ -31,9 +31,19 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     next_course INTEGER DEFAULT 0,
-    in_web_shop INTEGER DEFAULT 0
+    in_web_shop INTEGER DEFAULT 0,
+    display_order INTEGER DEFAULT 0
   )
 `);
+
+// Add display_order column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE categories ADD COLUMN display_order INTEGER DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
 
 // Create products table
 db.exec(`

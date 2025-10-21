@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import IconButton from './IconButton';
+import ConfirmationModal from './ConfirmationModal';
+
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,6 +11,11 @@ const CategoryManager = () => {
     name: '',
     next_course: 0,
     in_web_shop: 0
+  });
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    categoryId: null,
+    categoryName: ''
   });
 
   const fetchCategories = async () => {
@@ -72,8 +79,6 @@ const CategoryManager = () => {
   };
 
   const handleDeleteCategory = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this category?')) return;
-
     try {
       const response = await fetch(`http://localhost:5000/api/categories/${id}`, {
         method: 'DELETE'
@@ -88,6 +93,64 @@ const CategoryManager = () => {
     } catch (error) {
       console.error('Error deleting category:', error);
       alert('Error deleting category');
+    }
+  };
+
+  const openDeleteConfirmation = (category) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      categoryId: category.id,
+      categoryName: category.name
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      categoryId: null,
+      categoryName: ''
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation.categoryId) {
+      handleDeleteCategory(deleteConfirmation.categoryId);
+    }
+  };
+
+  const handleMoveUp = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/categories/${id}/move-up`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        fetchCategories();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Cannot move up');
+      }
+    } catch (error) {
+      console.error('Error moving category:', error);
+      alert('Error moving category');
+    }
+  };
+
+  const handleMoveDown = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/categories/${id}/move-down`, {
+        method: 'POST'
+      });
+
+      if (response.ok) {
+        fetchCategories();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Cannot move down');
+      }
+    } catch (error) {
+      console.error('Error moving category:', error);
+      alert('Error moving category');
     }
   };
 
@@ -111,7 +174,7 @@ const CategoryManager = () => {
           <table>
             <thead>
               <tr>
-                <th>ID</th>
+                <th className="order-header"></th>
                 <th>Category Name</th>
                 <th>Next Course</th>
                 <th>Web Shop</th>
@@ -126,9 +189,26 @@ const CategoryManager = () => {
                   </td>
                 </tr>
               ) : (
-                categories.map(category => (
+                categories.map((category, index) => (
                   <tr key={category.id}>
-                    <td className="id-cell">#{category.id}</td>
+                    <td className="order-cell">
+                      <button
+                        className="arrow-btn"
+                        onClick={() => handleMoveUp(category.id)}
+                        disabled={index === 0}
+                        title="Move up"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        className="arrow-btn"
+                        onClick={() => handleMoveDown(category.id)}
+                        disabled={index === categories.length - 1}
+                        title="Move down"
+                      >
+                        ▼
+                      </button>
+                    </td>
                     <td className="">{category.name || 'Unnamed Category'}</td>
                     <td className="">
                       <span className="">
@@ -137,7 +217,7 @@ const CategoryManager = () => {
                     </td>
                     <td className="">
                       {/* <span className={`status-badge ${category.in_web_shop ? 'active' : 'inactive'}`}> */}
-                        {/* {category.in_web_shop ? 'Available' : 'Hidden'} */}
+                      {/* {category.in_web_shop ? 'Available' : 'Hidden'} */}
                       <span className="">
                         {category.in_web_shop}
                       </span>
@@ -152,7 +232,7 @@ const CategoryManager = () => {
                       <IconButton
                         icon="🗑️"
                         className="delete"
-                        onClick={() => handleDeleteCategory(category.id)}
+                        onClick={() => openDeleteConfirmation(category)}
                         title="Delete category"
                       />
                     </td>
@@ -180,26 +260,26 @@ const CategoryManager = () => {
 
             <div className="form-group">
               <label>
-                  Next Course
+                Next Course
               </label>
-                <input
-                  type="text"
-                  checked={categoryForm.next_course === 1}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, next_course: e.target.checked ? 1 : 0 })}
-                />
-              
+              <input
+                type="text"
+                checked={categoryForm.next_course === 1}
+                onChange={(e) => setCategoryForm({ ...categoryForm, next_course: e.target.checked ? 1 : 0 })}
+              />
+
             </div>
 
             <div className="form-group">
               <label>
-                 Available in Web Shop
+                Available in Web Shop
               </label>
-                <input
-                  type="text"
-                  checked={categoryForm.in_web_shop === 1}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, in_web_shop: e.target.checked ? 1 : 0 })}
-                />
-               
+              <input
+                type="text"
+                checked={categoryForm.in_web_shop === 1}
+                onChange={(e) => setCategoryForm({ ...categoryForm, in_web_shop: e.target.checked ? 1 : 0 })}
+              />
+
             </div>
 
             <div className="modal-actions">
@@ -213,6 +293,17 @@ const CategoryManager = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={confirmDelete}
+        title="Delete Category"
+        message={`Are you sure you want to delete "${deleteConfirmation.categoryName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };
