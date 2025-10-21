@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import IconButton from './IconButton';
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -142,20 +143,18 @@ const CategoryManager = () => {
                       </span>
                     </td>
                     <td className="actions-cell">
-                      <button
-                        className="edit-btn"
+                      <IconButton
+                        icon="✏️"
+                        className="edit"
                         onClick={() => handleEditCategory(category)}
                         title="Edit category"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        className="delete-btn"
+                      />
+                      <IconButton
+                        icon="🗑️"
+                        className="delete"
                         onClick={() => handleDeleteCategory(category.id)}
                         title="Delete category"
-                      >
-                        Delete
-                      </button>
+                      />
                     </td>
                   </tr>
                 ))

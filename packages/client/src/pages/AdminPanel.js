@@ -40,12 +40,12 @@ const AdminPanel = () => {
           >
             Users
           </button>
-          <button
+          {/* <button
             className={activeTab === 'settings' ? 'active' : ''}
             onClick={() => setActiveTab('settings')}
           >
             Settings
-          </button>
+          </button> */}
         </div>
 
         <div className="admin-body">

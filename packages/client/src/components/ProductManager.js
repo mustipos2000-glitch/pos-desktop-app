@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import IconButton from './IconButton';
 import './css/ProductManager.css';
 
 const ProductManager = () => {
@@ -312,13 +313,19 @@ const ProductManager = () => {
                     'No Image'
                   )}
                 </td>
-                <td>
-                  <button className="edit-btn" onClick={() => handleEditProduct(product)}>
-                    Edit
-                  </button>
-                  <button className="delete-btn" onClick={() => handleDeleteProduct(product.id)}>
-                    Delete
-                  </button>
+                <td style={{ display: 'flex'}}>
+                  <IconButton 
+                    icon="✏️" 
+                    className="edit" 
+                    onClick={() => handleEditProduct(product)} 
+                    title="Edit product"
+                  />
+                  <IconButton 
+                    icon="🗑️" 
+                    className="delete" 
+                    onClick={() => handleDeleteProduct(product.id)} 
+                    title="Delete product"
+                  />
                 </td>
               </tr>
             ))}
