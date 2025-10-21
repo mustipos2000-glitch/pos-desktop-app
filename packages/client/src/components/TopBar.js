@@ -43,7 +43,7 @@ const TopBar = () => {
         <button className="filter-btn">Room</button>
         <button className="filter-btn">Table</button>
         <button className="filter-btn">Customer</button>
-        <button className="fullscreen-btn">⛶</button>
+        {/* <button className="fullscreen-btn">⛶</button> */}
       </div>
     </div>
   );

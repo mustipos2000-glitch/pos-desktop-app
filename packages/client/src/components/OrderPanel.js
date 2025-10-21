@@ -129,6 +129,9 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
       </div>
 
       <div className="payment-actions">
+        <button className="action-icon-btn trash" onClick={onClearCart} title="Clear Cart">
+          🗑️
+        </button>
         <button className="payment-btn drawer" title="Open Drawer">
           Drawer
         </button>
