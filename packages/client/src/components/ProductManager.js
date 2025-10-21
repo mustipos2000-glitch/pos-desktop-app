@@ -695,7 +695,7 @@ const ProductManager = () => {
                   accept="image/*"
                   onChange={handleFileChange}
                 />
-                {productForm.image && <small>Current/Selected: {productForm.image}</small>}
+                {/* {productForm.image && <small>Current/Selected: {productForm.image}</small>} */}
               </div>
               
               <div className="modal-actions full-width">
