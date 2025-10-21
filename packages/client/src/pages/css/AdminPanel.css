@@ -489,3 +489,48 @@
 .actions-cell .edit-btn {
   margin-right: 8px;
 }
+
+/* Arrow buttons for reordering */
+.order-cell {
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+.categories-table th.order-header {
+  text-align: center !important;
+  width: 100px;
+}
+
+.arrow-btn {
+  background: #3d4461;
+  color: #fff;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 10px;
+  margin: 0 3px;
+  transition: all 0.2s;
+  min-width: 20px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.arrow-btn:hover:not(:disabled) {
+  background: #10b981;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.arrow-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.arrow-btn:disabled {
+  background: #2d3348;
+  color: #4a5170;
+  cursor: not-allowed;
+  opacity: 0.4;
+}

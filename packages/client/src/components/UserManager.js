@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import IconButton from './IconButton';
+import ConfirmationModal from './ConfirmationModal';
 
 const UserManager = () => {
   const [users, setUsers] = useState([]);
@@ -12,6 +13,11 @@ const UserManager = () => {
     identification: '',
     role: 'User',
     avatar_color: '#3b82f6'
+  });
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    userId: null,
+    userName: ''
   });
 
   const avatarColors = [
@@ -86,8 +92,6 @@ const UserManager = () => {
   };
 
   const handleDeleteUser = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
-
     try {
       const response = await fetch(`http://localhost:5000/api/users/${id}`, {
         method: 'DELETE'
@@ -102,6 +106,28 @@ const UserManager = () => {
     } catch (error) {
       console.error('Error deleting user:', error);
       alert('Error deleting user');
+    }
+  };
+
+  const openDeleteConfirmation = (user) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      userId: user.id,
+      userName: user.name
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      userId: null,
+      userName: ''
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation.userId) {
+      handleDeleteUser(deleteConfirmation.userId);
     }
   };
 
@@ -162,7 +188,7 @@ const UserManager = () => {
                     <IconButton 
                       icon="🗑️" 
                       className="delete" 
-                      onClick={() => handleDeleteUser(user.id)} 
+                      onClick={() => openDeleteConfirmation(user)} 
                       title="Delete user"
                     />
                   )}
@@ -180,7 +206,7 @@ const UserManager = () => {
             
             <div className="modal-tabs">
               <div className="tab active">General</div>
-              <div className="tab">Privileges</div>
+              {/* <div className="tab">Privileges</div> */}
             </div>
 
             <div className="form-group">
@@ -257,6 +283,17 @@ const UserManager = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={confirmDelete}
+        title="Delete User"
+        message={`Are you sure you want to delete user "${deleteConfirmation.userName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import IconButton from './IconButton';
+import ConfirmationModal from './ConfirmationModal';
 import './css/ProductManager.css';
 
 const ProductManager = () => {
@@ -10,6 +11,11 @@ const ProductManager = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    productId: null,
+    productName: ''
+  });
 
   // Form state for product data
   const [productForm, setProductForm] = useState({
@@ -258,6 +264,28 @@ const ProductManager = () => {
     }
   };
 
+  const openDeleteConfirmation = (product) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      productId: product.id,
+      productName: product.name
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      productId: null,
+      productName: ''
+    });
+  };
+
+  const confirmDelete = () => {
+    if (deleteConfirmation.productId) {
+      handleDeleteProduct(deleteConfirmation.productId);
+    }
+  };
+
   // Get category name by ID for display
   const getCategoryName = (categoryId) => {
     const category = categories.find(cat => cat.id === categoryId);
@@ -283,14 +311,12 @@ const ProductManager = () => {
         <table>
           <thead>
             <tr>
-              <th>ID</th>
               <th>Name</th>
               <th>Button Name</th>
               <th>Price</th>
               <th>VAT Takeout</th>
               <th>VAT Eat-in</th>
               <th>Category</th>
-              <th>Display Index</th>
               <th>Image</th>
               <th>Actions</th>
             </tr>
@@ -298,14 +324,12 @@ const ProductManager = () => {
           <tbody>
             {products.map(product => (
               <tr key={product.id}>
-                <td>{product.id}</td>
                 <td>{product.name}</td>
                 <td>{product.button_name || '-'}</td>
                 <td>${parseFloat(product.price).toFixed(2)}</td>
                 <td>{product.vat_takeout}%</td>
                 <td>{product.vat_eat_in}%</td>
                 <td>{getCategoryName(product.category_id)}</td>
-                <td>{product.display_index}</td>
                 <td>
                   {product.image ? (
                     <img src={`http://localhost:5000${product.image}`} alt={product.name} style={{ maxWidth: '50px', maxHeight: '50px' }} />
@@ -323,7 +347,7 @@ const ProductManager = () => {
                   <IconButton 
                     icon="🗑️" 
                     className="delete" 
-                    onClick={() => handleDeleteProduct(product.id)} 
+                    onClick={() => openDeleteConfirmation(product)} 
                     title="Delete product"
                   />
                 </td>
@@ -682,6 +706,17 @@ const ProductManager = () => {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={confirmDelete}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${deleteConfirmation.productName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

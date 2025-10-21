@@ -23,6 +23,8 @@ router.get('/categories/:id', CategoryController.getCategoryById);
 router.post('/categories', CategoryController.createCategory);
 router.put('/categories/:id', CategoryController.updateCategory);
 router.delete('/categories/:id', CategoryController.deleteCategory);
+router.post('/categories/:id/move-up', CategoryController.moveUp);
+router.post('/categories/:id/move-down', CategoryController.moveDown);
 
 // Product routes
 router.get('/products', ProductController.getAllProducts);
