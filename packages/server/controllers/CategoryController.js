@@ -64,7 +64,14 @@ const CategoryController = {
             Category.delete(id);
             res.json({ message: 'Category deleted successfully' });
         } catch (err) {
-            res.status(500).json({ error: 'Internal server error' });
+            console.error('Delete category error:', err);
+            // Check if it's a foreign key constraint error
+            if (err.message && err.message.includes('FOREIGN KEY constraint failed')) {
+                return res.status(400).json({ 
+                    error: 'Cannot delete category because it has associated products. Please delete or reassign the products first.' 
+                });
+            }
+            res.status(500).json({ error: err.message });
         }
     },
 

@@ -124,7 +124,14 @@ const ProductController = {
             Product.delete(id);
             res.json({ message: 'Product deleted successfully' });
         } catch (err) {
-            res.status(500).json({ error: 'Internal server error' });
+            console.error('Delete product error:', err);
+            // Check if it's a foreign key constraint error
+            if (err.message && (err.message.includes('FOREIGN KEY constraint failed') || err.message.includes('sub-product'))) {
+                return res.status(400).json({ 
+                    error: err.message || 'Cannot delete product because it has associated sub-products. Please delete the sub-products first.' 
+                });
+            }
+            res.status(500).json({ error: err.message });
         }
     }
 };

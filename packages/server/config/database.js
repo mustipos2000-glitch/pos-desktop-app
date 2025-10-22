@@ -104,6 +104,31 @@ db.exec(`
   )
 `);
 
+// Create sub_products table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS sub_products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    button_name TEXT,
+    production_name TEXT,
+    price REAL DEFAULT 0,
+    vat_takeout REAL DEFAULT 0,
+    vat_eat_in REAL DEFAULT 0,
+    barcode TEXT,
+    category_id INTEGER,
+    addition_type TEXT,
+    display_index INTEGER DEFAULT 0,
+    in_web_shop INTEGER DEFAULT 0,
+    printer1 TEXT,
+    printer2 TEXT,
+    printer3 TEXT,
+    image TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY(category_id) REFERENCES categories(id)
+  )
+`);
 
 // Insert default admin user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();

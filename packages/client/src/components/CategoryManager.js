@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
+import MessageModal from './MessageModal';
+import { useMessageModal } from '../hooks/useMessageModal';
 
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
@@ -17,6 +19,7 @@ const CategoryManager = () => {
     categoryId: null,
     categoryName: ''
   });
+  const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
   const fetchCategories = async () => {
     try {
@@ -26,7 +29,7 @@ const CategoryManager = () => {
       setCategories(result.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      alert('Failed to load categories. Please check your connection.');
+      showError('Failed to load categories. Please check your connection.', 'Connection Error');
     } finally {
       setLoading(false);
     }
@@ -38,7 +41,6 @@ const CategoryManager = () => {
 
   const handleAddCategory = async () => {
     if (!categoryForm.name) {
-      alert('Category name is required');
       return;
     }
 
@@ -60,11 +62,11 @@ const CategoryManager = () => {
         setCategoryForm({ name: '', next_course: 0, in_web_shop: 0 });
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to save category');
+        showError(error.error || 'Failed to save category');
       }
     } catch (error) {
       console.error('Error saving category:', error);
-      alert('Error saving category');
+      showError('Error saving category. Please try again.');
     }
   };
 
@@ -86,13 +88,16 @@ const CategoryManager = () => {
 
       if (response.ok) {
         fetchCategories();
+        closeDeleteConfirmation();
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to delete category');
+        closeDeleteConfirmation();
+        showWarning(error.error || 'Failed to delete category', 'Cannot Delete Category');
       }
     } catch (error) {
       console.error('Error deleting category:', error);
-      alert('Error deleting category');
+      closeDeleteConfirmation();
+      showError('Error deleting category. Please try again.');
     }
   };
 
@@ -128,11 +133,11 @@ const CategoryManager = () => {
         fetchCategories();
       } else {
         const error = await response.json();
-        alert(error.error || 'Cannot move up');
+        showWarning(error.error || 'Cannot move up', 'Cannot Move');
       }
     } catch (error) {
       console.error('Error moving category:', error);
-      alert('Error moving category');
+      showError('Error moving category. Please try again.');
     }
   };
 
@@ -146,11 +151,11 @@ const CategoryManager = () => {
         fetchCategories();
       } else {
         const error = await response.json();
-        alert(error.error || 'Cannot move down');
+        showWarning(error.error || 'Cannot move down', 'Cannot Move');
       }
     } catch (error) {
       console.error('Error moving category:', error);
-      alert('Error moving category');
+      showError('Error moving category. Please try again.');
     }
   };
 
@@ -301,6 +306,14 @@ const CategoryManager = () => {
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+      />
+
+      <MessageModal
+        isOpen={messageModal.isOpen}
+        onClose={closeModal}
+        title={messageModal.title}
+        message={messageModal.message}
+        type={messageModal.type}
       />
     </div>
   );

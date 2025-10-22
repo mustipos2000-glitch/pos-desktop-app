@@ -1,21 +1,13 @@
 import './css/ConfirmationModal.css';
 
-const ConfirmationModal = ({
+const MessageModal = ({
     isOpen,
     onClose,
-    onConfirm,
-    title = 'Confirm Action',
-    message = 'Are you sure you want to proceed?',
-    confirmText = 'Confirm',
-    cancelText = 'Cancel',
-    type = 'danger' // 'danger', 'warning', 'info'
+    title = 'Message',
+    message = '',
+    type = 'info' // 'danger', 'warning', 'info'
 }) => {
     if (!isOpen) return null;
-
-    const handleConfirm = () => {
-        onConfirm();
-        onClose();
-    };
 
     return (
         <div className="confirmation-overlay" onClick={onClose}>
@@ -48,13 +40,8 @@ const ConfirmationModal = ({
                 <p className="confirmation-message">{message}</p>
 
                 <div className="confirmation-actions">
-                    {cancelText && (
-                        <button className="confirmation-cancel-btn" onClick={onClose}>
-                            {cancelText}
-                        </button>
-                    )}
-                    <button className={`confirmation-confirm-btn ${type}`} onClick={handleConfirm}>
-                        {confirmText}
+                    <button className={`confirmation-confirm-btn ${type}`} onClick={onClose}>
+                        OK
                     </button>
                 </div>
             </div>
@@ -62,4 +49,4 @@ const ConfirmationModal = ({
     );
 };
 
-export default ConfirmationModal;
+export default MessageModal;
