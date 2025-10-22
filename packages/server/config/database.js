@@ -49,6 +49,7 @@ try {
 db.exec(`
   CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    parent_id INTEGER DEFAULT NULL,
     name TEXT NOT NULL,
     button_name TEXT,
     production_name TEXT,
@@ -65,7 +66,8 @@ db.exec(`
     printer3 TEXT,
     image TEXT,                     
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(category_id) REFERENCES categories(id)
+    FOREIGN KEY(category_id) REFERENCES categories(id),
+    FOREIGN KEY(parent_id) REFERENCES products(id) ON DELETE CASCADE
   )
 `);
 
@@ -74,6 +76,38 @@ try {
 } catch (err) {
   if (!err.message.includes('duplicate column name')) {
   }
+}
+
+// Add parent_id column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN parent_id INTEGER DEFAULT NULL`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+// Migrate data from sub_products to products if sub_products table exists
+try {
+  const subProductsExist = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='sub_products'`).get();
+
+  if (subProductsExist) {
+    // Copy sub_products to products with parent_id
+    db.exec(`
+      INSERT INTO products (parent_id, name, button_name, production_name, price, vat_takeout, vat_eat_in, 
+                           barcode, category_id, addition_type, display_index, in_web_shop, 
+                           printer1, printer2, printer3, image, created_at)
+      SELECT product_id, name, button_name, production_name, price, vat_takeout, vat_eat_in,
+             barcode, category_id, addition_type, display_index, in_web_shop,
+             printer1, printer2, printer3, image, created_at
+      FROM sub_products
+      WHERE product_id NOT IN (SELECT COALESCE(parent_id, 0) FROM products WHERE parent_id IS NOT NULL)
+    `);
+
+    // Drop the old sub_products table
+    db.exec(`DROP TABLE IF EXISTS sub_products`);
+  }
+} catch (err) {
+  console.log('Migration note:', err.message);
 }
 
 // Create orders table
@@ -104,31 +138,7 @@ db.exec(`
   )
 `);
 
-// Create sub_products table
-db.exec(`
-  CREATE TABLE IF NOT EXISTS sub_products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product_id INTEGER NOT NULL,
-    name TEXT NOT NULL,
-    button_name TEXT,
-    production_name TEXT,
-    price REAL DEFAULT 0,
-    vat_takeout REAL DEFAULT 0,
-    vat_eat_in REAL DEFAULT 0,
-    barcode TEXT,
-    category_id INTEGER,
-    addition_type TEXT,
-    display_index INTEGER DEFAULT 0,
-    in_web_shop INTEGER DEFAULT 0,
-    printer1 TEXT,
-    printer2 TEXT,
-    printer3 TEXT,
-    image TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE,
-    FOREIGN KEY(category_id) REFERENCES categories(id)
-  )
-`);
+
 
 // Insert default admin user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();

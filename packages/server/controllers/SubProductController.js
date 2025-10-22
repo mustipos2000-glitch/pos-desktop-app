@@ -1,4 +1,4 @@
-const SubProduct = require('../models/SubProduct');
+const Product = require('../models/Product');
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
@@ -6,7 +6,7 @@ const path = require('path');
 const SubProductController = {
     getAllSubProducts: (req, res) => {
         try {
-            const subProducts = SubProduct.getAll();
+            const subProducts = Product.getAllSubProducts();
             res.json({ data: subProducts });
         } catch (err) {
             res.status(500).json({ error: 'Internal server error' });
@@ -16,7 +16,7 @@ const SubProductController = {
     getSubProductById: (req, res) => {
         try {
             const id = req.params.id;
-            const subProduct = SubProduct.getById(id);
+            const subProduct = Product.getById(id);
             if (!subProduct) {
                 return res.status(404).json({ error: 'Sub-Product not found' });
             }
@@ -29,7 +29,7 @@ const SubProductController = {
     getSubProductsByProductId: (req, res) => {
         try {
             const productId = req.params.productId;
-            const subProducts = SubProduct.getByProductId(productId);
+            const subProducts = Product.getSubProductsByParentId(productId);
             res.json({ data: subProducts });
         } catch (err) {
             res.status(500).json({ error: 'Internal server error' });
@@ -46,12 +46,15 @@ const SubProductController = {
                 return res.status(400).json({ error: 'Product ID is required' });
             }
 
-            // Validate product existence
+            // Set parent_id from product_id
+            payload.parent_id = payload.product_id;
+
+            // Validate parent product existence (must be a main product)
             const product = db
-                .prepare('SELECT id FROM products WHERE id = ?')
-                .get(payload.product_id);
+                .prepare('SELECT id FROM products WHERE id = ? AND parent_id IS NULL')
+                .get(payload.parent_id);
             if (!product) {
-                return res.status(404).json({ error: 'Product does not exist' });
+                return res.status(404).json({ error: 'Parent product does not exist' });
             }
 
             // Attach uploaded image if exists
@@ -73,7 +76,7 @@ const SubProductController = {
             if (typeof payload.vat_takeout === 'undefined') payload.vat_takeout = 0;
             if (typeof payload.vat_eat_in === 'undefined') payload.vat_eat_in = 0;
 
-            const subProduct = SubProduct.create(payload);
+            const subProduct = Product.create(payload);
             res.status(201).json({ message: 'Sub-Product created successfully', data: subProduct });
         } catch (error) {
             res.status(500).json({
@@ -94,18 +97,21 @@ const SubProductController = {
                 return res.status(400).json({ error: 'Product ID is required' });
             }
 
+            // Set parent_id from product_id
+            payload.parent_id = payload.product_id;
+
             // Check if sub-product exists
-            const existingSubProduct = SubProduct.getById(id);
+            const existingSubProduct = Product.getById(id);
             if (!existingSubProduct) {
                 return res.status(404).json({ error: 'Sub-Product not found' });
             }
 
-            // Validate product existence
+            // Validate parent product existence (must be a main product)
             const product = db
-                .prepare('SELECT id FROM products WHERE id = ?')
-                .get(payload.product_id);
+                .prepare('SELECT id FROM products WHERE id = ? AND parent_id IS NULL')
+                .get(payload.parent_id);
             if (!product) {
-                return res.status(404).json({ error: 'Product does not exist' });
+                return res.status(404).json({ error: 'Parent product does not exist' });
             }
 
             // Validate category existence if category_id provided
@@ -134,7 +140,7 @@ const SubProductController = {
                 payload.image = existingSubProduct.image;
             }
 
-            const subProduct = SubProduct.update(id, payload);
+            const subProduct = Product.update(id, payload);
             res.status(200).json({ message: 'Sub-Product updated successfully', data: subProduct });
         } catch (err) {
             res.status(500).json({ error: 'Internal server error' });
@@ -144,16 +150,20 @@ const SubProductController = {
     deleteSubProduct: (req, res) => {
         try {
             const id = req.params.id;
-            const subProduct = SubProduct.getById(id);
+            const subProduct = Product.getById(id);
 
             if (!subProduct) {
                 return res.status(404).json({ error: 'Sub-Product not found' });
             }
 
-            SubProduct.delete(id);
+            Product.delete(id);
             res.json({ message: 'Sub-Product deleted successfully' });
         } catch (err) {
-            res.status(500).json({ error: 'Internal server error' });
+            console.error('Delete sub-product error:', err);
+            if (err.message && err.message.includes('order')) {
+                return res.status(400).json({ error: err.message });
+            }
+            res.status(500).json({ error: 'Internal server error: ' + err.message });
         }
     }
 };

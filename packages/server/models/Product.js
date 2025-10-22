@@ -7,9 +7,33 @@ class Product {
       SELECT p.*, c.name as category_name
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.parent_id IS NULL
       ORDER BY p.display_index ASC, p.id ASC
     `;
         return db.prepare(sql).all();
+    }
+
+    static getAllSubProducts() {
+        const sql = `
+      SELECT p.*, c.name as category_name, parent.name as parent_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN products parent ON p.parent_id = parent.id
+      WHERE p.parent_id IS NOT NULL
+      ORDER BY p.parent_id ASC, p.display_index ASC, p.id ASC
+    `;
+        return db.prepare(sql).all();
+    }
+
+    static getSubProductsByParentId(parentId) {
+        const sql = `
+      SELECT p.*, c.name as category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.parent_id = ?
+      ORDER BY p.display_index ASC, p.id ASC
+    `;
+        return db.prepare(sql).all(parentId);
     }
 
     static getById(id) {
@@ -24,12 +48,13 @@ class Product {
 
     static create(product) {
         const sql = `INSERT INTO products (
-      name, button_name, production_name, price, vat_takeout, vat_eat_in,
+      parent_id, name, button_name, production_name, price, vat_takeout, vat_eat_in,
       barcode, category_id, addition_type, display_index, in_web_shop,
       printer1, printer2, printer3, image
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const params = [
+            product.parent_id || null,
             product.name,
             product.button_name || null,
             product.production_name || null,
@@ -53,12 +78,13 @@ class Product {
 
     static update(id, product) {
         const sql = `UPDATE products SET
-      name = ?, button_name = ?, production_name = ?, price = ?, vat_takeout = ?, vat_eat_in = ?,
+      parent_id = ?, name = ?, button_name = ?, production_name = ?, price = ?, vat_takeout = ?, vat_eat_in = ?,
       barcode = ?, category_id = ?, addition_type = ?, display_index = ?, in_web_shop = ?,
       printer1 = ?, printer2 = ?, printer3 = ?, image = ?
       WHERE id = ?`;
 
         const params = [
+            product.parent_id || null,
             product.name,
             product.button_name || null,
             product.production_name || null,
@@ -82,8 +108,8 @@ class Product {
     }
 
     static delete(id) {
-        // Check if product has sub-products
-        const checkSubProducts = 'SELECT COUNT(*) as count FROM sub_products WHERE product_id = ?';
+        // Check if product has sub-products (children)
+        const checkSubProducts = 'SELECT COUNT(*) as count FROM products WHERE parent_id = ?';
         const subProductCount = db.prepare(checkSubProducts).get(id);
         
         if (subProductCount.count > 0) {
