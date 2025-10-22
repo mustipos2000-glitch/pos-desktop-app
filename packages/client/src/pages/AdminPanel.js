@@ -23,6 +23,12 @@ const AdminPanel = () => {
 
       <div className="admin-content">
         <div className="admin-tabs">
+            <button
+            className={activeTab === 'categories' ? 'active' : ''}
+            onClick={() => setActiveTab('categories')}
+          >
+            Categories
+          </button>
           <button
             className={activeTab === 'products' ? 'active' : ''}
             onClick={() => setActiveTab('products')}
@@ -35,12 +41,7 @@ const AdminPanel = () => {
           >
             Sub-Products
           </button>
-          <button
-            className={activeTab === 'categories' ? 'active' : ''}
-            onClick={() => setActiveTab('categories')}
-          >
-            Categories
-          </button>
+        
           <button
             className={activeTab === 'users' ? 'active' : ''}
             onClick={() => setActiveTab('users')}
