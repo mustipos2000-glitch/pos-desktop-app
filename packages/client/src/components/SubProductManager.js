@@ -448,6 +448,17 @@ const SubProductManager = () => {
                 />
               </div>
 
+               <div className="form-group">
+                <label>Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price"
+                  value={subProductForm.price}
+                  onChange={handleInputChange}
+                />
+              </div>
+
               <div className="form-group">
                 <label>Production Name</label>
                 <input
@@ -458,16 +469,7 @@ const SubProductManager = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="price"
-                  value={subProductForm.price}
-                  onChange={handleInputChange}
-                />
-              </div>
+             
 
               <div className="form-group">
                 <label>VAT Takeout (%)</label>
@@ -576,6 +578,17 @@ const SubProductManager = () => {
                 />
               </div>
 
+                <div className="form-group">
+                <label>Price</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price"
+                  value={subProductForm.price}
+                  onChange={handleInputChange}
+                />
+              </div>
+
               <div className="form-group">
                 <label>Production Name</label>
                 <input
@@ -586,16 +599,7 @@ const SubProductManager = () => {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="price"
-                  value={subProductForm.price}
-                  onChange={handleInputChange}
-                />
-              </div>
+            
 
               <div className="form-group">
                 <label>VAT Takeout (%)</label>
