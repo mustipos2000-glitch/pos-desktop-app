@@ -1,178 +1,281 @@
+/* Receipt Modal Overlay */
 .receipt-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .receipt-modal {
-  background: #fff;
-  width: 400px;
-  max-height: 80vh;
+  /* background: #2a2a2a;
+  border-radius: 12px;
+  padding: 20px; */
+  /* box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); */
+  position: relative;
+  max-height: 90vh;
   overflow: hidden;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .receipt-content {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  align-items: center;
+  gap: 20px;
 }
 
-.receipt-header {
+/* Close Button */
+.receipt-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #2d2a2a;
+  font-size: 12px;
+  width: 12px;
+  height: 24px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.receipt-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Receipt Paper */
+.receipt-paper {
+  background: #f8f8f8;
+  width: 280px;
+  padding: 8px 18px;
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  line-height: 1;
+  color: #000;
+  /* box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 4px 4px 0 0; */
+  max-height: 60vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.receipt-paper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 8px,
+    #ddd 8px,
+    #ddd 10px
+  );
+}
+
+/* Store Header */
+.receipt-store-header {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.store-name {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 0 0 4px 0;
+  letter-spacing: 1px;
+}
+
+.store-address,
+.store-phone {
+  margin: 2px 0;
+  font-size: 10px;
+}
+
+/* Separators */
+.receipt-separator {
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  text-align: center;
+  margin: 6px 0;
+  color: #333;
+  letter-spacing: -0.5px;
+}
+
+/* Transaction Info */
+.receipt-transaction-info {
+  margin: 8px 0;
+}
+
+.receipt-info-row {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 2px solid #e5e7eb;
+  font-size: 10px;
+  margin: 2px 0;
 }
 
-.receipt-header h2 {
-  margin: 0;
-  color: #1f2937;
-  font-size: 24px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #6b7280;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.close-btn:hover {
-  background: #f3f4f6;
-  color: #1f2937;
-}
-
-.receipt-body {
-  padding: 20px;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.receipt-info {
-  margin-bottom: 15px;
-}
-
-.receipt-info p {
-  margin: 5px 0;
-  color: #4b5563;
-  font-size: 14px;
-}
-
-.receipt-divider {
-  border-top: 1px dashed #d1d5db;
-  margin: 15px 0;
-}
-
+/* Items */
 .receipt-items {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  margin: 8px 0;
 }
 
 .receipt-item {
+  margin-bottom: 6px;
+}
+
+.receipt-item-line1 {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.item-name {
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.receipt-item-line2 {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  font-size: 10px;
+  margin-top: 1px;
 }
 
-.receipt-item-details {
-  display: flex;
-  flex-direction: row;
-  gap: .5rem;
-  flex: 1;
+.item-details {
+  color: #555;
 }
 
-.receipt-item-name {
-  color: #1f2937;
-  font-weight: 500;
-  font-size: 15px;
+.item-total {
+  font-weight: bold;
 }
 
-.receipt-item-qty {
-  color: #6b7280;
-  font-size: 13px;
-}
-
-.receipt-item-price {
-  color: #1f2937;
-  font-weight: 600;
-  font-size: 15px;
-}
-
+/* Summary */
 .receipt-summary {
-  margin: 15px 0;
+  margin: 0;
 }
 
-.receipt-row {
+.summary-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
-  font-size: 15px;
-  color: #4b5563;
+  font-size: 10px;
+  margin: 3px 0;
 }
 
+.summary-row.discount {
+  color: #d63384;
+  font-weight: bold;
+}
+
+/* Total */
 .receipt-total {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-size: 20px;
-  font-weight: 700;
-  color: #1f2937;
-  margin-top: 10px;
+  font-size: 14px;
+  font-weight: bold;
+  margin: 8px 0;
+  padding: 4px 0;
 }
 
+/* Footer */
+.receipt-footer {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 10px;
+}
+
+.receipt-footer p {
+  margin: 2px 0;
+}
+
+/* .receipt-barcode {
+  font-family: "Courier New", monospace;
+  font-size: 16px;
+  letter-spacing: 1px;
+  margin-top: 8px;
+  color: #333;
+} */
+
+/* Action Buttons */
 .receipt-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 20px;
-  border-top: 2px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+  width: 280px;
 }
 
 .receipt-btn {
-  padding: 12px 20px;
+  flex: 1;
+  padding: 12px 16px;
   border: none;
-  font-size: 15px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .receipt-btn.print {
-  background: #3b82f6;
+  background: #28a745;
   color: #fff;
 }
 
 .receipt-btn.print:hover {
-  background: #2563eb;
+  background: #218838;
+  transform: translateY(-1px);
 }
 
-.receipt-btn.close {
-  background: #e5e7eb;
-  color: #1f2937;
+.receipt-btn.email {
+  background: #007bff;
+  color: #fff;
 }
 
-.receipt-btn.close:hover {
-  background: #d1d5db;
+.receipt-btn.email:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+/* Scrollbar Styling */
+.receipt-paper::-webkit-scrollbar {
+  width: 4px;
+}
+
+.receipt-paper::-webkit-scrollbar-track {
+  background: #e0e0e0;
+}
+
+.receipt-paper::-webkit-scrollbar-thumb {
+  background: #999;
+  border-radius: 2px;
+}
+
+.receipt-paper::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 480px) {
+  .receipt-modal {
+    margin: 10px;
+    padding: 15px;
+  }
+
+  .receipt-paper {
+    width: 260px;
+  }
+
+  .receipt-actions {
+    width: 260px;
+    flex-direction: column;
+  }
 }
