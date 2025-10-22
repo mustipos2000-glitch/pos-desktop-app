@@ -207,7 +207,7 @@ const SubProductManager = () => {
   const handleEditSubProduct = (subProduct) => {
     setCurrentSubProduct(subProduct);
     setSubProductForm({
-      product_id: subProduct.product_id || '',
+      product_id: subProduct.parent_id || subProduct.product_id || '',
       name: subProduct.name || '',
       button_name: subProduct.button_name || '',
       production_name: subProduct.production_name || '',
@@ -371,7 +371,7 @@ const SubProductManager = () => {
           <tbody>
             {subProducts.map(subProduct => (
               <tr key={subProduct.id}>
-                <td>{getProductName(subProduct.product_id)}</td>
+                <td>{subProduct.parent_name || getProductName(subProduct.parent_id)}</td>
                 <td>{subProduct.name}</td>
                 <td>{subProduct.button_name || '-'}</td>
                 <td>${parseFloat(subProduct.price).toFixed(2)}</td>
