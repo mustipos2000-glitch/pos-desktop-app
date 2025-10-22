@@ -19,7 +19,6 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
 
   const handleCashPayment = async () => {
     if (cart.length === 0) {
-      alert('Cart is empty!');
       return;
     }
     
@@ -52,7 +51,7 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
       setShowReceipt(true);
     } catch (error) {
       console.error('Error processing order:', error);
-      alert('Failed to process order. Please try again.');
+      // alert('Failed to process order. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -60,7 +59,7 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
 
   const handleShowReceipt = () => {
     if (cart.length === 0) {
-      alert('Cart is empty!');
+      // alert('Cart is empty!');
       return;
     }
     setShowReceipt(true);
@@ -111,9 +110,9 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
     <div className="order-panel">
       <div className="order-header">
         <div className="order-tabs">
-          <span className="order-tab">Item</span>
-          <span className="order-tab">Quantity</span>
-          <span className="order-tab">Total</span>
+          <span className="">Item</span>
+          <span className="">Quantity</span>
+          <span className="total-price">Total</span>
         </div>
       </div>
 
@@ -196,9 +195,9 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
         <button className="payment-btn card" title="Card Payment">
           Card
         </button>
-        <button 
-          className="payment-btn cash" 
-          onClick={handleCashPayment} 
+        <button
+          className="payment-btn cash"
+          onClick={handleCashPayment}
           title="Cash Payment"
           disabled={isProcessing}
         >

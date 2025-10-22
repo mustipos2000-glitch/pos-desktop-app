@@ -13,7 +13,7 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
     minute: '2-digit',
     hour12: false
   });
-  
+
   const orderNumber = `${Date.now().toString().slice(-6)}`;
 
   return (
@@ -21,7 +21,7 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
       <div className="receipt-modal" onClick={(e) => e.stopPropagation()}>
         <div className="receipt-content">
           <button className="receipt-close-btn" onClick={onClose}>✕</button>
-          
+
           <div className="receipt-paper">
             {/* Store Header */}
             <div className="receipt-store-header">
@@ -84,9 +84,9 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
                   <span>-€{discount.toFixed(2)}</span>
                 </div>
               )}
-              
+
               <div className="receipt-separator">================================</div>
-              
+
               <div className="receipt-total">
                 <span>TOTAL</span>
                 <span>€{total.toFixed(2)}</span>
@@ -109,8 +109,8 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
             <button className="receipt-btn print" onClick={onPrint}>
               🖨️ Print Receipt
             </button>
-            <button className="receipt-btn email">
-              📧 Email
+            <button className="receipt-btn close" onClick={onClose}>
+              ✕ Close
             </button>
           </div>
         </div>

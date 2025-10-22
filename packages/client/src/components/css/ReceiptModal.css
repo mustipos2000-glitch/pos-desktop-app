@@ -208,7 +208,7 @@ font-weight: 300;
 /* Action Buttons */
 .receipt-actions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   width: 280px;
 }
 
@@ -216,35 +216,38 @@ font-weight: 300;
   flex: 1;
   padding: 12px 16px;
   border: none;
-  border-radius: 6px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
+  background: #3d4461;
+  color: #e5e7eb;
+}
+
+.receipt-btn:hover {
+  background: #4a5170;
 }
 
 .receipt-btn.print {
-  background: #28a745;
-  color: #fff;
+  background: #3d4461;
+  color: #e5e7eb;
 }
 
 .receipt-btn.print:hover {
-  background: #218838;
-  transform: translateY(-1px);
+  background: #4a5170;
 }
 
-.receipt-btn.email {
-  background: #007bff;
-  color: #fff;
+.receipt-btn.close {
+  background: #3d4461;
+  color: #e5e7eb;
 }
 
-.receipt-btn.email:hover {
-  background: #0056b3;
-  transform: translateY(-1px);
+.receipt-btn.close:hover {
+  background: #4a5170;
 }
 
 /* Scrollbar Styling */
