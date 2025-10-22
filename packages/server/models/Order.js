@@ -3,8 +3,8 @@ const db = require('../config/database');
 class Order {
     static create(order, details) {
         const insertOrder = db.prepare(`
-      INSERT INTO orders (tax, status, note, sub_total, total)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO orders (tax, status, note, gross_total, net_total, discount)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
         const result = insertOrder.run(
@@ -12,7 +12,8 @@ class Order {
             order.status || 'pending',
             order.note || '',
             order.sub_total || 0,
-            order.total || 0
+            order.total || 0,
+            order.discount || 0  // Now properly using the discount field
         );
 
         const orderId = result.lastInsertRowid;
@@ -44,7 +45,7 @@ class Order {
         // 🆙 Update the order record
         db.prepare(`
         UPDATE orders
-        SET tax = ?, status = ?, note = ?, total = ?, sub_total = ?
+        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?
         WHERE id = ?
         `).run(
             payload.tax || 0,
@@ -52,6 +53,7 @@ class Order {
             payload.note || '',
             payload.total || 0,
             payload.sub_total || 0,
+            payload.discount || 0,  // Now properly using the discount field
             id
         );
 
@@ -77,6 +79,13 @@ class Order {
     static getAll() {
         const orders = db.prepare('SELECT * FROM orders ORDER BY id DESC').all();
         for (const order of orders) {
+            // Map database column names to expected property names
+            order.sub_total = order.gross_total;
+            order.total = order.net_total;
+            // discount field is already correctly named
+            delete order.gross_total;
+            delete order.net_total;
+            
             order.details = db
                 .prepare(
                     `SELECT od.*, p.name as product_name, p.price
@@ -92,6 +101,14 @@ class Order {
     static getById(id) {
         const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id);
         if (!order) return null;
+        
+        // Map database column names to expected property names
+        order.sub_total = order.gross_total;
+        order.total = order.net_total;
+        // discount field is already correctly named
+        delete order.gross_total;
+        delete order.net_total;
+        
         order.details = db
             .prepare(
                 `SELECT od.*, p.name as product_name, p.price

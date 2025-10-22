@@ -24,8 +24,8 @@ const TopBar = () => {
         </button>
       </div>
       <div className="top-bar-center">
-        <button className="action-btn hold">On Hold</button>
-        <button className="action-btn kitchen">Send To Kitchen</button>
+        <button className="tab-btn">On Hold</button>
+        <button className="tab-btn">Send To Kitchen</button>
       </div>
       <div className="top-bar-right">
         {/* {currentUser.name && (
@@ -39,10 +39,10 @@ const TopBar = () => {
             <button className="logout-btn" onClick={handleLogout}>Logout</button>
           </div>
         )} */}
-        <button className="filter-btn">Order</button>
+        {/* <button className="filter-btn">Order</button>
         <button className="filter-btn">Room</button>
         <button className="filter-btn">Table</button>
-        <button className="filter-btn">Customer</button>
+        <button className="filter-btn">Customer</button> */}
         {/* <button className="fullscreen-btn">⛶</button> */}
       </div>
     </div>

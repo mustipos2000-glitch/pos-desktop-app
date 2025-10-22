@@ -83,8 +83,9 @@ db.exec(`
     tax REAL DEFAULT 0,
     status TEXT DEFAULT 'pending',
     note TEXT,
-    sub_total REAL DEFAULT 0,
-    total REAL DEFAULT 0,
+    gross_total REAL DEFAULT 0,
+    net_total REAL DEFAULT 0,
+    discount REAL DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);

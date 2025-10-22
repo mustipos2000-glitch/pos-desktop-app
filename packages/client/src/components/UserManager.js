@@ -19,9 +19,10 @@ const UserManager = () => {
     userId: null,
     userName: ''
   });
+  const [showPincode, setShowPincode] = useState(false);
 
   const avatarColors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
+    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
     '#8b5cf6', '#ec4899', '#06b6d4'
   ];
 
@@ -46,10 +47,10 @@ const UserManager = () => {
     }
 
     try {
-      const url = editingUser 
+      const url = editingUser
         ? `http://localhost:5000/api/users/${editingUser.id}`
         : 'http://localhost:5000/api/users';
-      
+
       const response = await fetch(url, {
         method: editingUser ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,16 +59,7 @@ const UserManager = () => {
 
       if (response.ok) {
         fetchUsers();
-        setShowUserModal(false);
-        setEditingUser(null);
-        setUserForm({
-          name: '',
-          pincode: '',
-          social_security: '',
-          identification: '',
-          role: 'User',
-          avatar_color: '#3b82f6'
-        });
+        closeUserModal();
       } else {
         const error = await response.json();
         alert(error.error || 'Failed to save user');
@@ -125,6 +117,20 @@ const UserManager = () => {
     });
   };
 
+  const closeUserModal = () => {
+    setShowUserModal(false);
+    setEditingUser(null);
+    setUserForm({
+      name: '',
+      pincode: '',
+      social_security: '',
+      identification: '',
+      role: 'User',
+      avatar_color: '#3b82f6'
+    });
+    setShowPincode(false);
+  };
+
   const confirmDelete = () => {
     if (deleteConfirmation.userId) {
       handleDeleteUser(deleteConfirmation.userId);
@@ -150,7 +156,7 @@ const UserManager = () => {
           + Add User
         </button>
       </div>
-      
+
       <div className="users-table">
         <table>
           <thead>
@@ -169,7 +175,7 @@ const UserManager = () => {
                 <td>
                   <div className="user-avatar-small" style={{ backgroundColor: user.avatar_color }}>
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                     </svg>
                   </div>
                 </td>
@@ -178,17 +184,17 @@ const UserManager = () => {
                 <td>••••</td>
                 <td>{user.social_security || '-'}</td>
                 <td>
-                  <IconButton 
-                    icon="✏️" 
-                    className="edit" 
-                    onClick={() => handleEditUser(user)} 
+                  <IconButton
+                    icon="✏️"
+                    className="edit"
+                    onClick={() => handleEditUser(user)}
                     title="Edit user"
                   />
                   {index !== 0 && (
-                    <IconButton 
-                      icon="🗑️" 
-                      className="delete" 
-                      onClick={() => openDeleteConfirmation(user)} 
+                    <IconButton
+                      icon="🗑️"
+                      className="delete"
+                      onClick={() => openDeleteConfirmation(user)}
                       title="Delete user"
                     />
                   )}
@@ -200,14 +206,14 @@ const UserManager = () => {
       </div>
 
       {showUserModal && (
-        <div className="modal-overlay" onClick={() => setShowUserModal(false)}>
+        <div className="modal-overlay" onClick={closeUserModal}>
           <div className="modal user-modal" onClick={(e) => e.stopPropagation()}>
             <h3>{editingUser ? 'Edit User' : 'Add New User'}</h3>
-            
-            <div className="modal-tabs">
+
+            {/* <div className="modal-tabs">
               <div className="tab active">General</div>
-              {/* <div className="tab">Privileges</div> */}
-            </div>
+              {/* <div className="tab">Privileges</div> 
+            </div> */}
 
             <div className="form-group">
               <label>Name</label>
@@ -220,12 +226,32 @@ const UserManager = () => {
 
             <div className="form-group">
               <label>Pincode</label>
-              <input
-                type="password"
-                maxLength="4"
-                value={userForm.pincode}
-                onChange={(e) => setUserForm({ ...userForm, pincode: e.target.value })}
-              />
+              <div className="password-input-container">
+                <input
+                  type={showPincode ? "text" : "password"}
+                  maxLength="4"
+                  value={userForm.pincode}
+                  onChange={(e) => setUserForm({ ...userForm, pincode: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => setShowPincode(!showPincode)}
+                  title={showPincode ? "Hide pincode" : "Show pincode"}
+                >
+                  {showPincode ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
@@ -275,7 +301,7 @@ const UserManager = () => {
             </div>
 
             <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowUserModal(false)}>Cancel</button>
+              <button className="cancel-btn" onClick={closeUserModal}>Cancel</button>
               <button className="add-btn" onClick={handleAddUser}>
                 {editingUser ? 'Update User' : 'Add User'}
               </button>

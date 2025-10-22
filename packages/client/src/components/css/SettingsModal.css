@@ -13,7 +13,6 @@
 
 .settings-modal {
   background: #2d3348;
-  border-radius: 12px;
   width: 90%;
   max-width: 700px;
   max-height: 80vh;
@@ -65,7 +64,6 @@
   color: #8b92b0;
   border: none;
   padding: 12px 24px;
-  border-radius: 8px 8px 0 0;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -111,14 +109,7 @@
   border: 1px solid #3d4461;
   color: #fff;
   padding: 12px;
-  border-radius: 8px;
   font-size: 14px;
-}
-
-.setting-item input:focus,
-.setting-item select:focus {
-  outline: none;
-  border-color: #10b981;
 }
 
 .setting-item.checkbox {
@@ -151,7 +142,6 @@
   color: #fff;
   border: none;
   padding: 12px 24px;
-  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -163,17 +153,11 @@
 }
 
 .save-btn {
-  background: #10b981;
   color: #fff;
   border: none;
   padding: 12px 24px;
-  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
   transition: background 0.2s;
-}
-
-.save-btn:hover {
-  background: #059669;
 }

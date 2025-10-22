@@ -1,7 +1,7 @@
 import React from 'react';
 import './css/ReceiptModal.css';
 
-const ReceiptModal = ({ cart, total, onClose, onPrint }) => {
+const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }) => {
   const currentDate = new Date().toLocaleString();
 
   return (
@@ -37,9 +37,26 @@ const ReceiptModal = ({ cart, total, onClose, onPrint }) => {
 
             <div className="receipt-divider"></div>
 
-            <div className="receipt-total">
-              <span>Total</span>
-              <span className="receipt-total-amount">€{total.toFixed(2)}</span>
+            <div className="receipt-summary">
+              <div className="receipt-row">
+                <span>Subtotal</span>
+                <span>€{subTotal.toFixed(2)}</span>
+              </div>
+              <div className="receipt-row">
+                <span>Tax (12%)</span>
+                <span>€{tax.toFixed(2)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="receipt-row">
+                  <span>Discount</span>
+                  <span>-€{discount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="receipt-divider"></div>
+              <div className="receipt-total">
+                <span>Total</span>
+                <span className="receipt-total-amount">€{total.toFixed(2)}</span>
+              </div>
             </div>
           </div>
 

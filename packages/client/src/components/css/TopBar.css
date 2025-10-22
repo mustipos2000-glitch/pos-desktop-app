@@ -13,11 +13,10 @@
 }
 
 .tab-btn {
-  background: transparent;
+  background: #3d4461;
   color: #8b92b0;
   border: none;
   padding: 6px 12px;
-  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   display: flex;
@@ -48,7 +47,6 @@
 .action-btn {
   border: none;
   padding: 8px 12px;
-  border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -60,10 +58,6 @@
   color: #fff;
 }
 
-.action-btn.kitchen {
-  background: #10b981;
-  color: #fff;
-}
 
 .action-btn:hover {
   opacity: 0.9;
@@ -80,7 +74,6 @@
   color: #8b92b0;
   border: 1px solid #3d4461;
   padding: 8px 16px;
-  border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
   transition: all 0.2s;
@@ -117,7 +110,6 @@
 .user-avatar-topbar {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -140,7 +132,6 @@
   color: #fff;
   border: none;
   padding: 6px 12px;
-  border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
   transition: background 0.2s;
