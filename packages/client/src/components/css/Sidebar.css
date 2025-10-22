@@ -41,20 +41,51 @@
   word-wrap: break-word;
   line-height: 1.3;
 }
-.user-name-topbar {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  margin-left: 1rem;
+.user-nav-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
-.logout-btn {
-  border: none;
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.user-name-topbar {
+  font-size: 12px;
+  font-weight: bold;
   color: #fff;
-  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.user-role {
+  font-size: 10px;
+  color: #8b92b0;
+  line-height: 1.2;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid #3d4461;
+  color: #8b92b0;
   cursor: pointer;
-  padding: 0.5rem;
-  margin-left: 1rem;
-  width:93px;
+  padding: 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  min-width: 32px;
+  height: 32px;
+}
+
+.logout-btn:hover {
+  background: #3d4461;
+  color: #fff;
+  border-color: #5a6282;
 }
 .category-btn:hover {
   background: #252a3f;
@@ -87,6 +118,3 @@
   color: #fff;
 }
 
-.RoleName{
-  font-size: 12px;
-}

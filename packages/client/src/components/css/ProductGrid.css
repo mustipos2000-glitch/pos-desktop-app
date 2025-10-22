@@ -3,7 +3,7 @@
   background: #252a3f;
   padding: .5rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   /* gap: 8px; */
   overflow-y: auto;
   align-content: start;
@@ -25,13 +25,14 @@
 .product-card {
   background: #2d3348;
   border: 2px solid transparent;
-  padding: 8px;
+  padding: 2px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
   gap: 2px;
   max-width: 6rem;
+  border-color: #3f4765;
 }
 
 .product-card:hover {
@@ -63,6 +64,7 @@
   display: flex;
   flex-direction: column;
   gap: 0px;
+  align-items: center;
 }
 
 .product-name {
