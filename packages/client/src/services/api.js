@@ -83,6 +83,39 @@ class ApiService {
     });
   }
 
+  // Sub-Product methods
+  static async getSubProducts() {
+    return this.request('/sub-products');
+  }
+
+  static async getSubProductsByProductId(productId) {
+    return this.request(`/products/${productId}/sub-products`);
+  }
+
+  static async getSubProductById(id) {
+    return this.request(`/sub-products/${id}`);
+  }
+
+  static async createSubProduct(subProductData) {
+    return this.request('/sub-products', {
+      method: 'POST',
+      body: JSON.stringify(subProductData),
+    });
+  }
+
+  static async updateSubProduct(id, subProductData) {
+    return this.request(`/sub-products/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(subProductData),
+    });
+  }
+
+  static async deleteSubProduct(id) {
+    return this.request(`/sub-products/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Order methods
   static async getOrders() {
     return this.request('/orders');
