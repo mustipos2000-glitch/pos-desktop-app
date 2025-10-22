@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
+import MessageModal from './MessageModal';
+import { useMessageModal } from '../hooks/useMessageModal';
 import './css/ProductManager.css';
 
 const ProductManager = () => {
@@ -10,12 +12,13 @@ const ProductManager = () => {
   const [showEditProduct, setShowEditProduct] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
     productId: null,
     productName: ''
   });
+  const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
   // Form state for product data
   const [productForm, setProductForm] = useState({
@@ -47,7 +50,7 @@ const ProductManager = () => {
       setProducts(result.data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
-      setError('Failed to fetch products');
+      showError('Failed to fetch products. Please check your connection.', 'Connection Error');
     } finally {
       setLoading(false);
     }
@@ -60,6 +63,7 @@ const ProductManager = () => {
       setCategories(result.data || []);
     } catch (error) {
       console.error('Error fetching categories:', error);
+      showError('Failed to fetch categories.', 'Connection Error');
     }
   };
 
@@ -74,6 +78,14 @@ const ProductManager = () => {
       ...productForm,
       [name]: type === 'checkbox' ? checked : value
     });
+    
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [name]: ''
+      });
+    }
   };
   
   // Handle file input changes separately
@@ -114,14 +126,22 @@ const ProductManager = () => {
       image: ''
     });
     setImageFile(null);
+    setFieldErrors({});
   };
 
   const handleAddProduct = async () => {
     // Validate required fields
+    const errors = {};
     if (!productForm.name) {
-      setError('Product name is required');
+      errors.name = 'Product name is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
+
+    setFieldErrors({});
 
     try {
       // Create FormData object to handle file uploads
@@ -158,14 +178,13 @@ const ProductManager = () => {
         await fetchProducts();
         resetForm();
         setShowAddProduct(false);
-        setError('');
       } else {
         const errorResult = await response.json();
-        setError(errorResult.error || 'Failed to create product');
+        showError(errorResult.error || 'Failed to create product');
       }
     } catch (error) {
       console.error('Error creating product:', error);
-      setError('Failed to create product');
+      showError('Failed to create product. Please try again.');
     }
   };
 
@@ -193,10 +212,18 @@ const ProductManager = () => {
   };
 
   const handleUpdateProduct = async () => {
+    // Validate required fields
+    const errors = {};
     if (!productForm.name) {
-      setError('Product name is required');
+      errors.name = 'Product name is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
+
+    setFieldErrors({});
 
     try {
       // Create FormData object to handle file uploads
@@ -234,14 +261,13 @@ const ProductManager = () => {
         resetForm();
         setShowEditProduct(false);
         setCurrentProduct(null);
-        setError('');
       } else {
         const errorResult = await response.json();
-        setError(errorResult.error || 'Failed to update product');
+        showError(errorResult.error || 'Failed to update product');
       }
     } catch (error) {
       console.error('Error updating product:', error);
-      setError('Failed to update product');
+      showError('Failed to update product. Please try again.');
     }
   };
 
@@ -252,15 +278,17 @@ const ProductManager = () => {
       });
 
       if (response.ok) {
-        // Refresh the product list
         fetchProducts();
+        closeDeleteConfirmation();
       } else {
         const errorResult = await response.json();
-        setError(errorResult.error || 'Failed to delete product');
+        closeDeleteConfirmation();
+        showWarning(errorResult.error || 'Failed to delete product', 'Cannot Delete Product');
       }
     } catch (error) {
       console.error('Error deleting product:', error);
-      setError('Failed to delete product');
+      closeDeleteConfirmation();
+      showError('Failed to delete product. Please try again.');
     }
   };
 
@@ -304,7 +332,6 @@ const ProductManager = () => {
         </button>
       </div>
       
-      {error && <div className="error-message">{error}</div>}
       {loading && <div className="loading">Loading...</div>}
       
       <div className="products-table">
@@ -370,7 +397,9 @@ const ProductManager = () => {
                   name="name"
                   value={productForm.name}
                   onChange={handleInputChange}
+                  style={fieldErrors.name ? { borderColor: '#ef4444' } : {}}
                 />
+                {fieldErrors.name && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.name}</small>}
               </div>
               
               <div className="form-group">
@@ -545,7 +574,9 @@ const ProductManager = () => {
                   name="name"
                   value={productForm.name}
                   onChange={handleInputChange}
+                  style={fieldErrors.name ? { borderColor: '#ef4444' } : {}}
                 />
+                {fieldErrors.name && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '1px' }}>{fieldErrors.name}</small>}
               </div>
               
               <div className="form-group">
@@ -716,6 +747,14 @@ const ProductManager = () => {
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+      />
+
+      <MessageModal
+        isOpen={messageModal.isOpen}
+        onClose={closeModal}
+        title={messageModal.title}
+        message={messageModal.message}
+        type={messageModal.type}
       />
     </div>
   );

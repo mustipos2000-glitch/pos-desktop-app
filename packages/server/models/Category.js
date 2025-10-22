@@ -28,6 +28,22 @@ class Category {
   }
 
   static delete(id) {
+    // Check if category has products
+    const checkProducts = 'SELECT COUNT(*) as count FROM products WHERE category_id = ?';
+    const productCount = db.prepare(checkProducts).get(id);
+    
+    if (productCount.count > 0) {
+      throw new Error(`Cannot delete category: ${productCount.count} product(s) are using this category`);
+    }
+
+    // Check if category has sub-products
+    const checkSubProducts = 'SELECT COUNT(*) as count FROM sub_products WHERE category_id = ?';
+    const subProductCount = db.prepare(checkSubProducts).get(id);
+    
+    if (subProductCount.count > 0) {
+      throw new Error(`Cannot delete category: ${subProductCount.count} sub-product(s) are using this category`);
+    }
+
     const sql = 'DELETE FROM categories WHERE id = ?';
     return db.prepare(sql).run(id);
   }

@@ -82,6 +82,22 @@ class Product {
     }
 
     static delete(id) {
+        // Check if product has sub-products
+        const checkSubProducts = 'SELECT COUNT(*) as count FROM sub_products WHERE product_id = ?';
+        const subProductCount = db.prepare(checkSubProducts).get(id);
+        
+        if (subProductCount.count > 0) {
+            throw new Error(`Cannot delete product: ${subProductCount.count} sub-product(s) are using this product`);
+        }
+
+        // Check if product is used in any orders
+        const checkOrders = 'SELECT COUNT(*) as count FROM order_details WHERE product_id = ?';
+        const orderCount = db.prepare(checkOrders).get(id);
+        
+        if (orderCount.count > 0) {
+            throw new Error(`Cannot delete product: This product has been used in ${orderCount.count} order(s)`);
+        }
+
         const sql = 'DELETE FROM products WHERE id = ?';
         return db.prepare(sql).run(id);
     }
