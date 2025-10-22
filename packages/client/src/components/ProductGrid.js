@@ -13,7 +13,7 @@ const ProductGrid = ({ products, onAddToCart }) => {
         <div
           key={product.id}
           className="product-card"
-          style={{ borderColor: product.color }}
+          // style={{ borderColor: product.color }}
           onClick={() => onAddToCart(product)}
         >
           <div className="product-image" style={{ background: product.color }}>

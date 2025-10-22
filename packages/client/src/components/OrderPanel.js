@@ -12,7 +12,7 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
   const calculateTotal = () => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   };
-  
+
   const calculateTax = () => {
     return cart.reduce((sum, item) => sum + (item.price * item.quantity * 0.12), 0);
   };
@@ -21,15 +21,15 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
     if (cart.length === 0) {
       return;
     }
-    
+
     setIsProcessing(true);
-    
+
     try {
       // Prepare order data
       const subTotal = calculateTotal();
       const tax = calculateTax();
       const total = subTotal + tax - discount;
-      
+
       const orderData = {
         tax: tax,
         status: 'completed',
@@ -43,10 +43,10 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
           total: item.price * item.quantity
         }))
       };
-      
+
       // Send order to backend
       await ApiService.createOrder(orderData);
-      
+
       // Show receipt
       setShowReceipt(true);
     } catch (error) {
@@ -84,9 +84,9 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
   // Handle numeric keypad input for discount
   const handleNumpadInput = (value) => {
     if (!discountInputRef.current) return;
-    
+
     const currentDiscount = discount.toString();
-    
+
     if (value === 'C') {
       // Clear discount
       setDiscount(0);
@@ -154,10 +154,10 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
       </div>
       <div className="total">
         <span>Discount</span>
-        <input 
-          type='text' 
-          className="discount" 
-          placeholder="0" 
+        <input
+          type='text'
+          className="discount"
+          placeholder="0"
           ref={discountInputRef}
           onChange={(e) => {
             const newDiscount = parseFloat(e.target.value) || 0;

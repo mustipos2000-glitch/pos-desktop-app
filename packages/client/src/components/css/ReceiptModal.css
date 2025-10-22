@@ -168,12 +168,14 @@ font-weight: 300;
   display: flex;
   justify-content: space-between;
   font-size: 10px;
-  margin: 0px 0;
+  margin: 4px 0;
 }
 
 .summary-row.discount {
-  color: #d63384;
-  font-weight: bold;
+  background-color: transparent;
+  font-weight: 300;
+  max-width: 16rem;
+  padding: 0px;
 }
 
 /* Total */
