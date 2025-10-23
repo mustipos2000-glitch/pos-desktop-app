@@ -4,6 +4,8 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isDev = process.env.NODE_ENV !== 'production';
+
 app.use('/uploads', express.static('uploads'));
 
 // Middleware
@@ -16,6 +18,32 @@ const apiRoutes = require('./routes/api');
 
 // Mount API routes
 app.use('/api', apiRoutes);
+
+// Serve React app in production
+if (!isDev) {
+  // Determine the correct path to the client build
+  let clientBuildPath;
+
+  if (process.resourcesPath) {
+    // Running as packaged app
+    clientBuildPath = path.join(process.resourcesPath, 'app.asar', 'packages', 'client', 'build');
+    if (!require('fs').existsSync(clientBuildPath)) {
+      clientBuildPath = path.join(process.resourcesPath, 'app', 'packages', 'client', 'build');
+    }
+  } else {
+    // Running from source
+    clientBuildPath = path.join(__dirname, '../client/build');
+  }
+
+  app.use(express.static(clientBuildPath));
+
+  // Handle React routing - send all non-API requests to index.html
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(clientBuildPath, 'index.html'));
+    }
+  });
+}
 
 // Test routes
 app.get('/api/hello', (req, res) => {
