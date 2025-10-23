@@ -1,6 +1,6 @@
 {
   "name": "po-desktop-monorepo",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "POS Desktop Application - Monorepo with React, Node.js, and Electron",
   "private": true,
   "workspaces": [
