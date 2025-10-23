@@ -1,14 +1,29 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
-// Ensure database directory exists
-const dbDir = path.join(__dirname, '../../..', 'database');
+// Determine database directory based on environment
+let dbDir;
+const isDev = process.env.NODE_ENV !== 'production';
+
+if (isDev) {
+  // Development: use project root database folder
+  dbDir = path.join(__dirname, '../../..', 'database');
+} else {
+  // Production: use user's app data directory
+  const appDataDir = process.env.APPDATA || 
+                     (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') : 
+                      path.join(os.homedir(), '.local', 'share'));
+  dbDir = path.join(appDataDir, 'POS Desktop', 'database');
+}
+
 if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
 const dbPath = path.join(dbDir, 'pos.db');
+console.log('Database path:', dbPath);
 const db = new Database(dbPath);
 
 // Create users table

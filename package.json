@@ -23,8 +23,16 @@
     "files": [
       "electron/**/*",
       "packages/client/build/**/*",
-      "packages/server/dist/**/*",
-      "package.json"
+      "packages/server/**/*",
+      "!packages/server/uploads/**/*",
+      "package.json",
+      "database/**/*",
+      "node_modules/**/*"
+    ],
+    "asarUnpack": [
+      "packages/server/**/*",
+      "packages/client/build/**/*",
+      "node_modules/better-sqlite3/**/*"
     ],
     "directories": {
       "buildResources": "assets",
@@ -34,7 +42,8 @@
       "target": [
         "nsis",
         "zip"
-      ]
+      ],
+      "signAndEditExecutable": false
     },
     "nsis": {
       "oneClick": false,
@@ -51,7 +60,9 @@
     "wait-on": "^7.2.0"
   },
   "dependencies": {
-    "multer": "^2.0.2",
-    "node-fetch": "^3.3.2"
+    "better-sqlite3": "^12.4.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "multer": "^2.0.2"
   }
 }
