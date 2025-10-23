@@ -51,7 +51,7 @@
       "allowToChangeInstallationDirectory": true
     }
   },
-  "author": "sohail-khan",
+  "author": "sohail & Rao",
   "license": "ISC",
   "devDependencies": {
     "concurrently": "^8.2.2",
