@@ -3,7 +3,7 @@ import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import { useMessageModal } from '../hooks/useMessageModal';
-import './css/ProductManager.css';
+// Converted to use Tailwind CSS
 
 const SubProductManager = () => {
   const [subProducts, setSubProducts] = useState([]);

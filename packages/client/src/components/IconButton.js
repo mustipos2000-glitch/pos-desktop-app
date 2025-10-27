@@ -1,10 +1,20 @@
 import React from 'react';
-import './css/IconButton.css';
 
-const IconButton = ({ icon, onClick, title, className = '' }) => {
+const IconButton = ({ icon, onClick, title, className = '', variant = 'default' }) => {
+  const getVariantClasses = () => {
+    switch (variant) {
+      case 'edit':
+        return 'icon-btn-edit';
+      case 'delete':
+        return 'icon-btn-delete';
+      default:
+        return 'icon-btn';
+    }
+  };
+
   return (
     <button 
-      className={`icon-button ${className}`}
+      className={`${getVariantClasses()} ${className}`}
       onClick={onClick}
       title={title}
     >

@@ -1,25 +1,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import './css/BottomBar.css';
 
 const BottomBar = ({ onOpenSettings }) => {
   const navigate = useNavigate();
 
   return (
-    <div className="bottom-bar">
-      <button className="bottom-btn admin" onClick={() => navigate('/admin')}>
+    <div className="flex gap-2 p-2 bg-pos-bg-primary border-t border-pos-border-primary">
+      <button className="btn-primary flex items-center gap-2" onClick={() => navigate('/admin')}>
         🔌 admin
       </button>
-      <button className="bottom-btn settings" onClick={onOpenSettings}>
+      <button className="btn-primary flex items-center gap-2" onClick={onOpenSettings}>
         ⚙️ Settings
       </button>
-      <button className="bottom-btn">Eat In</button>
-      <button className="bottom-btn">New Return</button>
-      <button className="bottom-btn">Customer</button>
-      {/* <button className="bottom-btn icon-btn">⚙️</button> */}
-      <button className="bottom-btn">Drawer</button>
-      <button className="bottom-btn">💳 Card</button>
-      {/* <button className="bottom-btn cash">💵 Cash</button> */}
+      <button className="btn-primary">Eat In</button>
+      <button className="btn-primary">New Return</button>
+      <button className="btn-primary">Customer</button>
+      <button className="btn-primary">Drawer</button>
+      <button className="btn-primary flex items-center gap-2">💳 Card</button>
     </div>
   );
 };

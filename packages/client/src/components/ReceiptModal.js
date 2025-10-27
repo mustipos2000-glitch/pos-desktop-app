@@ -1,5 +1,4 @@
 import React from 'react';
-import './css/ReceiptModal.css';
 
 const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }) => {
   const currentDate = new Date();
@@ -17,48 +16,48 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
   const orderNumber = `${Date.now().toString().slice(-6)}`;
 
   return (
-    <div className="receipt-modal-overlay" onClick={onClose}>
-      <div className="receipt-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="receipt-content">
-          <button className="receipt-close-btn" onClick={onClose}>✕</button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-md w-full mx-4 max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="relative">
+          <button className="absolute top-4 right-4 text-pos-text-muted hover:text-pos-text-primary text-xl z-10" onClick={onClose}>✕</button>
 
-          <div className="receipt-paper">
+          <div className="bg-white text-black p-6 font-mono text-sm overflow-y-auto max-h-[70vh]">
             {/* Store Header */}
-            <div className="receipt-store-header">
-              <h1 className="store-name">RETAIL STORE</h1>
-              <p className="store-address">123 Main Street</p>
-              <p className="store-address">City, State 12345</p>
-              <p className="store-phone">Tel: (555) 123-4567</p>
+            <div className="text-center mb-4">
+              <h1 className="text-lg font-bold">RETAIL STORE</h1>
+              <p className="text-xs">123 Main Street</p>
+              <p className="text-xs">City, State 12345</p>
+              <p className="text-xs">Tel: (555) 123-4567</p>
             </div>
 
-            <div className="receipt-separator">================================</div>
+            <div className="text-center mb-4">================================</div>
 
             {/* Transaction Info */}
-            <div className="receipt-transaction-info">
-              <div className="receipt-info-row">
+            <div className="mb-4">
+              <div className="flex justify-between text-xs mb-1">
                 <span>Date: {formatDate}</span>
                 <span>Time: {formatTime}</span>
               </div>
-              <div className="receipt-info-row">
+              <div className="flex justify-between text-xs">
                 <span>Order #: {orderNumber}</span>
                 <span>Cashier: 001</span>
               </div>
             </div>
 
-            <div className="receipt-separator">================================</div>
+            <div className="text-center mb-4">================================</div>
 
             {/* Items */}
-            <div className="receipt-items">
+            <div className="mb-4">
               {cart.map((item) => (
-                <div key={item.id} className="receipt-item">
-                  <div className="receipt-item-line1">
-                    <span className="item-name">{item.name}</span>
+                <div key={item.id} className="mb-2">
+                  <div className="text-xs font-medium">
+                    {item.name}
                   </div>
-                  <div className="receipt-item-line2">
-                    <span className="item-details">
+                  <div className="flex justify-between text-xs">
+                    <span>
                       {item.quantity} x €{item.price.toFixed(2)}
                     </span>
-                    <span className="item-total">
+                    <span>
                       €{(item.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
@@ -66,50 +65,49 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
               ))}
             </div>
 
-            <div className="receipt-separator">--------------------------------</div>
+            <div className="text-center mb-4">--------------------------------</div>
 
             {/* Summary */}
-            <div className="receipt-summary">
-              <div className="summary-row">
+            <div className="mb-4">
+              <div className="flex justify-between text-xs mb-1">
                 <span>SUBTOTAL</span>
                 <span>€{subTotal.toFixed(2)}</span>
               </div>
-              <div className="summary-row">
+              <div className="flex justify-between text-xs mb-1">
                 <span>TAX (12%)</span>
                 <span>€{tax.toFixed(2)}</span>
               </div>
               {discount > 0 && (
-                <div className="summary-row discount">
+                <div className="flex justify-between text-xs mb-1">
                   <span>DISCOUNT</span>
                   <span>-€{discount.toFixed(2)}</span>
                 </div>
               )}
 
-              <div className="receipt-separator">================================</div>
+              <div className="text-center my-2">================================</div>
 
-              <div className="receipt-total">
+              <div className="flex justify-between text-sm font-bold">
                 <span>TOTAL</span>
                 <span>€{total.toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="receipt-separator">================================</div>
+            <div className="text-center mb-4">================================</div>
 
             {/* Footer */}
-            <div className="receipt-footer">
+            <div className="text-center text-xs">
               <p>Thank you for your purchase!</p>
               <p>Please keep this receipt</p>
               <p>for your records</p>
-              {/* <div className="receipt-barcode">||||| |||| | |||| |||||</div> */}
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="receipt-actions">
-            <button className="receipt-btn print" onClick={onPrint}>
+          <div className="flex gap-3 p-4 bg-pos-bg-secondary">
+            <button className="btn-success flex-1 flex items-center justify-center gap-2" onClick={onPrint}>
               🖨️ Print Receipt
             </button>
-            <button className="receipt-btn close" onClick={onClose}>
+            <button className="btn-secondary flex-1 flex items-center justify-center gap-2" onClick={onClose}>
               ✕ Close
             </button>
           </div>

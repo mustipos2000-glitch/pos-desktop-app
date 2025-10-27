@@ -1,5 +1,4 @@
 import { useState, useRef } from 'react';
-import './css/OrderPanel.css';
 import ReceiptModal from './ReceiptModal';
 import ApiService from '../services/api';
 
@@ -107,56 +106,56 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
   };
 
   return (
-    <div className="order-panel">
-      <div className="order-header">
-        <div className="order-tabs">
-          <span className="">Item</span>
-          <span className="">Quantity</span>
-          <span className="total-price">Total</span>
+    <div className="w-1/4 min-w-[300px] bg-pos-bg-quaternary flex flex-col border-l border-pos-border-light h-screen">
+      <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light">
+        <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
+          <span>Item</span>
+          <span>Quantity</span>
+          <span className="text-right">Total</span>
         </div>
       </div>
 
-      <div className="order-items">
+      <div className="flex-1 overflow-y-auto px-4 flex flex-col bg-pos-bg-secondary min-h-[160px] scrollbar-custom">
         {cart.length === 0 ? (
-          <div className="empty-cart">No items in cart</div>
+          <div className="text-center text-pos-text-disabled py-10 px-5 text-sm">No items in cart</div>
         ) : (
           cart.map((item) => (
-            <div key={item.id} className="order-item">
-              <div className="item-name">{item.name}</div>
-              <div className="item-quantity">
+            <div key={item.id} className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 items-center text-sm py-1.5">
+              <div className="text-pos-text-secondary font-light">{item.name}</div>
+              <div className="flex items-center gap-2 justify-center text-pos-text-secondary">
                 <button
-                  className="qty-btn"
+                  className="bg-pos-interactive-primary text-pos-text-secondary border-none w-7 h-4 cursor-pointer text-base transition-colors duration-200 flex items-center justify-center hover:bg-pos-interactive-hover"
                   onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                 >
                   -
                 </button>
                 <span>{item.quantity}</span>
                 <button
-                  className="qty-btn"
+                  className="bg-pos-interactive-primary text-pos-text-secondary border-none w-7 h-4 cursor-pointer text-base transition-colors duration-200 flex items-center justify-center hover:bg-pos-interactive-hover"
                   onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                 >
                   +
                 </button>
               </div>
-              <div className="item-total">{(item.price * item.quantity).toFixed(2)}</div>
+              <div className="text-right text-pos-text-secondary font-light">{(item.price * item.quantity).toFixed(2)}</div>
             </div>
           ))
         )}
       </div>
 
-      <div className="total">
+      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-t border-pos-border-light border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
         <span>Gross Total</span>
-        <span className="amount">{calculateTotal().toFixed(2)}</span>
+        <span className="bg-pos-interactive-primary px-0.5 py-0.5 text-pos-text-secondary min-w-[100px] text-center">{calculateTotal().toFixed(2)}</span>
       </div>
-      <div className="total">
+      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
         <span>Tax 12%</span>
-        <span className="amount">{calculateTax().toFixed(2)}</span>
+        <span className="bg-pos-interactive-primary px-0.5 py-0.5 text-pos-text-secondary min-w-[100px] text-center">{calculateTax().toFixed(2)}</span>
       </div>
-      <div className="total">
+      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
         <span>Discount</span>
         <input
           type='text'
-          className="discount"
+          className="max-w-[6.5rem] text-center py-1.5 px-2 -my-0.5 -mx-0.5 text-black bg-white text-xs outline-none"
           placeholder="0"
           ref={discountInputRef}
           onChange={(e) => {
@@ -165,38 +164,38 @@ const OrderPanel = ({ cart, onUpdateQuantity, onClearCart }) => {
           }}
         />
       </div>
-      <div className="total">
+      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
         <span>Net Total</span>
-        <span className="amount">{(calculateTotal() + calculateTax() - discount).toFixed(2)}</span>
+        <span className="bg-pos-interactive-primary px-0.5 py-0.5 text-pos-text-secondary min-w-[100px] text-center">{(calculateTotal() + calculateTax() - discount).toFixed(2)}</span>
       </div>
 
-      <div className="numpad" id='order-numpad'>
-        <button className="num-btn clear" onClick={() => handleNumpadInput('C')}>C</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('7')}>7</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('8')}>8</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('9')}>9</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('.')}>.</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('4')}>4</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('5')}>5</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('6')}>6</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('0')}>0</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('1')}>1</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('2')}>2</button>
-        <button className="num-btn" onClick={() => handleNumpadInput('3')}>3</button>
+      <div className="grid grid-cols-4 gap-1 p-0.5">
+        <button className="bg-gray-600 text-pos-text-secondary border-none p-0 cursor-pointer text-sm font-semibold transition-colors duration-200 hover:bg-gray-500" onClick={() => handleNumpadInput('C')}>C</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('7')}>7</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('8')}>8</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('9')}>9</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('.')}>.</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('4')}>4</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('5')}>5</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('6')}>6</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('0')}>0</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('1')}>1</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('2')}>2</button>
+        <button className="btn-primary p-0 text-sm font-semibold" onClick={() => handleNumpadInput('3')}>3</button>
       </div>
 
-      <div className="payment-actions">
-        <button className="action-icon-btn trash" onClick={onClearCart} title="Clear Cart">
+      <div className="grid grid-cols-4 gap-2 p-1 bg-pos-bg-primary">
+        <button className="bg-pos-interactive-primary text-pos-text-secondary border-none px-3 py-2 cursor-pointer text-lg font-medium transition-colors duration-200 flex items-center justify-center hover:bg-pos-interactive-hover" onClick={onClearCart} title="Clear Cart">
           🗑️
         </button>
-        <button className="payment-btn drawer" title="Open Drawer">
+        <button className="btn-primary text-sm font-medium flex items-center justify-center gap-1.5" title="Open Drawer">
           Drawer
         </button>
-        <button className="payment-btn card" title="Card Payment">
+        <button className="btn-primary text-sm font-medium flex items-center justify-center gap-1.5" title="Card Payment">
           Card
         </button>
         <button
-          className="payment-btn cash"
+          className="btn-primary text-sm font-medium flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleCashPayment}
           title="Cash Payment"
           disabled={isProcessing}

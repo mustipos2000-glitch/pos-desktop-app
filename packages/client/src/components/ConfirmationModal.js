@@ -1,5 +1,3 @@
-import './css/ConfirmationModal.css';
-
 const ConfirmationModal = ({
     isOpen,
     onClose,
@@ -17,10 +15,28 @@ const ConfirmationModal = ({
         onClose();
     };
 
+    const getIconColor = () => {
+        switch (type) {
+            case 'danger': return 'text-pos-error';
+            case 'warning': return 'text-pos-warning';
+            case 'info': return 'text-pos-info';
+            default: return 'text-pos-error';
+        }
+    };
+
+    const getConfirmButtonClass = () => {
+        switch (type) {
+            case 'danger': return 'btn-danger';
+            case 'warning': return 'btn-warning';
+            case 'info': return 'btn-info';
+            default: return 'btn-danger';
+        }
+    };
+
     return (
-        <div className="confirmation-overlay" onClick={onClose}>
-            <div className="confirmation-modal" onClick={(e) => e.stopPropagation()}>
-                <div className={`confirmation-icon ${type}`}>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+            <div className="bg-pos-bg-secondary rounded-lg p-6 max-w-md w-full mx-4 shadow-lg" onClick={(e) => e.stopPropagation()}>
+                <div className={`flex justify-center mb-4 ${getIconColor()}`}>
                     {type === 'danger' && (
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <circle cx="12" cy="12" r="10" />
@@ -44,16 +60,16 @@ const ConfirmationModal = ({
                     )}
                 </div>
 
-                <h3 className="confirmation-title">{title}</h3>
-                <p className="confirmation-message">{message}</p>
+                <h3 className="text-pos-text-primary text-xl font-semibold text-center mb-4">{title}</h3>
+                <p className="text-pos-text-secondary text-center mb-6 leading-relaxed">{message}</p>
 
-                <div className="confirmation-actions">
+                <div className="flex gap-3 justify-end">
                     {cancelText && (
-                        <button className="confirmation-cancel-btn" onClick={onClose}>
+                        <button className="btn-secondary" onClick={onClose}>
                             {cancelText}
                         </button>
                     )}
-                    <button className={`confirmation-confirm-btn ${type}`} onClick={handleConfirm}>
+                    <button className={getConfirmButtonClass()} onClick={handleConfirm}>
                         {confirmText}
                     </button>
                 </div>
