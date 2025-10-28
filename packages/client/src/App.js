@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserLoginScreen from './pages/UserLoginScreen';
 import POSScreen from './pages/POSScreen';
 import AdminPanel from './pages/AdminPanel';
-import './App.css';
+// import './App.css';
 
 function App() {
   return (
