@@ -6,7 +6,6 @@ import OrderPanel from '../components/OrderPanel';
 import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
 import ApiService from '../services/api';
-import './css/POSScreen.css';
 
 const POSScreen = () => {
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -80,10 +79,10 @@ const POSScreen = () => {
 
   if (loading) {
     return (
-      <div className="pos-screen">
+      <div className="h-screen flex flex-col bg-pos-bg-primary">
         <TopBar />
-        <div className="pos-main" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div>Loading data...</div>
+        <div className="flex-1 flex justify-center items-center">
+          <div className="text-pos-text-primary">Loading data...</div>
         </div>
         <BottomBar onOpenSettings={() => setShowSettings(true)} />
       </div>
@@ -91,10 +90,10 @@ const POSScreen = () => {
   }
 
   return (
-    <div className="pos-screen">
-      <div className="pos-left-section">
+    <div className="h-screen flex bg-pos-bg-primary">
+      <div className="flex-1 flex flex-col">
         <TopBar />
-        <div className="pos-main">
+        <div className="flex-1 flex overflow-hidden">
           <Sidebar
             categories={categories}
             selectedCategory={selectedCategory}

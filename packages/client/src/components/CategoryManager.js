@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
@@ -21,7 +21,7 @@ const CategoryManager = () => {
   });
   const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch('http://localhost:5000/api/categories');
@@ -33,11 +33,11 @@ const CategoryManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
 
   useEffect(() => {
     fetchCategories();
-  }, []);
+  }, [fetchCategories]);
 
   const handleAddCategory = async () => {
     if (!categoryForm.name) {
