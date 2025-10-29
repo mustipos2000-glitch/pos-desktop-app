@@ -4,6 +4,11 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./public/index.html",
   ],
+  safelist: [
+    'bg-orange-500',
+    'bg-blue-500',
+    'bg-green-500',
+  ],
   theme: {
     extend: {
       colors: {
