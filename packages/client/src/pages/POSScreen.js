@@ -108,6 +108,7 @@ const POSScreen = () => {
       </div>
       <OrderPanel
         cart={cart}
+        setCart={setCart}
         onUpdateQuantity={updateQuantity}
         onClearCart={clearCart}
       />
