@@ -12,9 +12,9 @@ if (isDev) {
   dbDir = path.join(__dirname, '../../..', 'database');
 } else {
   // Production: use user's app data directory
-  const appDataDir = process.env.APPDATA || 
-                     (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') : 
-                      path.join(os.homedir(), '.local', 'share'));
+  const appDataDir = process.env.APPDATA ||
+    (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') :
+      path.join(os.homedir(), '.local', 'share'));
   dbDir = path.join(appDataDir, 'POS Desktop', 'database');
 }
 
@@ -96,6 +96,30 @@ try {
 // Add parent_id column if it doesn't exist
 try {
   db.exec(`ALTER TABLE products ADD COLUMN parent_id INTEGER DEFAULT NULL`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+// Add color column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN color TEXT DEFAULT '#3b82f6'`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+// Add price_vat_inc column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN price_vat_inc REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+// Add sub_product_group column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN sub_product_group INTEGER DEFAULT 0`);
 } catch (err) {
   if (!err.message.includes('duplicate column name')) {
   }
