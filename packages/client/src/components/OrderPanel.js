@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReceiptModal from "./ReceiptModal";
 import ConfirmationModal from "./ConfirmationModal";
+import PaymentModal from "./PaymentModal";
 import ApiService from "../services/api";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
@@ -13,6 +14,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
   const [lastAddedId, setLastAddedId] = useState(null);
   const prevCartLengthRef = useRef(cart.length);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
 
   // Track last added item. Only auto-set when items are added; clear selection when items are removed.
   useEffect(() => {
@@ -67,15 +70,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
     setLastAddedId(null);
   };
 
-  // Delete single item
-  const handleDeleteSingle = (e, itemId) => {
-    e.stopPropagation();
-    const id = Number(itemId);
-    setCart((prev) => prev.filter((item) => Number(item.id) !== id));
-    // When deleting a selected product, clear selection and active item
-    setSelectedIds([]);
-    setLastAddedId(null);
-  };
+
 
   const handleDeleteAllConfirm = () => {
     // Clear entire cart and selection
@@ -93,8 +88,21 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
   const calculateTax = () =>
     cart.reduce((sum, item) => sum + item.price * item.quantity * 0.12, 0);
 
-  const handleCashPayment = async () => {
+  const handlePayment = (paymentMethod = 'cash') => {
     if (cart.length === 0) return;
+    setSelectedPaymentMethod(paymentMethod);
+    setShowPaymentModal(true);
+  };
+
+  const handleCashPayment = () => {
+    handlePayment('cash');
+  };
+
+  const handleCardPayment = () => {
+    handlePayment('card');
+  };
+
+  const handlePaymentConfirm = async (paymentData) => {
     setIsProcessing(true);
     try {
       const subTotal = calculateTotal();
@@ -108,6 +116,12 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
         sub_total: subTotal,
         total,
         discount,
+        payment_method: paymentData.cashAmount > 0 && paymentData.cardAmount > 0 ? 'mixed' : 
+                       paymentData.cashAmount > 0 ? 'cash' : 'card',
+        cash_amount: paymentData.cashAmount,
+        card_amount: paymentData.cardAmount,
+        total_paid: paymentData.totalPaid,
+        change_due: paymentData.changeDue,
         details: cart.map((item) => ({
           product_id: item.id,
           qty: item.quantity,
@@ -116,6 +130,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
       };
 
       await ApiService.createOrder(orderData);
+      setShowPaymentModal(false);
       setShowReceipt(true);
     } catch (error) {
       console.error("Error processing order:", error);
@@ -332,12 +347,19 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
         </button>
 
         <button className="btn-primary text-sm font-medium">Drawer</button>
-        <button className="btn-primary text-sm font-medium">Card</button>
+        
+        <button
+          className="btn-primary text-sm font-medium disabled:opacity-50"
+          onClick={handleCardPayment}
+          disabled={isProcessing || cart.length === 0}
+        >
+          Card
+        </button>
 
         <button
           className="btn-primary text-sm font-medium disabled:opacity-50"
           onClick={handleCashPayment}
-          disabled={isProcessing}
+          disabled={isProcessing || cart.length === 0}
         >
           {isProcessing ? "Processing..." : "Cash"}
         </button>
@@ -356,6 +378,15 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
         confirmText="Yes, Delete"
         cancelText="No"
         type="danger"
+      />
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        total={calculateTotal() + calculateTax() - discount}
+        onConfirm={handlePaymentConfirm}
+        defaultPaymentMethod={selectedPaymentMethod}
       />
 
       {showReceipt && (
