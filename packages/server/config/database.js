@@ -177,6 +177,15 @@ db.exec(`
   )
 `);
 
+// Create groups table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    is_visible INTEGER DEFAULT 0
+  )
+`);
+
 
 
 // Insert default admin user if no users exist
