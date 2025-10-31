@@ -406,129 +406,175 @@ const SubProductManager = () => {
 
       {/* Add Sub-Product Modal */}
       {showAddSubProduct && (
-        <div className="modal-overlay" onClick={() => setShowAddSubProduct(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Add New Sub-Product</h3>
-            <div className="form-container">
-              <div className="form-group">
-                <label>Parent Product *</label>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowAddSubProduct(false)}>
+          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-xl font-semibold text-pos-text-primary">Add New Sub-Product</h3>
+              <button 
+                onClick={() => setShowAddSubProduct(false)}
+                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="px-6 py-4">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                  Parent Product <span className="text-pos-error">*</span>
+                </label>
                 <select
                   name="product_id"
                   value={subProductForm.product_id}
                   onChange={handleInputChange}
-                  style={fieldErrors.product_id ? { borderColor: '#ef4444' } : {}}
+                  className={`w-full bg-pos-bg-primary border ${fieldErrors.product_id ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 >
                   <option value="">Select Parent Product</option>
                   {products.map(product => (
                     <option key={product.id} value={product.id}>{product.name}</option>
                   ))}
                 </select>
-                {fieldErrors.product_id && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '1px' }}>{fieldErrors.product_id}</small>}
+                {fieldErrors.product_id && <p className="text-pos-error text-xs mt-1">{fieldErrors.product_id}</p>}
               </div>
 
-              <div className="form-group">
-                <label>Sub-Product Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={subProductForm.name}
-                  onChange={handleInputChange}
-                  style={fieldErrors.name ? { borderColor: '#ef4444' } : {}}
-                />
-                {fieldErrors.name && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '1px' }}>{fieldErrors.name}</small>}
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                    Sub-Product Name <span className="text-pos-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={subProductForm.name}
+                    onChange={handleInputChange}
+                    className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    placeholder="Enter sub-product name"
+                  />
+                  {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Button Name</label>
+                  <input
+                    type="text"
+                    name="button_name"
+                    value={subProductForm.button_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Display name"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Button Name</label>
-                <input
-                  type="text"
-                  name="button_name"
-                  value={subProductForm.button_name}
-                  onChange={handleInputChange}
-                />
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price"
+                    value={subProductForm.price}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Takeout (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_takeout"
+                    value={subProductForm.vat_takeout}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Eat-in (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_eat_in"
+                    value={subProductForm.vat_eat_in}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
 
-               <div className="form-group">
-                <label>Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="price"
-                  value={subProductForm.price}
-                  onChange={handleInputChange}
-                />
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
+                  <input
+                    type="text"
+                    name="production_name"
+                    value={subProductForm.production_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Name for production"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
+                  <input
+                    type="text"
+                    name="barcode"
+                    value={subProductForm.barcode}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Product barcode"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Production Name</label>
-                <input
-                  type="text"
-                  name="production_name"
-                  value={subProductForm.production_name}
-                  onChange={handleInputChange}
-                />
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
+                  <input
+                    type="text"
+                    name="addition_type"
+                    value={subProductForm.addition_type}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Addition type"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Image</label>
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                  />
+                </div>
               </div>
-
-             
-
-              <div className="form-group">
-                <label>VAT Takeout (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_takeout"
-                  value={subProductForm.vat_takeout}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>VAT Eat-in (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_eat_in"
-                  value={subProductForm.vat_eat_in}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Barcode</label>
-                <input
-                  type="text"
-                  name="barcode"
-                  value={subProductForm.barcode}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-
-
-              <div className="form-group">
-                <label>Addition Type</label>
-                <input
-                  type="text"
-                  name="addition_type"
-                  value={subProductForm.addition_type}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Image</label>
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              <div className="modal-actions full-width">
-                <button className="cancel-btn" onClick={() => setShowAddSubProduct(false)}>Cancel</button>
-                <button className="add-btn" onClick={handleAddSubProduct}>Add Sub-Product</button>
-              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setShowAddSubProduct(false)}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAddSubProduct}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Add Sub-Product
+              </button>
             </div>
           </div>
         </div>
@@ -536,129 +582,175 @@ const SubProductManager = () => {
 
       {/* Edit Sub-Product Modal */}
       {showEditSubProduct && (
-        <div className="modal-overlay" onClick={() => setShowEditSubProduct(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit Sub-Product</h3>
-            <div className="form-container">
-              <div className="form-group">
-                <label>Parent Product *</label>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowEditSubProduct(false)}>
+          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-xl font-semibold text-pos-text-primary">Edit Sub-Product</h3>
+              <button 
+                onClick={() => setShowEditSubProduct(false)}
+                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="px-6 py-4">
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                  Parent Product <span className="text-pos-error">*</span>
+                </label>
                 <select
                   name="product_id"
                   value={subProductForm.product_id}
                   onChange={handleInputChange}
-                  style={fieldErrors.product_id ? { borderColor: '#ef4444' } : {}}
+                  className={`w-full bg-pos-bg-primary border ${fieldErrors.product_id ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 >
                   <option value="">Select Parent Product</option>
                   {products.map(product => (
                     <option key={product.id} value={product.id}>{product.name}</option>
                   ))}
                 </select>
-                {fieldErrors.product_id && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '2px' }}>{fieldErrors.product_id}</small>}
+                {fieldErrors.product_id && <p className="text-pos-error text-xs mt-1">{fieldErrors.product_id}</p>}
               </div>
 
-              <div className="form-group">
-                <label>Sub Product Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={subProductForm.name}
-                  onChange={handleInputChange}
-                  style={fieldErrors.name ? { borderColor: '#ef4444' } : {}}
-                />
-                {fieldErrors.name && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '2px' }}>{fieldErrors.name}</small>}
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                    Sub-Product Name <span className="text-pos-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={subProductForm.name}
+                    onChange={handleInputChange}
+                    className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    placeholder="Enter sub-product name"
+                  />
+                  {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Button Name</label>
+                  <input
+                    type="text"
+                    name="button_name"
+                    value={subProductForm.button_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Display name"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Button Name</label>
-                <input
-                  type="text"
-                  name="button_name"
-                  value={subProductForm.button_name}
-                  onChange={handleInputChange}
-                />
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price"
+                    value={subProductForm.price}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Takeout (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_takeout"
+                    value={subProductForm.vat_takeout}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Eat-in (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_eat_in"
+                    value={subProductForm.vat_eat_in}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
 
-                <div className="form-group">
-                <label>Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="price"
-                  value={subProductForm.price}
-                  onChange={handleInputChange}
-                />
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
+                  <input
+                    type="text"
+                    name="production_name"
+                    value={subProductForm.production_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Name for production"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
+                  <input
+                    type="text"
+                    name="barcode"
+                    value={subProductForm.barcode}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Product barcode"
+                  />
+                </div>
               </div>
 
-              <div className="form-group">
-                <label>Production Name</label>
-                <input
-                  type="text"
-                  name="production_name"
-                  value={subProductForm.production_name}
-                  onChange={handleInputChange}
-                />
-              </div>
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
+                  <input
+                    type="text"
+                    name="addition_type"
+                    value={subProductForm.addition_type}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Addition type"
+                  />
+                </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Image</label>
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                  />
+                </div>
+              </div>
+            </div>
             
-
-              <div className="form-group">
-                <label>VAT Takeout (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_takeout"
-                  value={subProductForm.vat_takeout}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>VAT Eat-in (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_eat_in"
-                  value={subProductForm.vat_eat_in}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Barcode</label>
-                <input
-                  type="text"
-                  name="barcode"
-                  value={subProductForm.barcode}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-
-
-              <div className="form-group">
-                <label>Addition Type</label>
-                <input
-                  type="text"
-                  name="addition_type"
-                  value={subProductForm.addition_type}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Image</label>
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-              </div>
-
-              <div className="modal-actions full-width">
-                <button className="cancel-btn" onClick={() => setShowEditSubProduct(false)}>Cancel</button>
-                <button className="save-btn" onClick={handleUpdateSubProduct}>Update Sub Product</button>
-              </div>
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setShowEditSubProduct(false)}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUpdateSubProduct}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Update Sub-Product
+              </button>
             </div>
           </div>
         </div>

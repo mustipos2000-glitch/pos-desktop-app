@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 export const useMessageModal = () => {
     const [messageModal, setMessageModal] = useState({
@@ -8,36 +8,36 @@ export const useMessageModal = () => {
         type: 'info'
     });
 
-    const showError = (message, title = 'Error') => {
+    const showError = useCallback((message, title = 'Error') => {
         setMessageModal({
             isOpen: true,
             title,
             message,
             type: 'danger'
         });
-    };
+    }, []);
 
-    const showWarning = (message, title = 'Warning') => {
+    const showWarning = useCallback((message, title = 'Warning') => {
         setMessageModal({
             isOpen: true,
             title,
             message,
             type: 'warning'
         });
-    };
+    }, []);
 
-    const showInfo = (message, title = 'Info') => {
+    const showInfo = useCallback((message, title = 'Info') => {
         setMessageModal({
             isOpen: true,
             title,
             message,
             type: 'info'
         });
-    };
+    }, []);
 
-    const closeModal = () => {
-        setMessageModal({ ...messageModal, isOpen: false });
-    };
+    const closeModal = useCallback(() => {
+        setMessageModal(prev => ({ ...prev, isOpen: false }));
+    }, []);
 
     return {
         messageModal,

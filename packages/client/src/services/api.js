@@ -26,8 +26,18 @@ class ApiService {
   }
 
   // Category methods
-  static async getCategories() {
-    return this.request('/categories');
+  static async getCategories(filters = {}) {
+    const queryParams = new URLSearchParams();
+    
+    // Add filters to query params
+    if (filters.is_visible !== undefined) {
+      queryParams.append('is_visible', filters.is_visible);
+    }
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/categories?${queryString}` : '/categories';
+    
+    return this.request(endpoint);
   }
 
   static async getCategoryById(id) {

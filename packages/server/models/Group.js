@@ -13,14 +13,14 @@ class Group {
 
   static create(name, is_visible = 0) {
     const sql = 'INSERT INTO groups (name, is_visible) VALUES (?, ?)';
-    const result = db.prepare(sql).run(name, is_visible);
-    return { id: result.lastInsertRowid, name, is_visible };
+    const result = db.prepare(sql).run(name, is_visible ? 1 : 0);
+    return { id: result.lastInsertRowid, name, is_visible: is_visible ? 1 : 0 };
   }
 
   static update(id, name, is_visible = 0) {
     const sql = 'UPDATE groups SET name = ?, is_visible = ? WHERE id = ?';
-    db.prepare(sql).run(name, is_visible, id);
-    return { id, name, is_visible };
+    db.prepare(sql).run(name, is_visible ? 1 : 0, id);
+    return { id, name, is_visible: is_visible ? 1 : 0 };
   }
 
   static delete(id) {

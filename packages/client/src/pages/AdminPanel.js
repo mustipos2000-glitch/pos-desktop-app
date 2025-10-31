@@ -65,6 +65,16 @@ const AdminPanel = () => {
           </button>
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+              activeTab === 'groups' 
+                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+            }`}
+            onClick={() => setActiveTab('groups')}
+          >
+            Groups
+          </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
               activeTab === 'users' 
                 ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'

@@ -60,6 +60,15 @@ try {
   }
 }
 
+// Add is_visible column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE categories ADD COLUMN is_visible INTEGER DEFAULT 1`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
 // Create products table
 db.exec(`
   CREATE TABLE IF NOT EXISTS products (

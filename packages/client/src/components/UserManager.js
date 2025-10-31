@@ -248,116 +248,135 @@ const UserManager = () => {
       </div>
 
       {showUserModal && (
-        <div className="modal-overlay" onClick={closeUserModal}>
-          <div className="modal user-modal" onClick={(e) => e.stopPropagation()} key={editingUser ? editingUser.id : 'new-user'}>
-            <h3>{editingUser ? 'Edit User' : 'Add New User'}</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={closeUserModal}>
+          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[600px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} key={editingUser ? editingUser.id : 'new-user'}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-xl font-semibold text-pos-text-primary">{editingUser ? 'Edit User' : 'Add New User'}</h3>
+              <button 
+                onClick={closeUserModal}
+                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
 
-            {errors.general && (
-              <div className="error-message general-error">
-                {errors.general}
-              </div>
-            )}
+            {/* Modal Body */}
+            <div className="px-6 py-4">
+              {errors.general && (
+                <div className="bg-pos-error bg-opacity-10 border border-pos-error text-pos-error px-4 py-3 rounded-lg mb-4 text-sm">
+                  {errors.general}
+                </div>
+              )}
 
-            <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
-              <div className="form-columns">
-              <div className="form-column">
-                <div className="form-group">
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    value={userForm.name}
-                    onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                    className={errors.name ? 'error' : ''}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                  />
-                  {errors.name && <div className="error-message">{errors.name}</div>}
+              <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                      Name <span className="text-pos-error">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={userForm.name}
+                      onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
+                      className={`w-full bg-pos-bg-primary border ${errors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      placeholder="Enter user name"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                    />
+                    {errors.name && <p className="text-pos-error text-xs mt-1">{errors.name}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                      Pincode <span className="text-pos-error">*</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPincode ? "text" : "password"}
+                        maxLength="4"
+                        placeholder="4-digit code"
+                        value={userForm.pincode}
+                        onChange={(e) => setUserForm({ ...userForm, pincode: e.target.value })}
+                        className={`w-full bg-pos-bg-primary border ${errors.pincode ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors pr-10`}
+                        autoComplete="new-password"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-pos-text-muted hover:text-pos-text-primary transition-colors"
+                        onClick={() => setShowPincode(!showPincode)}
+                        title={showPincode ? "Hide pincode" : "Show pincode"}
+                      >
+                        {showPincode ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                            <line x1="1" y1="1" x2="23" y2="23" />
+                          </svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                            <circle cx="12" cy="12" r="3" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    {errors.pincode && <p className="text-pos-error text-xs mt-1">{errors.pincode}</p>}
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Social Security Number</label>
-                  <input
-                    type="number"
-                    placeholder="XXX-XX-XXXX"
-                    value={userForm.social_security}
-                    onChange={(e) => setUserForm({ ...userForm, social_security: e.target.value })}
-                    className={errors.social_security ? 'error' : ''}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                  />
-                  {errors.social_security && <div className="error-message">{errors.social_security}</div>}
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Social Security Number</label>
+                    <input
+                      type="number"
+                      placeholder="XXX-XX-XXXX"
+                      value={userForm.social_security}
+                      onChange={(e) => setUserForm({ ...userForm, social_security: e.target.value })}
+                      className={`w-full bg-pos-bg-primary border ${errors.social_security ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                    />
+                    {errors.social_security && <p className="text-pos-error text-xs mt-1">{errors.social_security}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Identification</label>
+                    <input
+                      type="text"
+                      value={userForm.identification}
+                      onChange={(e) => setUserForm({ ...userForm, identification: e.target.value })}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="ID number"
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                    />
+                  </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Role</label>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Role</label>
                   <select
                     value={userForm.role}
                     onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
                   >
                     <option value="User">User</option>
                     <option value="Admin">Admin</option>
                     <option value="Manager">Manager</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="form-column">
-                <div className="form-group">
-                  <label>Pincode</label>
-                  <div className="password-input-container">
-                    <input
-                      type={showPincode ? "text" : "password"}
-                      maxLength="4"
-                      placeholder="4-digit code"
-                      value={userForm.pincode}
-                      onChange={(e) => setUserForm({ ...userForm, pincode: e.target.value })}
-                      className={errors.pincode ? 'error' : ''}
-                      autoComplete="new-password"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                    />
-                    <button
-                      type="button"
-                      className="password-toggle-btn"
-                      onClick={() => setShowPincode(!showPincode)}
-                      title={showPincode ? "Hide pincode" : "Show pincode"}
-                    >
-                      {showPincode ? (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                          <line x1="1" y1="1" x2="23" y2="23" />
-                        </svg>
-                      ) : (
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                  {errors.pincode && <div className="error-message">{errors.pincode}</div>}
-                </div>
-
-                <div className="form-group">
-                  <label>Identification</label>
-                  <input
-                    type="text"
-                    value={userForm.identification}
-                    onChange={(e) => setUserForm({ ...userForm, identification: e.target.value })}
-                    autoComplete="off"
-                    autoCorrect="off"
-                    autoCapitalize="off"
-                    spellCheck="false"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Avatar Color</label>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-pos-text-muted mb-3">Avatar Color</label>
                   <div className="color-picker">
                     {avatarColors.map(color => (
                       <div
@@ -371,13 +390,21 @@ const UserManager = () => {
                     ))}
                   </div>
                 </div>
-              </div>
+              </form>
             </div>
-            </form>
-
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={closeUserModal}>Cancel</button>
-              <button className="add-btn" onClick={handleAddUser}>
+            
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={closeUserModal}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAddUser}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
                 {editingUser ? 'Update User' : 'Add User'}
               </button>
             </div>
