@@ -50,8 +50,8 @@ class Product {
         const sql = `INSERT INTO products (
       parent_id, name, button_name, production_name, price, vat_takeout, vat_eat_in,
       barcode, category_id, addition_type, display_index, in_web_shop,
-      printer1, printer2, printer3, image
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      printer1, printer2, printer3, image, color, price_vat_inc, sub_product_group
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const params = [
             product.parent_id || null,
@@ -69,7 +69,10 @@ class Product {
             product.printer1 || null,
             product.printer2 || null,
             product.printer3 || null,
-            product.image || null
+            product.image || null,
+            product.color || '#3b82f6',
+            product.price_vat_inc || 0,
+            product.sub_product_group || 0
         ];
 
         const result = db.prepare(sql).run(...params);
@@ -80,7 +83,7 @@ class Product {
         const sql = `UPDATE products SET
       parent_id = ?, name = ?, button_name = ?, production_name = ?, price = ?, vat_takeout = ?, vat_eat_in = ?,
       barcode = ?, category_id = ?, addition_type = ?, display_index = ?, in_web_shop = ?,
-      printer1 = ?, printer2 = ?, printer3 = ?, image = ?
+      printer1 = ?, printer2 = ?, printer3 = ?, image = ?, color = ?, price_vat_inc = ?, sub_product_group = ?
       WHERE id = ?`;
 
         const params = [
@@ -100,6 +103,9 @@ class Product {
             product.printer2 || null,
             product.printer3 || null,
             product.image || null,
+            product.color || '#3b82f6',
+            product.price_vat_inc || 0,
+            product.sub_product_group || 0,
             id
         ];
 
