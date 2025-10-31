@@ -30,16 +30,6 @@ const ProductManager = () => {
     '#fb923c'  // Orange
   ];
 
-  // Color options for product color picker
-  const productColors = [
-    '#3b82f6', // Blue
-    '#10b981', // Green
-    '#ef4444', // Red
-    '#ec4899', // Pink
-    '#fbbf24', // Yellow
-    '#fb923c'  // Orange
-  ];
-
   // Form state for product data
   const [productForm, setProductForm] = useState({
     name: '',
