@@ -202,7 +202,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
                 onClick={() => handleSelect(id)}
                 className={`grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-2.5 items-center text-sm py-1.5 px-5 cursor-pointer ${bgColor}`}
               >
-                <div className={`font-light ${textColor}`}>{item.name}</div>
+                <div className={`font-light ${textColor}`}>{item.name}
+                  
+                </div>
 
                 <div className={`flex items-center gap-2 justify-center ${textColor}`}>
                   <button
@@ -225,6 +227,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
                     +
                   </button>
                 </div>
+  {item.appliedDiscount && (
+  <div className="text-xs text-white.-200 italic">
+    Discount: {item.appliedDiscount}
+  </div>
+)}
 
                 <div className={`text-right ${textColor} font-light`}>
                   {(item.price * item.quantity).toFixed(2)}
@@ -383,28 +390,41 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
             .reduce((sum, i) => sum + i.price * i.quantity, 0)
     }
     onClose={() => setShowDiscountModal(false)}
-    onConfirm={({ discount, mode }) => {
-      if (selectedIds.length === 0) {
-        // Apply discount to entire order
-        setDiscount(Math.abs(discount));
-      } else {
-        // Apply discount to selected items
-        setCart((prev) =>
-          prev.map((item) => {
-            if (selectedIds.includes(item.id)) {
-              const itemTotal = item.price * item.quantity;
-              const updatedTotal =
-                mode === "amount"
-                  ? itemTotal + discount
-                  : itemTotal + (itemTotal * discount) / (calculateTotal() + calculateTax());
-              return { ...item, price: updatedTotal / item.quantity };
-            }
-            return item;
-          })
-        );
-      }
-      setShowDiscountModal(false);
-    }}
+   onConfirm={({ finalPrice, mode, rawInput }) => {
+  if (selectedIds.length === 0) {
+    // Apply discount to the whole order
+    setDiscount((prev) => prev + (mode === "percentage" ? (calculateTotal() + calculateTax()) * (parseFloat(rawInput) / 100) : parseFloat(rawInput)));
+  } else {
+    // Apply to selected items
+    setCart((prev) =>
+      prev.map((item) => {
+        if (selectedIds.includes(item.id)) {
+          const itemTotal = item.price * item.quantity;
+          let discountValue = 0;
+
+          if (mode === "percentage") {
+            discountValue = (itemTotal * parseFloat(rawInput)) / 100;
+          } else {
+            discountValue = parseFloat(rawInput);
+          }
+
+          const updatedTotal = itemTotal - discountValue;
+          return {
+            ...item,
+            price: updatedTotal / item.quantity,
+            appliedDiscount:
+              mode === "percentage"
+                ? `${rawInput}%`
+                : `€${discountValue.toFixed(2)}`,
+          };
+        }
+        return item;
+      })
+    );
+  }
+  setShowDiscountModal(false);
+}}
+
   />
 )}
       {showReceipt && (
