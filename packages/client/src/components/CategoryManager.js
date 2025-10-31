@@ -354,7 +354,7 @@ const CategoryManager = () => {
           {loading ? (
             <div className="loading-state">Loading categories...</div>
           ) : categories.length === 0 ? (
-            <div className="empty-state">
+            <div className="empty-state border p-2">
               No categories found. Click "Add Category" to create your first category.
             </div>
           ) : (
@@ -402,14 +402,14 @@ const CategoryManager = () => {
             <h3>Products</h3>
           
           {!selectedCategory ? (
-            <div className="empty-state">
+            <div className="empty-state border p-2 text-sm text-pos-error">
               Select a category to view its products
             </div>
           ) : loadingProducts ? (
             <div className="loading-state">Loading products...</div>
           ) : products.length === 0 ? (
-            <div className="empty-state">
-              No products found in this category. Click "Add Product" to create one.
+            <div className="empty-state border p-2 text-pos-error text-sm">
+              No products 
             </div>
           ) : (
             <div className="products-column border p-2">
@@ -434,6 +434,7 @@ const CategoryManager = () => {
         <div className='sub-product-section'> 
           <h3> Attached Sub-products</h3>
         </div>
+        
       </div>
 
       {showAddCategory && (
