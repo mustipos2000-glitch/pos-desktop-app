@@ -21,8 +21,8 @@ const POSScreen = () => {
       try {
         setLoading(true);
 
-        // Fetch categories
-        const categoryResponse = await ApiService.getCategories();
+        // Fetch categories (only visible ones)
+        const categoryResponse = await ApiService.getCategories({ is_visible: true });
         const categoryNames = categoryResponse.data.map(category => category.name);
         setCategories(categoryNames);
 

@@ -865,6 +865,43 @@ const ProductManager = () => {
                 <button className="cancel-btn" onClick={() => setShowEditProduct(false)}>Cancel</button>
                 <button className="save-btn" onClick={handleUpdateProduct}>Update Product</button>
               </div>
+
+              {/* Appearance Section */}
+              <div className="mb-2">
+                <div className="grid grid-cols-1 gap-2">
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-3">Product Color</label>
+                    <div className="color-picker">
+                      {productColors.map(color => (
+                        <div
+                          key={color}
+                          className={`color-option ${productForm.color === color ? 'selected' : ''}`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setProductForm({ ...productForm, color })}
+                        >
+                          {productForm.color === color && '✓'}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setShowEditProduct(false)}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUpdateProduct}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Update Product
+              </button>
             </div>
           </div>
         </div>

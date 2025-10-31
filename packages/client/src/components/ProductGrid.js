@@ -43,7 +43,7 @@ const ProductGrid = ({ products, onAddToCart }) => {
     try {
       setLoadingSubProducts(true);
       setSelectedProductId(product.id);
-      
+
       // Check if product has sub-products
       const response = await ApiService.getSubProductsByProductId(product.id);
       const productSubProducts = response.data;
@@ -89,16 +89,15 @@ const ProductGrid = ({ products, onAddToCart }) => {
         {products.map((product) => (
           <div
             key={product.id}
-            className={`card card-hover max-w-24 border-pos-border-accent flex flex-col gap-0.5 ${
-              selectedProductId === product.id ? 'border-pos-info bg-pos-bg-tertiary' : 'bg-pos-bg-tertiary'
-            }`}
+            className={`card card-hover max-w-24 border-pos-border-accent flex flex-col gap-0.5 ${selectedProductId === product.id ? 'border-pos-info bg-pos-bg-tertiary' : 'bg-pos-bg-tertiary'
+              }`}
             onClick={() => handleProductClick(product)}
           >
             <div className="max-w-24 h-12 flex items-center justify-center text-4xl overflow-hidden" style={{ background: product.color }}>
               {isImageUrl(product.image) ? (
-                <img 
-                  src={`http://localhost:5000${product.image}`} 
-                  alt={product.name} 
+                <img
+                  src={`http://localhost:5000${product.image}`}
+                  alt={product.name}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -115,7 +114,7 @@ const ProductGrid = ({ products, onAddToCart }) => {
 
       {/* Sub-products section at the bottom */}
       {(selectedProductId && (subProducts.length > 0 || loadingSubProducts)) && (
-        <div className="bg-pos-bg-accent border-t-2 border-pos-border-accent p-4 max-h-[40vh] overflow-y-auto scrollbar-custom" style={{animation: 'slideUp 0.3s ease-out'}} ref={subProductsRef}>
+        <div className="bg-pos-bg-accent border-t-2 border-pos-border-accent p-4 max-h-[40vh] overflow-y-auto scrollbar-custom" style={{ animation: 'slideUp 0.3s ease-out' }} ref={subProductsRef}>
           {loadingSubProducts ? (
             <div className="flex flex-col items-center justify-center gap-2 p-4 text-pos-text-muted text-xs">
               <div className="w-5 h-5 border-2 border-pos-border-accent border-t-pos-info rounded-full animate-spin"></div>
@@ -125,8 +124,8 @@ const ProductGrid = ({ products, onAddToCart }) => {
             <>
               <div className="flex justify-between items-center mb-4 pb-2 border-b border-pos-border-accent">
                 <h3 className="text-white m-0 text-base font-semibold">Select {products.find(p => p.id === selectedProductId)?.name} variant</h3>
-                <button 
-                  className="bg-none border-none text-pos-text-muted text-2xl cursor-pointer p-0 w-7.5 h-7.5 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-pos-border-accent hover:text-white" 
+                <button
+                  className="bg-none border-none text-pos-text-muted text-2xl cursor-pointer p-0 w-7.5 h-7.5 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-pos-border-accent hover:text-white"
                   onClick={() => {
                     setSelectedProductId(null);
                     setSubProducts([]);
@@ -144,9 +143,9 @@ const ProductGrid = ({ products, onAddToCart }) => {
                   >
                     <div className="h-10 flex items-center justify-center text-2xl rounded overflow-hidden" style={{ background: subProduct.color }}>
                       {isImageUrl(subProduct.image) ? (
-                        <img 
-                          src={`http://localhost:5000${subProduct.image}`} 
-                          alt={subProduct.name} 
+                        <img
+                          src={`http://localhost:5000${subProduct.image}`}
+                          alt={subProduct.name}
                           className="w-full h-full object-cover rounded"
                         />
                       ) : (
