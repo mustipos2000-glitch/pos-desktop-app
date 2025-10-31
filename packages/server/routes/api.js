@@ -2,7 +2,6 @@ const express = require('express');
 const multer = require('multer');
 const router = express.Router();
 const CategoryController = require('../controllers/CategoryController');
-const GroupController = require('../controllers/GroupController');
 const UserController = require('../controllers/UserController');
 const ProductController = require('../controllers/ProductController');
 const SubProductController = require('../controllers/SubProductController');
@@ -27,13 +26,6 @@ router.put('/categories/:id', CategoryController.updateCategory);
 router.delete('/categories/:id', CategoryController.deleteCategory);
 router.post('/categories/:id/move-up', CategoryController.moveUp);
 router.post('/categories/:id/move-down', CategoryController.moveDown);
-
-// Group routes
-router.get('/groups', GroupController.getAllGroups);
-router.get('/groups/:id', GroupController.getGroupById);
-router.post('/groups', GroupController.createGroup);
-router.put('/groups/:id', GroupController.updateGroup);
-router.delete('/groups/:id', GroupController.deleteGroup);
 
 // Product routes
 router.get('/products', ProductController.getAllProducts);

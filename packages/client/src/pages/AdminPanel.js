@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import ProductManager from '../components/ProductManager';
 import SubProductManager from '../components/SubProductManager';
 import CategoryManager from '../components/CategoryManager';
-import GroupManager from '../components/GroupManager';
 import UserManager from '../components/UserManager';
 
 const AdminPanel = () => {
@@ -32,16 +31,6 @@ const AdminPanel = () => {
             onClick={() => setActiveTab('categories')}
           >
             Categories
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'groups' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('groups')}
-          >
-            Groups
           </button>
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
@@ -79,7 +68,6 @@ const AdminPanel = () => {
           {activeTab === 'products' && <ProductManager />}
           {activeTab === 'sub-products' && <SubProductManager />}
           {activeTab === 'categories' && <CategoryManager />}
-          {activeTab === 'groups' && <GroupManager />}
           {activeTab === 'users' && <UserManager />}
 
           {activeTab === 'settings' && (
