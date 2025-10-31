@@ -439,7 +439,7 @@ const SubProductManager = () => {
                 {fieldErrors.product_id && <p className="text-pos-error text-xs mt-1">{fieldErrors.product_id}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">
                     Sub-Product Name <span className="text-pos-error">*</span>
@@ -509,7 +509,7 @@ const SubProductManager = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
                   <input
@@ -535,7 +535,7 @@ const SubProductManager = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
                   <input
@@ -615,7 +615,7 @@ const SubProductManager = () => {
                 {fieldErrors.product_id && <p className="text-pos-error text-xs mt-1">{fieldErrors.product_id}</p>}
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">
                     Sub-Product Name <span className="text-pos-error">*</span>
@@ -685,7 +685,7 @@ const SubProductManager = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
                   <input
@@ -711,7 +711,7 @@ const SubProductManager = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
                   <input
