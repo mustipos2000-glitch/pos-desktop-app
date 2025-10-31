@@ -12,9 +12,9 @@ if (isDev) {
   dbDir = path.join(__dirname, '../../..', 'database');
 } else {
   // Production: use user's app data directory
-  const appDataDir = process.env.APPDATA || 
-                     (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') : 
-                      path.join(os.homedir(), '.local', 'share'));
+  const appDataDir = process.env.APPDATA ||
+    (process.platform === 'darwin' ? path.join(os.homedir(), 'Library', 'Application Support') :
+      path.join(os.homedir(), '.local', 'share'));
   dbDir = path.join(appDataDir, 'POS Desktop', 'database');
 }
 
@@ -101,6 +101,30 @@ try {
   }
 }
 
+// Add color column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN color TEXT DEFAULT '#3b82f6'`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+// Add price_vat_inc column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN price_vat_inc REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+// Add sub_product_group column if it doesn't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN sub_product_group INTEGER DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
 // Migrate data from sub_products to products if sub_products table exists
 try {
   const subProductsExist = db.prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='sub_products'`).get();
@@ -150,6 +174,15 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY(product_id) REFERENCES products(id)
+  )
+`);
+
+// Create groups table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS groups (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    is_visible INTEGER DEFAULT 0
   )
 `);
 

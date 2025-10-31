@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReceiptModal from "./ReceiptModal";
 import ConfirmationModal from "./ConfirmationModal";
-import DiscountModal from "./DiscountModal";
+import PaymentModal from "./PaymentModal";
 import ApiService from "../services/api";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
@@ -14,7 +14,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
   const [lastAddedId, setLastAddedId] = useState(null);
   const prevCartLengthRef = useRef(cart.length);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
-  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
 
   // Track last added item. Only auto-set when items are added; clear selection when items are removed.
   useEffect(() => {
@@ -69,15 +70,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
     setLastAddedId(null);
   };
 
-  // Delete single item
-  const handleDeleteSingle = (e, itemId) => {
-    e.stopPropagation();
-    const id = Number(itemId);
-    setCart((prev) => prev.filter((item) => Number(item.id) !== id));
-    // When deleting a selected product, clear selection and active item
-    setSelectedIds([]);
-    setLastAddedId(null);
-  };
+
 
   const handleDeleteAllConfirm = () => {
     // Clear entire cart and selection
@@ -95,8 +88,21 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
   const calculateTax = () =>
     cart.reduce((sum, item) => sum + item.price * item.quantity * 0.12, 0);
 
-  const handleCashPayment = async () => {
+  const handlePayment = (paymentMethod = 'cash') => {
     if (cart.length === 0) return;
+    setSelectedPaymentMethod(paymentMethod);
+    setShowPaymentModal(true);
+  };
+
+  const handleCashPayment = () => {
+    handlePayment('cash');
+  };
+
+  const handleCardPayment = () => {
+    handlePayment('card');
+  };
+
+  const handlePaymentConfirm = async (paymentData) => {
     setIsProcessing(true);
     try {
       const subTotal = calculateTotal();
@@ -110,6 +116,12 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
         sub_total: subTotal,
         total,
         discount,
+        payment_method: paymentData.cashAmount > 0 && paymentData.cardAmount > 0 ? 'mixed' : 
+                       paymentData.cashAmount > 0 ? 'cash' : 'card',
+        cash_amount: paymentData.cashAmount,
+        card_amount: paymentData.cardAmount,
+        total_paid: paymentData.totalPaid,
+        change_due: paymentData.changeDue,
         details: cart.map((item) => ({
           product_id: item.id,
           qty: item.quantity,
@@ -118,6 +130,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
       };
 
       await ApiService.createOrder(orderData);
+      setShowPaymentModal(false);
       setShowReceipt(true);
     } catch (error) {
       console.error("Error processing order:", error);
@@ -202,9 +215,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
                 onClick={() => handleSelect(id)}
                 className={`grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-2.5 items-center text-sm py-1.5 px-5 cursor-pointer ${bgColor}`}
               >
-                <div className={`font-light ${textColor}`}>{item.name}
-                  
-                </div>
+                <div className={`font-light ${textColor}`}>{item.name}</div>
 
                 <div className={`flex items-center gap-2 justify-center ${textColor}`}>
                   <button
@@ -227,11 +238,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
                     +
                   </button>
                 </div>
-  {item.appliedDiscount && (
-  <div className="text-xs text-white.-200 italic">
-    Discount: {item.appliedDiscount}
-  </div>
-)}
 
                 <div className={`text-right ${textColor} font-light`}>
                   {(item.price * item.quantity).toFixed(2)}
@@ -333,20 +339,27 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
 
         {/* Select All */}
         <button
-          className=" bg-pos-interactive-primary  text-sm   font-medium"
-           onClick={() => setShowDiscountModal(true)}
+          className=" text-sm   font-medium"
+          onClick={handleSelectAll}
           title="Discount"
         >
           Discount
         </button>
 
-        <button className=" btn-primary  text-sm font-medium">Drawer</button>
-        <button className="btn-primary text-sm font-medium">Card</button>
+        <button className="btn-primary text-sm font-medium">Drawer</button>
+        
+        <button
+          className="btn-primary text-sm font-medium disabled:opacity-50"
+          onClick={handleCardPayment}
+          disabled={isProcessing || cart.length === 0}
+        >
+          Card
+        </button>
 
         <button
           className="btn-primary text-sm font-medium disabled:opacity-50"
           onClick={handleCashPayment}
-          disabled={isProcessing}
+          disabled={isProcessing || cart.length === 0}
         >
           {isProcessing ? "Processing..." : "Cash"}
         </button>
@@ -360,73 +373,22 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
           handleDeleteAllConfirm();
           setShowDeleteAllModal(false);
         }}
-        
         title="Delete Order"
         message={`This order has ${totalProductCount()} product(s). Do you want to delete?`}
         confirmText="Yes, Delete"
         cancelText="No"
         type="danger"
       />
- 
 
-{/* discount modal logic opening closing and % and amount  */}
-{showDiscountModal && (
-  <DiscountModal
-    title={
-      selectedIds.length === 0
-        ? "Whole Order"
-        : selectedIds.length === 1
-        ? cart.find((item) => item.id === selectedIds[0])?.name
-        : cart
-            .filter((item) => selectedIds.includes(item.id))
-            .map((i) => i.name)
-            .join(", ")
-    }
-    basePrice={
-      selectedIds.length === 0
-        ? calculateTotal() + calculateTax()
-        : cart
-            .filter((item) => selectedIds.includes(item.id))
-            .reduce((sum, i) => sum + i.price * i.quantity, 0)
-    }
-    onClose={() => setShowDiscountModal(false)}
-   onConfirm={({ finalPrice, mode, rawInput }) => {
-  if (selectedIds.length === 0) {
-    // Apply discount to the whole order
-    setDiscount((prev) => prev + (mode === "percentage" ? (calculateTotal() + calculateTax()) * (parseFloat(rawInput) / 100) : parseFloat(rawInput)));
-  } else {
-    // Apply to selected items
-    setCart((prev) =>
-      prev.map((item) => {
-        if (selectedIds.includes(item.id)) {
-          const itemTotal = item.price * item.quantity;
-          let discountValue = 0;
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        total={calculateTotal() + calculateTax() - discount}
+        onConfirm={handlePaymentConfirm}
+        defaultPaymentMethod={selectedPaymentMethod}
+      />
 
-          if (mode === "percentage") {
-            discountValue = (itemTotal * parseFloat(rawInput)) / 100;
-          } else {
-            discountValue = parseFloat(rawInput);
-          }
-
-          const updatedTotal = itemTotal - discountValue;
-          return {
-            ...item,
-            price: updatedTotal / item.quantity,
-            appliedDiscount:
-              mode === "percentage"
-                ? `${rawInput}%`
-                : `€${discountValue.toFixed(2)}`,
-          };
-        }
-        return item;
-      })
-    );
-  }
-  setShowDiscountModal(false);
-}}
-
-  />
-)}
       {showReceipt && (
         <ReceiptModal
           cart={cart}
