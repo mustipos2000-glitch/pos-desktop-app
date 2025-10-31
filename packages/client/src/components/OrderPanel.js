@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReceiptModal from "./ReceiptModal";
 import ConfirmationModal from "./ConfirmationModal";
+import DiscountModal from "./DiscountModal";
 import ApiService from "../services/api";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
@@ -13,6 +14,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
   const [lastAddedId, setLastAddedId] = useState(null);
   const prevCartLengthRef = useRef(cart.length);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
 
   // Track last added item. Only auto-set when items are added; clear selection when items are removed.
   useEffect(() => {
@@ -324,14 +326,14 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
 
         {/* Select All */}
         <button
-          className=" text-sm   font-medium"
-          onClick={handleSelectAll}
+          className=" bg-pos-interactive-primary  text-sm   font-medium"
+           onClick={() => setShowDiscountModal(true)}
           title="Discount"
         >
           Discount
         </button>
 
-        <button className="btn-primary text-sm font-medium">Drawer</button>
+        <button className=" btn-primary  text-sm font-medium">Drawer</button>
         <button className="btn-primary text-sm font-medium">Card</button>
 
         <button
@@ -351,13 +353,60 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
           handleDeleteAllConfirm();
           setShowDeleteAllModal(false);
         }}
+        
         title="Delete Order"
         message={`This order has ${totalProductCount()} product(s). Do you want to delete?`}
         confirmText="Yes, Delete"
         cancelText="No"
         type="danger"
       />
+ 
 
+{/* discount modal logic opening closing and % and amount  */}
+{showDiscountModal && (
+  <DiscountModal
+    title={
+      selectedIds.length === 0
+        ? "Whole Order"
+        : selectedIds.length === 1
+        ? cart.find((item) => item.id === selectedIds[0])?.name
+        : cart
+            .filter((item) => selectedIds.includes(item.id))
+            .map((i) => i.name)
+            .join(", ")
+    }
+    basePrice={
+      selectedIds.length === 0
+        ? calculateTotal() + calculateTax()
+        : cart
+            .filter((item) => selectedIds.includes(item.id))
+            .reduce((sum, i) => sum + i.price * i.quantity, 0)
+    }
+    onClose={() => setShowDiscountModal(false)}
+    onConfirm={({ discount, mode }) => {
+      if (selectedIds.length === 0) {
+        // Apply discount to entire order
+        setDiscount(Math.abs(discount));
+      } else {
+        // Apply discount to selected items
+        setCart((prev) =>
+          prev.map((item) => {
+            if (selectedIds.includes(item.id)) {
+              const itemTotal = item.price * item.quantity;
+              const updatedTotal =
+                mode === "amount"
+                  ? itemTotal + discount
+                  : itemTotal + (itemTotal * discount) / (calculateTotal() + calculateTax());
+              return { ...item, price: updatedTotal / item.quantity };
+            }
+            return item;
+          })
+        );
+      }
+      setShowDiscountModal(false);
+    }}
+  />
+)}
       {showReceipt && (
         <ReceiptModal
           cart={cart}
