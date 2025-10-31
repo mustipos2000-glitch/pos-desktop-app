@@ -151,11 +151,11 @@
   }
 
   .admin-section {
-    @apply p-6 overflow-y-auto scrollbar-custom;
+    @apply p-2 overflow-y-auto scrollbar-custom;
   }
 
   .admin-section h2 {
-    @apply text-pos-text-primary text-xl font-semibold mb-6;
+    @apply text-pos-text-primary text-xl font-semibold mb-2;
   }
 
   .data-table {
