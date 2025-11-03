@@ -27,9 +27,8 @@
 
 .categories-column,
 .products-column {
-    min-height: 200px;
-    /* max-height: 500px;
-    overflow-y: auto; */
+    min-height: 256px;
+    min-width: 160px;
 }
 
 .category-item,
