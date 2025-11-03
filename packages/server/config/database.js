@@ -195,6 +195,16 @@ db.exec(`
   )
 `);
 
+// Create rooms table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS rooms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    total_table INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 
 
 // Insert default admin user if no users exist

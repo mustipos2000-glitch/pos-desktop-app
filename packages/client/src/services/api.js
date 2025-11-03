@@ -154,6 +154,35 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Room methods
+  static async getRooms() {
+    return this.request('/rooms');
+  }
+
+  static async getRoomById(id) {
+    return this.request(`/rooms/${id}`);
+  }
+
+  static async createRoom(roomData) {
+    return this.request('/rooms', {
+      method: 'POST',
+      body: JSON.stringify(roomData),
+    });
+  }
+
+  static async updateRoom(id, roomData) {
+    return this.request(`/rooms/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(roomData),
+    });
+  }
+
+  static async deleteRoom(id) {
+    return this.request(`/rooms/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default ApiService;
