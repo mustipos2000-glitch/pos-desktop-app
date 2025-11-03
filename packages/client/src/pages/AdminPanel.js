@@ -5,6 +5,7 @@ import SubProductManager from '../components/SubProductManager';
 import CategoryManager from '../components/CategoryManager';
 import GroupManager from '../components/GroupManager';
 import UserManager from '../components/UserManager';
+import RoomManager from '../components/RoomManager';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -83,6 +84,16 @@ const AdminPanel = () => {
           >
             Users
           </button>
+          <button
+            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+              activeTab === 'rooms' 
+                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+            }`}
+            onClick={() => setActiveTab('rooms')}
+          >
+            Rooms
+          </button>
         </div>
 
         <div className="flex-1 overflow-hidden">
@@ -91,6 +102,7 @@ const AdminPanel = () => {
           {activeTab === 'categories' && <CategoryManager />}
           {activeTab === 'groups' && <GroupManager />}
           {activeTab === 'users' && <UserManager />}
+          {activeTab === 'rooms' && <RoomManager />}
 
           {activeTab === 'settings' && (
             <div className="p-6 overflow-y-auto scrollbar-custom">

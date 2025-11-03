@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
+import ProductFormModal from './ProductFormModal';
 import { useMessageModal } from '../hooks/useMessageModal';
 import './css/CategoryManager.css';
 
@@ -20,11 +21,6 @@ const CategoryManager = () => {
     next_course: 0,
     in_web_shop: 0,
     is_visible: 1
-  });
-  const [productForm, setProductForm] = useState({
-    name: '',
-    price: '',
-    category_id: ''
   });
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
@@ -223,34 +219,48 @@ const CategoryManager = () => {
     }
   };
 
-  const handleAddProduct = async () => {
-    if (!productForm.name || !productForm.price) {
-      showWarning('Please fill in all required fields', 'Missing Information');
-      return;
-    }
-
+  const handleAddProduct = async (productFormData, imageFile) => {
     try {
       const url = editingProduct
         ? `http://localhost:5000/api/products/${editingProduct.id}`
         : 'http://localhost:5000/api/products';
 
-      const productData = {
-        ...productForm,
-        category_id: selectedCategory.id,
-        price: parseFloat(productForm.price)
-      };
+      // Create FormData object to handle file uploads
+      const formData = new FormData();
+
+      // Append all product data to FormData
+      formData.append('name', productFormData.name);
+      formData.append('button_name', productFormData.button_name || '');
+      formData.append('production_name', productFormData.production_name || '');
+      formData.append('price', parseFloat(productFormData.price) || 0);
+      formData.append('vat_takeout', parseFloat(productFormData.vat_takeout) || 0);
+      formData.append('vat_eat_in', parseFloat(productFormData.vat_eat_in) || 0);
+      formData.append('barcode', productFormData.barcode || '');
+      formData.append('category_id', productFormData.category_id ? parseInt(productFormData.category_id) : selectedCategory.id);
+      formData.append('addition_type', productFormData.addition_type || '');
+      formData.append('display_index', parseInt(productFormData.display_index) || 0);
+      formData.append('in_web_shop', productFormData.in_web_shop ? 1 : 0);
+      formData.append('printer1', productFormData.printer1 || '');
+      formData.append('printer2', productFormData.printer2 || '');
+      formData.append('printer3', productFormData.printer3 || '');
+      formData.append('color', productFormData.color || '#3b82f6');
+      formData.append('price_vat_inc', parseFloat(productFormData.price_vat_inc) || 0);
+      formData.append('sub_product_group', productFormData.sub_product_group ? 1 : 0);
+      
+      // Append image file if selected
+      if (imageFile) {
+        formData.append('image', imageFile);
+      }
 
       const response = await fetch(url, {
         method: editingProduct ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productData)
+        body: formData
       });
 
       if (response.ok) {
         fetchProducts(selectedCategory.id);
         setShowAddProduct(false);
         setEditingProduct(null);
-        setProductForm({ name: '', price: '', category_id: '' });
       } else {
         const error = await response.json();
         showError(error.error || 'Failed to save product');
@@ -263,11 +273,6 @@ const CategoryManager = () => {
 
   const handleEditProduct = (product) => {
     setEditingProduct(product);
-    setProductForm({
-      name: product.name || '',
-      price: product.price || '',
-      category_id: product.category_id || selectedCategory?.id || ''
-    });
     setShowAddProduct(true);
   };
 
@@ -324,7 +329,6 @@ const CategoryManager = () => {
               className="btn-primary"
               onClick={() => {
                 setEditingProduct(null);
-                setProductForm({ name: '', price: '', category_id: selectedCategory?.id || '' });
                 setShowAddProduct(true);
               }}
               disabled={!selectedCategory}
@@ -500,41 +504,17 @@ const CategoryManager = () => {
         </div>
       )}
 
-      {showAddProduct && (
-        <div className="modal-overlay" onClick={() => setShowAddProduct(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{editingProduct ? 'Edit Product' : 'Add New Product'}</h3>
-
-            <div className="form-group">
-              <label>Product Name</label>
-              <input
-                type="text"
-                value={productForm.name}
-                onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Price</label>
-              <input
-                type="number"
-                step="0.01"
-                value={productForm.price}
-                onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-              />
-            </div>
-
-            <div className="modal-actions">
-              <button className="cancel-btn" onClick={() => setShowAddProduct(false)}>
-                Cancel
-              </button>
-              <button className="add-btn" onClick={handleAddProduct}>
-                {editingProduct ? 'Update Product' : 'Add Product'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProductFormModal
+        isOpen={showAddProduct}
+        onClose={() => {
+          setShowAddProduct(false);
+          setEditingProduct(null);
+        }}
+        onSubmit={handleAddProduct}
+        product={editingProduct}
+        categories={categories}
+        selectedCategoryId={selectedCategory?.id}
+      />
 
       <ConfirmationModal
         isOpen={deleteConfirmation.isOpen}
