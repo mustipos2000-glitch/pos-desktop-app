@@ -7,6 +7,7 @@ const UserController = require('../controllers/UserController');
 const ProductController = require('../controllers/ProductController');
 const SubProductController = require('../controllers/SubProductController');
 const OrderController = require('../controllers/OrderController');
+const RoomController = require('../controllers/RoomController');
 
 
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
@@ -57,5 +58,12 @@ router.get('/orders/:id', OrderController.getOrderById);
 router.post('/orders', OrderController.createOrder);
 router.put('/orders/:id', OrderController.updateOrder);
 router.delete('/orders/:id', OrderController.deleteOrder);
+
+// Room routes
+router.get('/rooms', RoomController.getAllRooms);
+router.get('/rooms/:id', RoomController.getRoomById);
+router.post('/rooms', RoomController.createRoom);
+router.put('/rooms/:id', RoomController.updateRoom);
+router.delete('/rooms/:id', RoomController.deleteRoom);
 
 module.exports = router;
