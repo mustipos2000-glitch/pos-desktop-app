@@ -405,7 +405,7 @@ const UserManager = () => {
                 onClick={handleAddUser}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
-                {editingUser ? 'Update User' : 'Add User'}
+                {editingUser ? 'Update' : 'Add'}
               </button>
             </div>
           </div>

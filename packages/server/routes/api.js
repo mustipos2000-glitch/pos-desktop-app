@@ -51,6 +51,8 @@ router.get('/products/:productId/sub-products', SubProductController.getSubProdu
 router.post('/sub-products', upload.single('image'), SubProductController.createSubProduct);
 router.put('/sub-products/:id', upload.single('image'), SubProductController.updateSubProduct);
 router.delete('/sub-products/:id', SubProductController.deleteSubProduct);
+router.post('/sub-products/assign-to-product', SubProductController.assignSubProductsToProduct);
+router.post('/sub-products/unassign-from-product', SubProductController.unassignSubProductsFromProduct);
 
 // Order routes
 router.get('/orders', OrderController.getAllOrders);

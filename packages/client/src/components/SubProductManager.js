@@ -9,6 +9,7 @@ const SubProductManager = () => {
   const [subProducts, setSubProducts] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [showAddSubProduct, setShowAddSubProduct] = useState(false);
   const [showEditSubProduct, setShowEditSubProduct] = useState(false);
   const [currentSubProduct, setCurrentSubProduct] = useState(null);
@@ -23,6 +24,7 @@ const SubProductManager = () => {
 
   // Form state for sub-product data
   const [subProductForm, setSubProductForm] = useState({
+    group_id: '',
     product_id: '',
     name: '',
     button_name: '',
@@ -38,7 +40,9 @@ const SubProductManager = () => {
     printer1: '',
     printer2: '',
     printer3: '',
-    image: ''
+    image: '',
+    color: '#3b82f6',
+    price_vat_inc: ''
   });
 
   // State for file inputs
@@ -78,10 +82,21 @@ const SubProductManager = () => {
     }
   };
 
+  const fetchGroups = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/groups');
+      const result = await response.json();
+      setGroups(result.data || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+    }
+  };
+
   useEffect(() => {
     fetchSubProducts();
     fetchProducts();
     fetchCategories();
+    fetchGroups();
   }, []);
 
   const handleInputChange = (e) => {
@@ -121,6 +136,7 @@ const SubProductManager = () => {
 
   const resetForm = () => {
     setSubProductForm({
+      group_id: '',
       product_id: '',
       name: '',
       button_name: '',
@@ -136,7 +152,9 @@ const SubProductManager = () => {
       printer1: '',
       printer2: '',
       printer3: '',
-      image: ''
+      image: '',
+      color: '#3b82f6',
+      price_vat_inc: ''
     });
     setImageFile(null);
     setFieldErrors({});
@@ -145,9 +163,6 @@ const SubProductManager = () => {
   const handleAddSubProduct = async () => {
     // Validate required fields
     const errors = {};
-    if (!subProductForm.product_id) {
-      errors.product_id = 'Parent Product is required';
-    }
     if (!subProductForm.name) {
       errors.name = 'Sub-Product name is required';
     }
@@ -164,7 +179,12 @@ const SubProductManager = () => {
       const formData = new FormData();
 
       // Append all sub-product data to FormData
-      formData.append('product_id', parseInt(subProductForm.product_id));
+      if (subProductForm.group_id) {
+        formData.append('group_id', parseInt(subProductForm.group_id));
+      }
+      if (subProductForm.product_id) {
+        formData.append('product_id', parseInt(subProductForm.product_id));
+      }
       formData.append('name', subProductForm.name);
       formData.append('button_name', subProductForm.button_name || '');
       formData.append('production_name', subProductForm.production_name || '');
@@ -179,6 +199,8 @@ const SubProductManager = () => {
       formData.append('printer1', subProductForm.printer1 || '');
       formData.append('printer2', subProductForm.printer2 || '');
       formData.append('printer3', subProductForm.printer3 || '');
+      formData.append('color', subProductForm.color || '#3b82f6');
+      formData.append('price_vat_inc', parseFloat(subProductForm.price_vat_inc) || 0);
 
       // Append image file if selected
       if (imageFile) {
@@ -207,7 +229,8 @@ const SubProductManager = () => {
   const handleEditSubProduct = (subProduct) => {
     setCurrentSubProduct(subProduct);
     setSubProductForm({
-      product_id: subProduct.parent_id || subProduct.product_id || '',
+      group_id: subProduct.group_id || '',
+      product_id: subProduct.product_id || '',
       name: subProduct.name || '',
       button_name: subProduct.button_name || '',
       production_name: subProduct.production_name || '',
@@ -222,7 +245,9 @@ const SubProductManager = () => {
       printer1: subProduct.printer1 || '',
       printer2: subProduct.printer2 || '',
       printer3: subProduct.printer3 || '',
-      image: subProduct.image || ''
+      image: subProduct.image || '',
+      color: subProduct.color || '#3b82f6',
+      price_vat_inc: subProduct.price_vat_inc || ''
     });
     setImageFile(null);
     setShowEditSubProduct(true);
@@ -231,9 +256,6 @@ const SubProductManager = () => {
   const handleUpdateSubProduct = async () => {
     // Validate required fields
     const errors = {};
-    if (!subProductForm.product_id) {
-      errors.product_id = 'Parent Product is required';
-    }
     if (!subProductForm.name) {
       errors.name = 'Sub-Product name is required';
     }
@@ -248,7 +270,12 @@ const SubProductManager = () => {
     try {
       const formData = new FormData();
 
-      formData.append('product_id', parseInt(subProductForm.product_id));
+      if (subProductForm.group_id) {
+        formData.append('group_id', parseInt(subProductForm.group_id));
+      }
+      if (subProductForm.product_id) {
+        formData.append('product_id', parseInt(subProductForm.product_id));
+      }
       formData.append('name', subProductForm.name);
       formData.append('button_name', subProductForm.button_name || '');
       formData.append('production_name', subProductForm.production_name || '');
@@ -263,6 +290,8 @@ const SubProductManager = () => {
       formData.append('printer1', subProductForm.printer1 || '');
       formData.append('printer2', subProductForm.printer2 || '');
       formData.append('printer3', subProductForm.printer3 || '');
+      formData.append('color', subProductForm.color || '#3b82f6');
+      formData.append('price_vat_inc', parseFloat(subProductForm.price_vat_inc) || 0);
 
       if (imageFile) {
         formData.append('image', imageFile);
@@ -358,7 +387,8 @@ const SubProductManager = () => {
         <table>
           <thead>
             <tr>
-              <th>Parent Product</th>
+              <th>Group</th>
+              <th>Product</th>
               <th>Name</th>
               <th>Button Name</th>
               <th>Price</th>
@@ -371,7 +401,8 @@ const SubProductManager = () => {
           <tbody>
             {subProducts.map(subProduct => (
               <tr key={subProduct.id}>
-                <td>{subProduct.parent_name || getProductName(subProduct.parent_id)}</td>
+                <td>{subProduct.group_name || '-'}</td>
+                <td>{subProduct.product_name || '-'}</td>
                 <td>{subProduct.name}</td>
                 <td>{subProduct.button_name || '-'}</td>
                 <td>${parseFloat(subProduct.price).toFixed(2)}</td>
@@ -389,13 +420,13 @@ const SubProductManager = () => {
                     icon="✏️"
                     className="edit"
                     onClick={() => handleEditSubProduct(subProduct)}
-                    title="Edit sub-product"
+                    title="Edit"
                   />
                   <IconButton
                     icon="🗑️"
                     className="delete"
                     onClick={() => openDeleteConfirmation(subProduct)}
-                    title="Delete sub-product"
+                    title="Delete"
                   />
                 </td>
               </tr>
@@ -410,7 +441,7 @@ const SubProductManager = () => {
           <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">Add New Sub-Product</h3>
+              <h3 className="text-xl font-semibold text-pos-text-primary">Add New Sub Product</h3>
               <button 
                 onClick={() => setShowAddSubProduct(false)}
                 className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
@@ -421,28 +452,26 @@ const SubProductManager = () => {
             
             {/* Modal Body */}
             <div className="px-6 py-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                  Parent Product <span className="text-pos-error">*</span>
-                </label>
-                <select
-                  name="product_id"
-                  value={subProductForm.product_id}
-                  onChange={handleInputChange}
-                  className={`w-full bg-pos-bg-primary border ${fieldErrors.product_id ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                >
-                  <option value="">Select Parent Product</option>
-                  {products.map(product => (
-                    <option key={product.id} value={product.id}>{product.name}</option>
-                  ))}
-                </select>
-                {fieldErrors.product_id && <p className="text-pos-error text-xs mt-1">{fieldErrors.product_id}</p>}
-              </div>
-
               <div className="grid grid-cols-3 gap-4 mb-4">
+                 <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                    Group Name
+                  </label>
+                  <select
+                    name="group_id"
+                    value={subProductForm.group_id}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                  >
+                    <option value="">Select Group</option>
+                    {groups.map(group => (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Sub-Product Name <span className="text-pos-error">*</span>
+                    Sub Product Name <span className="text-pos-error">*</span>
                   </label>
                   <input
                     type="text"
@@ -533,10 +562,8 @@ const SubProductManager = () => {
                     placeholder="Product barcode"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>
+                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
                   <input
                     type="text"
@@ -547,7 +574,9 @@ const SubProductManager = () => {
                     placeholder="Addition type"
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Image</label>
                   <input
@@ -573,7 +602,7 @@ const SubProductManager = () => {
                 onClick={handleAddSubProduct}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
-                Add Sub-Product
+                Add
               </button>
             </div>
           </div>
@@ -586,7 +615,7 @@ const SubProductManager = () => {
           <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">Edit Sub-Product</h3>
+              <h3 className="text-xl font-semibold text-pos-text-primary">Edit Sub Product</h3>
               <button 
                 onClick={() => setShowEditSubProduct(false)}
                 className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
@@ -597,28 +626,27 @@ const SubProductManager = () => {
             
             {/* Modal Body */}
             <div className="px-6 py-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                  Parent Product <span className="text-pos-error">*</span>
-                </label>
-                <select
-                  name="product_id"
-                  value={subProductForm.product_id}
-                  onChange={handleInputChange}
-                  className={`w-full bg-pos-bg-primary border ${fieldErrors.product_id ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                >
-                  <option value="">Select Parent Product</option>
-                  {products.map(product => (
-                    <option key={product.id} value={product.id}>{product.name}</option>
-                  ))}
-                </select>
-                {fieldErrors.product_id && <p className="text-pos-error text-xs mt-1">{fieldErrors.product_id}</p>}
-              </div>
-
               <div className="grid grid-cols-3 gap-4 mb-4">
+
+                  <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                    Group Name
+                  </label>
+                  <select
+                    name="group_id"
+                    value={subProductForm.group_id}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                  >
+                    <option value="">Select Group</option>
+                    {groups.map(group => (
+                      <option key={group.id} value={group.id}>{group.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Sub-Product Name <span className="text-pos-error">*</span>
+                    Sub Product Name <span className="text-pos-error">*</span>
                   </label>
                   <input
                     type="text"
@@ -709,10 +737,7 @@ const SubProductManager = () => {
                     placeholder="Product barcode"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>
+                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
                   <input
                     type="text"
@@ -723,7 +748,9 @@ const SubProductManager = () => {
                     placeholder="Addition type"
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Image</label>
                   <input
@@ -749,7 +776,7 @@ const SubProductManager = () => {
                 onClick={handleUpdateSubProduct}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
-                Update Sub-Product
+                Update
               </button>
             </div>
           </div>

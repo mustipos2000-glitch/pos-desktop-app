@@ -629,9 +629,9 @@ const ProductManager = () => {
               </button>
               <button 
                 onClick={handleAddProduct}
-                className="px-6 py-2.5 bg-pos-info text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg"
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
-                Add Product
+                Add
               </button>
             </div>
           </div>
@@ -844,9 +844,9 @@ const ProductManager = () => {
               </button>
               <button 
                 onClick={handleUpdateProduct}
-                className="px-6 py-2.5 bg-pos-info text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg"
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
-                Update Product
+                Update
               </button>
             </div>
           </div>
