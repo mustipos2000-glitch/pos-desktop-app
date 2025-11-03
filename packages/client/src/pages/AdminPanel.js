@@ -9,93 +9,90 @@ import RoomManager from '../components/RoomManager';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('products');
+  const [activeTab, setActiveTab] = useState('categories');
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
       <div className="bg-pos-bg-secondary border-b border-pos-border-primary p-4">
         <div className="flex items-center gap-4">
           <button className="btn-secondary flex items-center gap-2" onClick={() => navigate('/pos')}>
-            ← Back to POS
+            POS
           </button>
-          <h1 className="text-pos-text-primary text-2xl font-bold">Admin Panel</h1>
+          <div className="flex gap-1">
+            <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${
+                activeTab === 'categories' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('categories')}
+            >
+              Product
+            </button>
+            {/* <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${
+                activeTab === 'groups' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('groups')}
+            >
+              Groups
+            </button> */}
+            {/* <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${
+                activeTab === 'products' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('products')}
+            >
+              Products
+            </button> */}
+            <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${
+                activeTab === 'sub-products' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('sub-products')}
+            >
+              Sub-Products
+            </button>
+            {/* <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${
+                activeTab === 'groups' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('groups')}
+            >
+              Groups
+            </button> */}
+            <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${
+                activeTab === 'users' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('users')}
+            >
+              Users
+            </button>
+            <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${
+                activeTab === 'rooms' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('rooms')}
+            >
+              Rooms
+            </button>
+          </div>
         </div>
-      </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex border-b border-pos-border-primary bg-pos-bg-secondary">
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'categories' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('categories')}
-          >
-            Categories
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'groups' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('groups')}
-          >
-            Groups
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'products' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('products')}
-          >
-            Products
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'sub-products' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('sub-products')}
-          >
-            Sub-Products
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'groups' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('groups')}
-          >
-            Groups
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'users' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('users')}
-          >
-            Users
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'rooms' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('rooms')}
-          >
-            Rooms
-          </button>
-        </div>
-
         <div className="flex-1 overflow-hidden">
           {activeTab === 'products' && <ProductManager />}
           {activeTab === 'sub-products' && <SubProductManager />}
@@ -130,6 +127,8 @@ const AdminPanel = () => {
           )}
         </div>
       </div>
+    </div>
+
     </div>
   );
 };

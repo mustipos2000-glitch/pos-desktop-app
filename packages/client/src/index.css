@@ -311,9 +311,3 @@ ual Keyboard Styles */
 .keyboard-icon-btn {
   @apply absolute right-2 top-1/2 -translate-y-1/2 text-pos-text-muted hover:text-pos-info cursor-pointer text-xl transition-colors;
 }
-.category-name{
-  font-size: smaller;
-}
-h3{
-  font-size: small;
-}

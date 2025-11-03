@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import ConfirmationModal from './ConfirmationModal';
-import MessageModal from './MessageModal';
-import ProductFormModal from './ProductFormModal';
-import { useMessageModal } from '../hooks/useMessageModal';
-import './css/CategoryManager.css';
+import { useState, useEffect } from "react";
+import ConfirmationModal from "./ConfirmationModal";
+import MessageModal from "./MessageModal";
+import ProductFormModal from "./ProductFormModal";
+import { useMessageModal } from "../hooks/useMessageModal";
 
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
@@ -20,31 +19,35 @@ const CategoryManager = () => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedGroup, setSelectedGroup] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState("");
   const [categoryForm, setCategoryForm] = useState({
-    name: '',
+    name: "",
     next_course: 0,
     in_web_shop: 0,
-    is_visible: 1
+    is_visible: 1,
   });
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
     categoryId: null,
-    categoryName: '',
+    categoryName: "",
     productId: null,
-    productName: ''
+    productName: "",
   });
-  const { messageModal, showError, showWarning, closeModal } = useMessageModal();
+  const { messageModal, showError, showWarning, closeModal } =
+    useMessageModal();
 
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/categories');
+      const response = await fetch("http://localhost:5000/api/categories");
       const result = await response.json();
       setCategories(result.data || []);
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      showError('Failed to load categories. Please check your connection.', 'Connection Error');
+      console.error("Error fetching categories:", error);
+      showError(
+        "Failed to load categories. Please check your connection.",
+        "Connection Error"
+      );
     } finally {
       setLoading(false);
     }
@@ -58,14 +61,21 @@ const CategoryManager = () => {
 
     try {
       setLoadingProducts(true);
-      const response = await fetch(`http://localhost:5000/api/products?category_id=${categoryId}`);
+      const response = await fetch(
+        `http://localhost:5000/api/products?category_id=${categoryId}`
+      );
       const result = await response.json();
       // Filter products by category_id on client side as well to ensure only category products are shown
-      const filteredProducts = (result.data || []).filter(product => product.category_id === categoryId);
+      const filteredProducts = (result.data || []).filter(
+        (product) => product.category_id === categoryId
+      );
       setProducts(filteredProducts);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      showError('Failed to load products. Please check your connection.', 'Connection Error');
+      console.error("Error fetching products:", error);
+      showError(
+        "Failed to load products. Please check your connection.",
+        "Connection Error"
+      );
     } finally {
       setLoadingProducts(false);
     }
@@ -75,34 +85,42 @@ const CategoryManager = () => {
     try {
       setLoadingGroups(true);
       // Fetch groups from the groups API endpoint
-      const response = await fetch('http://localhost:5000/api/groups');
+      const response = await fetch("http://localhost:5000/api/groups");
       const result = await response.json();
       setGroups(result.data || []);
     } catch (error) {
-      console.error('Error fetching groups:', error);
-      showError('Failed to load groups. Please check your connection.', 'Connection Error');
+      console.error("Error fetching groups:", error);
+      showError(
+        "Failed to load groups. Please check your connection.",
+        "Connection Error"
+      );
     } finally {
       setLoadingGroups(false);
     }
   };
 
   const fetchGroupProducts = async (groupId) => {
-    if (!groupId || groupId === 'all') {
-      setGroupProducts([]); // Here we will fetch all the sub-products. 
+    if (!groupId || groupId === "all") {
+      setGroupProducts([]); // Here we will fetch all the sub-products.
       return;
     }
 
     try {
       setLoadingGroupProducts(true);
       // Fetch all products and filter those that have this group as parent_id
-      const response = await fetch('http://localhost:5000/api/sub-products'); // This API will be updated accordingly. Now it is fetching all the subproducts later it will fetch only the the group products also .
+      const response = await fetch("http://localhost:5000/api/sub-products"); // This API will be updated accordingly. Now it is fetching all the subproducts later it will fetch only the the group products also .
       const result = await response.json();
       // Filter products where parent_id matches the selected group
-      const productsInGroup = (result.data || []).filter(product => product.parent_id === parseInt(groupId));
+      const productsInGroup = (result.data || []).filter(
+        (product) => product.parent_id === parseInt(groupId)
+      );
       setGroupProducts(productsInGroup);
     } catch (error) {
-      console.error('Error fetching group products:', error);
-      showError('Failed to load group products. Please check your connection.', 'Connection Error');
+      console.error("Error fetching group products:", error);
+      showError(
+        "Failed to load group products. Please check your connection.",
+        "Connection Error"
+      );
     } finally {
       setLoadingGroupProducts(false);
     }
@@ -142,45 +160,56 @@ const CategoryManager = () => {
     try {
       const url = editingCategory
         ? `http://localhost:5000/api/categories/${editingCategory.id}`
-        : 'http://localhost:5000/api/categories';
+        : "http://localhost:5000/api/categories";
 
       const response = await fetch(url, {
-        method: editingCategory ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(categoryForm)
+        method: editingCategory ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(categoryForm),
       });
 
       if (response.ok) {
         fetchCategories();
         setShowAddCategory(false);
         setEditingCategory(null);
-        setCategoryForm({ name: '', next_course: 0, in_web_shop: 0, is_visible: 1 });
+        setCategoryForm({
+          name: "",
+          next_course: 0,
+          in_web_shop: 0,
+          is_visible: 1,
+        });
       } else {
         const error = await response.json();
-        showError(error.error || 'Failed to save category');
+        showError(error.error || "Failed to save category");
       }
     } catch (error) {
-      console.error('Error saving category:', error);
-      showError('Error saving category. Please try again.');
+      console.error("Error saving category:", error);
+      showError("Error saving category. Please try again.");
     }
   };
 
   const handleEditCategory = (category) => {
     setEditingCategory(category);
     setCategoryForm({
-      name: category.name || '',
+      name: category.name || "",
       next_course: Number(category.next_course) || 0,
       in_web_shop: Number(category.in_web_shop) || 0,
-      is_visible: Number(category.is_visible) !== undefined ? Number(category.is_visible) : 1
+      is_visible:
+        Number(category.is_visible) !== undefined
+          ? Number(category.is_visible)
+          : 1,
     });
     setShowAddCategory(true);
   };
 
   const handleDeleteCategory = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/categories/${id}`, {
-        method: 'DELETE'
-      });
+      const response = await fetch(
+        `http://localhost:5000/api/categories/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         fetchCategories();
@@ -188,12 +217,15 @@ const CategoryManager = () => {
       } else {
         const error = await response.json();
         closeDeleteConfirmation();
-        showWarning(error.error || 'Failed to delete category', 'Cannot Delete Category');
+        showWarning(
+          error.error || "Failed to delete category",
+          "Cannot Delete Category"
+        );
       }
     } catch (error) {
-      console.error('Error deleting category:', error);
+      console.error("Error deleting category:", error);
       closeDeleteConfirmation();
-      showError('Error deleting category. Please try again.');
+      showError("Error deleting category. Please try again.");
     }
   };
 
@@ -203,7 +235,7 @@ const CategoryManager = () => {
       categoryId: category.id,
       categoryName: category.name,
       productId: null,
-      productName: ''
+      productName: "",
     });
   };
 
@@ -211,9 +243,9 @@ const CategoryManager = () => {
     setDeleteConfirmation({
       isOpen: true,
       categoryId: null,
-      categoryName: '',
+      categoryName: "",
       productId: product.id,
-      productName: product.name
+      productName: product.name,
     });
   };
 
@@ -221,9 +253,9 @@ const CategoryManager = () => {
     setDeleteConfirmation({
       isOpen: false,
       categoryId: null,
-      categoryName: '',
+      categoryName: "",
       productId: null,
-      productName: ''
+      productName: "",
     });
   };
 
@@ -237,37 +269,43 @@ const CategoryManager = () => {
 
   const handleMoveUp = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/categories/${id}/move-up`, {
-        method: 'POST'
-      });
+      const response = await fetch(
+        `http://localhost:5000/api/categories/${id}/move-up`,
+        {
+          method: "POST",
+        }
+      );
 
       if (response.ok) {
         fetchCategories();
       } else {
         const error = await response.json();
-        showWarning(error.error || 'Cannot move up', 'Cannot Move');
+        showWarning(error.error || "Cannot move up", "Cannot Move");
       }
     } catch (error) {
-      console.error('Error moving category:', error);
-      showError('Error moving category. Please try again.');
+      console.error("Error moving category:", error);
+      showError("Error moving category. Please try again.");
     }
   };
 
   const handleMoveDown = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/categories/${id}/move-down`, {
-        method: 'POST'
-      });
+      const response = await fetch(
+        `http://localhost:5000/api/categories/${id}/move-down`,
+        {
+          method: "POST",
+        }
+      );
 
       if (response.ok) {
         fetchCategories();
       } else {
         const error = await response.json();
-        showWarning(error.error || 'Cannot move down', 'Cannot Move');
+        showWarning(error.error || "Cannot move down", "Cannot Move");
       }
     } catch (error) {
-      console.error('Error moving category:', error);
-      showError('Error moving category. Please try again.');
+      console.error("Error moving category:", error);
+      showError("Error moving category. Please try again.");
     }
   };
 
@@ -275,38 +313,58 @@ const CategoryManager = () => {
     try {
       const url = editingProduct
         ? `http://localhost:5000/api/products/${editingProduct.id}`
-        : 'http://localhost:5000/api/products';
+        : "http://localhost:5000/api/products";
 
       // Create FormData object to handle file uploads
       const formData = new FormData();
 
       // Append all product data to FormData
-      formData.append('name', productFormData.name);
-      formData.append('button_name', productFormData.button_name || '');
-      formData.append('production_name', productFormData.production_name || '');
-      formData.append('price', parseFloat(productFormData.price) || 0);
-      formData.append('vat_takeout', parseFloat(productFormData.vat_takeout) || 0);
-      formData.append('vat_eat_in', parseFloat(productFormData.vat_eat_in) || 0);
-      formData.append('barcode', productFormData.barcode || '');
-      formData.append('category_id', productFormData.category_id ? parseInt(productFormData.category_id) : selectedCategory.id);
-      formData.append('addition_type', productFormData.addition_type || '');
-      formData.append('display_index', parseInt(productFormData.display_index) || 0);
-      formData.append('in_web_shop', productFormData.in_web_shop ? 1 : 0);
-      formData.append('printer1', productFormData.printer1 || '');
-      formData.append('printer2', productFormData.printer2 || '');
-      formData.append('printer3', productFormData.printer3 || '');
-      formData.append('color', productFormData.color || '#3b82f6');
-      formData.append('price_vat_inc', parseFloat(productFormData.price_vat_inc) || 0);
-      formData.append('sub_product_group', productFormData.sub_product_group ? 1 : 0);
+      formData.append("name", productFormData.name);
+      formData.append("button_name", productFormData.button_name || "");
+      formData.append("production_name", productFormData.production_name || "");
+      formData.append("price", parseFloat(productFormData.price) || 0);
+      formData.append(
+        "vat_takeout",
+        parseFloat(productFormData.vat_takeout) || 0
+      );
+      formData.append(
+        "vat_eat_in",
+        parseFloat(productFormData.vat_eat_in) || 0
+      );
+      formData.append("barcode", productFormData.barcode || "");
+      formData.append(
+        "category_id",
+        productFormData.category_id
+          ? parseInt(productFormData.category_id)
+          : selectedCategory.id
+      );
+      formData.append("addition_type", productFormData.addition_type || "");
+      formData.append(
+        "display_index",
+        parseInt(productFormData.display_index) || 0
+      );
+      formData.append("in_web_shop", productFormData.in_web_shop ? 1 : 0);
+      formData.append("printer1", productFormData.printer1 || "");
+      formData.append("printer2", productFormData.printer2 || "");
+      formData.append("printer3", productFormData.printer3 || "");
+      formData.append("color", productFormData.color || "#3b82f6");
+      formData.append(
+        "price_vat_inc",
+        parseFloat(productFormData.price_vat_inc) || 0
+      );
+      formData.append(
+        "sub_product_group",
+        productFormData.sub_product_group ? 1 : 0
+      );
 
       // Append image file if selected
       if (imageFile) {
-        formData.append('image', imageFile);
+        formData.append("image", imageFile);
       }
 
       const response = await fetch(url, {
-        method: editingProduct ? 'PUT' : 'POST',
-        body: formData
+        method: editingProduct ? "PUT" : "POST",
+        body: formData,
       });
 
       if (response.ok) {
@@ -315,11 +373,11 @@ const CategoryManager = () => {
         setEditingProduct(null);
       } else {
         const error = await response.json();
-        showError(error.error || 'Failed to save product');
+        showError(error.error || "Failed to save product");
       }
     } catch (error) {
-      console.error('Error saving product:', error);
-      showError('Error saving product. Please try again.');
+      console.error("Error saving product:", error);
+      showError("Error saving product. Please try again.");
     }
   };
 
@@ -331,7 +389,7 @@ const CategoryManager = () => {
   const handleDeleteProduct = async (id) => {
     try {
       const response = await fetch(`http://localhost:5000/api/products/${id}`, {
-        method: 'DELETE'
+        method: "DELETE",
       });
 
       if (response.ok) {
@@ -341,91 +399,128 @@ const CategoryManager = () => {
       } else {
         const error = await response.json();
         closeDeleteConfirmation();
-        showWarning(error.error || 'Failed to delete product', 'Cannot Delete Product');
+        showWarning(
+          error.error || "Failed to delete product",
+          "Cannot Delete Product"
+        );
       }
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error("Error deleting product:", error);
       closeDeleteConfirmation();
-      showError('Error deleting product. Please try again.');
+      showError("Error deleting product. Please try again.");
     }
   };
 
   return (
-    <div className="admin-section">
-      <div className="section-header">
-        <h2>Products</h2>
-        <div className='flex gap-2'>
-          <button className="btn-primary" onClick={() => {
+    <div className="p-2 overflow-y-auto scrollbar-custom">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-pos-text-primary text-xl font-semibold text-center flex-1">
+          Products
+        </h2>
+      </div>
+      <div className="flex gap-2">
+        <button
+          className="btn-primary"
+          onClick={() => {
             setEditingCategory(null);
-            setCategoryForm({ name: '', next_course: 0, in_web_shop: 0 });
+            setCategoryForm({ name: "", next_course: 0, in_web_shop: 0 });
             setShowAddCategory(true);
-          }}>
-            Add Category
-          </button>
+          }}
+        >
+          Add Category
+        </button>
+        <button
+          className={`btn-primary ${
+            !selectedCategory
+              ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+              : ""
+          }`}
+          onClick={() => handleEditCategory(selectedCategory)}
+          disabled={!selectedCategory}
+        >
+          Edit Category
+        </button>
+        <button
+          className={`btn-primary ${
+            !selectedCategory
+              ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+              : ""
+          }`}
+          onClick={() => openDeleteConfirmation(selectedCategory)}
+          disabled={!selectedCategory}
+        >
+          Delete Category
+        </button>
+        <div className="flex gap-2">
           <button
-            className="btn-primary"
-            onClick={() => handleEditCategory(selectedCategory)}
+            className={`btn-primary ${
+              !selectedCategory
+                ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                : ""
+            }`}
+            onClick={() => {
+              setEditingProduct(null);
+              setShowAddProduct(true);
+            }}
             disabled={!selectedCategory}
           >
-            Edit Category
+            Add Product
           </button>
           <button
-            className="btn-primary"
-            onClick={() => openDeleteConfirmation(selectedCategory)}
-            disabled={!selectedCategory}
+            className={`btn-primary ${
+              !selectedProduct
+                ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                : ""
+            }`}
+            onClick={() => handleEditProduct(selectedProduct)}
+            disabled={!selectedProduct}
           >
-            Delete Category
+            Edit Product
           </button>
-          <div className='flex gap-2'>
-            <button
-              className="btn-primary"
-              onClick={() => {
-                setEditingProduct(null);
-                setShowAddProduct(true);
-              }}
-              disabled={!selectedCategory}
-            >
-              Add Product
-            </button>
-            <button
-              className="btn-primary"
-              onClick={() => handleEditProduct(selectedProduct)}
-              disabled={!selectedProduct}
-            >
-              Edit Product
-            </button>
-            <button
-              className="btn-primary"
-              onClick={() => openDeleteProductConfirmation(selectedProduct)}
-              disabled={!selectedProduct}
-            >
-              Delete Product
-            </button>
-          </div>
+          <button
+            className={`btn-primary ${
+              !selectedProduct
+                ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+                : ""
+            }`}
+            onClick={() => openDeleteProductConfirmation(selectedProduct)}
+            disabled={!selectedProduct}
+          >
+            Delete Product
+          </button>
         </div>
       </div>
 
-      <div className="columns-layout">
+      <div className="flex gap-2 mt-4">
         {/* This is category Column  */}
-        <div className="categories-section">
-          <h3>Categories</h3>
+        <div className="flex-1 max-w-[11rem]">
+          <h3 className="text-sm font-medium text-pos-text-primary mb-2">
+            Categories
+          </h3>
           {loading ? (
-            <div className="loading-state">Loading categories...</div>
+            <div className="text-pos-text-muted text-sm p-4 text-center">
+              Loading categories...
+            </div>
           ) : categories.length === 0 ? (
-            <div className="empty-state border p-2">
-              No categories found. Click "Add Category" to create your first category.
+            <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded">
+              No categories found. Click "Add Category" to create your first
+              category.
             </div>
           ) : (
-            <div className="categories-column border p-2">
+            <div className="min-h-64 min-w-[160px] border border-pos-border-secondary p-2 rounded">
               {categories.map((category, index) => (
                 <div
                   key={category.id}
-                  className={`category-item flex text-base mt-1 ${selectedCategory?.id === category.id ? 'selected' : ''}`}
+                  className={`flex text-sm mt-1 cursor-pointer transition-colors rounded ${
+                    selectedCategory?.id === category.id
+                      ? "bg-[#252a3f] text-white hover:bg-[#353c5a]"
+                      : "hover:bg-black/5"
+                  }`}
                   onClick={() => setSelectedCategory(category)}
                 >
-                  <div className="category-order flex">
+                  <div className="flex">
                     <button
-                      className="arrow-btn"
+                      className="text-xs px-1 py-0.5 hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleMoveUp(category.id);
@@ -436,7 +531,7 @@ const CategoryManager = () => {
                       ▲
                     </button>
                     <button
-                      className="arrow-btn"
+                      className="text-xs px-1 py-0.5 hover:bg-white/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleMoveDown(category.id);
@@ -447,8 +542,8 @@ const CategoryManager = () => {
                       ▼
                     </button>
                   </div>
-                  <div className="category-name px-1">
-                    {category.name || 'Unnamed Category'}
+                  <div className="px-1 py-1 flex-1">
+                    {category.name || "Unnamed Category"}
                   </div>
                 </div>
               ))}
@@ -456,65 +551,68 @@ const CategoryManager = () => {
           )}
         </div>
         {/* This is product Column */}
-        <div className="products-section">
-          <h3>Products</h3>
+        <div className="flex-[2] max-w-[11rem]">
+          <h3 className="text-sm font-medium text-pos-text-primary mb-2">
+            Products
+          </h3>
 
           {!selectedCategory ? (
-            <div className="empty-state border p-2 text-sm text-pos-error">
+            <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error">
               Select a category to view its products
             </div>
           ) : loadingProducts ? (
-            <div className="loading-state">Loading products...</div>
+            <div className="text-pos-text-muted text-sm p-4 text-center">
+              Loading products...
+            </div>
           ) : products.length === 0 ? (
-            <div className="empty-state border p-2 text-pos-error text-sm">
+            <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error">
               No products
             </div>
           ) : (
-            <div className="products-column border p-2">
+            <div className="min-h-64 min-w-[160px] border border-pos-border-secondary p-2 rounded">
               {products.map((product) => (
                 <div
                   key={product.id}
-                  className={`product-item flex text-base mt-1 ${selectedProduct?.id === product.id ? 'selected' : ''}`}
+                  className={`flex justify-between items-center text-sm mt-1 cursor-pointer transition-colors rounded px-1 py-1 ${
+                    selectedProduct?.id === product.id
+                      ? "bg-[#252a3f] text-white hover:bg-[#353c5a]"
+                      : "hover:bg-black/5"
+                  }`}
                   onClick={() => setSelectedProduct(product)}
                 >
-                  <div className="product-name px-1 flex-1">
-                    {product.name || 'Unnamed Product'}
+                  <div className="flex-1">
+                    {product.name || "Unnamed Product"}
                   </div>
-                  {/* <div className="product-price px-1">
-                    ${parseFloat(product.price || 0).toFixed(2)} */}
-                  {/* </div> */}
                 </div>
               ))}
             </div>
           )}
         </div>
         {/* This is sub-product Column */}
-        <div className='sub-product-section'>
-          <h3> Attached Sub-products</h3>
-          <div className='min-w-[100px] border min-h-[256px]'>
-          </div>
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-pos-text-primary mb-2">
+            Attached Sub-products
+          </h3>
+          <div className="min-w-[100px] border border-pos-border-secondary min-h-[256px] rounded p-2"></div>
         </div>
-        {/* Here will be twoo Buttons to attache and detached the sub-products */}
-        <div>
-          {/* <h3>Attach / Detach Sub-products</h3> */}
-          <div className='flex flex-col gap-2 h-full justify-center'>
-            <button className="btn-primary">&gt;></button>
-            <button className="btn-primary">{"<<"}</button>
-
+        {/* Here will be two Buttons to attach and detach the sub-products */}
+        <div className="flex items-center">
+          <div className="flex flex-col gap-2">
+            <button className="btn-primary px-4 py-2">&gt;&gt;</button>
+            <button className="btn-primary px-4 py-2">&lt;&lt;</button>
           </div>
         </div>
         {/* This is Group of Subproduct */}
-        <div className='sub-product-group-section'>
-          <h3>Sub-product Group</h3>
+        <div className="flex-1">
+          <h3 className="text-sm font-medium text-pos-text-primary mb-2">
+            Sub-product Group
+          </h3>
 
           <div className="mb-1 min-w-[100px]">
-            {/* <label className="block text-sm font-medium text-pos-text-muted mb-2">
-              Select Group
-            </label> */}
             <select
               value={selectedGroup}
               onChange={(e) => setSelectedGroup(e.target.value)}
-              className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-0.5 text-sm focus:outline-none focus:border-pos-info transition-colors"
+              className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-0.5 text-sm rounded focus:outline-none focus:border-pos-info transition-colors"
             >
               <option value="all">All Groups </option>
               {loadingGroups ? (
@@ -531,25 +629,23 @@ const CategoryManager = () => {
 
           {selectedGroup && (
             <div className="mt-1">
-              {/* <h4 className="text-sm font-medium text-pos-text-muted mb-2">Products in Group</h4> */}
               {loadingGroupProducts ? (
-                <div className="loading-state">Loading products...</div>
+                <div className="text-pos-text-muted text-sm p-4 text-center">
+                  Loading products...
+                </div>
               ) : groupProducts.length === 0 ? (
-                <div className="empty-state border p-2 text-pos-error text-sm">
+                <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error">
                   No products in this group
                 </div>
               ) : (
-                <div className="products-column border p-2">
+                <div className="min-h-64 min-w-[160px] border border-pos-border-secondary p-2 rounded">
                   {groupProducts.map((product) => (
                     <div
                       key={product.id}
-                      className="product-item flex text-base mt-1"
+                      className="flex justify-between items-center text-sm mt-1 min-w-[100px] cursor-pointer transition-colors hover:bg-black/5 rounded px-1 py-1"
                     >
-                      <div className="product-name px-1 flex-1">
-                        {product.name || 'Unnamed Product'}
-                      </div>
-                      <div className="product-price px-1">
-                        ${parseFloat(product.price || 0).toFixed(2)}
+                      <div className="flex-1">
+                        {product.name || "Unnamed Product"}
                       </div>
                     </div>
                   ))}
@@ -558,15 +654,22 @@ const CategoryManager = () => {
             </div>
           )}
         </div>
-
       </div>
 
       {showAddCategory && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowAddCategory(false)}>
-          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
+          onClick={() => setShowAddCategory(false)}
+        >
+          <div
+            className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">{editingCategory ? 'Edit Category' : 'Add New Category'}</h3>
+              <h3 className="text-xl font-semibold text-pos-text-primary">
+                {editingCategory ? "Edit Category" : "Add New Category"}
+              </h3>
               <button
                 onClick={() => setShowAddCategory(false)}
                 className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
@@ -584,7 +687,9 @@ const CategoryManager = () => {
                 <input
                   type="text"
                   value={categoryForm.name}
-                  onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                  onChange={(e) =>
+                    setCategoryForm({ ...categoryForm, name: e.target.value })
+                  }
                   className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
                   placeholder="Enter category name"
                 />
@@ -595,10 +700,17 @@ const CategoryManager = () => {
                   <input
                     type="checkbox"
                     checked={categoryForm.is_visible === 1}
-                    onChange={(e) => setCategoryForm({ ...categoryForm, is_visible: e.target.checked ? 1 : 0 })}
+                    onChange={(e) =>
+                      setCategoryForm({
+                        ...categoryForm,
+                        is_visible: e.target.checked ? 1 : 0,
+                      })
+                    }
                     className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
                   />
-                  <span className="ml-2 text-sm text-pos-text-primary">Visible</span>
+                  <span className="ml-2 text-sm text-pos-text-primary">
+                    Visible
+                  </span>
                 </label>
               </div>
             </div>
@@ -638,10 +750,13 @@ const CategoryManager = () => {
         isOpen={deleteConfirmation.isOpen}
         onClose={closeDeleteConfirmation}
         onConfirm={confirmDelete}
-        title={deleteConfirmation.categoryId ? "Delete Category" : "Delete Product"}
-        message={deleteConfirmation.categoryId
-          ? `Are you sure you want to delete "${deleteConfirmation.categoryName}"? This action cannot be undone.`
-          : `Are you sure you want to delete "${deleteConfirmation.productName}"? This action cannot be undone.`
+        title={
+          deleteConfirmation.categoryId ? "Delete Category" : "Delete Product"
+        }
+        message={
+          deleteConfirmation.categoryId
+            ? `Are you sure you want to delete "${deleteConfirmation.categoryName}"? This action cannot be undone.`
+            : `Are you sure you want to delete "${deleteConfirmation.productName}"? This action cannot be undone.`
         }
         confirmText="Delete"
         cancelText="Cancel"
