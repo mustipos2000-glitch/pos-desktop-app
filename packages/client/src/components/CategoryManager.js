@@ -727,7 +727,7 @@ const CategoryManager = () => {
                 onClick={handleAddCategory}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
-                {editingCategory ? "Update Category" : "Add Category"}
+                {editingCategory ? 'Update' : 'Add'}
               </button>
             </div>
           </div>
