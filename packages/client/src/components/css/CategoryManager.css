@@ -1,6 +1,6 @@
 .columns-layout {
     display: flex;
-    gap: 1rem;
+    gap: .5rem;
     margin-top: 1rem;
 }
 

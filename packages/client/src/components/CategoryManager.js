@@ -8,14 +8,19 @@ import './css/CategoryManager.css';
 const CategoryManager = () => {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [groups, setGroups] = useState([]);
+  const [groupProducts, setGroupProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [loadingGroupProducts, setLoadingGroupProducts] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedGroup, setSelectedGroup] = useState('');
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     next_course: 0,
@@ -66,8 +71,46 @@ const CategoryManager = () => {
     }
   };
 
+  const fetchGroups = async () => {
+    try {
+      setLoadingGroups(true);
+      // Fetch groups from the groups API endpoint
+      const response = await fetch('http://localhost:5000/api/groups');
+      const result = await response.json();
+      setGroups(result.data || []);
+    } catch (error) {
+      console.error('Error fetching groups:', error);
+      showError('Failed to load groups. Please check your connection.', 'Connection Error');
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
+
+  const fetchGroupProducts = async (groupId) => {
+    if (!groupId || groupId === 'all') {
+      setGroupProducts([]); // Here we will fetch all the sub-products. 
+      return;
+    }
+
+    try {
+      setLoadingGroupProducts(true);
+      // Fetch all products and filter those that have this group as parent_id
+      const response = await fetch('http://localhost:5000/api/sub-products'); // This API will be updated accordingly. Now it is fetching all the subproducts later it will fetch only the the group products also .
+      const result = await response.json();
+      // Filter products where parent_id matches the selected group
+      const productsInGroup = (result.data || []).filter(product => product.parent_id === parseInt(groupId));
+      setGroupProducts(productsInGroup);
+    } catch (error) {
+      console.error('Error fetching group products:', error);
+      showError('Failed to load group products. Please check your connection.', 'Connection Error');
+    } finally {
+      setLoadingGroupProducts(false);
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
+    fetchGroups();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -81,6 +124,15 @@ const CategoryManager = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCategory]);
+
+  useEffect(() => {
+    if (selectedGroup) {
+      fetchGroupProducts(selectedGroup);
+    } else {
+      setGroupProducts([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedGroup]);
 
   const handleAddCategory = async () => {
     if (!categoryForm.name) {
@@ -246,7 +298,7 @@ const CategoryManager = () => {
       formData.append('color', productFormData.color || '#3b82f6');
       formData.append('price_vat_inc', parseFloat(productFormData.price_vat_inc) || 0);
       formData.append('sub_product_group', productFormData.sub_product_group ? 1 : 0);
-      
+
       // Append image file if selected
       if (imageFile) {
         formData.append('image', imageFile);
@@ -301,7 +353,7 @@ const CategoryManager = () => {
   return (
     <div className="admin-section">
       <div className="section-header">
-        <h2>Manage Categories & Products</h2>
+        <h2>Products</h2>
         <div className='flex gap-2'>
           <button className="btn-primary" onClick={() => {
             setEditingCategory(null);
@@ -405,8 +457,8 @@ const CategoryManager = () => {
         </div>
         {/* This is product Column */}
         <div className="products-section">
-            <h3>Products</h3>
-          
+          <h3>Products</h3>
+
           {!selectedCategory ? (
             <div className="empty-state border p-2 text-sm text-pos-error">
               Select a category to view its products
@@ -415,7 +467,7 @@ const CategoryManager = () => {
             <div className="loading-state">Loading products...</div>
           ) : products.length === 0 ? (
             <div className="empty-state border p-2 text-pos-error text-sm">
-              No products 
+              No products
             </div>
           ) : (
             <div className="products-column border p-2">
@@ -437,10 +489,76 @@ const CategoryManager = () => {
           )}
         </div>
         {/* This is sub-product Column */}
-        <div className='sub-product-section'> 
+        <div className='sub-product-section'>
           <h3> Attached Sub-products</h3>
+          <div className='min-w-[100px] border min-h-[256px]'>
+          </div>
         </div>
-        
+        {/* Here will be twoo Buttons to attache and detached the sub-products */}
+        <div>
+          {/* <h3>Attach / Detach Sub-products</h3> */}
+          <div className='flex flex-col gap-2 h-full justify-center'>
+            <button className="btn-primary">&gt;></button>
+            <button className="btn-primary">{"<<"}</button>
+
+          </div>
+        </div>
+        {/* This is Group of Subproduct */}
+        <div className='sub-product-group-section'>
+          <h3>Sub-product Group</h3>
+
+          <div className="mb-1 min-w-[100px]">
+            {/* <label className="block text-sm font-medium text-pos-text-muted mb-2">
+              Select Group
+            </label> */}
+            <select
+              value={selectedGroup}
+              onChange={(e) => setSelectedGroup(e.target.value)}
+              className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-0.5 text-sm focus:outline-none focus:border-pos-info transition-colors"
+            >
+              <option value="all">All Groups </option>
+              {loadingGroups ? (
+                <option disabled>Loading groups...</option>
+              ) : (
+                groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
+          {selectedGroup && (
+            <div className="mt-1">
+              {/* <h4 className="text-sm font-medium text-pos-text-muted mb-2">Products in Group</h4> */}
+              {loadingGroupProducts ? (
+                <div className="loading-state">Loading products...</div>
+              ) : groupProducts.length === 0 ? (
+                <div className="empty-state border p-2 text-pos-error text-sm">
+                  No products in this group
+                </div>
+              ) : (
+                <div className="products-column border p-2">
+                  {groupProducts.map((product) => (
+                    <div
+                      key={product.id}
+                      className="product-item flex text-base mt-1"
+                    >
+                      <div className="product-name px-1 flex-1">
+                        {product.name || 'Unnamed Product'}
+                      </div>
+                      <div className="product-price px-1">
+                        ${parseFloat(product.price || 0).toFixed(2)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
       </div>
 
       {showAddCategory && (
@@ -449,14 +567,14 @@ const CategoryManager = () => {
             {/* Modal Header */}
             <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
               <h3 className="text-xl font-semibold text-pos-text-primary">{editingCategory ? 'Edit Category' : 'Add New Category'}</h3>
-              <button 
+              <button
                 onClick={() => setShowAddCategory(false)}
                 className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
               >
                 ×
               </button>
             </div>
-            
+
             {/* Modal Body */}
             <div className="px-6 py-4">
               <div className="mb-4">
@@ -484,16 +602,16 @@ const CategoryManager = () => {
                 </label>
               </div>
             </div>
-            
+
             {/* Modal Footer */}
             <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setShowAddCategory(false)}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleAddCategory}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
