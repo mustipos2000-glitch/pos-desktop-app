@@ -548,9 +548,9 @@ const CategoryManager = () => {
                       <div className="product-name px-1 flex-1">
                         {product.name || 'Unnamed Product'}
                       </div>
-                      <div className="product-price px-1">
+                      {/* <div className="product-price px-1">
                         ${parseFloat(product.price || 0).toFixed(2)}
-                      </div>
+                      </div> */}
                     </div>
                   ))}
                 </div>
