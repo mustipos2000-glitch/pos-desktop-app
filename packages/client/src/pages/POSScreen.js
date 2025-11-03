@@ -21,8 +21,8 @@ const POSScreen = () => {
       try {
         setLoading(true);
 
-        // Fetch categories
-        const categoryResponse = await ApiService.getCategories();
+        // Fetch categories (only visible ones)
+        const categoryResponse = await ApiService.getCategories({ is_visible: true });
         const categoryNames = categoryResponse.data.map(category => category.name);
         setCategories(categoryNames);
 
@@ -34,6 +34,7 @@ const POSScreen = () => {
         // Fetch products
         const productResponse = await ApiService.getProducts();
         // Map products to match the expected format
+       
         const formattedProducts = productResponse.data.map(product => ({
           id: product.id,
           name: product.name,
@@ -42,6 +43,8 @@ const POSScreen = () => {
           image: product.image || '📦',
           color: '#3b82f6' // Default color, can be customized
         }));
+      
+        
         setProducts(formattedProducts);
       } catch (error) {
         console.error('Failed to fetch data:', error);

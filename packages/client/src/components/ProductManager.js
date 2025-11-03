@@ -20,6 +20,16 @@ const ProductManager = () => {
   });
   const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
+  // Color options for product color picker
+  const productColors = [
+    '#3b82f6', // Blue
+    '#10b981', // Green
+    '#ef4444', // Red
+    '#ec4899', // Pink
+    '#fbbf24', // Yellow
+    '#fb923c'  // Orange
+  ];
+
   // Form state for product data
   const [productForm, setProductForm] = useState({
     name: '',
@@ -36,9 +46,12 @@ const ProductManager = () => {
     printer1: '',
     printer2: '',
     printer3: '',
-    image: ''
+    image: '',
+    color: '#3b82f6',
+    price_vat_inc: '',
+    sub_product_group: false
   });
-  
+
   // State for file inputs
   const [imageFile, setImageFile] = useState(null);
 
@@ -78,7 +91,7 @@ const ProductManager = () => {
       ...productForm,
       [name]: type === 'checkbox' ? checked : value
     });
-    
+
     // Clear field error when user starts typing
     if (fieldErrors[name]) {
       setFieldErrors({
@@ -87,12 +100,12 @@ const ProductManager = () => {
       });
     }
   };
-  
+
   // Handle file input changes separately
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setImageFile(file);
-    
+
     // Store file name for display purposes
     if (file) {
       setProductForm({
@@ -123,7 +136,10 @@ const ProductManager = () => {
       printer1: '',
       printer2: '',
       printer3: '',
-      image: ''
+      image: '',
+      color: '#3b82f6',
+      price_vat_inc: '',
+      sub_product_group: false
     });
     setImageFile(null);
     setFieldErrors({});
@@ -146,7 +162,7 @@ const ProductManager = () => {
     try {
       // Create FormData object to handle file uploads
       const formData = new FormData();
-      
+
       // Append all product data to FormData
       formData.append('name', productForm.name);
       formData.append('button_name', productForm.button_name || '');
@@ -162,6 +178,9 @@ const ProductManager = () => {
       formData.append('printer1', productForm.printer1 || '');
       formData.append('printer2', productForm.printer2 || '');
       formData.append('printer3', productForm.printer3 || '');
+      formData.append('color', productForm.color || '#3b82f6');
+      formData.append('price_vat_inc', parseFloat(productForm.price_vat_inc) || 0);
+      formData.append('sub_product_group', productForm.sub_product_group ? 1 : 0);
       
       // Append image file if selected
       if (imageFile) {
@@ -205,7 +224,10 @@ const ProductManager = () => {
       printer1: product.printer1 || '',
       printer2: product.printer2 || '',
       printer3: product.printer3 || '',
-      image: product.image || ''
+      image: product.image || '',
+      color: product.color || '#3b82f6',
+      price_vat_inc: product.price_vat_inc || '',
+      sub_product_group: product.sub_product_group === 1
     });
     setImageFile(null); // Reset file input
     setShowEditProduct(true);
@@ -228,7 +250,7 @@ const ProductManager = () => {
     try {
       // Create FormData object to handle file uploads
       const formData = new FormData();
-      
+
       // Append all product data to FormData
       formData.append('name', productForm.name);
       formData.append('button_name', productForm.button_name || '');
@@ -244,6 +266,9 @@ const ProductManager = () => {
       formData.append('printer1', productForm.printer1 || '');
       formData.append('printer2', productForm.printer2 || '');
       formData.append('printer3', productForm.printer3 || '');
+      formData.append('color', productForm.color || '#3b82f6');
+      formData.append('price_vat_inc', parseFloat(productForm.price_vat_inc) || 0);
+      formData.append('sub_product_group', productForm.sub_product_group ? 1 : 0);
       
       // Append image file if selected
       if (imageFile) {
@@ -331,9 +356,9 @@ const ProductManager = () => {
           + Add Product
         </button>
       </div>
-      
+
       {loading && <div className="loading">Loading...</div>}
-      
+
       <div className="products-table">
         <table>
           <thead>
@@ -343,7 +368,10 @@ const ProductManager = () => {
               <th>Price</th>
               <th>VAT Takeout</th>
               <th>VAT Eat-in</th>
+              <th>Price VAT Inc</th>
               <th>Category</th>
+              <th>Color</th>
+              <th>Sub-Product Group</th>
               <th>Image</th>
               <th>Actions</th>
             </tr>
@@ -356,7 +384,18 @@ const ProductManager = () => {
                 <td>${parseFloat(product.price).toFixed(2)}</td>
                 <td>{product.vat_takeout}%</td>
                 <td>{product.vat_eat_in}%</td>
+                <td>${parseFloat(product.price_vat_inc || 0).toFixed(2)}</td>
                 <td>{getCategoryName(product.category_id)}</td>
+                <td>
+                  <div style={{
+                    width: '30px',
+                    height: '30px',
+                    backgroundColor: product.color || '#3b82f6',
+                    borderRadius: '4px',
+                    border: '1px solid #ddd'
+                  }}></div>
+                </td>
+                <td>{product.sub_product_group === 1 ? 'Yes' : 'No'}</td>
                 <td>
                   {product.image ? (
                     <img src={`http://localhost:5000${product.image}`} alt={product.name} style={{ maxWidth: '50px', maxHeight: '50px' }} />
@@ -364,17 +403,17 @@ const ProductManager = () => {
                     'No Image'
                   )}
                 </td>
-                <td style={{ display: 'flex'}}>
-                  <IconButton 
-                    icon="✏️" 
-                    className="edit" 
-                    onClick={() => handleEditProduct(product)} 
+                <td style={{ display: 'flex' }}>
+                  <IconButton
+                    icon="✏️"
+                    className="edit"
+                    onClick={() => handleEditProduct(product)}
                     title="Edit product"
                   />
-                  <IconButton 
-                    icon="🗑️" 
-                    className="delete" 
-                    onClick={() => openDeleteConfirmation(product)} 
+                  <IconButton
+                    icon="🗑️"
+                    className="delete"
+                    onClick={() => openDeleteConfirmation(product)}
                     title="Delete product"
                   />
                 </td>
@@ -386,176 +425,214 @@ const ProductManager = () => {
 
       {/* Add Product Modal */}
       {showAddProduct && (
-        <div className="modal-overlay" onClick={() => setShowAddProduct(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Add New Product</h3>
-            <div className="form-container">
-              <div className="form-group">
-                <label>Product Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={productForm.name}
-                  onChange={handleInputChange}
-                  style={fieldErrors.name ? { borderColor: '#ef4444' } : {}}
-                />
-                {fieldErrors.name && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '4px' }}>{fieldErrors.name}</small>}
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowAddProduct(false)}>
+          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[600px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-xl font-semibold text-pos-text-primary">Add New Product</h3>
+              <button 
+                onClick={() => setShowAddProduct(false)}
+                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="px-6 py-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                    Product Name <span className="text-pos-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={productForm.name}
+                    onChange={handleInputChange}
+                    className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    placeholder="Enter product name"
+                  />
+                  {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Button Name</label>
+                  <input
+                    type="text"
+                    name="button_name"
+                    value={productForm.button_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Display name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
+                  <input
+                    type="text"
+                    name="production_name"
+                    value={productForm.production_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Production name"
+                  />
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>Button Name</label>
-                <input
-                  type="text"
-                  name="button_name"
-                  value={productForm.button_name}
-                  onChange={handleInputChange}
-                />
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price"
+                    value={productForm.price}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Price VAT Inc</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price_vat_inc"
+                    value={productForm.price_vat_inc}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
+                  <input
+                    type="text"
+                    name="barcode"
+                    value={productForm.barcode}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Barcode"
+                  />
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>Production Name</label>
-                <input
-                  type="text"
-                  name="production_name"
-                  value={productForm.production_name}
-                  onChange={handleInputChange}
-                />
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Takeout (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_takeout"
+                    value={productForm.vat_takeout}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Eat-in (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_eat_in"
+                    value={productForm.vat_eat_in}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Category</label>
+                  <select
+                    name="category_id"
+                    value={productForm.category_id}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="price"
-                  value={productForm.price}
-                  onChange={handleInputChange}
-                />
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
+                  <input
+                    type="text"
+                    name="addition_type"
+                    value={productForm.addition_type}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Addition type"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Product Color</label>
+                  <div className="flex gap-2 mt-1">
+                    {productColors.map(color => (
+                      <div
+                        key={color}
+                        className={`w-8 h-8 rounded cursor-pointer border-2 flex items-center justify-center ${productForm.color === color ? 'border-white' : 'border-transparent'}`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => setProductForm({ ...productForm, color })}
+                      >
+                        {productForm.color === color && <span className="text-white text-xs">✓</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Product Image</label>
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                  />
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>VAT Takeout (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_takeout"
-                  value={productForm.vat_takeout}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>VAT Eat-in (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_eat_in"
-                  value={productForm.vat_eat_in}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Barcode</label>
-                <input
-                  type="text"
-                  name="barcode"
-                  value={productForm.barcode}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Category</label>
-                <select
-                  name="category_id"
-                  value={productForm.category_id}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Select Category</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label>Addition Type</label>
-                <input
-                  type="text"
-                  name="addition_type"
-                  value={productForm.addition_type}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              {/* <div className="form-group">
-                <label>Display Index</label>
-                <input
-                  type="number"
-                  name="display_index"
-                  value={productForm.display_index}
-                  onChange={handleInputChange}
-                />
-              </div> */}
-              
-              {/* <div className="form-group checkbox-group">
-                <label>
+
+              <div className="mb-4">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    name="in_web_shop"
-                    checked={productForm.in_web_shop}
+                    name="sub_product_group"
+                    checked={productForm.sub_product_group}
                     onChange={handleInputChange}
+                    className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
                   />
-                  Available in Web Shop
+                  <span className="ml-2 text-sm text-pos-text-primary">Sub-Product Group</span>
                 </label>
               </div>
-              
-              <div className="form-group">
-                <label>Printer 1</label>
-                <input
-                  type="text"
-                  name="printer1"
-                  value={productForm.printer1}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Printer 2</label>
-                <input
-                  type="text"
-                  name="printer2"
-                  value={productForm.printer2}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Printer 3</label>
-                <input
-                  type="text"
-                  name="printer3"
-                  value={productForm.printer3}
-                  onChange={handleInputChange}
-                />
-              </div> */}
-              
-              <div className="form-group">
-                <label>Image</label>
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-                {/* {productForm.image && <small>Selected: {productForm.image}</small>} */}
-              </div>
-              
-              <div className="modal-actions full-width">
-                <button className="cancel-btn" onClick={() => setShowAddProduct(false)}>Cancel</button>
-                <button className="add-btn" onClick={handleAddProduct}>Add Product</button>
-              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setShowAddProduct(false)}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleAddProduct}
+                className="px-6 py-2.5 bg-pos-info text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg"
+              >
+                Add Product
+              </button>
             </div>
           </div>
         </div>
@@ -563,176 +640,214 @@ const ProductManager = () => {
 
       {/* Edit Product Modal */}
       {showEditProduct && (
-        <div className="modal-overlay" onClick={() => setShowEditProduct(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h3>Edit Product</h3>
-            <div className="form-container">
-              <div className="form-group">
-                <label>Product Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={productForm.name}
-                  onChange={handleInputChange}
-                  style={fieldErrors.name ? { borderColor: '#ef4444' } : {}}
-                />
-                {fieldErrors.name && <small style={{ color: '#ef4444', fontSize: '12px', marginTop: '1px' }}>{fieldErrors.name}</small>}
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowEditProduct(false)}>
+          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[600px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
+              <h3 className="text-xl font-semibold text-pos-text-primary">Edit Product</h3>
+              <button 
+                onClick={() => setShowEditProduct(false)}
+                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="px-6 py-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                    Product Name <span className="text-pos-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={productForm.name}
+                    onChange={handleInputChange}
+                    className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    placeholder="Enter product name"
+                  />
+                  {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Button Name</label>
+                  <input
+                    type="text"
+                    name="button_name"
+                    value={productForm.button_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Display name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
+                  <input
+                    type="text"
+                    name="production_name"
+                    value={productForm.production_name}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Production name"
+                  />
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>Button Name</label>
-                <input
-                  type="text"
-                  name="button_name"
-                  value={productForm.button_name}
-                  onChange={handleInputChange}
-                />
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price"
+                    value={productForm.price}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Price VAT Inc</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="price_vat_inc"
+                    value={productForm.price_vat_inc}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
+                  <input
+                    type="text"
+                    name="barcode"
+                    value={productForm.barcode}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Barcode"
+                  />
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>Production Name</label>
-                <input
-                  type="text"
-                  name="production_name"
-                  value={productForm.production_name}
-                  onChange={handleInputChange}
-                />
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Takeout (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_takeout"
+                    value={productForm.vat_takeout}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Eat-in (%)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="vat_eat_in"
+                    value={productForm.vat_eat_in}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Category</label>
+                  <select
+                    name="category_id"
+                    value={productForm.category_id}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>Price</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="price"
-                  value={productForm.price}
-                  onChange={handleInputChange}
-                />
+
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
+                  <input
+                    type="text"
+                    name="addition_type"
+                    value={productForm.addition_type}
+                    onChange={handleInputChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Addition type"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Product Color</label>
+                  <div className="flex gap-2 mt-1">
+                    {productColors.map(color => (
+                      <div
+                        key={color}
+                        className={`w-8 h-8 rounded cursor-pointer border-2 flex items-center justify-center ${productForm.color === color ? 'border-white' : 'border-transparent'}`}
+                        style={{ backgroundColor: color }}
+                        onClick={() => setProductForm({ ...productForm, color })}
+                      >
+                        {productForm.color === color && <span className="text-white text-xs">✓</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Product Image</label>
+                  <input
+                    type="file"
+                    name="image"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                  />
+                </div>
               </div>
-              
-              <div className="form-group">
-                <label>VAT Takeout (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_takeout"
-                  value={productForm.vat_takeout}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>VAT Eat-in (%)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  name="vat_eat_in"
-                  value={productForm.vat_eat_in}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Barcode</label>
-                <input
-                  type="text"
-                  name="barcode"
-                  value={productForm.barcode}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Category</label>
-                <select
-                  name="category_id"
-                  value={productForm.category_id}
-                  onChange={handleInputChange}
-                >
-                  <option value="">Select Category</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label>Addition Type</label>
-                <input
-                  type="text"
-                  name="addition_type"
-                  value={productForm.addition_type}
-                  onChange={handleInputChange}
-                />
-              </div>
-{/*               
-              <div className="form-group">
-                <label>Display Index</label>
-                <input
-                  type="number"
-                  name="display_index"
-                  value={productForm.display_index}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group checkbox-group">
-                <label>
+
+              <div className="mb-4">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    name="in_web_shop"
-                    checked={productForm.in_web_shop}
+                    name="sub_product_group"
+                    checked={productForm.sub_product_group}
                     onChange={handleInputChange}
+                    className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
                   />
-                  Available in Web Shop
+                  <span className="ml-2 text-sm text-pos-text-primary">Sub-Product Group</span>
                 </label>
               </div>
-              
-              <div className="form-group">
-                <label>Printer 1</label>
-                <input
-                  type="text"
-                  name="printer1"
-                  value={productForm.printer1}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Printer 2</label>
-                <input
-                  type="text"
-                  name="printer2"
-                  value={productForm.printer2}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Printer 3</label>
-                <input
-                  type="text"
-                  name="printer3"
-                  value={productForm.printer3}
-                  onChange={handleInputChange}
-                />
-              </div> */}
-              
-              <div className="form-group">
-                <label>Image</label>
-                <input
-                  type="file"
-                  name="image"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
-                {/* {productForm.image && <small>Current/Selected: {productForm.image}</small>} */}
-              </div>
-              
-              <div className="modal-actions full-width">
-                <button className="cancel-btn" onClick={() => setShowEditProduct(false)}>Cancel</button>
-                <button className="save-btn" onClick={handleUpdateProduct}>Update Product</button>
-              </div>
+            </div>
+            
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+              <button 
+                onClick={() => setShowEditProduct(false)}
+                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleUpdateProduct}
+                className="px-6 py-2.5 bg-pos-info text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg"
+              >
+                Update Product
+              </button>
             </div>
           </div>
         </div>

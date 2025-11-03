@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import ApiService from '../services/api';
 
 const ProductGrid = ({ products, onAddToCart }) => {
+
+  console.log("products in ProductGrid", products);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
   const [loadingSubProducts, setLoadingSubProducts] = useState(false);
@@ -83,50 +85,46 @@ const ProductGrid = ({ products, onAddToCart }) => {
       <div className="flex-1 p-2 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2 overflow-y-auto content-start scrollbar-custom">
         {products.map((product) => (
           <div
-            key={product.id}
-            className={`product-card card-hover flex flex-col gap-1 transition-all duration-200 ${
-              selectedProductId === product.id
-                ? 'bg-pos-bg-tertiary scale-[1.02]'
-                : 'bg-pos-bg-tertiary'
-            }`}
-            onClick={() => handleProductClick(product)}
-            style={{
-              border: `2px solid ${product.color || '#3b82f6'}`,
-              borderRadius: '0.75rem',
-              minHeight: '120px',
-            }}
-          >
-            {/* Image / Icon */}
-            <div
-              className="h-14 flex items-center justify-center text-3xl overflow-hidden rounded-t-lg"
-              style={{
-                background: product.color || '#1e293b',
-              }}
-            >
-              {isImageUrl(product.image) ? (
-                <img
-                  src={`http://localhost:5000${product.image}`}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <span className="drop-shadow-md">{product.image || '📦'}</span>
-              )}
-            </div>
+  key={product.id}
+  className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative bg-[#1e293b] rounded-lg overflow-hidden"
+  onClick={() => handleProductClick(product)}
+  style={{
+    border: `2px solid ${
+      product.color?.startsWith('#') ? product.color : `#${product.color || '3b82f6'}`
+    }`,
+    
+  }}
+>
+  
+  {/* Price - Top Right */}
+  <div className="absolute  right-0  text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
+    €{product.price.toFixed(2)}
+  </div>
 
-            {/* Name and Price */}
-            <div className="flex flex-col items-center justify-center px-2 pb-2 text-center">
-              <div
-                className="font-medium text-white text-[clamp(0.75rem,2vw,0.9rem)] leading-tight text-ellipsis overflow-hidden whitespace-nowrap w-full"
-                title={product.name}
-              >
-                {product.name}
-              </div>
-              <div className="text-xs text-pos-text-muted font-semibold mt-1">
-                €{product.price.toFixed(2)}
-              </div>
-            </div>
-          </div>
+  {/* Image */}
+  <div className="w-full h-20 flex mt-2 items-center justify-center overflow-hidden">
+    {isImageUrl(product.image) ? (
+      <img
+        src={`http://localhost:5000${product.image}`}
+        alt={product.name}
+        className="w-full h-full object-cover"
+      />
+    ) : (
+      <span className="text-3xl">{product.image || '📦'}</span>
+    )}
+  </div>
+
+  {/* Product Name */}
+  <div className="w-full px-2 py-2">
+    <div
+      className="text-sm font-semibold text-white leading-tight break-words text-center"
+      style={{ wordBreak: 'break-word' }}
+    >
+      {product.name}
+    </div>
+  </div>
+</div>
+
         ))}
       </div>
 

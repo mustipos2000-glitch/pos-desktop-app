@@ -1,9 +1,21 @@
 const db = require('../config/database');
 
 class Category {
-  static getAll() {
-    const sql = 'SELECT * FROM categories ORDER BY display_order ASC, id ASC';
-    return db.prepare(sql).all();
+  static getAll(filters = {}) {
+    let sql = 'SELECT * FROM categories';
+    const params = [];
+    
+    // Apply is_visible filter if provided
+    if (filters.is_visible !== undefined && filters.is_visible !== null) {
+      sql += ' WHERE is_visible = ?';
+      params.push(filters.is_visible ? 1 : 0);
+    }
+    
+    sql += ' ORDER BY display_order ASC, id ASC';
+    
+    return params.length > 0 
+      ? db.prepare(sql).all(...params)
+      : db.prepare(sql).all();
   }
 
   static getById(id) {
@@ -11,37 +23,29 @@ class Category {
     return db.prepare(sql).get(id);
   }
 
-  static create(name, next_course = 0, in_web_shop = 0) {
+  static create(name, next_course = 0, in_web_shop = 0, is_visible = 1) {
     // Get the max display_order and add 1
     const maxOrder = db.prepare('SELECT MAX(display_order) as max FROM categories').get();
     const display_order = (maxOrder.max || 0) + 1;
     
-    const sql = 'INSERT INTO categories (name, next_course, in_web_shop, display_order) VALUES (?, ?, ?, ?)';
-    const result = db.prepare(sql).run(name, next_course, in_web_shop, display_order);
-    return { id: result.lastInsertRowid, name, next_course, in_web_shop, display_order };
+    const sql = 'INSERT INTO categories (name, next_course, in_web_shop, display_order, is_visible) VALUES (?, ?, ?, ?, ?)';
+    const result = db.prepare(sql).run(name, next_course, in_web_shop, display_order, is_visible ? 1 : 0);
+    return { id: result.lastInsertRowid, name, next_course, in_web_shop, display_order, is_visible: is_visible ? 1 : 0 };
   }
 
-  static update(id, name, next_course = 0, in_web_shop = 0) {
-    const sql = 'UPDATE categories SET name = ?, next_course = ?, in_web_shop = ? WHERE id = ?';
-    db.prepare(sql).run(name, next_course, in_web_shop, id);
-    return { id, name, next_course, in_web_shop };
+  static update(id, name, next_course = 0, in_web_shop = 0, is_visible = 1) {
+    const sql = 'UPDATE categories SET name = ?, next_course = ?, in_web_shop = ?, is_visible = ? WHERE id = ?';
+    db.prepare(sql).run(name, next_course, in_web_shop, is_visible ? 1 : 0, id);
+    return { id, name, next_course, in_web_shop, is_visible: is_visible ? 1 : 0 };
   }
 
   static delete(id) {
-    // Check if category has products
+    // Check if category has products (including sub-products which are now in products table)
     const checkProducts = 'SELECT COUNT(*) as count FROM products WHERE category_id = ?';
     const productCount = db.prepare(checkProducts).get(id);
     
     if (productCount.count > 0) {
       throw new Error(`Cannot delete category: ${productCount.count} product(s) are using this category`);
-    }
-
-    // Check if category has sub-products
-    const checkSubProducts = 'SELECT COUNT(*) as count FROM sub_products WHERE category_id = ?';
-    const subProductCount = db.prepare(checkSubProducts).get(id);
-    
-    if (subProductCount.count > 0) {
-      throw new Error(`Cannot delete category: ${subProductCount.count} sub-product(s) are using this category`);
     }
 
     const sql = 'DELETE FROM categories WHERE id = ?';

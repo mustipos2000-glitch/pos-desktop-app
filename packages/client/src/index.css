@@ -30,145 +30,284 @@
 }
 
 @layer components {
+
   /* Common button styles */
   .btn-primary {
     @apply bg-pos-interactive-primary text-pos-text-primary border-none px-3 py-2 cursor-pointer text-sm font-medium transition-all duration-200 hover:bg-pos-interactive-hover;
   }
-  
+
   .btn-secondary {
     @apply bg-transparent text-pos-text-muted border border-pos-border-secondary px-4 py-2 cursor-pointer text-sm transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-pos-text-primary;
   }
-  
+
   .btn-danger {
     @apply bg-pos-error text-white border-none px-3 py-2 cursor-pointer text-sm transition-all duration-200 hover:bg-red-600;
   }
-  
+
   .btn-warning {
     @apply bg-pos-warning text-white border-none px-3 py-2 cursor-pointer text-sm transition-all duration-200 hover:bg-yellow-600;
   }
-  
+
   .btn-success {
     @apply bg-pos-success text-white border-none px-3 py-2 cursor-pointer text-sm transition-all duration-200 hover:bg-green-600;
   }
-  
+
   .btn-info {
     @apply bg-pos-info text-white border-none px-3 py-2 cursor-pointer text-sm transition-all duration-200 hover:bg-blue-600;
   }
-  
+
   /* Icon button styles */
   .icon-btn {
     @apply bg-transparent border-none cursor-pointer p-2 inline-flex items-center justify-center transition-all duration-200 text-base hover:bg-white hover:bg-opacity-10;
   }
-  
+
   .icon-btn-edit {
     @apply icon-btn text-pos-warning;
   }
-  
+
   .icon-btn-delete {
     @apply icon-btn text-pos-error;
   }
-  
+
   /* Card styles */
   .card {
     @apply bg-pos-bg-tertiary border-2 border-transparent p-1 cursor-pointer transition-all duration-200;
   }
-  
+
   .card-hover {
     @apply hover:transform hover:-translate-y-0.5 hover:shadow-lg;
   }
-  
+
   .card-hover:hover {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
-  
+
   /* Scrollbar styles */
   .scrollbar-custom {
     scrollbar-width: thin;
   }
-  
+
   .scrollbar-custom::-webkit-scrollbar {
     width: 6px;
   }
-  
+
   .scrollbar-custom::-webkit-scrollbar-track {
     background: #1a1d2e;
   }
-  
+
   .scrollbar-custom::-webkit-scrollbar-thumb {
     background: #3d4461;
     border-radius: 3px;
   }
-  
+
   /* Animation keyframes */
   @keyframes slideUp {
     from {
       transform: translateY(100%);
       opacity: 0;
     }
+
     to {
       transform: translateY(0);
       opacity: 1;
     }
   }
-  
+
   /* Modal and form styles for admin components */
   .modal {
     @apply bg-pos-bg-tertiary max-h-[90vh] overflow-y-auto flex flex-col;
   }
-  
+
   .modal-overlay {
     @apply fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50;
   }
-  
+
   .form-container {
     @apply grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-0;
   }
-  
+
   .form-group {
     @apply flex flex-col gap-1.5 mb-2.5;
   }
-  
+
   .form-group label {
     @apply text-sm font-medium text-pos-text-muted;
   }
-  
+
   .form-group input,
   .form-group select,
   .form-group textarea {
     @apply bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2 rounded text-sm focus:outline-none focus:border-pos-info;
   }
-  
+
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
     @apply border-pos-info;
   }
-  
+
   .form-actions {
     @apply flex gap-3 justify-end mt-6;
   }
-  
+
   .admin-section {
-    @apply p-6 overflow-y-auto scrollbar-custom;
+    @apply p-2 overflow-y-auto scrollbar-custom;
   }
-  
+
   .admin-section h2 {
-    @apply text-pos-text-primary text-xl font-semibold mb-6;
+    @apply text-pos-text-primary text-xl font-semibold mb-2;
   }
-  
+
   .data-table {
     @apply w-full bg-pos-bg-secondary rounded-lg overflow-hidden;
   }
-  
+
   .data-table th {
     @apply bg-pos-bg-tertiary text-pos-text-primary text-left px-4 py-3 text-sm font-medium;
   }
-  
+
   .data-table td {
     @apply px-4 py-3 text-pos-text-secondary text-sm border-t border-pos-border-primary;
   }
-  
+
   .data-table tr:hover {
     @apply bg-pos-bg-tertiary;
   }
+
+  /* Color picker styles */
+  .color-picker {
+    @apply flex gap-[2px] mt-1 p-[2px] bg-gray-700 rounded;
+  }
+
+  .color-option {
+    @apply w-[35px] h-[35px] rounded-sm border border-black cursor-pointer flex items-center justify-center text-white text-xl font-bold transition-all duration-150;
+  }
+
+  .color-option:hover {
+    @apply scale-105;
+  }
+
+  .color-option.selected {
+    @apply border-2 border-white;
+  }
+
+
+}
+
+/* Virt
+ual Keyboard Styles */
+.virtual-keyboard-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-60 flex items-end justify-center z-[60];
+}
+
+.virtual-keyboard-container {
+  @apply bg-pos-bg-tertiary rounded-t-2xl shadow-2xl w-full max-w-4xl animate-slideUp;
+}
+
+.keyboard-header {
+  @apply flex items-center justify-between px-6 py-4 border-b border-pos-border-secondary;
+}
+
+.keyboard-title {
+  @apply text-lg font-semibold text-pos-text-primary;
+}
+
+.keyboard-close-btn {
+  @apply text-pos-text-muted hover:text-pos-text-primary text-3xl leading-none transition-colors;
+}
+
+.keyboard-body {
+  @apply p-4;
+}
+
+/* Full Keyboard Layout */
+.full-keyboard {
+  @apply flex flex-col gap-2;
+}
+
+.keyboard-row {
+  @apply flex gap-1.5 justify-center;
+}
+
+.key-btn {
+  @apply bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg px-4 py-3 text-base font-medium hover:bg-pos-interactive-primary active:bg-pos-interactive-hover transition-all duration-100 min-w-[45px] flex items-center justify-center;
+}
+
+.key-btn:active {
+  @apply scale-95;
+}
+
+.special-key {
+  @apply bg-pos-bg-secondary text-pos-text-muted;
+}
+
+.special-key.active {
+  @apply bg-pos-info text-white;
+}
+
+.backspace-key {
+  @apply min-w-[120px];
+}
+
+.tab-key {
+  @apply min-w-[80px];
+}
+
+.caps-key {
+  @apply min-w-[90px];
+}
+
+.enter-key {
+  @apply min-w-[100px];
+}
+
+.shift-key {
+  @apply min-w-[100px];
+}
+
+.space-key {
+  @apply flex-1 min-w-[300px];
+}
+
+.clear-key {
+  @apply min-w-[80px];
+}
+
+/* Numeric Keypad Layout */
+.numeric-keypad {
+  @apply flex justify-center;
+}
+
+.keypad-grid {
+  @apply grid grid-cols-3 gap-3 max-w-md;
+}
+
+.numpad-key {
+  @apply text-xl py-6 min-w-[80px];
+}
+
+/* Animation for keyboard slide up */
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Input field with keyboard icon */
+.input-with-keyboard {
+  @apply relative;
+}
+
+.keyboard-icon-btn {
+  @apply absolute right-2 top-1/2 -translate-y-1/2 text-pos-text-muted hover:text-pos-info cursor-pointer text-xl transition-colors;
 }
