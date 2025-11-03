@@ -41,7 +41,7 @@ const POSScreen = () => {
           price: product.price,
           category: product.category_name || 'Uncategorized',
           image: product.image || '📦',
-          color: '#3b82f6' // Default color, can be customized
+          color: product.color || '#3b82f6',
         }));
       
         

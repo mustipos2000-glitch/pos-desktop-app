@@ -2,8 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import ApiService from '../services/api';
 
 const ProductGrid = ({ products, onAddToCart }) => {
-
-  console.log("products in ProductGrid", products);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
   const [loadingSubProducts, setLoadingSubProducts] = useState(false);
@@ -88,21 +86,21 @@ const ProductGrid = ({ products, onAddToCart }) => {
   key={product.id}
   className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative bg-[#1e293b] rounded-lg overflow-hidden"
   onClick={() => handleProductClick(product)}
-  style={{
-    border: `2px solid ${
-      product.color?.startsWith('#') ? product.color : `#${product.color || '3b82f6'}`
-    }`,
-    
+ style={{
+    borderWidth: "2px",
+    borderStyle: "solid",
+    borderColor: product.color || "#3b82f6",
+    boxShadow: `0 0 0 1px ${product.color || "#3b82f6"} inset`, // ensures color visibility
   }}
 >
   
   {/* Price - Top Right */}
-  <div className="absolute  right-0  text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
+  <div className="absolute  right-0  rounded-md text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
     €{product.price.toFixed(2)}
   </div>
 
   {/* Image */}
-  <div className="w-full h-20 flex mt-2 items-center justify-center overflow-hidden">
+  <div className="w-full h-20 flex mt-2 p-1 items-center justify-center overflow-hidden">
     {isImageUrl(product.image) ? (
       <img
         src={`http://localhost:5000${product.image}`}

@@ -188,7 +188,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
       </div>
 
       {/* Cart Items */}
-      <div className="flex-1 overflow-y-auto px-4 flex flex-col bg-pos-bg-secondary min-h-[160px] scrollbar-custom">
+      <div className="flex-1 overflow-y-auto  px-4 flex flex-col bg-pos-bg-secondary min-h-[160px] scrollbar-custom">
         {cart.length === 0 ? (
           <div className="text-center text-pos-text-disabled py-10 px-5 text-sm">
             No items in cart
@@ -210,9 +210,17 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
               <div
                 key={id}
                 onClick={() => handleSelect(id)}
-                className={`grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-2.5 items-center text-sm py-1.5 px-5 cursor-pointer ${bgColor}`}
+                className={`grid grid-cols-[2fr_1fr_1fr_0.5fr] mb-1 gap-2.5 items-center text-sm py-1.5 px-5 cursor-pointer ${bgColor}`}
               >
-                <div className={`font-light ${textColor}`}>{item.name}</div>
+       <div className={`font-light ${textColor}`}>
+  {item.name
+    ? item.name.split(" ").length > 1
+      ? item.name.split(" ").slice(0, 5).join(" ") + (item.name.split(" ").length > 5 ? "..." : "")
+      : item.name.length > 20
+      ? item.name.slice(0, 20) + "..."
+      : item.name
+    : ""}
+</div>
 
                 <div
                   className={`flex items-center gap-2 justify-center ${textColor}`}
@@ -240,7 +248,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
                 </div>
                 {item.appliedDiscount && (
   <div className="text-xs text-whit italic">
-    Discount: {item.appliedDiscount}
+     {item.appliedDiscount}
   </div>
 )}
 
