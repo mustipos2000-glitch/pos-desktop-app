@@ -1,4 +1,4 @@
-const Product = require('../models/Product');
+const SubProduct = require('../models/SubProduct');
 const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
@@ -6,9 +6,19 @@ const path = require('path');
 const SubProductController = {
     getAllSubProducts: (req, res) => {
         try {
-            const subProducts = Product.getAllSubProducts();
+            const { group_id } = req.query;
+            
+            const filters = {};
+            
+            // Add group_id filter if provided
+            if (group_id) {
+                filters.group_id = parseInt(group_id);
+            }
+            
+            const subProducts = SubProduct.getAll(filters);
             res.json({ data: subProducts });
         } catch (err) {
+            console.error('Get all sub-products error:', err);
             res.status(500).json({ error: 'Internal server error' });
         }
     },
@@ -16,7 +26,7 @@ const SubProductController = {
     getSubProductById: (req, res) => {
         try {
             const id = req.params.id;
-            const subProduct = Product.getById(id);
+            const subProduct = SubProduct.getById(id);
             if (!subProduct) {
                 return res.status(404).json({ error: 'Sub-Product not found' });
             }
@@ -29,7 +39,7 @@ const SubProductController = {
     getSubProductsByProductId: (req, res) => {
         try {
             const productId = req.params.productId;
-            const subProducts = Product.getSubProductsByParentId(productId);
+            const subProducts = SubProduct.getByProductId(productId);
             res.json({ data: subProducts });
         } catch (err) {
             res.status(500).json({ error: 'Internal server error' });
@@ -42,19 +52,25 @@ const SubProductController = {
             if (!payload.name) {
                 return res.status(400).json({ error: 'Name is required' });
             }
-            if (!payload.product_id) {
-                return res.status(400).json({ error: 'Product ID is required' });
+
+            // Validate product existence if product_id provided
+            if (payload.product_id) {
+                const product = db
+                    .prepare('SELECT id FROM products WHERE id = ?')
+                    .get(payload.product_id);
+                if (!product) {
+                    return res.status(404).json({ error: 'Product does not exist' });
+                }
             }
 
-            // Set parent_id from product_id
-            payload.parent_id = payload.product_id;
-
-            // Validate parent product existence (must be a main product)
-            const product = db
-                .prepare('SELECT id FROM products WHERE id = ? AND parent_id IS NULL')
-                .get(payload.parent_id);
-            if (!product) {
-                return res.status(404).json({ error: 'Parent product does not exist' });
+            // Validate group existence if group_id provided
+            if (payload.group_id) {
+                const group = db
+                    .prepare('SELECT id FROM groups WHERE id = ?')
+                    .get(payload.group_id);
+                if (!group) {
+                    return res.status(404).json({ error: 'Group does not exist' });
+                }
             }
 
             // Attach uploaded image if exists
@@ -76,7 +92,7 @@ const SubProductController = {
             if (typeof payload.vat_takeout === 'undefined') payload.vat_takeout = 0;
             if (typeof payload.vat_eat_in === 'undefined') payload.vat_eat_in = 0;
 
-            const subProduct = Product.create(payload);
+            const subProduct = SubProduct.create(payload);
             res.status(201).json({ message: 'Sub-Product created successfully', data: subProduct });
         } catch (error) {
             res.status(500).json({
@@ -93,25 +109,31 @@ const SubProductController = {
             if (!payload.name) {
                 return res.status(400).json({ error: 'Name is required' });
             }
-            if (!payload.product_id) {
-                return res.status(400).json({ error: 'Product ID is required' });
-            }
-
-            // Set parent_id from product_id
-            payload.parent_id = payload.product_id;
 
             // Check if sub-product exists
-            const existingSubProduct = Product.getById(id);
+            const existingSubProduct = SubProduct.getById(id);
             if (!existingSubProduct) {
                 return res.status(404).json({ error: 'Sub-Product not found' });
             }
 
-            // Validate parent product existence (must be a main product)
-            const product = db
-                .prepare('SELECT id FROM products WHERE id = ? AND parent_id IS NULL')
-                .get(payload.parent_id);
-            if (!product) {
-                return res.status(404).json({ error: 'Parent product does not exist' });
+            // Validate product existence if product_id provided
+            if (payload.product_id) {
+                const product = db
+                    .prepare('SELECT id FROM products WHERE id = ?')
+                    .get(payload.product_id);
+                if (!product) {
+                    return res.status(404).json({ error: 'Product does not exist' });
+                }
+            }
+
+            // Validate group existence if group_id provided
+            if (payload.group_id) {
+                const group = db
+                    .prepare('SELECT id FROM groups WHERE id = ?')
+                    .get(payload.group_id);
+                if (!group) {
+                    return res.status(404).json({ error: 'Group does not exist' });
+                }
             }
 
             // Validate category existence if category_id provided
@@ -140,7 +162,7 @@ const SubProductController = {
                 payload.image = existingSubProduct.image;
             }
 
-            const subProduct = Product.update(id, payload);
+            const subProduct = SubProduct.update(id, payload);
             res.status(200).json({ message: 'Sub-Product updated successfully', data: subProduct });
         } catch (err) {
             res.status(500).json({ error: 'Internal server error' });
@@ -150,13 +172,13 @@ const SubProductController = {
     deleteSubProduct: (req, res) => {
         try {
             const id = req.params.id;
-            const subProduct = Product.getById(id);
+            const subProduct = SubProduct.getById(id);
 
             if (!subProduct) {
                 return res.status(404).json({ error: 'Sub-Product not found' });
             }
 
-            Product.delete(id);
+            SubProduct.delete(id);
             res.json({ message: 'Sub-Product deleted successfully' });
         } catch (err) {
             console.error('Delete sub-product error:', err);
@@ -164,6 +186,101 @@ const SubProductController = {
                 return res.status(400).json({ error: err.message });
             }
             res.status(500).json({ error: 'Internal server error: ' + err.message });
+        }
+    },
+
+    // Assign multiple sub-products to a product
+    assignSubProductsToProduct: (req, res) => {
+        try {
+            const { product_id, sub_product_ids } = req.body;
+
+            // Validate required fields
+            if (!product_id) {
+                return res.status(400).json({ error: 'product_id is required' });
+            }
+
+            if (!sub_product_ids || !Array.isArray(sub_product_ids) || sub_product_ids.length === 0) {
+                return res.status(400).json({ error: 'sub_product_ids must be a non-empty array' });
+            }
+
+            // Validate product exists
+            const product = db.prepare('SELECT id FROM products WHERE id = ?').get(product_id);
+            if (!product) {
+                return res.status(404).json({ error: 'Product does not exist' });
+            }
+
+            // Validate all sub-products exist
+            const placeholders = sub_product_ids.map(() => '?').join(',');
+            const subProducts = db.prepare(`SELECT id FROM sub_products WHERE id IN (${placeholders})`).all(...sub_product_ids);
+
+            if (subProducts.length !== sub_product_ids.length) {
+                return res.status(404).json({ error: 'One or more sub-products do not exist' });
+            }
+
+            // Update all sub-products with the product_id
+            const updateStmt = db.prepare('UPDATE sub_products SET product_id = ? WHERE id = ?');
+            const updateMany = db.transaction((productId, subProductIds) => {
+                for (const subProductId of subProductIds) {
+                    updateStmt.run(productId, subProductId);
+                }
+            });
+
+            updateMany(product_id, sub_product_ids);
+
+            res.json({
+                message: 'Sub-products assigned to product successfully',
+                assigned_count: sub_product_ids.length,
+                product_id: product_id,
+                sub_product_ids: sub_product_ids
+            });
+        } catch (error) {
+            console.error('Assign sub-products error:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                details: error.message
+            });
+        }
+    },
+
+    // Unassign multiple sub-products from a product (set product_id to NULL)
+    unassignSubProductsFromProduct: (req, res) => {
+        try {
+            const { sub_product_ids } = req.body;
+
+            // Validate required fields
+            if (!sub_product_ids || !Array.isArray(sub_product_ids) || sub_product_ids.length === 0) {
+                return res.status(400).json({ error: 'sub_product_ids must be a non-empty array' });
+            }
+
+            // Validate all sub-products exist
+            const placeholders = sub_product_ids.map(() => '?').join(',');
+            const subProducts = db.prepare(`SELECT id FROM sub_products WHERE id IN (${placeholders})`).all(...sub_product_ids);
+
+            if (subProducts.length !== sub_product_ids.length) {
+                return res.status(404).json({ error: 'One or more sub-products do not exist' });
+            }
+
+            // Update all sub-products to set product_id to NULL
+            const updateStmt = db.prepare('UPDATE sub_products SET product_id = NULL WHERE id = ?');
+            const updateMany = db.transaction((subProductIds) => {
+                for (const subProductId of subProductIds) {
+                    updateStmt.run(subProductId);
+                }
+            });
+
+            updateMany(sub_product_ids);
+
+            res.json({
+                message: 'Sub-products unassigned from product successfully',
+                unassigned_count: sub_product_ids.length,
+                sub_product_ids: sub_product_ids
+            });
+        } catch (error) {
+            console.error('Unassign sub-products error:', error);
+            res.status(500).json({
+                error: 'Internal server error',
+                details: error.message
+            });
         }
     }
 };

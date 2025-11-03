@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
+import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import { useMessageModal } from '../hooks/useMessageModal';
 import ApiService from '../services/api';
-import './css/RoomManager.css';
 
 const RoomManager = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddRoom, setShowAddRoom] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
-  const [selectedRoom, setSelectedRoom] = useState(null);
   const [roomForm, setRoomForm] = useState({
     name: '',
     total_table: 0
@@ -77,9 +76,6 @@ const RoomManager = () => {
       await ApiService.deleteRoom(id);
       fetchRooms();
       closeDeleteConfirmation();
-      if (selectedRoom?.id === id) {
-        setSelectedRoom(null);
-      }
     } catch (error) {
       console.error('Error deleting room:', error);
       closeDeleteConfirmation();
@@ -113,51 +109,58 @@ const RoomManager = () => {
     <div className="admin-section">
       <div className="section-header">
         <h2>Manage Rooms</h2>
-        <div className='flex gap-2'>
-          <button className="btn-primary" onClick={() => {
-            setEditingRoom(null);
-            setRoomForm({ name: '', total_table: 0 });
-            setShowAddRoom(true);
-          }}>
-            Add Room
-          </button>
-          <button
-            className="btn-primary"
-            onClick={() => handleEditRoom(selectedRoom)}
-            disabled={!selectedRoom}
-          >
-            Edit Room
-          </button>
-          <button
-            className="btn-primary"
-            onClick={() => openDeleteConfirmation(selectedRoom)}
-            disabled={!selectedRoom}
-          >
-            Delete Room
-          </button>
-        </div>
+        <button className="add-btn" onClick={() => {
+          setEditingRoom(null);
+          setRoomForm({ name: '', total_table: 0 });
+          setShowAddRoom(true);
+        }}>
+          + Add Room
+        </button>
       </div>
 
-      <div className="rooms-container">
+      <div className="categories-table">
         {loading ? (
           <div className="loading-state">Loading rooms...</div>
-        ) : rooms.length === 0 ? (
-          <div className="empty-state border p-2">
-            No rooms found. Click "Add Room" to create your first room.
-          </div>
         ) : (
-          <div className="rooms-grid">
-            {rooms.map((room) => (
-              <div
-                key={room.id}
-                className={`room-card ${selectedRoom?.id === room.id ? 'selected' : ''}`}
-                onClick={() => setSelectedRoom(room)}
-              >
-                <div className="room-name">{room.name || 'Unnamed Room'}</div>
-                <div className="room-tables">Tables: {room.total_table || 0}</div>
-              </div>
-            ))}
-          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Room Name</th>
+                <th>Total Tables</th>
+                <th className='actions-cell'>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rooms.length === 0 ? (
+                <tr>
+                  <td colSpan="3" className="empty-state">
+                    No rooms found. Click "Add Room" to create your first room.
+                  </td>
+                </tr>
+              ) : (
+                rooms.map((room) => (
+                  <tr key={room.id}>
+                    <td className="">{room.name || 'Unnamed Room'}</td>
+                    <td className="">{room.total_table || 0}</td>
+                    <td className="actions-cell">
+                      <IconButton
+                        icon="✏️"
+                        className="edit"
+                        onClick={() => handleEditRoom(room)}
+                        title="Edit room"
+                      />
+                      <IconButton
+                        icon="🗑️"
+                        className="delete"
+                        onClick={() => openDeleteConfirmation(room)}
+                        title="Delete room"
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         )}
       </div>
 
@@ -166,14 +169,14 @@ const RoomManager = () => {
           <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
               <h3 className="text-xl font-semibold text-pos-text-primary">{editingRoom ? 'Edit Room' : 'Add New Room'}</h3>
-              <button 
+              <button
                 onClick={() => setShowAddRoom(false)}
                 className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
               >
                 ×
               </button>
             </div>
-            
+
             <div className="px-6 py-4">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-pos-text-muted mb-2">
@@ -202,19 +205,19 @@ const RoomManager = () => {
                 />
               </div>
             </div>
-            
+
             <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setShowAddRoom(false)}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleAddRoom}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
-                {editingRoom ? 'Update Room' : 'Add Room'}
+                {editingRoom ? 'Update' : 'Add'}
               </button>
             </div>
           </div>
