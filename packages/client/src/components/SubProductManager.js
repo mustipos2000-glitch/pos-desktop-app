@@ -1,14 +1,10 @@
 import { useState, useEffect } from 'react';
-import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import { useMessageModal } from '../hooks/useMessageModal';
-// Converted to use Tailwind CSS
 
 const SubProductManager = () => {
   const [subProducts, setSubProducts] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [groups, setGroups] = useState([]);
   const [showAddSubProduct, setShowAddSubProduct] = useState(false);
   const [showEditSubProduct, setShowEditSubProduct] = useState(false);
@@ -19,6 +15,17 @@ const SubProductManager = () => {
     isOpen: false,
     subProductId: null,
     subProductName: ''
+  });
+  const [deleteGroupConfirmation, setDeleteGroupConfirmation] = useState({
+    isOpen: false,
+    groupId: null,
+    groupName: ''
+  });
+  const [showAddGroup, setShowAddGroup] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [groupForm, setGroupForm] = useState({
+    name: '',
+    is_visible: 0
   });
   const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
@@ -62,26 +69,6 @@ const SubProductManager = () => {
     }
   };
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/products');
-      const result = await response.json();
-      setProducts(result.data || []);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/categories');
-      const result = await response.json();
-      setCategories(result.data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
   const fetchGroups = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/groups');
@@ -94,9 +81,8 @@ const SubProductManager = () => {
 
   useEffect(() => {
     fetchSubProducts();
-    fetchProducts();
-    fetchCategories();
     fetchGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInputChange = (e) => {
@@ -360,79 +346,252 @@ const SubProductManager = () => {
     }
   };
 
-  const getProductName = (productId) => {
-    const product = products.find(p => p.id === productId);
-    return product ? product.name : 'Unknown';
+  // const getProductName = (productId) => {
+  //   const product = products.find(p => p.id === productId);
+  //   return product ? product.name : 'Unknown';
+  // };
+
+  // const getCategoryName = (categoryId) => {
+  //   const category = categories.find(cat => cat.id === categoryId);
+  //   return category ? category.name : 'Unknown';
+  // };
+
+  const handleAddGroup = async () => {
+    if (!groupForm.name) {
+      return;
+    }
+
+    try {
+      const url = editingGroup
+        ? `http://localhost:5000/api/groups/${editingGroup.id}`
+        : 'http://localhost:5000/api/groups';
+
+      const response = await fetch(url, {
+        method: editingGroup ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(groupForm)
+      });
+
+      if (response.ok) {
+        fetchGroups();
+        setShowAddGroup(false);
+        setEditingGroup(null);
+        setGroupForm({ name: '', is_visible: 0 });
+      } else {
+        const error = await response.json();
+        showError(error.error || 'Failed to save group');
+      }
+    } catch (error) {
+      console.error('Error saving group:', error);
+      showError('Error saving group. Please try again.');
+    }
   };
 
-  const getCategoryName = (categoryId) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    return category ? category.name : 'Unknown';
+  const handleEditGroup = (group) => {
+    setEditingGroup(group);
+    setGroupForm({
+      name: group.name || '',
+      is_visible: Number(group.is_visible) || 0
+    });
+    setShowAddGroup(true);
   };
+
+  const handleDeleteGroup = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/groups/${id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        fetchGroups();
+        closeDeleteGroupConfirmation();
+        if (selectedGroup?.id === id) {
+          setSelectedGroup(null);
+        }
+      } else {
+        const error = await response.json();
+        closeDeleteGroupConfirmation();
+        showWarning(error.error || 'Failed to delete group', 'Cannot Delete Group');
+      }
+    } catch (error) {
+      console.error('Error deleting group:', error);
+      closeDeleteGroupConfirmation();
+      showError('Error deleting group. Please try again.');
+    }
+  };
+
+  const openDeleteGroupConfirmation = (group) => {
+    setDeleteGroupConfirmation({
+      isOpen: true,
+      groupId: group.id,
+      groupName: group.name
+    });
+  };
+
+  const closeDeleteGroupConfirmation = () => {
+    setDeleteGroupConfirmation({
+      isOpen: false,
+      groupId: null,
+      groupName: ''
+    });
+  };
+
+  const confirmDeleteGroup = () => {
+    if (deleteGroupConfirmation.groupId) {
+      handleDeleteGroup(deleteGroupConfirmation.groupId);
+    }
+  };
+
+  const [selectedGroup, setSelectedGroup] = useState(null);
+
+  const filteredSubProducts = selectedGroup
+    ? subProducts.filter(sp => sp.group_id === selectedGroup.id)
+    : [];
 
   return (
-    <div className="admin-section">
-      <div className="section-header">
-        <h2>Manage Sub Products</h2>
-        <button className="add-btn" onClick={() => {
-          resetForm();
-          setShowAddSubProduct(true);
-        }}>
-          + Add Sub Product
+    <div className="admin-section h-screen flex flex-col">
+      {/* Header */}
+      <div className="text-center bg-pos-bg-secondary border-pos-border-primary">
+        <h2 className="m-0 text-pos-text-primary text-2xl font-medium">Subproducts</h2>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="px-2 py-1 flex gap-1 border-pos-border-primary">
+        <button
+          onClick={() => {
+            resetForm();
+            setEditingGroup(null);
+            setGroupForm({ name: '', is_visible: 0 });
+            setShowAddGroup(true);
+          }}
+          className="btn-primary font-semibold"
+        >
+          Add Group
+        </button>
+        <button
+          onClick={() => {
+            if (selectedGroup) {
+              handleEditGroup(selectedGroup);
+            }
+          }}
+          disabled={!selectedGroup}
+          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Edit Group
+        </button>
+        <button
+          onClick={() => {
+            if (selectedGroup) {
+              openDeleteGroupConfirmation(selectedGroup);
+            }
+          }}
+          disabled={!selectedGroup}
+          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Delete Group
+        </button>
+        <button
+          onClick={() => {
+            if (selectedGroup) {
+              resetForm();
+              setSubProductForm({ ...subProductForm, group_id: selectedGroup.id });
+              setShowAddSubProduct(true);
+            }
+          }}
+          disabled={!selectedGroup}
+          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Add Subproduct
         </button>
       </div>
-      {loading && <div className="loading">Loading...</div>}
 
-      <div className="products-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Group</th>
-              <th>Product</th>
-              <th>Name</th>
-              <th>Button Name</th>
-              <th>Price</th>
-              <th>VAT Takeout</th>
-              <th>VAT Eat-in</th>
-              <th>Image</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {subProducts.map(subProduct => (
-              <tr key={subProduct.id}>
-                <td>{subProduct.group_name || '-'}</td>
-                <td>{subProduct.product_name || '-'}</td>
-                <td>{subProduct.name}</td>
-                <td>{subProduct.button_name || '-'}</td>
-                <td>${parseFloat(subProduct.price).toFixed(2)}</td>
-                <td>{subProduct.vat_takeout}%</td>
-                <td>{subProduct.vat_eat_in}%</td>
-                <td>
-                  {subProduct.image ? (
-                    <img src={`http://localhost:5000${subProduct.image}`} alt={subProduct.name} style={{ maxWidth: '50px', maxHeight: '50px' }} />
+      {/* Main Content Area */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar - Groups */}
+        <div className="w-[156px] bg-pos-bg-secondary border-r-2 border-pos-border-primary overflow-y-auto scrollbar-custom px-2">
+          {loading ? (
+            <div className="p-5 text-pos-text-primary text-center">
+              Loading...
+            </div>
+          ) : (
+            groups.map(group => (
+              <div
+                key={group.id}
+                onClick={() => setSelectedGroup(group)}
+                className={`bg-pos-bg-primary py-2 px-2 mb-1 text-pos-text-primary cursor-pointer text-sm ${selectedGroup?.id === group.id
+                  ? 'bg-pos-bg-tertiary'
+                  : 'hover:bg-pos-interactive-primary'
+                  }`}
+              >
+                {group.name}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Right Content - Sub Products Table */}
+        <div className="flex-1 bg-pos-bg-primary overflow-y-auto scrollbar-custom">
+          {!selectedGroup ? (
+            <div className="text-pos-text-primary text-center mt-12 text-base">
+              Select a group to view sub-products
+            </div>
+          ) : (
+            <div>
+              <table className="w-full border-collapse bg-pos-bg-secondary overflow-hidden">
+                <thead>
+                  <tr className="bg-pos-bg-tertiary">
+                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Id</th>
+                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Product Name</th>
+                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Price VAT incl</th>
+                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">VAT Take out</th>
+                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">VAT Eat in</th>
+                    <th className="p-1 text-right text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredSubProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="p-4 text-center text-pos-text-secondary text-sm">
+                        No sub-products found for this group
+                      </td>
+                    </tr>
                   ) : (
-                    'No Image'
+                    filteredSubProducts.map(subProduct => (
+                      <tr key={subProduct.id} className="border-b border-pos-border-primary hover:bg-pos-bg-tertiary transition-colors">
+                        <td className="p-1 text-pos-text-primary text-sm">{subProduct.id}</td>
+                        <td className="p-1 text-pos-text-primary text-sm">
+                          <div>
+                            {subProduct.name}
+                            <div
+                              className="w-full"
+                            ></div>
+                          </div>
+                        </td>
+                        <td className="p-1 text-pos-text-primary text-sm">{parseFloat(subProduct.price).toFixed(2)}</td>
+                        <td className="p-1 text-pos-text-primary text-sm">{subProduct.vat_takeout || 0}</td>
+                        <td className="p-1 text-pos-text-primary text-sm">{subProduct.vat_eat_in || 0}</td>
+                        <td className="p-1 text-right">
+                          <button
+                            onClick={() => handleEditSubProduct(subProduct)}
+                            className="btn-secondary mr-2 py-1"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => openDeleteConfirmation(subProduct)}
+                            className="btn-secondary py-1"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))
                   )}
-                </td>
-                <td style={{ display: 'flex' }}>
-                  <IconButton
-                    icon="✏️"
-                    className="edit"
-                    onClick={() => handleEditSubProduct(subProduct)}
-                    title="Edit"
-                  />
-                  <IconButton
-                    icon="🗑️"
-                    className="delete"
-                    onClick={() => openDeleteConfirmation(subProduct)}
-                    title="Delete"
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Add Sub-Product Modal */}
@@ -442,18 +601,18 @@ const SubProductManager = () => {
             {/* Modal Header */}
             <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
               <h3 className="text-xl font-semibold text-pos-text-primary">Add New Sub Product</h3>
-              <button 
+              <button
                 onClick={() => setShowAddSubProduct(false)}
                 className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
               >
                 ×
               </button>
             </div>
-            
+
             {/* Modal Body */}
             <div className="px-6 py-4">
               <div className="grid grid-cols-3 gap-4 mb-4">
-                 <div>
+                <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">
                     Group Name
                   </label>
@@ -563,7 +722,7 @@ const SubProductManager = () => {
                   />
                 </div>
 
-                 <div>
+                <div>
                   <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
                   <input
                     type="text"
@@ -589,16 +748,16 @@ const SubProductManager = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Modal Footer */}
             <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setShowAddSubProduct(false)}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleAddSubProduct}
                 className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
               >
@@ -607,181 +766,257 @@ const SubProductManager = () => {
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* Edit Sub-Product Modal */}
-      {showEditSubProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowEditSubProduct(false)}>
-          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">Edit Sub Product</h3>
-              <button 
-                onClick={() => setShowEditSubProduct(false)}
-                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-            
-            {/* Modal Body */}
-            <div className="px-6 py-4">
-              <div className="grid grid-cols-3 gap-4 mb-4">
+      {
+        showEditSubProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowEditSubProduct(false)}>
+            <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
+                <h3 className="text-xl font-semibold text-pos-text-primary">Edit Sub Product</h3>
+                <button
+                  onClick={() => setShowEditSubProduct(false)}
+                  className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="px-6 py-4">
+                <div className="grid grid-cols-3 gap-4 mb-4">
 
                   <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Group Name
-                  </label>
-                  <select
-                    name="group_id"
-                    value={subProductForm.group_id}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="">Select Group</option>
-                    {groups.map(group => (
-                      <option key={group.id} value={group.id}>{group.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Sub Product Name <span className="text-pos-error">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={subProductForm.name}
-                    onChange={handleInputChange}
-                    className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                    placeholder="Enter sub-product name"
-                  />
-                  {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                      Group Name
+                    </label>
+                    <select
+                      name="group_id"
+                      value={subProductForm.group_id}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    >
+                      <option value="">Select Group</option>
+                      {groups.map(group => (
+                        <option key={group.id} value={group.id}>{group.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                      Sub Product Name <span className="text-pos-error">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={subProductForm.name}
+                      onChange={handleInputChange}
+                      className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      placeholder="Enter sub-product name"
+                    />
+                    {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Button Name</label>
+                    <input
+                      type="text"
+                      name="button_name"
+                      value={subProductForm.button_name}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="Display name"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Button Name</label>
-                  <input
-                    type="text"
-                    name="button_name"
-                    value={subProductForm.button_name}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Display name"
-                  />
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="price"
+                      value={subProductForm.price}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Takeout (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="vat_takeout"
+                      value={subProductForm.vat_takeout}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Eat-in (%)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="vat_eat_in"
+                      value={subProductForm.vat_eat_in}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
+                    <input
+                      type="text"
+                      name="production_name"
+                      value={subProductForm.production_name}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="Name for production"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
+                    <input
+                      type="text"
+                      name="barcode"
+                      value={subProductForm.barcode}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="Product barcode"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
+                    <input
+                      type="text"
+                      name="addition_type"
+                      value={subProductForm.addition_type}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                      placeholder="Addition type"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Image</label>
+                    <input
+                      type="file"
+                      name="image"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="price"
-                    value={subProductForm.price}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Takeout (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="vat_takeout"
-                    value={subProductForm.vat_takeout}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Eat-in (%)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="vat_eat_in"
-                    value={subProductForm.vat_eat_in}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="0.00"
-                  />
-                </div>
+              {/* Modal Footer */}
+              <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowEditSubProduct(false)}
+                  className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateSubProduct}
+                  className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+                >
+                  Update
+                </button>
               </div>
-
-              <div className="grid grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
-                  <input
-                    type="text"
-                    name="production_name"
-                    value={subProductForm.production_name}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Name for production"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
-                  <input
-                    type="text"
-                    name="barcode"
-                    value={subProductForm.barcode}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Product barcode"
-                  />
-                </div>
-                 <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
-                  <input
-                    type="text"
-                    name="addition_type"
-                    value={subProductForm.addition_type}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Addition type"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Image</label>
-                  <input
-                    type="file"
-                    name="image"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-            
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button 
-                onClick={() => setShowEditSubProduct(false)}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleUpdateSubProduct}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Update
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
+
+      {/* Add/Edit Group Modal */}
+      {
+        showAddGroup && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => {
+            setShowAddGroup(false);
+            setEditingGroup(null);
+            setGroupForm({ name: '', is_visible: 0 });
+          }}>
+            <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
+                <h3 className="text-xl font-semibold text-pos-text-primary">{editingGroup ? 'Edit Group' : 'Add New Group'}</h3>
+                <button
+                  onClick={() => {
+                    setShowAddGroup(false);
+                    setEditingGroup(null);
+                    setGroupForm({ name: '', is_visible: 0 });
+                  }}
+                  className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="px-6 py-4">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                    Group Name <span className="text-pos-error">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={groupForm.name}
+                    onChange={(e) => setGroupForm({ ...groupForm, name: e.target.value })}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    placeholder="Enter group name"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={groupForm.is_visible === 1}
+                      onChange={(e) => setGroupForm({ ...groupForm, is_visible: e.target.checked ? 1 : 0 })}
+                      className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
+                    />
+                    <span className="ml-2 text-sm text-pos-text-primary">Visible</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowAddGroup(false);
+                    setEditingGroup(null);
+                    setGroupForm({ name: '', is_visible: 0 });
+                  }}
+                  className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleAddGroup}
+                  className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+                >
+                  {editingGroup ? 'Update' : 'Add'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
 
       <ConfirmationModal
         isOpen={deleteConfirmation.isOpen}
@@ -789,6 +1024,17 @@ const SubProductManager = () => {
         onConfirm={confirmDelete}
         title="Delete Sub Product"
         message={`Are you sure you want to delete "${deleteConfirmation.subProductName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      <ConfirmationModal
+        isOpen={deleteGroupConfirmation.isOpen}
+        onClose={closeDeleteGroupConfirmation}
+        onConfirm={confirmDeleteGroup}
+        title="Delete Group"
+        message={`Are you sure you want to delete "${deleteGroupConfirmation.groupName}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"

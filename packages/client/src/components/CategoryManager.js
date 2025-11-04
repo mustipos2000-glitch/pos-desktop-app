@@ -513,7 +513,7 @@ const CategoryManager = () => {
                   key={category.id}
                   className={`flex text-sm mt-1 cursor-pointer transition-colors rounded ${
                     selectedCategory?.id === category.id
-                      ? "bg-[#252a3f] text-white hover:bg-[#353c5a]"
+                      ? "text-white bg-[#353c5a]"
                       : "hover:bg-black/5"
                   }`}
                   onClick={() => setSelectedCategory(category)}
