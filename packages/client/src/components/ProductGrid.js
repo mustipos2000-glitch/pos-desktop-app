@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ApiService from '../services/api';
 
-const ProductGrid = ({ products, onAddToCart }) => {
+const ProductGrid = ({ products, onAddToCart,customQuantity,setCustomQuantity }) => {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
   const [loadingSubProducts, setLoadingSubProducts] = useState(false);
@@ -31,51 +31,61 @@ const ProductGrid = ({ products, onAddToCart }) => {
   }, [selectedProductId]);
 
   // Handle product click - check for sub-products first
-  const handleProductClick = async (product) => {
-    if (selectedProductId === product.id) {
+const handleProductClick = async (product) => {
+  // If same product clicked again → close sub-products
+  if (selectedProductId === product.id) {
+    setSelectedProductId(null);
+    setSubProducts([]);
+    return;
+  }
+
+  try {
+    setLoadingSubProducts(true);
+    setSelectedProductId(product.id);
+
+    // Fetch sub-products
+    const response = await ApiService.getSubProductsByProductId(product.id);
+    const productSubProducts = response.data;
+
+    // No sub-products → directly add product
+    if (!productSubProducts || productSubProducts.length === 0) {
+      onAddToCart(product, Number(customQuantity) || 1);
+      setCustomQuantity(''); // ✅ reset quantity input
       setSelectedProductId(null);
       setSubProducts([]);
       return;
     }
 
-    try {
-      setLoadingSubProducts(true);
-      setSelectedProductId(product.id);
-
-      const response = await ApiService.getSubProductsByProductId(product.id);
-      const productSubProducts = response.data;
-
-      if (productSubProducts && productSubProducts.length > 0) {
-        setSubProducts(
-          productSubProducts.map((subProduct) => ({
-            id: subProduct.id,
-            name: subProduct.name,
-            price: subProduct.price,
-            category: subProduct.category_name || 'Uncategorized',
-            image: subProduct.image || '📦',
-            color: subProduct.color || product.color || '#3b82f6',
-          }))
-        );
-      } else {
-        setSelectedProductId(null);
-        setSubProducts([]);
-        onAddToCart(product);
-      }
-    } catch (error) {
-      console.error('Error checking sub-products:', error);
-      setSelectedProductId(null);
-      setSubProducts([]);
-      onAddToCart(product);
-    } finally {
-      setLoadingSubProducts(false);
-    }
-  };
-
-  const handleSubProductSelect = (subProduct) => {
-    onAddToCart(subProduct);
+    // Set sub-products
+    setSubProducts(
+      productSubProducts.map((subProduct) => ({
+        id: subProduct.id,
+        name: subProduct.name,
+        price: subProduct.price,
+        category: subProduct.category_name || "Uncategorized",
+        image: subProduct.image || "📦",
+        color: subProduct.color || product.color || "#3b82f6",
+      }))
+    );
+  } catch (error) {
+    console.error("Error checking sub-products:", error);
+    onAddToCart(product, Number(customQuantity) || 1);
+    setCustomQuantity(''); // ✅ reset quantity input
     setSelectedProductId(null);
     setSubProducts([]);
-  };
+  } finally {
+    setLoadingSubProducts(false);
+  }
+};
+
+const handleSubProductSelect = (subProduct) => {
+  onAddToCart(subProduct, Number(customQuantity) || 1);
+  setCustomQuantity(''); // ✅ reset quantity input
+  setSelectedProductId(null);
+  setSubProducts([]);
+};
+
+
 
   return (
     <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden">
