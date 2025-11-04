@@ -167,7 +167,7 @@ db.exec(`
 // Migrate existing sub-products from products table to sub_products table (one-time migration)
 try {
   const existingSubProducts = db.prepare(`SELECT * FROM products WHERE parent_id IS NOT NULL`).all();
-  
+
   if (existingSubProducts.length > 0) {
     const insertStmt = db.prepare(`
       INSERT INTO sub_products (
@@ -176,13 +176,16 @@ try {
         printer1, printer2, printer3, image, color, price_vat_inc, created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    
+
     const checkStmt = db.prepare(`SELECT id FROM sub_products WHERE name = ? AND product_id = ?`);
-    
+
     for (const subProduct of existingSubProducts) {
       // Check if already migrated
       const existing = checkStmt.get(subProduct.name, subProduct.parent_id);
       if (!existing) {
+        // Verify that the parent product exists before inserting
+        const parentExists = db.prepare(`SELECT id FROM products WHERE id = ?`).get(subProduct.parent_id);
+        if (parentExists) {
         insertStmt.run(
           subProduct.parent_id,
           subProduct.name,
@@ -203,10 +206,13 @@ try {
           subProduct.color || '#3b82f6',
           subProduct.price_vat_inc || 0,
           subProduct.created_at
-        );
+          );
+        } else {
+          console.log(`⚠️  Skipping sub-product "${subProduct.name}" - parent product ${subProduct.parent_id} not found`);
+        }
       }
     }
-    
+
     // Delete migrated sub-products from products table
     db.exec(`DELETE FROM products WHERE parent_id IS NOT NULL`);
     console.log(`✅ Migrated ${existingSubProducts.length} sub-products to separate table`);
