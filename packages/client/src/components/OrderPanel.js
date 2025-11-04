@@ -2,22 +2,26 @@ import { useState, useRef, useEffect } from "react";
 import ReceiptModal from "./ReceiptModal";
 import ConfirmationModal from "./ConfirmationModal";
 import PaymentModal from "./PaymentModal";
-import DiscountModal from "./DiscountModal"; // Added missing import
+import DiscountModal from "./DiscountModal";
 import ApiService from "../services/api";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity }) => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const discountInputRef = useRef(null);
+
+  // repurposed ref/state: cash input (cash received)
+  const cashInputRef = useRef(null);
+  const [cashReceived, setCashReceived] = useState("");
+
   const [selectedIds, setSelectedIds] = useState([]);
   const [lastAddedId, setLastAddedId] = useState(null);
   const prevCartLengthRef = useRef(cart.length);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash");
-  const [showDiscountModal, setShowDiscountModal] = useState(false); // Added missing state
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
 
   // Track last added item
   useEffect(() => {
@@ -75,8 +79,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
   };
 
   const totalProductCount = () =>
-    cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
-
+    cart.length;
   const hasSelection = selectedIds.length > 0;
 
   const calculateTotal = () =>
@@ -113,8 +116,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
           paymentData.cashAmount > 0 && paymentData.cardAmount > 0
             ? "mixed"
             : paymentData.cashAmount > 0
-            ? "cash"
-            : "card",
+              ? "cash"
+              : "card",
         cash_amount: paymentData.cashAmount,
         card_amount: paymentData.cardAmount,
         total_paid: paymentData.totalPaid,
@@ -148,35 +151,25 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
     setShowReceipt(false);
     setCart([]);
     setDiscount(0);
-    if (discountInputRef.current) discountInputRef.current.value = "";
+    setCashReceived("");
+    if (cashInputRef.current) cashInputRef.current.value = "";
     window.print();
   };
 
-  // Numpad
+  
   const handleNumpadInput = (value) => {
-    if (!discountInputRef.current) return;
-
-    const currentDiscount = discount.toString();
-
     if (value === "C") {
-      setDiscount(0);
-      discountInputRef.current.value = "";
+      setCustomQuantity("");
     } else if (value === ".") {
-      if (!currentDiscount.includes(".")) {
-        const newDiscount = currentDiscount + ".";
-        setDiscount(parseFloat(newDiscount) || 0);
-        discountInputRef.current.value = newDiscount;
-      }
+      if (!customQuantity.includes(".")) setCustomQuantity(customQuantity + ".");
     } else {
-      const newDiscount =
-        currentDiscount === "0" ? value : currentDiscount + value;
-      setDiscount(parseFloat(newDiscount) || 0);
-      discountInputRef.current.value = newDiscount;
+      setCustomQuantity((prev) => prev + value);
     }
   };
 
+
   return (
-    <div className="w-1/4 min-w-[300px] bg-pos-bg-quaternary flex flex-col border-l border-pos-border-light h-screen">
+    <div className="w-1/6 min-w-[300px] bg-pos-bg-quaternary flex flex-col border-l border-pos-border-light h-screen">
       {/* Header */}
       <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light">
         <div className="grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
@@ -188,7 +181,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
       </div>
 
       {/* Cart Items */}
-      <div className="flex-1 overflow-y-auto  px-4 flex flex-col bg-pos-bg-secondary min-h-[160px] scrollbar-custom">
+      <div className="flex-1 overflow-y-auto   flex flex-col bg-pos-bg-secondary min-h-[160px] scrollbar-custom">
         {cart.length === 0 ? (
           <div className="text-center text-pos-text-disabled py-10 px-5 text-sm">
             No items in cart
@@ -202,31 +195,33 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
             const bgColor = isLastAdded
               ? "bg-green-500"
               : isSelected
-              ? "bg-green-500"
-              : "bg-blue-500";
+                ? "bg-green-500"
+                : "bg-blue-500";
             const textColor = "text-white";
+
 
             return (
               <div
                 key={id}
                 onClick={() => handleSelect(id)}
-                className={`grid grid-cols-[2fr_1fr_1fr_0.5fr] mb-1 gap-2.5 items-center text-sm py-1.5 px-5 cursor-pointer ${bgColor}`}
+                className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-2 px-2 cursor-pointer rounded ${bgColor}`}
               >
-       <div className={`font-light ${textColor}`}>
-  {item.name
-    ? item.name.split(" ").length > 1
-      ? item.name.split(" ").slice(0, 5).join(" ") + (item.name.split(" ").length > 5 ? "..." : "")
-      : item.name.length > 20
-      ? item.name.slice(0, 20) + "..."
-      : item.name
-    : ""}
-</div>
+                {/* Product Name */}
+                <div className={`font-light col-span-4 ${textColor}`}>
+                  {item.name
+                    ? item.name.split(" ").length > 1
+                      ? item.name.split(" ").slice(0, 5).join(" ") + (item.name.split(" ").length > 5 ? "..." : "")
+                      : item.name.length > 20
+                        ? item.name.slice(0, 14) + "..."
+                        : item.name
+                    : ""}
+                </div>
 
-                <div
-                  className={`flex items-center gap-2 justify-center ${textColor}`}
-                >
+                {/* Quantity Controls */}
+
+                <div className={`flex items-center col-span-2 gap-2 justify-center ${textColor}`}>
                   <button
-                    className={`bg-pos-interactive-primary ${textColor} w-7 h-4 flex items-center justify-center hover:bg-pos-interactive-hover`}
+                    className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm font-semibold justify-center hover:bg-pos-interactive-hover`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onUpdateQuantity(item.id, item.quantity - 1);
@@ -236,7 +231,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
                   </button>
                   <span>{item.quantity}</span>
                   <button
-                    className={`bg-pos-interactive-primary ${textColor} w-7 h-4 flex items-center justify-center hover:bg-pos-interactive-hover`}
+                    className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm justify-center hover:bg-pos-interactive-hover`}
                     onClick={(e) => {
                       e.stopPropagation();
                       onUpdateQuantity(item.id, item.quantity + 1);
@@ -244,132 +239,137 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
                   >
                     +
                   </button>
-
                 </div>
-                {item.appliedDiscount && (
-  <div className="text-xs text-whit italic">
-     {item.appliedDiscount}
-  </div>
-)}
 
-                <div className={`text-right ${textColor} font-light`}>
-                  {(item.price * item.quantity).toFixed(2)}
+
+                {/* Price Section */}
+
+                <div className="flex gap-2  col-span-6 items-end ps-4 text-center ">
+                  {/* Actual Price (before discount) */}
+                  <span className="text-xs line-through ">
+                    {item.originalPrice
+                      ? (item.originalPrice * item.quantity).toFixed(2)
+                      : ""}
+                  </span>
+
+                  {/* Discount Info */}
+                  {item.appliedDiscount && (
+                    <span className="text-xs italic text-white">
+                      {item.appliedDiscount}
+                    </span>
+                  )}
+
+                  {/* Final Price after discount */}
+                  <span className={`text-xs mt-1 ${textColor}`}>
+                    {(item.price * item.quantity).toFixed(2)}
+                  </span>
                 </div>
+
               </div>
             );
+
+
           })
         )}
       </div>
 
-      {/* Totals */}
-      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-t border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
-        <span>Gross Total</span>
-        <span className="bg-pos-interactive-primary px-0.5 py-0.5 text-pos-text-secondary min-w-[100px] text-center">
-          {calculateTotal().toFixed(2)}
-        </span>
+      {/* Total row (label | amount | cash input) */}
+      <div className="bg-pos-bg-secondary px-3 py-3 border-t border-pos-border-light">
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-xs font-semibold text-pos-text-disabled uppercase">Total</div>
+          <div className="text-lg font-bold text-pos-text-secondary">
+            {(calculateTotal() - discount + calculateTax()).toFixed(2)}
+          </div>
+
+
+          <input
+            type="text"
+            placeholder="Add Quantity"
+            value={customQuantity}
+            onChange={(e) => setCustomQuantity(e.target.value)}
+            className="max-w-[7rem] text-center py-1 px-2 bg-white text-black text-xs rounded outline-none"
+          />
+        </div>
       </div>
 
-      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
-        <span>Tax 12%</span>
-        <span className="bg-pos-interactive-primary px-0.5 py-0.5 text-pos-text-secondary min-w-[100px] text-center">
-          {calculateTax().toFixed(2)}
-        </span>
-      </div>
-
-      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
-        <span>Discount</span>
-        <input
-          type="text"
-          className={`max-w-[6.5rem] text-center py-1.5 px-2 text-black bg-white text-xs outline-none ${
-            !hasSelection ? "opacity-50 cursor-not-allowed" : ""
-          }`}
-          placeholder="0"
-          ref={discountInputRef}
-          disabled={!hasSelection}
-          onChange={(e) => {
-            const newDiscount = parseFloat(e.target.value) || 0;
-            setDiscount(newDiscount);
-          }}
-        />
-      </div>
-
-      <div className="flex justify-between items-center px-2 py-0 bg-pos-bg-secondary border-b border-pos-border-light text-xs font-semibold text-pos-text-secondary">
-        <span>Net Total</span>
-        <span className="bg-pos-interactive-primary px-0.5 py-0.5 text-pos-text-secondary min-w-[100px] text-center">
-          {(calculateTotal() + calculateTax() - discount).toFixed(2)}
-        </span>
-      </div>
-
-      {/* Numpad */}
-      <div className="grid grid-cols-4 gap-1 p-0.5">
-        {["C", "7", "8", "9", ".", "4", "5", "6", "0", "1", "2", "3"].map(
-          (val) => (
-            <button
-              key={val}
-              className={`btn-primary p-0 text-sm font-semibold ${
-                val === "C" ? "bg-gray-600 hover:bg-gray-500" : ""
-              }`}
-              onClick={() => handleNumpadInput(val)}
-            >
-              {val}
-            </button>
-          )
-        )}
-      </div>
-
-      {/* Bottom Buttons */}
-      <div className="grid grid-cols-6 gap-2 p-1 bg-pos-bg-primary">
+      {/* Icon row (4 icons) */}
+      <div className="grid grid-cols-4 gap-2 p-2 bg-pos-bg-secondary border-t border-pos-border-light">
         <button
-          className={`bg-pos-interactive-primary text-pos-text-secondary px-3 py-2 text-lg font-medium ${
-            hasSelection ? "hover:bg-pos-interactive-hover" : "opacity-50 cursor-not-allowed"
-          }`}
           onClick={handleClearSelected}
           disabled={!hasSelection}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 rounded ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
           🗑️
         </button>
 
         <button
-          className={`btn-danger text-sm font-medium ${!hasSelection ? "opacity-50 cursor-not-allowed" : ""}`}
+
           onClick={() => setShowDeleteAllModal(true)}
           disabled={!hasSelection}
+          className="bg-pos-interactive-primary text-pos-text-secondary py-2 rounded hover:bg-pos-interactive-hover"
         >
-          Delete All
+          🛒
         </button>
 
         <button
-          className={`btn-primary text-sm font-medium ${!hasSelection ? "opacity-50 cursor-not-allowed" : ""}`}
           onClick={handleNotes}
           disabled={!hasSelection}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 rounded ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
-          Notes
+          📝
         </button>
 
         <button
-          className="btn-primary text-sm font-medium"
           onClick={() => setShowDiscountModal(true)}
+
+          className="bg-pos-interactive-primary text-pos-text-secondary py-2 rounded hover:bg-pos-interactive-hover disabled:opacity-50"
+          disabled={isProcessing || cart.length === 0}
+
         >
-          Discount
+          💳
         </button>
+      </div>
 
-        <button className="btn-primary text-sm font-medium">Drawer</button>
+      {/* Numpad */}
+      <div className="grid grid-cols-4 gap-1.5 p-1.5">
+        {["C", "7", "8", "9", ".", "4", "5", "6", "0", "1", "2", "3"].map((val) => (
+          <button
+            key={val}
+            onClick={() => handleNumpadInput(val)}
+            className={`aspect-auto flex items-center py-1  justify-center rounded font-medium text-sm shadow-sm transition-all duration-150 
+        ${val === "C"
+                ? "bg-red-500 hover:bg-red-600 text-white"
+                : "bg-pos-interactive-primary hover:bg-pos-interactive-primary text-gray-100 active:scale-95"
+              }`}
+          >
+            {val}
+          </button>
+        ))}
+      </div>
 
+
+
+      {/* Bottom Buttons */}
+      <div className="grid grid-cols-2 gap-2 p-2 bg-pos-bg-primary border-t border-pos-border-light">
+        {/* Card */}
         <button
-          className="btn-primary text-sm font-medium disabled:opacity-50"
+          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 rounded hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCardPayment}
           disabled={isProcessing || cart.length === 0}
         >
           Card
         </button>
 
+        {/* Cash */}
         <button
-          className="btn-primary text-sm font-medium disabled:opacity-50"
+          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 rounded hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCashPayment}
           disabled={isProcessing || cart.length === 0}
         >
           {isProcessing ? "Processing..." : "Cash"}
         </button>
       </div>
+
 
       {/* Modals */}
       <ConfirmationModal
@@ -412,8 +412,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
             selectedIds.length === 0
               ? "Whole Order"
               : selectedIds.length === 1
-              ? cart.find((item) => item.id === selectedIds[0])?.name
-              : cart
+                ? cart.find((item) => item.id === selectedIds[0])?.name
+                : cart
                   .filter((item) => selectedIds.includes(item.id))
                   .map((i) => i.name)
                   .join(", ")
@@ -422,44 +422,53 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity }) => {
             selectedIds.length === 0
               ? calculateTotal() + calculateTax()
               : cart
-                  .filter((item) => selectedIds.includes(item.id))
-                  .reduce((sum, i) => sum + i.price * i.quantity, 0)
+                .filter((item) => selectedIds.includes(item.id))
+                .reduce((sum, i) => sum + i.price * i.quantity, 0)
           }
           onClose={() => setShowDiscountModal(false)}
-         onConfirm={({ finalPrice, mode, rawInput }) => {
-  if (selectedIds.length === 0) {
-    // Apply discount to the whole order
-    setDiscount((prev) => prev + (mode === "percentage" ? (calculateTotal() + calculateTax()) * (parseFloat(rawInput) / 100) : parseFloat(rawInput)));
-  } else {
-    // Apply to selected items
-    setCart((prev) =>
-      prev.map((item) => {
-        if (selectedIds.includes(item.id)) {
-          const itemTotal = item.price * item.quantity;
-          let discountValue = 0;
+          onConfirm={({ finalPrice, mode, rawInput }) => {
+            const discountValueInput = parseFloat(rawInput);
+            const discountAmount = isNaN(discountValueInput) ? 0 : discountValueInput;
 
-          if (mode === "percentage") {
-            discountValue = (itemTotal * parseFloat(rawInput)) / 100;
-          } else {
-            discountValue = parseFloat(rawInput);
-          }
+            if (selectedIds.length === 0) {
+              // Apply discount to the whole order
+              setDiscount((prev) =>
+                prev +
+                (mode === "percentage"
+                  ? (calculateTotal() + calculateTax()) * (discountAmount / 100)
+                  : discountAmount)
+              );
+            } else {
+              // Apply to selected items
+              setCart((prev) =>
+                prev.map((item) => {
+                  if (selectedIds.includes(item.id)) {
+                    const itemTotal = item.price * item.quantity;
+                    let discountValue = 0;
 
-          const updatedTotal = itemTotal - discountValue;
-          return {
-            ...item,
-            price: updatedTotal / item.quantity,
-            appliedDiscount:
-              mode === "percentage"
-                ? `${rawInput}%`
-                : `€${discountValue.toFixed(2)}`,
-          };
-        }
-        return item;
-      })
-    );
-  }
-  setShowDiscountModal(false);
-}}
+                    if (mode === "percentage") {
+                      discountValue = (itemTotal * discountAmount) / 100;
+                    } else {
+                      discountValue = discountAmount;
+                    }
+
+                    const updatedTotal = itemTotal - discountValue;
+                    return {
+                      ...item,
+                      originalPrice: item.originalPrice || item.price, // store the base price once
+                      price: updatedTotal / item.quantity,
+                      appliedDiscount:
+                        mode === "percentage"
+                          ? `${discountAmount}%`
+                          : `€${discountValue.toFixed(2)}`,
+                    };
+                  }
+                  return item;
+                })
+              );
+            }
+            setShowDiscountModal(false);
+          }}
 
         />
       )}
