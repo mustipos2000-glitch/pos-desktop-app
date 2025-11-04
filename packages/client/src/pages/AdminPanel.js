@@ -6,6 +6,7 @@ import CategoryManager from '../components/CategoryManager';
 import GroupManager from '../components/GroupManager';
 import UserManager from '../components/UserManager';
 import RoomManager from '../components/RoomManager';
+import PrTableManager from '../components/PrTableManager';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -20,11 +21,10 @@ const AdminPanel = () => {
           </button>
           <div className="flex gap-1">
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${
-                activeTab === 'categories' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
-                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-              }`}
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'categories'
+                ? 'bg-pos-interactive-primary text-pos-text-primary'
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                }`}
               onClick={() => setActiveTab('categories')}
             >
               Product
@@ -50,11 +50,10 @@ const AdminPanel = () => {
               Products
             </button> */}
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${
-                activeTab === 'sub-products' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
-                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-              }`}
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'sub-products'
+                ? 'bg-pos-interactive-primary text-pos-text-primary'
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                }`}
               onClick={() => setActiveTab('sub-products')}
             >
               Sub-Products
@@ -70,64 +69,72 @@ const AdminPanel = () => {
               Groups
             </button> */}
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${
-                activeTab === 'users' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
-                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-              }`}
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'users'
+                ? 'bg-pos-interactive-primary text-pos-text-primary'
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                }`}
               onClick={() => setActiveTab('users')}
             >
               Users
             </button>
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${
-                activeTab === 'rooms' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
-                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-              }`}
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'rooms'
+                ? 'bg-pos-interactive-primary text-pos-text-primary'
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                }`}
               onClick={() => setActiveTab('rooms')}
             >
               Rooms
             </button>
+            <button
+              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'tables'
+                ? 'bg-pos-interactive-primary text-pos-text-primary'
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                }`}
+              onClick={() => setActiveTab('tables')}
+            >
+              Tables
+            </button>
           </div>
         </div>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-hidden">
-          {activeTab === 'products' && <ProductManager />}
-          {activeTab === 'sub-products' && <SubProductManager />}
-          {activeTab === 'categories' && <CategoryManager />}
-          {activeTab === 'groups' && <GroupManager />}
-          {activeTab === 'users' && <UserManager />}
-          {activeTab === 'rooms' && <RoomManager />}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-hidden">
+            {activeTab === 'products' && <ProductManager />}
+            {activeTab === 'sub-products' && <SubProductManager />}
+            {activeTab === 'categories' && <CategoryManager />}
+            {activeTab === 'groups' && <GroupManager />}
+            {activeTab === 'users' && <UserManager />}
+            {activeTab === 'rooms' && <RoomManager />}
+            {activeTab === 'tables' && <PrTableManager />}
 
-          {activeTab === 'settings' && (
-            <div className="p-6 overflow-y-auto scrollbar-custom">
-              <h2 className="text-pos-text-primary text-xl font-semibold mb-6">System Settings</h2>
-              <div className="space-y-6 max-w-md">
-                <div>
-                  <label className="block text-pos-text-primary text-sm font-medium mb-2">Store Name</label>
-                  <input type="text" defaultValue="My POS Store" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" />
+            {activeTab === 'settings' && (
+              <div className="p-6 overflow-y-auto scrollbar-custom">
+                <h2 className="text-pos-text-primary text-xl font-semibold mb-6">System Settings</h2>
+                <div className="space-y-6 max-w-md">
+                  <div>
+                    <label className="block text-pos-text-primary text-sm font-medium mb-2">Store Name</label>
+                    <input type="text" defaultValue="My POS Store" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" />
+                  </div>
+                  <div>
+                    <label className="block text-pos-text-primary text-sm font-medium mb-2">Tax Rate (%)</label>
+                    <input type="number" defaultValue="8" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" />
+                  </div>
+                  <div>
+                    <label className="block text-pos-text-primary text-sm font-medium mb-2">Currency</label>
+                    <select defaultValue="USD" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
+                      <option value="USD">USD ($)</option>
+                      <option value="EUR">EUR (€)</option>
+                      <option value="GBP">GBP (£)</option>
+                    </select>
+                  </div>
+                  <button className="btn-success">Save Settings</button>
                 </div>
-                <div>
-                  <label className="block text-pos-text-primary text-sm font-medium mb-2">Tax Rate (%)</label>
-                  <input type="number" defaultValue="8" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" />
-                </div>
-                <div>
-                  <label className="block text-pos-text-primary text-sm font-medium mb-2">Currency</label>
-                  <select defaultValue="USD" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
-                    <option value="USD">USD ($)</option>
-                    <option value="EUR">EUR (€)</option>
-                    <option value="GBP">GBP (£)</option>
-                  </select>
-                </div>
-                <button className="btn-success">Save Settings</button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
 
     </div>
   );

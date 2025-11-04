@@ -268,6 +268,49 @@ db.exec(`
   )
 `);
 
+// Create pr_table table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS pr_table (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    table_no TEXT NOT NULL,
+    room_id INTEGER,
+    order_id INTEGER,
+    status TEXT DEFAULT 'available',
+    description TEXT,
+    customer_name TEXT,
+    waiter_name TEXT,
+    table_size INTEGER,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE SET NULL,
+    FOREIGN KEY(order_id) REFERENCES orders(id) ON DELETE SET NULL
+  )
+`);
+
+// Add new columns to pr_table if they don't exist
+try {
+  db.exec(`ALTER TABLE pr_table ADD COLUMN customer_name TEXT`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+try {
+  db.exec(`ALTER TABLE pr_table ADD COLUMN waiter_name TEXT`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+try {
+  db.exec(`ALTER TABLE pr_table ADD COLUMN table_size INTEGER`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
 
 
 // Insert default admin user if no users exist

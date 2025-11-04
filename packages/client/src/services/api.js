@@ -183,6 +183,35 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // PrTable methods
+  static async getPrTables() {
+    return this.request('/pr-tables');
+  }
+
+  static async getPrTableById(id) {
+    return this.request(`/pr-tables/${id}`);
+  }
+
+  static async createPrTable(tableData) {
+    return this.request('/pr-tables', {
+      method: 'POST',
+      body: JSON.stringify(tableData),
+    });
+  }
+
+  static async updatePrTable(id, tableData) {
+    return this.request(`/pr-tables/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(tableData),
+    });
+  }
+
+  static async deletePrTable(id) {
+    return this.request(`/pr-tables/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default ApiService;
