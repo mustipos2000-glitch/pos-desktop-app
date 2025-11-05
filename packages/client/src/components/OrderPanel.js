@@ -190,6 +190,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           cart.map((item) => {
             const id = Number(item.id);
             const isSelected = selectedIds.includes(id);
+ 
             const isLastAdded = id === lastAddedId;
 
             const bgColor = isLastAdded

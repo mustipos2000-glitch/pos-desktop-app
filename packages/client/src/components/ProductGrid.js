@@ -139,31 +139,16 @@ const handleSubProductSelect = (subProduct) => {
       {/* Sub-products section */}
       {(selectedProductId && (subProducts.length > 0 || loadingSubProducts)) && (
         <div
-          className="bg-pos-bg-accent border-t-2 border-pos-border-accent p-4 max-h-[40vh] overflow-y-auto scrollbar-custom animate-slideUp"
+          className="p-1 max-h-[40vh] overflow-y-auto scrollbar-custom animate-slideUp"
           ref={subProductsRef}
         >
           {loadingSubProducts ? (
             <div className="flex flex-col items-center justify-center gap-2 p-4 text-pos-text-muted text-xs">
-              <div className="w-5 h-5 border-2 border-pos-border-accent border-t-pos-info rounded-full animate-spin"></div>
+              <div className="w-5 h-5"></div>
               <span>Loading variants...</span>
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-4 pb-2 border-b border-pos-border-accent">
-                <h3 className="text-white m-0 text-base font-semibold">
-                  Select {products.find((p) => p.id === selectedProductId)?.name} variant
-                </h3>
-                <button
-                  className="bg-none border-none text-pos-text-muted text-2xl cursor-pointer p-0 w-7.5 h-7.5 flex items-center justify-center rounded-full transition-all duration-200 hover:bg-pos-border-accent hover:text-white"
-                  onClick={() => {
-                    setSelectedProductId(null);
-                    setSubProducts([]);
-                  }}
-                >
-                  ×
-                </button>
-              </div>
-
               {/* Sub-product grid */}
               <div className="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-2">
                 {subProducts.map((subProduct) => (
