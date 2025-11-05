@@ -85,8 +85,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const calculateTotal = () =>
     cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const calculateTax = () =>
-    cart.reduce((sum, item) => sum + item.price * item.quantity * 0.12, 0);
+  // const calculateTax = () =>
+  //   cart.reduce((sum, item) => sum + item.price * item.quantity * 0.12, 0);
 
   // Payment
   const handlePayment = (paymentMethod = "cash") => {
@@ -102,11 +102,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setIsProcessing(true);
     try {
       const subTotal = calculateTotal();
-      const tax = calculateTax();
-      const total = subTotal + tax - discount;
+      // const tax = calculateTax();
+      const total = subTotal  - discount;
 
       const orderData = {
-        tax,
+        // tax,
         status: "completed",
         note,
         sub_total: subTotal,
@@ -274,11 +274,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       </div>
 
       {/* Total row (label | amount | cash input) */}
-      <div className="bg-pos-bg-secondary px-3 py-3 border-t border-pos-border-light">
+      <div className="bg-pos-bg-secondary px-2 py-1 border-t border-pos-border-light">
         <div className="flex items-center justify-between gap-3">
           <div className="text-xs font-semibold text-pos-text-disabled uppercase">Total</div>
           <div className="text-lg font-bold text-pos-text-secondary">
-            {(calculateTotal() - discount + calculateTax()).toFixed(2)}
+            {(calculateTotal() - discount ).toFixed(2)}
           </div>
 
 
@@ -287,17 +287,17 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             placeholder="Add Quantity"
             value={customQuantity}
             onChange={(e) => setCustomQuantity(e.target.value)}
-            className="max-w-[7rem] text-center py-1 px-2 bg-white text-black text-xs rounded outline-none"
+            className="max-w-[7rem] text-center py-1 px-2 bg-white text-black text-sm outline-none"
           />
         </div>
       </div>
 
       {/* Icon row (4 icons) */}
-      <div className="grid grid-cols-4 gap-2 p-2 bg-pos-bg-secondary border-t border-pos-border-light">
+      <div className="grid grid-cols-4 gap-2 p-1 bg-pos-bg-secondary border-t border-pos-border-light">
         <button
           onClick={handleClearSelected}
           disabled={!hasSelection}
-          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 rounded ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
           🗑️
         </button>
@@ -306,7 +306,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
           onClick={() => setShowDeleteAllModal(true)}
           disabled={!hasSelection}
-          className="bg-pos-interactive-primary text-pos-text-secondary py-2 rounded hover:bg-pos-interactive-hover"
+          className="bg-pos-interactive-primary text-pos-text-secondary py-2 hover:bg-pos-interactive-hover"
         >
           🛒
         </button>
@@ -314,7 +314,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         <button
           onClick={handleNotes}
           disabled={!hasSelection}
-          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 rounded ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
           📝
         </button>
@@ -322,7 +322,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         <button
           onClick={() => setShowDiscountModal(true)}
 
-          className="bg-pos-interactive-primary text-pos-text-secondary py-2 rounded hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-interactive-primary text-pos-text-secondary py-2 hover:bg-pos-interactive-hover disabled:opacity-50"
           disabled={isProcessing || cart.length === 0}
 
         >
@@ -331,12 +331,12 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       </div>
 
       {/* Numpad */}
-      <div className="grid grid-cols-4 gap-1.5 p-1.5">
+      <div className="grid grid-cols-4 gap-1 p-1">
         {["C", "7", "8", "9", ".", "4", "5", "6", "0", "1", "2", "3"].map((val) => (
           <button
             key={val}
             onClick={() => handleNumpadInput(val)}
-            className={`aspect-auto flex items-center py-1  justify-center rounded font-medium text-sm shadow-sm transition-all duration-150 
+            className={`aspect-auto flex items-center py-2  justify-center text-sm transition-all duration-150 
         ${val === "C"
                 ? "bg-red-500 hover:bg-red-600 text-white"
                 : "bg-pos-interactive-primary hover:bg-pos-interactive-primary text-gray-100 active:scale-95"
@@ -389,7 +389,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        total={calculateTotal() + calculateTax() - discount}
+        total={calculateTotal() - discount}
         onConfirm={handlePaymentConfirm}
         defaultPaymentMethod={selectedPaymentMethod}
       />
@@ -397,9 +397,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       {showReceipt && (
         <ReceiptModal
           cart={cart}
-          total={calculateTotal() + calculateTax() - discount}
+          total={calculateTotal() - discount}
           subTotal={calculateTotal()}
-          tax={calculateTax()}
+          // tax={calculateTax()}
           discount={discount}
           onClose={handleCloseReceipt}
           onPrint={handlePrintReceipt}
@@ -420,7 +420,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           }
           basePrice={
             selectedIds.length === 0
-              ? calculateTotal() + calculateTax()
+              ? calculateTotal()
               : cart
                 .filter((item) => selectedIds.includes(item.id))
                 .reduce((sum, i) => sum + i.price * i.quantity, 0)
@@ -435,7 +435,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               setDiscount((prev) =>
                 prev +
                 (mode === "percentage"
-                  ? (calculateTotal() + calculateTax()) * (discountAmount / 100)
+                  ? (calculateTotal() ) * (discountAmount / 100)
                   : discountAmount)
               );
             } else {
