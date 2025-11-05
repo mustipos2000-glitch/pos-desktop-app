@@ -197,52 +197,75 @@ const UserManager = () => {
         </button>
       </div>
 
-      <div className="users-table">
-        <table>
+      <div className="overflow-x-auto">
+        <table className="data-table">
           <thead>
             <tr>
-              <th>Avatar</th>
-              <th>Name</th>
-              <th>Role</th>
-              <th>Pincode</th>
-              <th>SSN</th>
-              <th>Actions</th>
+              <th className="w-16">Avatar</th>
+              <th className="w-48">Name</th>
+              <th className="w-32">Role</th>
+              <th className="w-24">Pincode</th>
+              <th className="w-40">SSN</th>
+              <th className="w-32 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users
-              .sort((a, b) => a.id - b.id)
-              .map((user, index) => (
-                <tr key={user.id}>
-                  <td>
-                    <div className="user-avatar-small" style={{ backgroundColor: user.avatar_color }}>
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                      </svg>
-                    </div>
-                  </td>
-                  <td>{user.name}</td>
-                  <td>{user.role}</td>
-                  <td>••••</td>
-                  <td>{user.social_security || '-'}</td>
-                  <td>
-                    <IconButton
-                      icon="✏️"
-                      className="edit"
-                      onClick={() => handleEditUser(user)}
-                      title="Edit user"
-                    />
-                    {index !== 0 && (
-                      <IconButton
-                        icon="🗑️"
-                        className="delete"
-                        onClick={() => openDeleteConfirmation(user)}
-                        title="Delete user"
-                      />
-                    )}
-                  </td>
-                </tr>
-              ))}
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="text-center py-8 text-pos-text-muted">
+                  No users found. Click "Add User" to create one.
+                </td>
+              </tr>
+            ) : (
+              users
+                .sort((a, b) => a.id - b.id)
+                .map((user, index) => (
+                  <tr key={user.id}>
+                    <td>
+                      <div 
+                        className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md"
+                        style={{ backgroundColor: user.avatar_color }}
+                      >
+                        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                      </div>
+                    </td>
+                    <td className="font-medium text-pos-text-primary">{user.name}</td>
+                    <td>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user.role === 'Admin' 
+                          ? 'bg-pos-error bg-opacity-20 text-pos-error' 
+                          : user.role === 'Manager'
+                          ? 'bg-pos-warning bg-opacity-20 text-pos-warning'
+                          : 'bg-pos-info bg-opacity-20 text-pos-info'
+                      }`}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="text-pos-text-muted font-mono">••••</td>
+                    <td className="text-pos-text-secondary">{user.social_security || '-'}</td>
+                    <td>
+                      <div className="flex items-center justify-center gap-2">
+                        <IconButton
+                          icon="✏️"
+                          className="edit"
+                          onClick={() => handleEditUser(user)}
+                          title="Edit user"
+                        />
+                        {index !== 0 && (
+                          <IconButton
+                            icon="🗑️"
+                            className="delete"
+                            onClick={() => openDeleteConfirmation(user)}
+                            title="Delete user"
+                          />
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+            )}
           </tbody>
         </table>
       </div>
@@ -270,7 +293,7 @@ const UserManager = () => {
               )}
 
               <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-pos-text-muted mb-2">
                       Name <span className="text-pos-error">*</span>
@@ -327,9 +350,22 @@ const UserManager = () => {
                     </div>
                     {errors.pincode && <p className="text-pos-error text-xs mt-1">{errors.pincode}</p>}
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Role</label>
+                    <select
+                      value={userForm.role}
+                      onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    >
+                      <option value="User">User</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Manager">Manager</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-3 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-pos-text-muted mb-2">Social Security Number</label>
                     <input
@@ -360,34 +396,21 @@ const UserManager = () => {
                       spellCheck="false"
                     />
                   </div>
-                </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">Role</label>
-                  <select
-                    value={userForm.role}
-                    onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="User">User</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Manager">Manager</option>
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-pos-text-muted mb-3">Avatar Color</label>
-                  <div className="color-picker">
-                    {avatarColors.map(color => (
-                      <div
-                        key={color}
-                        className={`color-option ${userForm.avatar_color === color ? 'selected' : ''}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setUserForm({ ...userForm, avatar_color: color })}
-                      >
-                        {userForm.avatar_color === color && '✓'}
-                      </div>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Avatar Color</label>
+                    <div className="color-picker">
+                      {avatarColors.map(color => (
+                        <div
+                          key={color}
+                          className={`color-option ${userForm.avatar_color === color ? 'selected' : ''}`}
+                          style={{ backgroundColor: color }}
+                          onClick={() => setUserForm({ ...userForm, avatar_color: color })}
+                        >
+                          {userForm.avatar_color === color && '✓'}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </form>

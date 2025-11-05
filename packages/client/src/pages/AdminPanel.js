@@ -6,7 +6,6 @@ import CategoryManager from '../components/CategoryManager';
 import GroupManager from '../components/GroupManager';
 import UserManager from '../components/UserManager';
 import RoomManager from '../components/RoomManager';
-import PrTableManager from '../components/PrTableManager';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -84,16 +83,7 @@ const AdminPanel = () => {
                 }`}
               onClick={() => setActiveTab('rooms')}
             >
-              Rooms
-            </button>
-            <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'tables'
-                ? 'bg-pos-interactive-primary text-pos-text-primary'
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-                }`}
-              onClick={() => setActiveTab('tables')}
-            >
-              Tables
+              Rooms & Tables
             </button>
           </div>
         </div>
@@ -106,7 +96,6 @@ const AdminPanel = () => {
             {activeTab === 'groups' && <GroupManager />}
             {activeTab === 'users' && <UserManager />}
             {activeTab === 'rooms' && <RoomManager />}
-            {activeTab === 'tables' && <PrTableManager />}
 
             {activeTab === 'settings' && (
               <div className="p-6 overflow-y-auto scrollbar-custom">
