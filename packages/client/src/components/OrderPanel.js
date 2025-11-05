@@ -204,7 +204,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               <div
                 key={id}
                 onClick={() => handleSelect(id)}
-                className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-2 px-2 cursor-pointer rounded ${bgColor}`}
+                className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-1 px-2 cursor-pointer rounded ${bgColor}`}
               >
                 {/* Product Name */}
                 <div className={`font-light col-span-4 ${textColor}`}>
