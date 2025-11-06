@@ -47,6 +47,7 @@ const ProductFormModal = ({
 
   useEffect(() => {
     if (product) {
+      console.log('Editing product:', product);
       // Edit mode - populate form with product data
       setProductForm({
         name: product.name || '',
@@ -92,25 +93,51 @@ const ProductFormModal = ({
         sub_product_group: false
       });
       setImageFile(null);
+      setFieldErrors({});
+  setHasEditedButtonOrProduction(false);
     }
     setFieldErrors({});
   }, [product, selectedCategoryId, isOpen]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setProductForm({
-      ...productForm,
-      [name]: type === 'checkbox' ? checked : value
-    });
 
-    // Clear field error when user starts typing
-    if (fieldErrors[name]) {
-      setFieldErrors({
-        ...fieldErrors,
-        [name]: ''
-      });
+const [hasEditedButtonOrProduction, setHasEditedButtonOrProduction] = useState(false);
+
+const handleInputChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  const newValue = type === "checkbox" ? checked : value;
+
+  setProductForm((prevForm) => {
+    // Only sync fields if adding a new product (not editing)
+    // and user hasn't edited button_name or production_name manually
+    if (name === "name" && !product && !hasEditedButtonOrProduction) {
+      return {
+        ...prevForm,
+        name: newValue,
+        button_name: newValue,
+        production_name: newValue,
+      };
     }
-  };
+
+    // If user edits button_name or production_name manually, stop syncing
+    if (name === "button_name" || name === "production_name") {
+      setHasEditedButtonOrProduction(true);
+    }
+
+    return {
+      ...prevForm,
+      [name]: newValue,
+    };
+  });
+
+  // Clear field error when user starts typing
+  if (fieldErrors[name]) {
+    setFieldErrors({
+      ...fieldErrors,
+      [name]: "",
+    });
+  }
+};
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
