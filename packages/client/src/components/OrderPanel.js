@@ -326,10 +326,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       <div className="w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen">
         {/* Header */}
       <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light">
-        <div className="grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
-          <span>Item</span>
-          <span>Quantity</span>
-          <span className="text-right">Total</span>
+        <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
+          <span className="col-span-4">Item</span>
+          <span className="col-span-2  flex justify-center items-center ">Quantity</span>
+          <span className="col-span-6 ps-5 ">Total</span>
           <span></span>
         </div>
       </div>
