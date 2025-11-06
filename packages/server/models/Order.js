@@ -20,12 +20,19 @@ class Order {
 
         if (details && details.length > 0) {
             const insertDetail = db.prepare(`
-        INSERT INTO order_details (order_id, product_id, qty, total)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO order_details (order_id, product_id, qty, total, notes, discount)
+        VALUES (?, ?, ?, ?, ?, ?)
       `);
             const insertMany = db.transaction((rows) => {
                 for (const row of rows) {
-                    insertDetail.run(orderId, row.product_id, row.qty, row.total);
+                    insertDetail.run(
+                        orderId, 
+                        row.product_id, 
+                        row.qty, 
+                        row.total,
+                        row.notes || null,
+                        row.discount || 0
+                    );
                 }
             });
             insertMany(details);
@@ -59,12 +66,19 @@ class Order {
 
         // 🔁 Insert new order details
         const stmt = db.prepare(`
-        INSERT INTO order_details (order_id, product_id, qty, total)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO order_details (order_id, product_id, qty, total, notes, discount)
+        VALUES (?, ?, ?, ?, ?, ?)
         `);
         const insertMany = db.transaction((items) => {
             for (const item of items) {
-                stmt.run(id, item.product_id, item.qty, item.total);
+                stmt.run(
+                    id, 
+                    item.product_id, 
+                    item.qty, 
+                    item.total,
+                    item.notes || null,
+                    item.discount || 0
+                );
             }
         });
 

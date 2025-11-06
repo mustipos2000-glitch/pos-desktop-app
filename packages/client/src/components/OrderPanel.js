@@ -3,6 +3,7 @@ import ReceiptModal from "./ReceiptModal";
 import ConfirmationModal from "./ConfirmationModal";
 import PaymentModal from "./PaymentModal";
 import DiscountModal from "./DiscountModal";
+import NoteModal from "./NoteModal";
 import ApiService from "../services/api";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity }) => {
@@ -22,6 +23,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash");
   const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [noteModalTitle, setNoteModalTitle] = useState("");
+  const [currentNoteValue, setCurrentNoteValue] = useState("");
 
   // Track last added item
   useEffect(() => {
@@ -126,10 +130,16 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           product_id: item.id,
           qty: item.quantity,
           total: item.price * item.quantity,
+          notes: item.notes || null,
+          discount: item.discount || 0,
         })),
       };
 
       await ApiService.createOrder(orderData);
+      
+      // Reset order-level note after successful order creation
+      setNote("");
+      
       setShowPaymentModal(false);
       setShowReceipt(true);
     } catch (error) {
@@ -141,8 +151,48 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
   // Notes
   const handleNotes = () => {
-    const newNote = window.prompt("Enter note for the order:", note || "");
-    if (newNote !== null) setNote(newNote);
+    if (selectedIds.length === 0) {
+      // No items selected - add note to the whole order
+      setNoteModalTitle("Whole Order");
+      setCurrentNoteValue(note);
+      setShowNoteModal(true);
+    } else if (selectedIds.length === 1) {
+      // Single item selected - add note to that item
+      const selectedItem = cart.find((item) => item.id === selectedIds[0]);
+      setNoteModalTitle(selectedItem?.name || "Item");
+      setCurrentNoteValue(selectedItem?.notes || "");
+      setShowNoteModal(true);
+    } else {
+      // Multiple items selected - add same note to all
+      const itemNames = cart
+        .filter((item) => selectedIds.includes(item.id))
+        .map((i) => i.name)
+        .join(", ");
+      setNoteModalTitle(`${selectedIds.length} Items`);
+      setCurrentNoteValue("");
+      setShowNoteModal(true);
+    }
+  };
+
+  const handleNoteConfirm = (noteText) => {
+    if (selectedIds.length === 0) {
+      // Update order-level note
+      setNote(noteText);
+    } else {
+      // Update item-level notes
+      setCart((prev) =>
+        prev.map((item) => {
+          if (selectedIds.includes(item.id)) {
+            return { ...item, notes: noteText };
+          }
+          return item;
+        })
+      );
+      
+      // Clear selection after adding note to items
+      setSelectedIds([]);
+      setLastAddedId(null);
+    }
   };
 
   const handleCloseReceipt = () => setShowReceipt(false);
@@ -151,6 +201,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setShowReceipt(false);
     setCart([]);
     setDiscount(0);
+    setNote(""); // Reset order-level note after order completion
     setCashReceived("");
     if (cashInputRef.current) cashInputRef.current.value = "";
     window.print();
@@ -207,14 +258,19 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                 className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-2 px-2 cursor-pointer rounded ${bgColor}`}
               >
                 {/* Product Name */}
-                <div className={`font-light col-span-4 ${textColor}`}>
-                  {item.name
-                    ? item.name.split(" ").length > 1
-                      ? item.name.split(" ").slice(0, 5).join(" ") + (item.name.split(" ").length > 5 ? "..." : "")
-                      : item.name.length > 20
-                        ? item.name.slice(0, 14) + "..."
-                        : item.name
-                    : ""}
+                <div className={`font-light col-span-4 ${textColor} flex items-center gap-1`}>
+                  <span>
+                    {item.name
+                      ? item.name.split(" ").length > 1
+                        ? item.name.split(" ").slice(0, 5).join(" ") + (item.name.split(" ").length > 5 ? "..." : "")
+                        : item.name.length > 20
+                          ? item.name.slice(0, 14) + "..."
+                          : item.name
+                      : ""}
+                  </span>
+                  {item.notes && (
+                    <span className="text-xs" title={item.notes}>📝</span>
+                  )}
                 </div>
 
                 {/* Quantity Controls */}
@@ -313,8 +369,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
         <button
           onClick={handleNotes}
-          disabled={!hasSelection}
-          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 rounded ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
+          className="bg-pos-interactive-primary text-pos-text-secondary py-2 rounded hover:bg-pos-interactive-hover"
         >
           📝
         </button>
@@ -461,17 +516,30 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                         mode === "percentage"
                           ? `${discountAmount}%`
                           : `€${discountValue.toFixed(2)}`,
+                      discount: discountValue,
                     };
                   }
                   return item;
                 })
               );
+              
+              // Clear selection after applying discount to items
+              setSelectedIds([]);
+              setLastAddedId(null);
             }
             setShowDiscountModal(false);
           }}
 
         />
       )}
+
+      <NoteModal
+        isOpen={showNoteModal}
+        onClose={() => setShowNoteModal(false)}
+        onConfirm={handleNoteConfirm}
+        title={noteModalTitle}
+        currentNote={currentNoteValue}
+      />
     </div>
   );
 };
