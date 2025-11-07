@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const KeypadNumpad = ({ 
   onInput, 
@@ -81,15 +81,15 @@ const KeypadNumpad = ({
   };
 
   return (
-    <div className={`bg-pos-bg-tertiary px-3 py-1 rounded-lg border border-pos-border-secondary ${className}`} style={{maxWidth: "24rem"}}>
-      <div className="">
+    <div className={`bg-pos-bg-tertiary px-4 py-2 border border-pos-border-secondary w-full max-w-3xl mx-auto ${className}`}>
+      <div className="space-y-1">
         {keys.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex gap-0.5">
+          <div key={rowIndex} className="flex gap-1 justify-center">
             {/* Add Shift button at the beginning of the last letter row */}
             {rowIndex === 2 && (
               <button
                 onClick={handleShift}
-                className={`px-2 h-8 ${isShifted ? 'bg-pos-interactive-primary' : 'bg-pos-bg-primary'} hover:bg-pos-interactive-primary text-pos-text-primary text-xs font-medium rounded border border-pos-border-secondary transition-colors`}
+                className={`px-3 h-10 ${isShifted ? 'bg-pos-interactive-primary' : 'bg-pos-bg-primary'} hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors`}
               >
                 Shift
               </button>
@@ -99,7 +99,7 @@ const KeypadNumpad = ({
               <button
                 key={key}
                 onClick={() => handleKeyPress(key)}
-                className="w-8 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
+                className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
               >
                 {getDisplayKey(key)}
               </button>
@@ -110,13 +110,13 @@ const KeypadNumpad = ({
               <>
                 <button
                   onClick={() => handleKeyPress('.')}
-                  className="w-8 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
+                  className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
                 >
                   .
                 </button>
                 <button
                   onClick={handleBackspace}
-                  className="px-4 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-xs font-medium rounded border border-pos-border-secondary transition-colors"
+                  className="px-4 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
                 >
                   ⌫
                 </button>
@@ -126,58 +126,55 @@ const KeypadNumpad = ({
         ))}
         
         {/* Function keys row */}
-        <div className="flex gap-0.5">
+        <div className="flex gap-1 justify-center">
           <button
             onClick={handleClear}
-            className="px-3 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-xs font-medium rounded border border-pos-border-secondary transition-colors"
+            className="px-4 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
           >
             Clear
           </button>
           <button
             onClick={() => handleKeyPress(',')}
-            className="w-8 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
+            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
           >
             ,
           </button>
           <button
             onClick={() => handleKeyPress(' ')}
-            className="w-16 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-xs font-medium rounded border border-pos-border-secondary transition-colors"
+            className="w-20 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
           >
             Space
           </button>
           <button
             onClick={() => handleKeyPress('/')}
-            className="w-8 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
+            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
           >
             /
           </button>
           <button
             onClick={() => handleKeyPress('*')}
-            className="w-8 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
+            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
           >
             *
           </button>
           <button
             onClick={() => handleKeyPress('-')}
-            className="w-8 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
+            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
           >
             -
           </button>
           <button
             onClick={() => handleKeyPress('+')}
-            className="w-8 h-8 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
+            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary text-sm font-medium rounded border border-pos-border-secondary transition-colors"
           >
             +
           </button>
-            {/* Add Enter button to the ASDFGHJKL row */}
-            {/* {rowIndex === 2 && ( */}
-              <button
-                onClick={handleEnter}
-                className="px-4 h-8 bg-pos-info hover:bg-blue-600 text-white text-xs font-medium rounded transition-colors"
-              >
-                Enter
-              </button>
-            {/* )} */}
+          <button
+            onClick={handleEnter}
+            className="px-6 h-10 bg-pos-info hover:bg-blue-600 text-white text-sm font-medium rounded transition-colors"
+          >
+            Enter
+          </button>
         </div>
       </div>
     </div>
