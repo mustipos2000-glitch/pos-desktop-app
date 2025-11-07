@@ -229,7 +229,7 @@ const handleInputChange = (e) => {
         </div>
         
         {/* Modal Body - Form Section */}
-        <div className="px-4 py-2 flex-shrink-0">
+        <div className="px-4 py-2" style={{maxWidth:"30rem"}}>
           <div className="grid grid-cols-3 gap-3 mb-2">
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">
@@ -241,7 +241,7 @@ const handleInputChange = (e) => {
                 value={productForm.name}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('name')}
-                className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Enter product name"
               />
               {fieldErrors.name && <p className="text-pos-error text-xs mt-0.5">{fieldErrors.name}</p>}
@@ -255,7 +255,7 @@ const handleInputChange = (e) => {
                 value={productForm.button_name}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('button_name')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'button_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'button_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Display name"
               />
             </div>
@@ -268,13 +268,13 @@ const handleInputChange = (e) => {
                 value={productForm.production_name}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('production_name')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'production_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'production_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Production name"
               />
             </div>
-          </div>
+          {/* </div> */}
 
-          <div className="grid grid-cols-3 gap-3 mb-2">
+          {/* <div className="grid grid-cols-3 gap-3 mb-2"> */}
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">Price</label>
               <input
@@ -284,7 +284,7 @@ const handleInputChange = (e) => {
                 value={productForm.price}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('price')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'price' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'price' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
@@ -298,7 +298,7 @@ const handleInputChange = (e) => {
                 value={productForm.price_vat_inc}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('price_vat_inc')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'price_vat_inc' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'price_vat_inc' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
@@ -311,13 +311,13 @@ const handleInputChange = (e) => {
                 value={productForm.barcode}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('barcode')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'barcode' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'barcode' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Barcode"
               />
             </div>
-          </div>
+          {/* </div> */}
 
-          <div className="grid grid-cols-3 gap-3 mb-2">
+          {/* <div className="grid grid-cols-3 gap-3 mb-2"> */}
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">VAT Takeout (%)</label>
               <input
@@ -327,7 +327,7 @@ const handleInputChange = (e) => {
                 value={productForm.vat_takeout}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('vat_takeout')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'vat_takeout' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'vat_takeout' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
@@ -341,7 +341,7 @@ const handleInputChange = (e) => {
                 value={productForm.vat_eat_in}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('vat_eat_in')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'vat_eat_in' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'vat_eat_in' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
@@ -352,7 +352,7 @@ const handleInputChange = (e) => {
                 name="category_id"
                 value={productForm.category_id}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors"
+                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors"
               >
                 <option value="">Select Category</option>
                 {categories.map(cat => (
@@ -371,7 +371,7 @@ const handleInputChange = (e) => {
                 value={productForm.addition_type}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('addition_type')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'addition_type' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 rounded text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'addition_type' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Addition type"
               />
             </div>
@@ -382,7 +382,7 @@ const handleInputChange = (e) => {
                 {productColors.map(color => (
                   <div
                     key={color}
-                    className={`w-6 h-6 rounded cursor-pointer border-2 flex items-center justify-center ${productForm.color === color ? 'border-white' : 'border-transparent'}`}
+                    className={`w-6 h-6  cursor-pointer border-2 flex items-center justify-center ${productForm.color === color ? 'border-white' : 'border-transparent'}`}
                     style={{ backgroundColor: color }}
                     onClick={() => setProductForm({ ...productForm, color })}
                   >
@@ -399,7 +399,7 @@ const handleInputChange = (e) => {
                 name="image"
                 accept="image/*"
                 onChange={handleFileChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1 rounded text-xs focus:outline-none focus:border-pos-info transition-colors file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:text-xs file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1  text-xs focus:outline-none focus:border-pos-info transition-colors file:mr-2 file:py-0.5 file:px-2 file: file:border-0 file:text-xs file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
               />
             </div>
           </div>
@@ -411,7 +411,7 @@ const handleInputChange = (e) => {
                 name="sub_product_group"
                 checked={productForm.sub_product_group}
                 onChange={handleInputChange}
-                className="w-3 h-3 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-1"
+                className="w-3 h-3 text-pos-info bg-pos-bg-primary border-pos-border-secondary  focus:ring-pos-info focus:ring-1"
               />
               <span className="ml-2 text-xs text-pos-text-primary">Sub-Product Group</span>
             </label>
@@ -420,7 +420,7 @@ const handleInputChange = (e) => {
 
         {/* Keypad Section */}
         {showKeypad && (
-          <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{"marginTop":"-2rem"}}>
+          <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{marginTop:"-2rem"}}>
             <div className="mb-1 text-sm text-pos-text-muted text-center">
               Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
             </div>
@@ -444,7 +444,7 @@ const handleInputChange = (e) => {
           <button
             type="button"
             onClick={() => setShowKeypad(!showKeypad)}
-            className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5  text-sm font-medium transition-colors ${
               showKeypad
                 ? 'bg-pos-info text-white'
                 : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
@@ -454,13 +454,13 @@ const handleInputChange = (e) => {
           <div className='flex gap-2'>
             <button 
               onClick={onClose}
-              className="px-4 py-1.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              className="px-4 py-1.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
             >
               Cancel
             </button>
             <button 
               onClick={handleSubmit}
-              className="px-4 py-1.5 bg-pos-info text-white rounded text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg"
+              className="px-4 py-1.5 bg-pos-info text-white  text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg"
             >
               {product ? 'Update' : 'Add'}
             </button>
