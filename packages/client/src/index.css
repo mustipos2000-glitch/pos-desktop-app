@@ -311,3 +311,16 @@ ual Keyboard Styles */
 .keyboard-icon-btn {
   @apply absolute right-2 top-1/2 -translate-y-1/2 text-pos-text-muted hover:text-pos-info cursor-pointer text-xl transition-colors;
 }
+
+/* Shift indicator styles */
+.key-btn {
+  @apply relative flex-col;
+}
+
+.key-main {
+  @apply text-base;
+}
+
+.key-shift {
+  @apply text-xs text-pos-text-muted absolute top-1 right-1 opacity-70;
+}

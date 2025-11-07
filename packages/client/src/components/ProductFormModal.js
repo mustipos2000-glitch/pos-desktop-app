@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import KeypadNumpad from './KeypadNumpad';
 
 const ProductFormModal = ({ 
   isOpen, 
@@ -31,6 +32,8 @@ const ProductFormModal = ({
 
   const [imageFile, setImageFile] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
+  const [activeField, setActiveField] = useState('name');
+  const [showKeypad, setShowKeypad] = useState(true);
 
   // Color options for product color picker
   const productColors = [
@@ -44,6 +47,7 @@ const ProductFormModal = ({
 
   useEffect(() => {
     if (product) {
+      console.log('Editing product:', product);
       // Edit mode - populate form with product data
       setProductForm({
         name: product.name || '',
@@ -89,25 +93,51 @@ const ProductFormModal = ({
         sub_product_group: false
       });
       setImageFile(null);
+      setFieldErrors({});
+  setHasEditedButtonOrProduction(false);
     }
     setFieldErrors({});
   }, [product, selectedCategoryId, isOpen]);
 
-  const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setProductForm({
-      ...productForm,
-      [name]: type === 'checkbox' ? checked : value
-    });
 
-    // Clear field error when user starts typing
-    if (fieldErrors[name]) {
-      setFieldErrors({
-        ...fieldErrors,
-        [name]: ''
-      });
+const [hasEditedButtonOrProduction, setHasEditedButtonOrProduction] = useState(false);
+
+const handleInputChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  const newValue = type === "checkbox" ? checked : value;
+
+  setProductForm((prevForm) => {
+    // Only sync fields if adding a new product (not editing)
+    // and user hasn't edited button_name or production_name manually
+    if (name === "name" && !product && !hasEditedButtonOrProduction) {
+      return {
+        ...prevForm,
+        name: newValue,
+        button_name: newValue,
+        production_name: newValue,
+      };
     }
-  };
+
+    // If user edits button_name or production_name manually, stop syncing
+    if (name === "button_name" || name === "production_name") {
+      setHasEditedButtonOrProduction(true);
+    }
+
+    return {
+      ...prevForm,
+      [name]: newValue,
+    };
+  });
+
+  // Clear field error when user starts typing
+  if (fieldErrors[name]) {
+    setFieldErrors({
+      ...fieldErrors,
+      [name]: "",
+    });
+  }
+};
+
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -142,29 +172,67 @@ const ProductFormModal = ({
     onSubmit(productForm, imageFile);
   };
 
+  const handleKeypadInput = (input) => {
+    if (activeField) {
+      setProductForm(prev => ({
+        ...prev,
+        [activeField]: prev[activeField] + input
+      }));
+    }
+  };
+
+  const handleKeypadBackspace = () => {
+    if (activeField) {
+      setProductForm(prev => ({
+        ...prev,
+        [activeField]: prev[activeField].toString().slice(0, -1)
+      }));
+    }
+  };
+
+  const handleKeypadClear = () => {
+    if (activeField) {
+      setProductForm(prev => ({
+        ...prev,
+        [activeField]: ""
+      }));
+    }
+  };
+
+  const handleKeypadEnter = () => {
+    // Keep keypad visible, just blur the active field
+    setActiveField(null);
+  };
+
+  const handleFieldFocus = (fieldName) => {
+    setActiveField(fieldName);
+  };
+
+
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[600px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-pos-bg-tertiary" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
-        <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-          <h3 className="text-xl font-semibold text-pos-text-primary">
+        <div className="bg-pos-bg-tertiary border-b border-pos-border-secondary px-4 py-2 flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-pos-text-primary">
             {product ? 'Edit Product' : 'Add New Product'}
           </h3>
           <button 
             onClick={onClose}
-            className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
+            className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-xl leading-none"
           >
             ×
           </button>
         </div>
         
-        {/* Modal Body */}
-        <div className="px-6 py-4">
-          <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* Modal Body - Form Section */}
+        <div className="px-4 py-2" style={{maxWidth:"30rem"}}>
+          <div className="grid grid-cols-3 gap-3 mb-2">
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">
                 Product Name <span className="text-pos-error">*</span>
               </label>
               <input
@@ -172,111 +240,119 @@ const ProductFormModal = ({
                 name="name"
                 value={productForm.name}
                 onChange={handleInputChange}
-                className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                onFocus={() => handleFieldFocus('name')}
+                className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Enter product name"
               />
-              {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
+              {fieldErrors.name && <p className="text-pos-error text-xs mt-0.5">{fieldErrors.name}</p>}
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Button Name</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Button Name</label>
               <input
                 type="text"
                 name="button_name"
                 value={productForm.button_name}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('button_name')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'button_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Display name"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Production Name</label>
               <input
                 type="text"
                 name="production_name"
                 value={productForm.production_name}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('production_name')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'production_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Production name"
               />
             </div>
-          </div>
+          {/* </div> */}
 
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          {/* <div className="grid grid-cols-3 gap-3 mb-2"> */}
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Price</label>
               <input
                 type="number"
                 step="0.01"
                 name="price"
                 value={productForm.price}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('price')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'price' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Price VAT Inc</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Price VAT Inc</label>
               <input
                 type="number"
                 step="0.01"
                 name="price_vat_inc"
                 value={productForm.price_vat_inc}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('price_vat_inc')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'price_vat_inc' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Barcode</label>
               <input
                 type="text"
                 name="barcode"
                 value={productForm.barcode}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('barcode')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'barcode' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Barcode"
               />
             </div>
-          </div>
+          {/* </div> */}
 
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          {/* <div className="grid grid-cols-3 gap-3 mb-2"> */}
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Takeout (%)</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">VAT Takeout (%)</label>
               <input
                 type="number"
                 step="0.01"
                 name="vat_takeout"
                 value={productForm.vat_takeout}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('vat_takeout')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'vat_takeout' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">VAT Eat-in (%)</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">VAT Eat-in (%)</label>
               <input
                 type="number"
                 step="0.01"
                 name="vat_eat_in"
                 value={productForm.vat_eat_in}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('vat_eat_in')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'vat_eat_in' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="0.00"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Category</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Category</label>
               <select
                 name="category_id"
                 value={productForm.category_id}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors"
               >
                 <option value="">Select Category</option>
                 {categories.map(cat => (
@@ -286,26 +362,27 @@ const ProductFormModal = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-3 gap-3 mb-2">
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Addition Type</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Addition Type</label>
               <input
                 type="text"
                 name="addition_type"
                 value={productForm.addition_type}
                 onChange={handleInputChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
+                onFocus={() => handleFieldFocus('addition_type')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'addition_type' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                 placeholder="Addition type"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Product Color</label>
-              <div className="flex gap-2 mt-1">
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Product Color</label>
+              <div className="flex gap-1 mt-2">
                 {productColors.map(color => (
                   <div
                     key={color}
-                    className={`w-8 h-8 rounded cursor-pointer border-2 flex items-center justify-center ${productForm.color === color ? 'border-white' : 'border-transparent'}`}
+                    className={`w-6 h-6  cursor-pointer border-2 flex items-center justify-center ${productForm.color === color ? 'border-white' : 'border-transparent'}`}
                     style={{ backgroundColor: color }}
                     onClick={() => setProductForm({ ...productForm, color })}
                   >
@@ -316,45 +393,78 @@ const ProductFormModal = ({
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-pos-text-muted mb-2">Product Image</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Product Image</label>
               <input
                 type="file"
                 name="image"
                 accept="image/*"
                 onChange={handleFileChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1  text-xs focus:outline-none focus:border-pos-info transition-colors file:mr-2 file:py-0.5 file:px-2 file: file:border-0 file:text-xs file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
               />
             </div>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-2">
             <label className="flex items-center cursor-pointer">
               <input
                 type="checkbox"
                 name="sub_product_group"
                 checked={productForm.sub_product_group}
                 onChange={handleInputChange}
-                className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
+                className="w-3 h-3 text-pos-info bg-pos-bg-primary border-pos-border-secondary  focus:ring-pos-info focus:ring-1"
               />
-              <span className="ml-2 text-sm text-pos-text-primary">Sub-Product Group</span>
+              <span className="ml-2 text-xs text-pos-text-primary">Sub-Product Group</span>
             </label>
           </div>
         </div>
+
+        {/* Keypad Section */}
+        {showKeypad && (
+          <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{marginTop:"-2rem"}}>
+            <div className="mb-1 text-sm text-pos-text-muted text-center">
+              Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
+            </div>
+            <div className="flex-1 flex items-center justify-center w-full max-w-2xl">
+              <KeypadNumpad
+                onInput={handleKeypadInput}
+                onEnter={handleKeypadEnter}
+                onBackspace={handleKeypadBackspace}
+                onClear={handleKeypadClear}
+                defaultMode="keypad"
+                showDecimal={['price', 'price_vat_inc', 'vat_takeout', 'vat_eat_in'].includes(activeField)}
+                className="w-full"
+              />
+            </div>
+          </div>
+        )}
         
         {/* Modal Footer */}
-        <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-          <button 
-            onClick={onClose}
-            className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-          >
-            Cancel
+        <div className="bg-pos-bg-tertiary border-t border-pos-border-secondary px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0">
+           {/* Keypad Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setShowKeypad(!showKeypad)}
+            className={`px-3 py-1.5  text-sm font-medium transition-colors ${
+              showKeypad
+                ? 'bg-pos-info text-white'
+                : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
+            }`}>
+            {showKeypad ? 'Hide Keyboard' : 'Show Keyboard'} ⌨️
           </button>
-          <button 
-            onClick={handleSubmit}
-            className="px-6 py-2.5 bg-pos-info text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors shadow-lg"
-          >
-            {product ? 'Update' : 'Add'}
-          </button>
+          <div className='flex gap-2'>
+            <button 
+              onClick={onClose}
+              className="px-4 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSubmit}
+              className="px-5 py-2 bg-pos-bg-primary text-white  text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
+            >
+              {product ? 'Update' : 'Add'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

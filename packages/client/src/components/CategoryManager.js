@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import ConfirmationModal from "./ConfirmationModal";
 import MessageModal from "./MessageModal";
 import ProductFormModal from "./ProductFormModal";
+import CategoryFormModal from "./CategoryFormModal";
 import { useMessageModal } from "../hooks/useMessageModal";
 
 const CategoryManager = () => {
@@ -24,12 +25,7 @@ const CategoryManager = () => {
   const [loadingAttachedSubProducts, setLoadingAttachedSubProducts] = useState(false);
   const [selectedGroupSubProducts, setSelectedGroupSubProducts] = useState([]);
   const [selectedAttachedSubProducts, setSelectedAttachedSubProducts] = useState([]);
-  const [categoryForm, setCategoryForm] = useState({
-    name: "",
-    next_course: 0,
-    in_web_shop: 0,
-    is_visible: 1,
-  });
+
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
     categoryId: null,
@@ -183,8 +179,8 @@ const CategoryManager = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProduct]);
 
-  const handleAddCategory = async () => {
-    if (!categoryForm.name) {
+  const handleAddCategory = async (categoryFormData) => {
+    if (!categoryFormData.name) {
       return;
     }
 
@@ -196,19 +192,13 @@ const CategoryManager = () => {
       const response = await fetch(url, {
         method: editingCategory ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(categoryForm),
+        body: JSON.stringify(categoryFormData),
       });
 
       if (response.ok) {
         fetchCategories();
         setShowAddCategory(false);
         setEditingCategory(null);
-        setCategoryForm({
-          name: "",
-          next_course: 0,
-          in_web_shop: 0,
-          is_visible: 1,
-        });
       } else {
         const error = await response.json();
         showError(error.error || "Failed to save category");
@@ -221,15 +211,6 @@ const CategoryManager = () => {
 
   const handleEditCategory = (category) => {
     setEditingCategory(category);
-    setCategoryForm({
-      name: category.name || "",
-      next_course: Number(category.next_course) || 0,
-      in_web_shop: Number(category.in_web_shop) || 0,
-      is_visible:
-        Number(category.is_visible) !== undefined
-          ? Number(category.is_visible)
-          : 1,
-    });
     setShowAddCategory(true);
   };
 
@@ -535,7 +516,6 @@ const CategoryManager = () => {
           className="btn-primary"
           onClick={() => {
             setEditingCategory(null);
-            setCategoryForm({ name: "", next_course: 0, in_web_shop: 0 });
             setShowAddCategory(true);
           }}
         >
@@ -887,83 +867,15 @@ const CategoryManager = () => {
         </div>
       </div>
 
-      {showAddCategory && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
-          onClick={() => setShowAddCategory(false)}
-        >
-          <div
-            className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">
-                {editingCategory ? "Edit Category" : "Add New Category"}
-              </h3>
-              <button
-                onClick={() => setShowAddCategory(false)}
-                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="px-6 py-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                  Category Name <span className="text-pos-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={categoryForm.name}
-                  onChange={(e) =>
-                    setCategoryForm({ ...categoryForm, name: e.target.value })
-                  }
-                  className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  placeholder="Enter category name"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={categoryForm.is_visible === 1}
-                    onChange={(e) =>
-                      setCategoryForm({
-                        ...categoryForm,
-                        is_visible: e.target.checked ? 1 : 0,
-                      })
-                    }
-                    className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
-                  />
-                  <span className="ml-2 text-sm text-pos-text-primary">
-                    Visible
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowAddCategory(false)}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddCategory}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                {editingCategory ? 'Update' : 'Add'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CategoryFormModal
+        isOpen={showAddCategory}
+        onClose={() => {
+          setShowAddCategory(false);
+          setEditingCategory(null);
+        }}
+        onSubmit={handleAddCategory}
+        category={editingCategory}
+      />
 
       <ProductFormModal
         isOpen={showAddProduct}
