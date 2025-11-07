@@ -420,7 +420,7 @@ const handleInputChange = (e) => {
 
         {/* Keypad Section */}
         {showKeypad && (
-          <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{"margin-top":"-2rem"}}>
+          <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{"marginTop":"-2rem"}}>
             <div className="mb-1 text-sm text-pos-text-muted text-center">
               Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
             </div>

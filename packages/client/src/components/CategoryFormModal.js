@@ -163,7 +163,7 @@ const CategoryFormModal = ({
 
             {/* Keypad */}
             {showKeypad && (
-              <div className="w-92">
+              <div className="w-full max-w-md">
                 <div className="mb-2 text-sm text-pos-text-muted">
                   Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
                 </div>

@@ -81,7 +81,7 @@ const KeypadNumpad = ({
   };
 
   return (
-    <div className={`bg-pos-bg-tertiary px-4 py-2 border border-pos-border-secondary w-full max-w-3xl mx-auto ${className}`}>
+    <div className={`bg-pos-bg-tertiary px-1 py-1 mx-auto ${className}`}>
       <div className="space-y-1">
         {keys.map((row, rowIndex) => (
           <div key={rowIndex} className="flex gap-1 justify-center">
