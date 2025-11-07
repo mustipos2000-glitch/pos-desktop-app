@@ -102,7 +102,7 @@ const CategoryFormModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-pos-bg-tertiary rounded-lg shadow-2xl max-w-6xl max-h-[90vh] overflow-y-auto"
+        className="bg-pos-bg-tertiary  shadow-2xl max-w-6xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
@@ -135,7 +135,7 @@ const CategoryFormModal = ({
                     setCategoryForm({ ...categoryForm, name: e.target.value })
                   }
                   onFocus={() => handleFieldFocus('name')}
-                  className={`w-full bg-pos-bg-primary border ${activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                  className={`w-full bg-pos-bg-primary border ${activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
                   placeholder="Enter category name"
                   autoFocus
                 />
@@ -152,7 +152,7 @@ const CategoryFormModal = ({
                         is_visible: e.target.checked ? 1 : 0,
                       })
                     }
-                    className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
+                    className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary focus:ring-pos-info focus:ring-2"
                   />
                   <span className="ml-2 text-sm text-pos-text-primary">
                     Visible
@@ -184,7 +184,7 @@ const CategoryFormModal = ({
           <button
             type="button"
             onClick={() => setShowKeypad(!showKeypad)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`px-4 py-2  text-sm font-medium transition-colors ${
               showKeypad
                 ? 'bg-pos-info text-white'
                 : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
@@ -194,14 +194,14 @@ const CategoryFormModal = ({
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+              className="px-6 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSubmit}
               disabled={!categoryForm.name.trim()}
-              className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {category ? 'Update' : 'Add'}
             </button>

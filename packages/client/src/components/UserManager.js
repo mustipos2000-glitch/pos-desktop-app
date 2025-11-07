@@ -1,31 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
+import UserFormModal from './UserFormModal';
 
 const UserManager = () => {
   const [users, setUsers] = useState([]);
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [userForm, setUserForm] = useState({
-    name: '',
-    pincode: '',
-    social_security: '',
-    identification: '',
-    role: 'User',
-    avatar_color: '#3b82f6'
-  });
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
     userId: null,
     userName: ''
   });
-  const [showPincode, setShowPincode] = useState(false);
-  const [errors, setErrors] = useState({});
-
-  const avatarColors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
-    '#8b5cf6', '#ec4899', '#06b6d4'
-  ];
 
   const fetchUsers = async () => {
     try {
@@ -41,23 +27,7 @@ const UserManager = () => {
     fetchUsers();
   }, []);
 
-  // Clear form when modal opens for new user
-  useEffect(() => {
-    if (showUserModal && !editingUser) {
-      setUserForm({
-        name: '',
-        pincode: '',
-        social_security: '',
-        identification: '',
-        role: 'Admin',
-        avatar_color: '#3b82f6'
-      });
-      setShowPincode(false);
-      setErrors({});
-    }
-  }, [showUserModal, editingUser]);
-
-  const validateForm = () => {
+  const validateForm = (userForm) => {
     const newErrors = {};
 
     if (!userForm.name.trim()) {
@@ -76,12 +46,15 @@ const UserManager = () => {
       newErrors.social_security = 'Invalid SSN format (XXX-XX-XXXX)';
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return newErrors;
   };
 
-  const handleAddUser = async () => {
-    if (!validateForm()) {
+  const handleSaveUser = async (userForm) => {
+    const errors = validateForm(userForm);
+    
+    if (Object.keys(errors).length > 0) {
+      // You could pass errors back to modal if needed
+      console.error('Validation errors:', errors);
       return;
     }
 
@@ -101,24 +74,15 @@ const UserManager = () => {
         closeUserModal();
       } else {
         const error = await response.json();
-        setErrors({ general: error.error || 'Failed to save user' });
+        console.error('Failed to save user:', error.error || 'Failed to save user');
       }
     } catch (error) {
       console.error('Error saving user:', error);
-      setErrors({ general: 'Error saving user' });
     }
   };
 
   const handleEditUser = (user) => {
     setEditingUser(user);
-    setUserForm({
-      name: user.name,
-      pincode: user.pincode,
-      social_security: user.social_security || '',
-      identification: user.identification || '',
-      role: user.role,
-      avatar_color: user.avatar_color
-    });
     setShowUserModal(true);
   };
 
@@ -158,16 +122,6 @@ const UserManager = () => {
   const closeUserModal = () => {
     setShowUserModal(false);
     setEditingUser(null);
-    setUserForm({
-      name: '',
-      pincode: '',
-      social_security: '',
-      identification: '',
-      role: 'User',
-      avatar_color: '#3b82f6'
-    });
-    setShowPincode(false);
-    setErrors({});
   };
 
   const confirmDelete = () => {
@@ -182,15 +136,6 @@ const UserManager = () => {
         <h2>Manage Users</h2>
         <button className="add-btn" onClick={() => {
           setEditingUser(null);
-          setUserForm({
-            name: '',
-            pincode: '',
-            social_security: '',
-            identification: '',
-            role: 'User',
-            avatar_color: '#3b82f6'
-          });
-          setErrors({});
           setShowUserModal(true);
         }}>
           + Add User
@@ -270,170 +215,12 @@ const UserManager = () => {
         </table>
       </div>
 
-      {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={closeUserModal}>
-          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[600px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} key={editingUser ? editingUser.id : 'new-user'}>
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">{editingUser ? 'Edit User' : 'Add New User'}</h3>
-              <button 
-                onClick={closeUserModal}
-                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="px-6 py-4">
-              {errors.general && (
-                <div className="bg-pos-error bg-opacity-10 border border-pos-error text-pos-error px-4 py-3 rounded-lg mb-4 text-sm">
-                  {errors.general}
-                </div>
-              )}
-
-              <form autoComplete="off" onSubmit={(e) => e.preventDefault()}>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                      Name <span className="text-pos-error">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={userForm.name}
-                      onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
-                      className={`w-full bg-pos-bg-primary border ${errors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                      placeholder="Enter user name"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                    />
-                    {errors.name && <p className="text-pos-error text-xs mt-1">{errors.name}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                      Pincode <span className="text-pos-error">*</span>
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={showPincode ? "text" : "password"}
-                        maxLength="4"
-                        placeholder="4-digit code"
-                        value={userForm.pincode}
-                        onChange={(e) => setUserForm({ ...userForm, pincode: e.target.value })}
-                        className={`w-full bg-pos-bg-primary border ${errors.pincode ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors pr-10`}
-                        autoComplete="new-password"
-                        autoCorrect="off"
-                        autoCapitalize="off"
-                        spellCheck="false"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-pos-text-muted hover:text-pos-text-primary transition-colors"
-                        onClick={() => setShowPincode(!showPincode)}
-                        title={showPincode ? "Hide pincode" : "Show pincode"}
-                      >
-                        {showPincode ? (
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                            <line x1="1" y1="1" x2="23" y2="23" />
-                          </svg>
-                        ) : (
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                            <circle cx="12" cy="12" r="3" />
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                    {errors.pincode && <p className="text-pos-error text-xs mt-1">{errors.pincode}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Role</label>
-                    <select
-                      value={userForm.role}
-                      onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
-                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    >
-                      <option value="User">User</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Manager">Manager</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Social Security Number</label>
-                    <input
-                      type="number"
-                      placeholder="XXX-XX-XXXX"
-                      value={userForm.social_security}
-                      onChange={(e) => setUserForm({ ...userForm, social_security: e.target.value })}
-                      className={`w-full bg-pos-bg-primary border ${errors.social_security ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                    />
-                    {errors.social_security && <p className="text-pos-error text-xs mt-1">{errors.social_security}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Identification</label>
-                    <input
-                      type="text"
-                      value={userForm.identification}
-                      onChange={(e) => setUserForm({ ...userForm, identification: e.target.value })}
-                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                      placeholder="ID number"
-                      autoComplete="off"
-                      autoCorrect="off"
-                      autoCapitalize="off"
-                      spellCheck="false"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Avatar Color</label>
-                    <div className="color-picker">
-                      {avatarColors.map(color => (
-                        <div
-                          key={color}
-                          className={`color-option ${userForm.avatar_color === color ? 'selected' : ''}`}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setUserForm({ ...userForm, avatar_color: color })}
-                        >
-                          {userForm.avatar_color === color && '✓'}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </form>
-            </div>
-            
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button 
-                onClick={closeUserModal}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleAddUser}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                {editingUser ? 'Update' : 'Add'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <UserFormModal
+        isOpen={showUserModal}
+        onClose={closeUserModal}
+        onSubmit={handleSaveUser}
+        user={editingUser}
+      />
 
       <ConfirmationModal
         isOpen={deleteConfirmation.isOpen}

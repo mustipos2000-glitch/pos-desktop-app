@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
+import RoomFormModal from './RoomFormModal';
+import TableFormModal from './TableFormModal';
 import { useMessageModal } from '../hooks/useMessageModal';
 import ApiService from '../services/api';
 
@@ -8,27 +10,11 @@ const RoomManager = () => {
   const [rooms, setRooms] = useState([]);
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAddRoom, setShowAddRoom] = useState(false);
-  const [showAddTable, setShowAddTable] = useState(false);
-  const [showEditTable, setShowEditTable] = useState(false);
+  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showTableModal, setShowTableModal] = useState(false);
   const [editingRoom, setEditingRoom] = useState(null);
-  const [currentTable, setCurrentTable] = useState(null);
+  const [editingTable, setEditingTable] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [roomForm, setRoomForm] = useState({
-    name: '',
-    total_table: 0
-  });
-  const [tableForm, setTableForm] = useState({
-    table_no: '',
-    room_id: '',
-    order_id: '',
-    status: 'available',
-    description: '',
-    customer_name: '',
-    waiter_name: '',
-    table_size: ''
-  });
-  const [fieldErrors, setFieldErrors] = useState({});
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
     roomId: null,
@@ -69,7 +55,7 @@ const RoomManager = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAddRoom = async () => {
+  const handleSaveRoom = async (roomForm) => {
     if (!roomForm.name) {
       return;
     }
@@ -87,9 +73,7 @@ const RoomManager = () => {
 
       if (response.ok) {
         fetchRooms();
-        setShowAddRoom(false);
-        setEditingRoom(null);
-        setRoomForm({ name: '', total_table: 0 });
+        closeRoomModal();
       } else {
         const error = await response.json();
         showError(error.error || 'Failed to save room');
@@ -102,11 +86,12 @@ const RoomManager = () => {
 
   const handleEditRoom = (room) => {
     setEditingRoom(room);
-    setRoomForm({
-      name: room.name || '',
-      total_table: Number(room.total_table) || 0
-    });
-    setShowAddRoom(true);
+    setShowRoomModal(true);
+  };
+
+  const closeRoomModal = () => {
+    setShowRoomModal(false);
+    setEditingRoom(null);
   };
 
   const handleDeleteRoom = async (id) => {
@@ -155,48 +140,7 @@ const RoomManager = () => {
     }
   };
 
-  const resetTableForm = () => {
-    setTableForm({
-      table_no: '',
-      room_id: '',
-      order_id: '',
-      status: 'available',
-      description: '',
-      customer_name: '',
-      waiter_name: '',
-      table_size: ''
-    });
-    setFieldErrors({});
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setTableForm({
-      ...tableForm,
-      [name]: value
-    });
-
-    if (fieldErrors[name]) {
-      setFieldErrors({
-        ...fieldErrors,
-        [name]: ''
-      });
-    }
-  };
-
-  const handleAddTable = async () => {
-    const errors = {};
-    if (!tableForm.table_no) {
-      errors.table_no = 'Table number is required';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-
-    setFieldErrors({});
-
+  const handleSaveTable = async (tableForm) => {
     try {
       const payload = {
         ...tableForm,
@@ -204,81 +148,37 @@ const RoomManager = () => {
         order_id: tableForm.order_id || null
       };
 
-      const response = await fetch('http://localhost:5000/api/pr-tables', {
-        method: 'POST',
+      const url = editingTable
+        ? `http://localhost:5000/api/pr-tables/${editingTable.id}`
+        : 'http://localhost:5000/api/pr-tables';
+
+      const response = await fetch(url, {
+        method: editingTable ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
       if (response.ok) {
         await fetchTables();
-        resetTableForm();
-        setShowAddTable(false);
+        closeTableModal();
       } else {
         const errorResult = await response.json();
-        showError(errorResult.error || 'Failed to create table');
+        showError(errorResult.error || `Failed to ${editingTable ? 'update' : 'create'} table`);
       }
     } catch (error) {
-      console.error('Error creating table:', error);
-      showError('Failed to create table. Please try again.');
+      console.error(`Error ${editingTable ? 'updating' : 'creating'} table:`, error);
+      showError(`Failed to ${editingTable ? 'update' : 'create'} table. Please try again.`);
     }
   };
 
   const handleEditTable = (table) => {
-    setCurrentTable(table);
-    setTableForm({
-      table_no: table.table_no || '',
-      room_id: table.room_id || '',
-      order_id: table.order_id || '',
-      status: table.status || 'available',
-      description: table.description || '',
-      customer_name: table.customer_name || '',
-      waiter_name: table.waiter_name || '',
-      table_size: table.table_size || ''
-    });
-    setShowEditTable(true);
+    setEditingTable(table);
+    setShowTableModal(true);
   };
 
-  const handleUpdateTable = async () => {
-    const errors = {};
-    if (!tableForm.table_no) {
-      errors.table_no = 'Table number is required';
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-
-    setFieldErrors({});
-
-    try {
-      const payload = {
-        ...tableForm,
-        room_id: tableForm.room_id || null,
-        order_id: tableForm.order_id || null
-      };
-
-      const response = await fetch(`http://localhost:5000/api/pr-tables/${currentTable.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        await fetchTables();
-        resetTableForm();
-        setShowEditTable(false);
-        setCurrentTable(null);
-        
-      } else {
-        const errorResult = await response.json();
-        showError(errorResult.error || 'Failed to update table');
-      }
-    } catch (error) {
-      console.error('Error updating table:', error);
-      showError('Failed to update table. Please try again.');
-    }
+  const closeTableModal = () => {
+    setShowTableModal(false);
+    setEditingTable(null);
   };
 
   const handleDeleteTable = async (id) => {
@@ -350,8 +250,7 @@ const RoomManager = () => {
         <button
           onClick={() => {
             setEditingRoom(null);
-            setRoomForm({ name: '', total_table: 0 });
-            setShowAddRoom(true);
+            setShowRoomModal(true);
           }}
           className="btn-primary font-semibold"
         >
@@ -382,9 +281,8 @@ const RoomManager = () => {
         <button
           onClick={() => {
             if (selectedRoom) {
-              resetTableForm();
-              setTableForm({ ...tableForm, room_id: selectedRoom.id });
-              setShowAddTable(true);
+              setEditingTable(null);
+              setShowTableModal(true);
             }
           }}
           disabled={!selectedRoom}
@@ -480,365 +378,21 @@ const RoomManager = () => {
         </div>
       </div>
 
-      {/* Add/Edit Room Modal */}
-      {showAddRoom && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowAddRoom(false)}>
-          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">{editingRoom ? 'Edit Room' : 'Add New Room'}</h3>
-              <button
-                onClick={() => setShowAddRoom(false)}
-                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
+      <RoomFormModal
+        isOpen={showRoomModal}
+        onClose={closeRoomModal}
+        onSubmit={handleSaveRoom}
+        room={editingRoom}
+      />
 
-            <div className="px-6 py-4">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                  Room Name / Number <span className="text-pos-error">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={roomForm.name}
-                  onChange={(e) => setRoomForm({ ...roomForm, name: e.target.value })}
-                  className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  placeholder="Enter room name or number"
-                />
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                  Total Tables
-                </label>
-                <input
-                  type="number"
-                  value={roomForm.total_table}
-                  onChange={(e) => setRoomForm({ ...roomForm, total_table: parseInt(e.target.value) })}
-                  className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowAddRoom(false)}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddRoom}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                {editingRoom ? 'Update' : 'Add'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Table Modal */}
-      {showAddTable && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowAddTable(false)}>
-          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">Add New Table</h3>
-              <button
-                onClick={() => setShowAddTable(false)}
-                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="px-6 py-4">
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Table Number <span className="text-pos-error">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="table_no"
-                    value={tableForm.table_no}
-                    onChange={handleInputChange}
-                    className={`w-full bg-pos-bg-primary border ${fieldErrors.table_no ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                    placeholder="Enter table number"
-                  />
-                  {fieldErrors.table_no && <p className="text-pos-error text-xs mt-1">{fieldErrors.table_no}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Room
-                  </label>
-                  <select
-                    name="room_id"
-                    value={tableForm.room_id}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="">Select a room</option>
-                    {rooms.map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={tableForm.status}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="available">Available</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="cleaning">Cleaning</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Table Size
-                  </label>
-                  <select
-                    name="table_size"
-                    value={tableForm.table_size}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="">Select size</option>
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Customer Name
-                  </label>
-                  <input
-                    type="text"
-                    name="customer_name"
-                    value={tableForm.customer_name}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Enter customer name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Waiter Name
-                  </label>
-                  <input
-                    type="text"
-                    name="waiter_name"
-                    value={tableForm.waiter_name}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Enter waiter name"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={tableForm.description}
-                  onChange={handleInputChange}
-                  className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  placeholder="Enter description (optional)"
-                  rows="3"
-                />
-              </div>
-            </div>
-
-            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowAddTable(false)}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddTable}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Table Modal */}
-      {showEditTable && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowEditTable(false)}>
-          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
-              <h3 className="text-xl font-semibold text-pos-text-primary">Edit Table</h3>
-              <button
-                onClick={() => setShowEditTable(false)}
-                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-2xl leading-none"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="px-6 py-4">
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Table Number <span className="text-pos-error">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="table_no"
-                    value={tableForm.table_no}
-                    onChange={handleInputChange}
-                    className={`w-full bg-pos-bg-primary border ${fieldErrors.table_no ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                    placeholder="Enter table number"
-                  />
-                  {fieldErrors.table_no && <p className="text-pos-error text-xs mt-1">{fieldErrors.table_no}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Room
-                  </label>
-                  <select
-                    name="room_id"
-                    value={tableForm.room_id}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="">Select a room</option>
-                    {rooms.map((room) => (
-                      <option key={room.id} value={room.id}>
-                        {room.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={tableForm.status}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="available">Available</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="cleaning">Cleaning</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Table Size
-                  </label>
-                  <select
-                    name="table_size"
-                    value={tableForm.table_size}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  >
-                    <option value="">Select size</option>
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Customer Name
-                  </label>
-                  <input
-                    type="text"
-                    name="customer_name"
-                    value={tableForm.customer_name}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Enter customer name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                    Waiter Name
-                  </label>
-                  <input
-                    type="text"
-                    name="waiter_name"
-                    value={tableForm.waiter_name}
-                    onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                    placeholder="Enter waiter name"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-pos-text-muted mb-2">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  value={tableForm.description}
-                  onChange={handleInputChange}
-                  className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 rounded-lg text-sm focus:outline-none focus:border-pos-info transition-colors"
-                  placeholder="Enter description (optional)"
-                  rows="3"
-                />
-              </div>
-            </div>
-
-            <div className="sticky bottom-0 bg-pos-bg-tertiary border-t border-pos-border-secondary px-6 py-4 flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowEditTable(false)}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpdateTable}
-                className="px-6 py-2.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary rounded-lg text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
-              >
-                Update
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <TableFormModal
+        isOpen={showTableModal}
+        onClose={closeTableModal}
+        onSubmit={handleSaveTable}
+        table={editingTable}
+        rooms={rooms}
+        selectedRoomId={selectedRoom?.id}
+      />
 
       <ConfirmationModal
         isOpen={deleteConfirmation.isOpen}
