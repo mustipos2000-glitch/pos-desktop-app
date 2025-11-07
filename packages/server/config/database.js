@@ -249,6 +249,24 @@ db.exec(`
   )
 `);
 
+// Add notes column to order_details if it doesn't exist
+try {
+  db.exec(`ALTER TABLE order_details ADD COLUMN notes TEXT`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+// Add discount column to order_details if it doesn't exist
+try {
+  db.exec(`ALTER TABLE order_details ADD COLUMN discount REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
 // Create groups table
 db.exec(`
   CREATE TABLE IF NOT EXISTS groups (
