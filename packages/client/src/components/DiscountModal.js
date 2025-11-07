@@ -67,12 +67,21 @@ export default function CalculatorModal({
           <h3 className="text-lg font-medium text-white">{title}</h3>
 
           <div className="mt-4 flex items-center justify-center gap-6">
-            <div className="text-white text-sm">€ {basePrice.toFixed(2)}</div>
-            <div className="bg-red-50 border border-red-300 text-red-700 text-sm px-3 py-1 rounded">
-              {discount < 0 ? `€ ${Math.abs(discount).toFixed(2)}` : "€ 0.00"}
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-gray-300 mb-1">Total</span>
+              <div className="text-white text-sm">€ {basePrice.toFixed(2)}</div>
             </div>
-            <div className="text-green-500 font-semibold">
-              € {finalPrice.toFixed(2)}
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-gray-300 mb-1">Discount</span>
+              <div className="bg-red-50 border border-red-300 text-red-700 text-sm px-3 py-1 rounded">
+                {discount < 0 ? `€ ${Math.abs(discount).toFixed(2)}` : "€ 0.00"}
+              </div>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-xs text-gray-300 mb-1">Remaining</span>
+              <div className="text-green-500 font-semibold">
+                € {finalPrice.toFixed(2)}
+              </div>
             </div>
           </div>
         </div>
