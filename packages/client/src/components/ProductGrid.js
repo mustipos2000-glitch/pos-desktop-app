@@ -39,6 +39,16 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
       return;
     }
 
+    // If product has sub_product_group enabled, don't show inline subproducts
+    // They will be shown via the modal button instead
+    if (product.sub_product_group) {
+      onAddToCart(product, Number(customQuantity) || 1);
+      setCustomQuantity(''); // ✅ reset quantity input
+      setSelectedProductId(null);
+      setSubProducts([]);
+      return;
+    }
+
     try {
       setLoadingSubProducts(true);
       setSelectedProductId(product.id);
@@ -85,8 +95,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
   const handleSubProductSelect = (subProduct) => {
     onAddToCart(subProduct, Number(customQuantity) || 1);
     setCustomQuantity(''); // ✅ reset quantity input
-    setSelectedProductId(null);
-    setSubProducts([]);
+    // Keep subproducts visible - don't clear them
   };
 
 
