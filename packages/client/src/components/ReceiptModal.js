@@ -1,6 +1,13 @@
 import React from 'react';
 
 const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }) => {
+  // Validate all numeric props
+  const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
+  const validSubTotal = typeof subTotal === 'number' && !isNaN(subTotal) ? subTotal : 0;
+  const validTax = typeof tax === 'number' && !isNaN(tax) ? tax : 0;
+  const validDiscount = typeof discount === 'number' && !isNaN(discount) ? discount : 0;
+  const validCart = Array.isArray(cart) ? cart : [];
+
   const currentDate = new Date();
   const formatDate = currentDate.toLocaleDateString('en-GB', {
     day: '2-digit',
@@ -48,21 +55,25 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
 
             {/* Items */}
             <div className="mb-4">
-              {cart.map((item) => (
-                <div key={item.id} className="mb-2">
-                  <div className="text-xs font-medium">
-                    {item.name}
+              {validCart.map((item) => {
+                const itemPrice = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+                const itemQty = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+                return (
+                  <div key={item.id} className="mb-2">
+                    <div className="text-xs font-medium">
+                      {item.name || 'Unknown Item'}
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span>
+                        {itemQty} x €{itemPrice.toFixed(2)}
+                      </span>
+                      <span>
+                        €{(itemPrice * itemQty).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between text-xs">
-                    <span>
-                      {item.quantity} x €{item.price.toFixed(2)}
-                    </span>
-                    <span>
-                      €{(item.price * item.quantity).toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="text-center mb-4">--------------------------------</div>
@@ -71,16 +82,18 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
             <div className="mb-4">
               <div className="flex justify-between text-xs mb-1">
                 <span>SUBTOTAL</span>
-                <span>€{subTotal.toFixed(2)}</span>
+                <span>€{validSubTotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-xs mb-1">
-                <span>TAX (12%)</span>
-                <span>€{tax.toFixed(2)}</span>
-              </div>
-              {discount > 0 && (
+              {validTax > 0 && (
+                <div className="flex justify-between text-xs mb-1">
+                  <span>TAX (12%)</span>
+                  <span>€{validTax.toFixed(2)}</span>
+                </div>
+              )}
+              {validDiscount > 0 && (
                 <div className="flex justify-between text-xs mb-1">
                   <span>DISCOUNT</span>
-                  <span>-€{discount.toFixed(2)}</span>
+                  <span>-€{validDiscount.toFixed(2)}</span>
                 </div>
               )}
 
@@ -88,7 +101,7 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
 
               <div className="flex justify-between text-sm font-bold">
                 <span>TOTAL</span>
-                <span>€{total.toFixed(2)}</span>
+                <span>€{validTotal.toFixed(2)}</span>
               </div>
             </div>
 

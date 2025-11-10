@@ -6,7 +6,7 @@ import DiscountModal from "./DiscountModal";
 import NoteModal from "./NoteModal";
 import ApiService from "../services/api";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete }) => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
@@ -87,7 +87,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const hasSelection = selectedIds.length > 0;
 
   const calculateTotal = () =>
-    cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    cart.reduce((sum, item) => {
+      const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+      const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+      return sum + (price * quantity);
+    }, 0);
 
   // const calculateTax = () =>
   //   cart.reduce((sum, item) => sum + item.price * item.quantity * 0.12, 0);
@@ -135,7 +139,32 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         })),
       };
 
-      await ApiService.createOrder(orderData);
+      // If we have a currentOrderId, update the existing order
+      // Otherwise create a new order
+      if (currentOrderId) {
+        // Add table_id to order data if we have a selected table
+        if (selectedTable) {
+          orderData.table_id = selectedTable.id;
+        }
+        await ApiService.updateOrder(currentOrderId, orderData);
+        console.log(`Updated existing order #${currentOrderId} to completed status`);
+        
+        // Update table status to 'available' after payment
+        if (selectedTable) {
+          try {
+            await ApiService.updatePrTable(selectedTable.id, {
+              ...selectedTable,
+              status: 'available'
+            });
+            console.log(`Table ${selectedTable.table_no} status changed to available`);
+          } catch (error) {
+            console.error('Error updating table status:', error);
+          }
+        }
+      } else {
+        await ApiService.createOrder(orderData);
+        console.log('Created new order');
+      }
       
       // Reset order-level note after successful order creation
       setNote("");
@@ -204,6 +233,12 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setNote(""); // Reset order-level note after order completion
     setCashReceived("");
     if (cashInputRef.current) cashInputRef.current.value = "";
+    
+    // Call onOrderComplete to clear table and order selection in parent
+    if (onOrderComplete) {
+      onOrderComplete();
+    }
+    
     window.print();
   };
 
