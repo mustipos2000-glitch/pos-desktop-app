@@ -80,6 +80,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setCart([]);
     setSelectedIds([]);
     setLastAddedId(null);
+    setDiscount(0);
+    setNote("");
+    setCustomQuantity("");
+    setCashReceived("");
+    if (cashInputRef.current) cashInputRef.current.value = "";
   };
 
   const totalProductCount = () =>
@@ -256,7 +261,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               <div
                 key={id}
                 onClick={() => handleSelect(id)}
-                className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-1 px-2 cursor-pointer rounded ${bgColor}`}
+                className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-1 px-2 cursor-pointer ${bgColor}`}
               >
                 {/* Product Name */}
                 <div className={`font-light col-span-4 ${textColor} flex items-center gap-1`}>
@@ -360,30 +365,30 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         </button>
 
         <button
-
           onClick={() => setShowDeleteAllModal(true)}
-          disabled={!hasSelection}
-          className="bg-pos-interactive-primary text-pos-text-secondary py-2 hover:bg-pos-interactive-hover"
+          disabled={cart.length === 0}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${cart.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
-          🛒
+          <span className="relative inline-block">
+            🛒
+            <span className="absolute -top-1 -right-1 text-sm text-red-500 font-bold">✕</span>
+          </span>
         </button>
 
         <button
           onClick={handleNotes}
-          disabled={!hasSelection}
-          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${!hasSelection ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
+          disabled={cart.length === 0}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${cart.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
           📝
         </button>
 
         <button
           onClick={() => setShowDiscountModal(true)}
-
           className="bg-pos-interactive-primary text-pos-text-secondary py-2 hover:bg-pos-interactive-hover disabled:opacity-50"
           disabled={isProcessing || cart.length === 0}
-
         >
-          💳
+          🏷️
         </button>
       </div>
 
@@ -407,10 +412,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
       {/* Bottom Buttons */}
-      <div className="grid grid-cols-2 gap-2 p-2 bg-pos-bg-primary border-t border-pos-border-light">
+      <div className="grid grid-cols-2 gap-2 px-2 bg-pos-bg-primary border-t border-pos-border-light">
         {/* Card */}
         <button
-          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 rounded hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCardPayment}
           disabled={isProcessing || cart.length === 0}
         >
@@ -419,7 +424,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
         {/* Cash */}
         <button
-          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 rounded hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCashPayment}
           disabled={isProcessing || cart.length === 0}
         >
@@ -488,12 +493,33 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             const discountAmount = isNaN(discountValueInput) ? 0 : discountValueInput;
 
             if (selectedIds.length === 0) {
-              // Apply discount to the whole order
-              setDiscount((prev) =>
-                prev +
-                (mode === "percentage"
-                  ? (calculateTotal() ) * (discountAmount / 100)
-                  : discountAmount)
+              // Apply discount to all items in the cart
+              setCart((prev) =>
+                prev.map((item) => {
+                  const itemTotal = item.price * item.quantity;
+                  let discountValue = 0;
+
+                  if (mode === "percentage") {
+                    discountValue = (itemTotal * discountAmount) / 100;
+                  } else {
+                    // For fixed amount, distribute proportionally across all items
+                    const totalCartValue = calculateTotal();
+                    const itemProportion = itemTotal / totalCartValue;
+                    discountValue = discountAmount * itemProportion;
+                  }
+
+                  const updatedTotal = itemTotal - discountValue;
+                  return {
+                    ...item,
+                    originalPrice: item.originalPrice || item.price,
+                    price: updatedTotal / item.quantity,
+                    appliedDiscount:
+                      mode === "percentage"
+                        ? `${discountAmount}%`
+                        : `€${discountValue.toFixed(2)}`,
+                    discount: discountValue,
+                  };
+                })
               );
             } else {
               // Apply to selected items
