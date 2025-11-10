@@ -169,23 +169,26 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
           ) : (
             <>
               {/* Sub-product grid */}
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(90px,1fr))] gap-2">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
                 {subProducts.map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className="cursor-pointer transition-all duration-200 flex flex-col items-center justify-center text-center rounded-lg p-2 hover:scale-[1.03]"
+                    className="cursor-pointer transition-all duration-200 flex flex-col items-center justify-between text-center relative overflow-hidden"
                     style={{
-                      border: `2px solid ${subProduct.color || '#3b82f6'}`,
-                      background: '#1e293b',
+                      borderWidth: "2px",
+                      borderStyle: "solid",
+                      borderColor: subProduct.color || "#3b82f6",
+                      boxShadow: `0 0 0 1px ${subProduct.color || "#3b82f6"} inset`,
                     }}
                     onClick={() => handleSubProductSelect(subProduct)}
                   >
-                    <div
-                      className="h-10 flex items-center justify-center text-2xl rounded-md overflow-hidden w-full"
-                      style={{
-                        background: subProduct.color || '#1e293b',
-                      }}
-                    >
+                    {/* Price - Top Right */}
+                    <div className="absolute right-0 rounded-md text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px]">
+                      €{subProduct.price.toFixed(2)}
+                    </div>
+
+                    {/* Image */}
+                    <div className="w-full h-20 flex mt-2 p-1 items-center justify-center overflow-hidden">
                       {isImageUrl(subProduct.image) ? (
                         <img
                           src={`http://localhost:5000${subProduct.image}`}
@@ -193,14 +196,18 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span>{subProduct.image || '📦'}</span>
+                        <span className="text-3xl">{subProduct.image || '📦'}</span>
                       )}
                     </div>
-                    <div className="mt-1 text-xs font-medium text-white text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                      {subProduct.name}
-                    </div>
-                    <div className="text-xs text-pos-info font-semibold">
-                      €{subProduct.price.toFixed(2)}
+
+                    {/* Product Name */}
+                    <div className="w-full px-2 py-2">
+                      <div
+                        className="text-sm font-semibold text-white leading-tight break-words text-center"
+                        style={{ wordBreak: 'break-word' }}
+                      >
+                        {subProduct.name}
+                      </div>
                     </div>
                   </div>
                 ))}

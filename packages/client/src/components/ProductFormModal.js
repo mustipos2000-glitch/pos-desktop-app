@@ -26,7 +26,6 @@ const ProductFormModal = ({
     printer3: '',
     image: '',
     color: '#3b82f6',
-    price_vat_inc: '',
     sub_product_group: false
   });
 
@@ -66,7 +65,7 @@ const ProductFormModal = ({
         printer3: product.printer3 || '',
         image: product.image || '',
         color: product.color || '#3b82f6',
-        price_vat_inc: product.price_vat_inc || '',
+        // price_vat_inc: product.price_vat_inc || '',
         sub_product_group: product.sub_product_group === 1
       });
       setImageFile(null);
@@ -89,7 +88,7 @@ const ProductFormModal = ({
         printer3: '',
         image: '',
         color: '#3b82f6',
-        price_vat_inc: '',
+        // price_vat_inc: '',
         sub_product_group: false
       });
       setImageFile(null);
@@ -272,11 +271,9 @@ const handleInputChange = (e) => {
                 placeholder="Production name"
               />
             </div>
-          {/* </div> */}
 
-          {/* <div className="grid grid-cols-3 gap-3 mb-2"> */}
             <div>
-              <label className="block text-xs font-medium text-pos-text-muted mb-1">Price</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Price vat inc</label>
               <input
                 type="number"
                 step="0.01"
@@ -288,21 +285,7 @@ const handleInputChange = (e) => {
                 placeholder="0.00"
               />
             </div>
-            
-            <div>
-              <label className="block text-xs font-medium text-pos-text-muted mb-1">Price VAT Inc</label>
-              <input
-                type="number"
-                step="0.01"
-                name="price_vat_inc"
-                value={productForm.price_vat_inc}
-                onChange={handleInputChange}
-                onFocus={() => handleFieldFocus('price_vat_inc')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'price_vat_inc' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5  text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                placeholder="0.00"
-              />
-            </div>
-            
+                        
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">Barcode</label>
               <input
@@ -315,9 +298,7 @@ const handleInputChange = (e) => {
                 placeholder="Barcode"
               />
             </div>
-          {/* </div> */}
 
-          {/* <div className="grid grid-cols-3 gap-3 mb-2"> */}
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">VAT Takeout (%)</label>
               <input
@@ -360,6 +341,17 @@ const handleInputChange = (e) => {
                 ))}
               </select>
             </div>
+             <div>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Product Image</label>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1  text-xs focus:outline-none focus:border-pos-info transition-colors file:mr-2 file:py-0.5 file:px-2 file: file:border-0 file:text-xs file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+              />
+            </div>
+          </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3 mb-2">
@@ -392,20 +384,10 @@ const handleInputChange = (e) => {
               </div>
             </div>
             
-            <div>
-              <label className="block text-xs font-medium text-pos-text-muted mb-1">Product Image</label>
-              <input
-                type="file"
-                name="image"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1  text-xs focus:outline-none focus:border-pos-info transition-colors file:mr-2 file:py-0.5 file:px-2 file: file:border-0 file:text-xs file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
-              />
-            </div>
-          </div>
+           
 
-          <div className="mb-2">
-            <label className="flex items-center cursor-pointer">
+          <div className="mb-2 flex items-center">
+            <label className="flex items-center cursor-pointer mt-4">
               <input
                 type="checkbox"
                 name="sub_product_group"
@@ -420,7 +402,7 @@ const handleInputChange = (e) => {
 
         {/* Keypad Section */}
         {showKeypad && (
-          <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{marginTop:"-2rem"}}>
+          <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" >
             <div className="mb-1 text-sm text-pos-text-muted text-center">
               Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
             </div>
@@ -431,7 +413,7 @@ const handleInputChange = (e) => {
                 onBackspace={handleKeypadBackspace}
                 onClear={handleKeypadClear}
                 defaultMode="keypad"
-                showDecimal={['price', 'price_vat_inc', 'vat_takeout', 'vat_eat_in'].includes(activeField)}
+                showDecimal={['price', 'vat_takeout', 'vat_eat_in'].includes(activeField)}
                 className="w-full"
               />
             </div>

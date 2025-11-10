@@ -60,6 +60,9 @@ const SubProductManager = () => {
   // Keypad states
   const [activeField, setActiveField] = useState(null);
   const [showKeypad, setShowKeypad] = useState(true);
+  
+  // Track if user has manually edited button_name or production_name
+  const [hasEditedButtonOrProduction, setHasEditedButtonOrProduction] = useState(false);
 
   const fetchSubProducts = async () => {
     try {
@@ -93,9 +96,29 @@ const SubProductManager = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setSubProductForm({
-      ...subProductForm,
-      [name]: type === 'checkbox' ? checked : value
+    const newValue = type === 'checkbox' ? checked : value;
+
+    setSubProductForm((prevForm) => {
+      // Only sync fields if adding a new sub-product (not editing)
+      // and user hasn't edited button_name or production_name manually
+      if (name === "name" && !currentSubProduct && !hasEditedButtonOrProduction) {
+        return {
+          ...prevForm,
+          name: newValue,
+          button_name: newValue,
+          production_name: newValue,
+        };
+      }
+
+      // If user edits button_name or production_name manually, stop syncing
+      if (name === "button_name" || name === "production_name") {
+        setHasEditedButtonOrProduction(true);
+      }
+
+      return {
+        ...prevForm,
+        [name]: newValue,
+      };
     });
 
     // Clear field error when user starts typing
@@ -187,6 +210,7 @@ const SubProductManager = () => {
     });
     setImageFile(null);
     setFieldErrors({});
+    setHasEditedButtonOrProduction(false);
   };
 
   const handleAddSubProduct = async () => {
@@ -279,6 +303,7 @@ const SubProductManager = () => {
       price_vat_inc: subProduct.price_vat_inc || ''
     });
     setImageFile(null);
+    setHasEditedButtonOrProduction(false);
     setShowEditSubProduct(true);
   };
 
@@ -712,7 +737,7 @@ const SubProductManager = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-pos-text-muted">Price</label>
+                  <label className="block text-sm font-medium text-pos-text-muted">Price vat inc</label>
                   <input
                     type="number"
                     step="0.01"
@@ -776,7 +801,7 @@ const SubProductManager = () => {
                     placeholder="Addition type"
                   />
                 </div>
-              </div>
+              {/* </div> */}
 
                 <div>
                   <label className="block text-sm font-medium text-pos-text-muted">Image</label>
@@ -788,6 +813,18 @@ const SubProductManager = () => {
                     className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1 text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-pos-text-muted">Color</label>
+                  <input
+                    type="color"
+                    name="color"
+                    value={subProductForm.color}
+                    onChange={handleInputChange}
+                    className="w-full h-10 bg-pos-bg-primary border border-pos-border-secondary cursor-pointer"
+                  />
+                </div>
+              </div>
               
               {/* Keypad Section */}
               {showKeypad && (
@@ -907,9 +944,21 @@ const SubProductManager = () => {
                       placeholder="Display name"
                     />
                   </div>
-                </div>
+                     <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
+                    <input
+                      type="text"
+                      name="production_name"
+                      value={subProductForm.production_name}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFieldFocus('production_name')}
+                      className={`w-full bg-pos-bg-primary border ${activeField === 'production_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      placeholder="Name for production"
+                    />
+                  </div>
+                {/* </div>
 
-                <div className="grid grid-cols-3 gap-4 mb-4">
+                <div className="grid grid-cols-3 gap-4 mb-4"> */}
                   <div>
                     <label className="block text-sm font-medium text-pos-text-muted mb-2">Price</label>
                     <input
@@ -951,21 +1000,10 @@ const SubProductManager = () => {
                       placeholder="0.00"
                     />
                   </div>
-                </div>
+                {/* </div> */}
 
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Production Name</label>
-                    <input
-                      type="text"
-                      name="production_name"
-                      value={subProductForm.production_name}
-                      onChange={handleInputChange}
-                      onFocus={() => handleFieldFocus('production_name')}
-                      className={`w-full bg-pos-bg-primary border ${activeField === 'production_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                      placeholder="Name for production"
-                    />
-                  </div>
+                {/* <div className="grid grid-cols-3 gap-4 mb-4"> */}
+               
 
                   <div>
                     <label className="block text-sm font-medium text-pos-text-muted mb-2">Barcode</label>
@@ -1002,6 +1040,17 @@ const SubProductManager = () => {
                       accept="image/*"
                       onChange={handleFileChange}
                       className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1 text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-pos-text-muted mb-2">Color</label>
+                    <input
+                      type="color"
+                      name="color"
+                      value={subProductForm.color}
+                      onChange={handleInputChange}
+                      className="w-full h-10 bg-pos-bg-primary border border-pos-border-secondary cursor-pointer"
                     />
                   </div>
                 </div>
