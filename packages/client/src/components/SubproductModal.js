@@ -89,9 +89,9 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId }) => {
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-pos-bg-secondary rounded-lg w-full max-w-5xl h-[80vh] flex flex-col">
+      <div className="bg-pos-bg-secondary w-4/5 h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-pos-border-secondary">
+        <div className="flex items-center justify-between px-4 py-2 border-b border-pos-border-secondary">
           <h2 className="text-xl font-semibold text-pos-text-primary">Select subproduct</h2>
           <button
             onClick={onClose}
@@ -104,7 +104,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId }) => {
         {/* Content */}
         <div className="flex-1 flex overflow-hidden">
           {/* Groups sidebar */}
-          <div className="w-48 border-r border-pos-border-secondary p-2 overflow-y-auto scrollbar-custom">
+          <div className="w-32 border-r border-pos-border-secondary p-1 overflow-y-auto scrollbar-custom">
             {loading && groups.length === 0 ? (
               <div className="text-pos-text-muted text-sm text-center py-4">Loading...</div>
             ) : groups.length === 0 ? (
@@ -113,9 +113,9 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId }) => {
               groups.map((group) => (
                 <div
                   key={group.id}
-                  className={`px-4 py-3 mb-1 cursor-pointer rounded transition-colors ${
+                  className={`px-2 py-2 mb-1 cursor-pointer transition-colors text-sm ${
                     selectedGroup?.id === group.id
-                      ? 'bg-pos-bg-primary text-white border-2 border-pos-info'
+                      ? 'bg-pos-bg-primary text-white'
                       : 'bg-pos-bg-primary/50 hover:bg-pos-bg-primary/70 text-pos-text-primary'
                   }`}
                   onClick={() => setSelectedGroup(group)}
@@ -141,11 +141,11 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId }) => {
                 No sub-products in this group
               </div>
             ) : (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-3">
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-2">
                 {subProducts.map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className="flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative bg-[#1e293b] rounded-lg overflow-hidden hover:scale-105"
+                    className="flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative overflow-hidden hover:scale-105"
                     onClick={() => handleSubProductClick(subProduct)}
                     style={{
                       borderWidth: '2px',
