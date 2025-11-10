@@ -44,6 +44,7 @@ const POSScreen = () => {
           category: product.category_name || 'Uncategorized',
           image: product.image || '📦',
           color: product.color || '#3b82f6',
+          sub_product_group: product.sub_product_group || false,
         }));
       
         
@@ -111,8 +112,8 @@ const POSScreen = () => {
           <ProductGrid
             products={products.filter(p => p.category === selectedCategory)}
             onAddToCart={addToCart}
-             customQuantity={customQuantity}
-              setCustomQuantity={setCustomQuantity}
+            customQuantity={customQuantity}
+            setCustomQuantity={setCustomQuantity}
           />
         </div>
         <BottomBar onOpenSettings={() => setShowSettings(true)} />

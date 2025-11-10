@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ApiService from '../services/api';
+import SubproductModal from './SubproductModal';
 
 const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity }) => {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
   const [loadingSubProducts, setLoadingSubProducts] = useState(false);
+  const [showSubproductModal, setShowSubproductModal] = useState(false);
+  const [productWithSubproducts, setProductWithSubproducts] = useState(null);
   const subProductsRef = useRef(null);
 
   // Function to determine if the image is a URL or emoji
@@ -53,30 +56,43 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
         setCustomQuantity(''); // ✅ reset quantity input
         setSelectedProductId(null);
         setSubProducts([]);
+        setProductWithSubproducts(null);
         return;
       }
 
-      // Has sub-products → add main product AND show sub-products
-      onAddToCart(product, Number(customQuantity) || 1);
-      setCustomQuantity(''); // ✅ reset quantity input
+      // Has sub-products → check sub_product_group setting
+      if (product.sub_product_group) {
+        // sub_product_group is checked → show button only
+        onAddToCart(product, Number(customQuantity) || 1);
+        setCustomQuantity(''); // ✅ reset quantity input
+        setSelectedProductId(null);
+        setSubProducts([]);
+        setProductWithSubproducts(product);
+      } else {
+        // sub_product_group is unchecked → show inline products
+        onAddToCart(product, Number(customQuantity) || 1);
+        setCustomQuantity(''); // ✅ reset quantity input
+        setProductWithSubproducts(null);
 
-      // Set sub-products
-      setSubProducts(
-        productSubProducts.map((subProduct) => ({
-          id: subProduct.id,
-          name: subProduct.name,
-          price: subProduct.price,
-          category: subProduct.category_name || "Uncategorized",
-          image: subProduct.image || "📦",
-          color: subProduct.color || product.color || "#3b82f6",
-        }))
-      );
+        // Set sub-products for inline display
+        setSubProducts(
+          productSubProducts.map((subProduct) => ({
+            id: subProduct.id,
+            name: subProduct.name,
+            price: subProduct.price,
+            category: subProduct.category_name || "Uncategorized",
+            image: subProduct.image || "📦",
+            color: subProduct.color || product.color || "#3b82f6",
+          }))
+        );
+      }
     } catch (error) {
       console.error("Error checking sub-products:", error);
       onAddToCart(product, Number(customQuantity) || 1);
       setCustomQuantity(''); // ✅ reset quantity input
       setSelectedProductId(null);
       setSubProducts([]);
+      setProductWithSubproducts(null);
     } finally {
       setLoadingSubProducts(false);
     }
@@ -85,20 +101,19 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
   const handleSubProductSelect = (subProduct) => {
     onAddToCart(subProduct, Number(customQuantity) || 1);
     setCustomQuantity(''); // ✅ reset quantity input
-    setSelectedProductId(null);
-    setSubProducts([]);
+    // Keep subproducts visible - don't clear them
   };
 
 
 
   return (
-    <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden">
+    <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden relative">
       {/* Main products grid */}
       <div className="flex-1 p-2 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2 overflow-y-auto content-start scrollbar-custom">
         {products.map((product) => (
           <div
             key={product.id}
-            className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative bg-[#1e293b] rounded-lg overflow-hidden"
+            className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative overflow-hidden"
             onClick={() => handleProductClick(product)}
             style={{
               borderWidth: "2px",
@@ -193,6 +208,26 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
             </>
           )}
         </div>
+      )}
+
+      {/* Subproducts Button - Bottom Left */}
+      {productWithSubproducts && (
+        <button
+          onClick={() => setShowSubproductModal(true)}
+          className="absolute bottom-0 px-6 py-3 btn-primary hover:bg-pos-interactive-primary text-white font-semibold transition-all duration-200 hover:scale-105"
+        >
+          Subproducts
+        </button>
+      )}
+
+      {/* Subproduct Modal */}
+      {showSubproductModal && productWithSubproducts && (
+        <SubproductModal
+          isOpen={showSubproductModal}
+          onClose={() => setShowSubproductModal(false)}
+          onAddToCart={onAddToCart}
+          productId={productWithSubproducts.id}
+        />
       )}
     </div>
   );
