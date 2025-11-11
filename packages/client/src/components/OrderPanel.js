@@ -14,9 +14,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const [isProcessing, setIsProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  // repurposed ref/state: cash input (cash received)
-  const cashInputRef = useRef(null);
-  const [cashReceived, setCashReceived] = useState("");
+
 
   const [selectedIds, setSelectedIds] = useState([]);
   const [lastAddedId, setLastAddedId] = useState(null);
@@ -60,10 +58,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     });
   };
 
-  // Select all
-  const handleSelectAll = () => {
-    setSelectedIds(cart.map((item) => item.cartItemId || `${item.id}_${item.name}`));
-  };
+  // Select all (available for future use)
+  // const handleSelectAll = () => {
+  //   setSelectedIds(cart.map((item) => item.cartItemId || `${item.id}_${item.name}`));
+  // };
 
   // Delete selected
   const handleClearSelected = () => {
@@ -89,8 +87,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setDiscount(0);
     setNote("");
     setCustomQuantity("");
-    setCashReceived("");
-    if (cashInputRef.current) cashInputRef.current.value = "";
   };
 
   const totalProductCount = () =>
@@ -118,14 +114,38 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const handleCardPayment = () => handlePayment("card");
 
   const handlePaymentConfirm = async (paymentData) => {
+    // Edge case: Validate cart has items
+    if (cart.length === 0) {
+      alert('Cart is empty. Cannot process payment.');
+      return;
+    }
+    
+    // Edge case: Validate payment data
+    if (!paymentData || typeof paymentData.totalPaid !== 'number' || paymentData.totalPaid < 0) {
+      alert('Invalid payment data. Please try again.');
+      return;
+    }
+    
     setIsProcessing(true);
     try {
       const subTotal = calculateTotal();
-      // const tax = calculateTax();
-      const total = subTotal  - discount;
+      const total = subTotal - discount;
+      
+      // Edge case: Validate total is positive
+      if (total < 0) {
+        alert('Order total cannot be negative. Please review discounts.');
+        setIsProcessing(false);
+        return;
+      }
+      
+      // Edge case: Validate payment covers the total
+      if (paymentData.totalPaid < total) {
+        alert(`Insufficient payment. Total: €${total.toFixed(2)}, Paid: €${paymentData.totalPaid.toFixed(2)}`);
+        setIsProcessing(false);
+        return;
+      }
 
       const orderData = {
-        // tax,
         status: "completed",
         note,
         sub_total: subTotal,
@@ -137,10 +157,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             : paymentData.cashAmount > 0
               ? "cash"
               : "card",
-        cash_amount: paymentData.cashAmount,
-        card_amount: paymentData.cardAmount,
+        cash_amount: paymentData.cashAmount || 0,
+        card_amount: paymentData.cardAmount || 0,
         total_paid: paymentData.totalPaid,
-        change_due: paymentData.changeDue,
+        change_due: paymentData.changeDue || 0,
         details: cart.map((item) => ({
           product_id: item.id,
           qty: item.quantity,
@@ -153,14 +173,38 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       // If we have a currentOrderId, update the existing order
       // Otherwise create a new order
       if (currentOrderId) {
-        // Add table_id to order data if we have a selected table
+        // Edge case: Always include table_id if we have a selected table
         if (selectedTable) {
           orderData.table_id = selectedTable.id;
         }
+        
         await ApiService.updateOrder(currentOrderId, orderData);
         console.log(`Updated existing order #${currentOrderId} to completed status`);
         
-        // Update table status to 'available' after payment
+        // Edge case: Update table status to 'available' after payment only if table exists
+        if (selectedTable) {
+          try {
+            await ApiService.updatePrTable(selectedTable.id, {
+              ...selectedTable,
+              status: 'available'
+            });
+            console.log(`Table ${selectedTable.table_no} status changed to available`);
+          } catch (error) {
+            console.error('Error updating table status:', error);
+            // Don't fail the entire operation if table status update fails
+          }
+        }
+      } else {
+        // Edge case: Creating new order without existing order ID
+        // This should include table_id if available
+        if (selectedTable) {
+          orderData.table_id = selectedTable.id;
+        }
+        
+        const response = await ApiService.createOrder(orderData);
+        console.log('Created new completed order', response);
+        
+        // Edge case: Update table status even for new orders
         if (selectedTable) {
           try {
             await ApiService.updatePrTable(selectedTable.id, {
@@ -172,9 +216,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             console.error('Error updating table status:', error);
           }
         }
-      } else {
-        await ApiService.createOrder(orderData);
-        console.log('Created new order');
       }
       
       // Reset order-level note after successful order creation
@@ -184,6 +225,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       setShowReceipt(true);
     } catch (error) {
       console.error("Error processing order:", error);
+      alert('Failed to process payment. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -207,13 +249,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       setShowNoteModal(true);
     } else {
       // Multiple items selected - add same note to all
-      const itemNames = cart
-        .filter((item) => {
-          const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
-          return selectedIds.includes(itemCartId);
-        })
-        .map((i) => i.name)
-        .join(", ");
       setNoteModalTitle(`${selectedIds.length} Items`);
       setCurrentNoteValue("");
       setShowNoteModal(true);
@@ -249,8 +284,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setCart([]);
     setDiscount(0);
     setNote(""); // Reset order-level note after order completion
-    setCashReceived("");
-    if (cashInputRef.current) cashInputRef.current.value = "";
     
     // Call onOrderComplete to clear table and order selection in parent
     if (onOrderComplete) {

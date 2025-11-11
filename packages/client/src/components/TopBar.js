@@ -13,14 +13,16 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
   };
 
   const handleSendToKitchen = () => {
-    if (!selectedTable) {
-      alert('Please select a table first');
+    // Validate and call parent handler
+    if (!selectedTable || !cart || cart.length === 0) {
       return;
     }
-    if (!cart || cart.length === 0) {
-      alert('Cart is empty. Add items before sending to kitchen.');
+    
+    // Validate table is not in cleaning status
+    if (selectedTable.status === 'cleaning') {
       return;
     }
+    
     onSendToKitchen();
   };
 

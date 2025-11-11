@@ -47,6 +47,13 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
   };
 
   const handleTableSelect = (table) => {
+    // Prevent selecting tables in cleaning status only
+    if (table.status === 'cleaning') {
+      alert(`Table ${table.table_no} is currently being cleaned. Please select another table.`);
+      return;
+    }
+    
+    // Allow selection of any other table without confirmation
     onSelectTable(table);
     onClose();
   };
