@@ -3,8 +3,8 @@ const db = require('../config/database');
 class Order {
     static create(order, details) {
         const insertOrder = db.prepare(`
-      INSERT INTO orders (tax, status, note, gross_total, net_total, discount)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
         const result = insertOrder.run(
@@ -13,7 +13,8 @@ class Order {
             order.note || '',
             order.sub_total || 0,
             order.total || 0,
-            order.discount || 0  // Now properly using the discount field
+            order.discount || 0,  // Now properly using the discount field
+            order.table_id || null
         );
 
         const orderId = result.lastInsertRowid;
@@ -52,7 +53,7 @@ class Order {
         // 🆙 Update the order record
         db.prepare(`
         UPDATE orders
-        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?
+        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?
         WHERE id = ?
         `).run(
             payload.tax || 0,
@@ -61,6 +62,7 @@ class Order {
             payload.total || 0,
             payload.sub_total || 0,
             payload.discount || 0,  // Now properly using the discount field
+            payload.table_id || null,
             id
         );
 
@@ -137,6 +139,27 @@ class Order {
     static delete(id) {
         db.prepare('DELETE FROM order_details WHERE order_id = ?').run(id);
         db.prepare('DELETE FROM orders WHERE id = ?').run(id);
+    }
+
+    static getByTableId(tableId) {
+        const order = db.prepare('SELECT * FROM orders WHERE table_id = ? AND status = ? ORDER BY id DESC LIMIT 1').get(tableId, 'send_kitchen');
+        if (!order) return null;
+        
+        // Map database column names to expected property names
+        order.sub_total = order.gross_total;
+        order.total = order.net_total;
+        delete order.gross_total;
+        delete order.net_total;
+        
+        order.details = db
+            .prepare(
+                `SELECT od.*, p.name as product_name, p.price, p.color, p.image
+         FROM order_details od
+         LEFT JOIN products p ON od.product_id = p.id
+         WHERE od.order_id = ?`
+            )
+            .all(order.id);
+        return order;
     }
 }
 

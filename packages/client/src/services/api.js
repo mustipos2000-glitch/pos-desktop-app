@@ -155,6 +155,10 @@ class ApiService {
     });
   }
 
+  static async getOrderByTableId(tableId) {
+    return this.request(`/orders/table/${tableId}`);
+  }
+
   // Room methods
   static async getRooms() {
     return this.request('/rooms');

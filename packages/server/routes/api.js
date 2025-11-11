@@ -57,6 +57,7 @@ router.post('/sub-products/unassign-from-product', SubProductController.unassign
 
 // Order routes
 router.get('/orders', OrderController.getAllOrders);
+router.get('/orders/table/:tableId', OrderController.getOrderByTableId);
 router.get('/orders/:id', OrderController.getOrderById);
 router.post('/orders', OrderController.createOrder);
 router.put('/orders/:id', OrderController.updateOrder);

@@ -32,9 +32,10 @@ const PaymentModal = ({
 
     // Calculate totals when amounts change
     useEffect(() => {
+        const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
         const totalAssigned = cashAmount + cardAmount;
         setAssigned(totalAssigned);
-        setChangeDue(Math.max(0, totalAssigned - total));
+        setChangeDue(Math.max(0, totalAssigned - validTotal));
     }, [cashAmount, cardAmount, total]);
 
     // Handle numeric keypad input
@@ -52,11 +53,12 @@ const PaymentModal = ({
 
     // Handle quick amount buttons
     const handleQuickAmount = (amount) => {
+        const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
         if (amount === 'exact') {
-            const remaining = total - assigned;
+            const remaining = validTotal - assigned;
             setEnteredAmount(remaining.toFixed(2));
         } else if (amount === 'ceiling') {
-            const ceilingAmount = Math.ceil(total);
+            const ceilingAmount = Math.ceil(validTotal);
             setEnteredAmount(ceilingAmount.toString());
         } else {
             setEnteredAmount(amount.toString());
@@ -85,7 +87,8 @@ const PaymentModal = ({
 
     // Handle payment confirmation
     const handleConfirm = useCallback(() => {
-        if (assigned < total) {
+        const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
+        if (assigned < validTotal) {
             alert('Payment amount is less than total. Please add more payment.');
             return;
         }
@@ -112,8 +115,11 @@ const PaymentModal = ({
             } else if (e.key === 'Enter') {
                 if (enteredAmount && parseFloat(enteredAmount) > 0) {
                     handleAddAmount();
-                } else if (assigned >= total) {
-                    handleConfirm();
+                } else {
+                    const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
+                    if (assigned >= validTotal) {
+                        handleConfirm();
+                    }
                 }
             } else if (e.key === 'Backspace' || e.key === 'Delete') {
                 setEnteredAmount(prev => prev.slice(0, -1));
@@ -128,7 +134,9 @@ const PaymentModal = ({
 
     if (!isOpen) return null;
 
-    const remaining = Math.max(0, total - assigned);
+    // Ensure total is a valid number
+    const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
+    const remaining = Math.max(0, validTotal - assigned);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -141,7 +149,7 @@ const PaymentModal = ({
                     <div className="grid grid-cols-3 gap-2 text-center mb-2">
                         <div>
                             <div className="text-pos-text-disabled text-xs">Total</div>
-                            <div className="text-sm font-semibold text-pos-text-primary">€ {total.toFixed(2)}</div>
+                            <div className="text-sm font-semibold text-pos-text-primary">€ {validTotal.toFixed(2)}</div>
                         </div>
                         <div>
                             <div className="text-pos-text-disabled text-xs">Assigned</div>
@@ -180,7 +188,7 @@ const PaymentModal = ({
                                 onClick={() => handleQuickAmount('ceiling')}
                                 className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-1 px-2 text-xs rounded"
                             >
-                                {Math.ceil(total)}€
+                                {Math.ceil(validTotal)}€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(50)}
@@ -348,7 +356,7 @@ const PaymentModal = ({
                             </button>
                             <button
                                 onClick={handleConfirm}
-                                disabled={assigned < total}
+                                disabled={assigned < validTotal}
                                 className="bg-pos-bg-primary hover:bg-pos-interactive-hover disabled:bg-gray-500 disabled:cursor-not-allowed text-white py-2 rounded text-sm"
                             >
                                 Confirm Payment
