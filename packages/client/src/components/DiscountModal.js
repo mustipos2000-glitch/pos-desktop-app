@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Toast from "./Toast";
 
 const KEYS = ["7", "8", "9", "4", "5", "6", "1", "2", "3", ",", "0", "←"];
 
@@ -11,6 +12,7 @@ export default function CalculatorModal({
   const [mode, setMode] = useState("amount");
   const [input, setInput] = useState("");
   const modalRef = useRef(null);
+  const [toastMessage, setToastMessage] = useState("");
 
   // Close on ESC
   useEffect(() => {
@@ -49,19 +51,50 @@ export default function CalculatorModal({
     }
     if ((key === "," || key === ".") && (input.includes(",") || input.includes("."))) return;
     if (key === "0" && input === "0") return;
+    
+    // Prevent percentage from exceeding 100%
+    const newInput = input === "0" && key !== "," ? key : input + key;
+    if (mode === "percentage") {
+      const normalized = newInput.replace(",", ".");
+      const value = parseFloat(normalized);
+      if (Number.isFinite(value) && value > 100) {
+        return; // Don't allow input if it would exceed 100%
+      }
+    }
+    
     setInput((s) => (s === "0" && key !== "," ? key : s + key));
   }
 
   function handleOk() {
+    // Validate percentage doesn't exceed 100%
+    if (mode === "percentage" && numericValue > 100) {
+      setToastMessage("Percentage discount cannot exceed 100%");
+      return;
+    }
+    
+    // Validate discount doesn't exceed base price
+    if (Math.abs(discount) > basePrice) {
+      setToastMessage("Discount cannot exceed the total amount");
+      return;
+    }
+    
     if (onConfirm) onConfirm({ discount, mode, rawInput: input });
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-      <div
-        ref={modalRef}
-        className="w-full max-w-md bg-pos-interactive-primary rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden"
-      >
+    <>
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          type="error"
+          onClose={() => setToastMessage("")}
+        />
+      )}
+      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
+        <div
+          ref={modalRef}
+          className="w-full max-w-md bg-pos-interactive-primary rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden"
+        >
         {/* Header */}
         <div className="px-6 pt-6 pb-4 text-center">
           <h3 className="text-lg font-medium text-white">{title}</h3>
@@ -161,5 +194,6 @@ export default function CalculatorModal({
         </div>
       </div>
     </div>
+    </>
   );
 }

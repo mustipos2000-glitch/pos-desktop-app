@@ -4,6 +4,7 @@ import ConfirmationModal from "./ConfirmationModal";
 import PaymentModal from "./PaymentModal";
 import DiscountModal from "./DiscountModal";
 import NoteModal from "./NoteModal";
+import Toast from "./Toast";
 import ApiService from "../services/api";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete }) => {
@@ -11,6 +12,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   // repurposed ref/state: cash input (cash received)
   const cashInputRef = useRef(null);
@@ -34,7 +36,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     if (currLen > prevLen) {
       const lastItem = cart[cart.length - 1];
-      setLastAddedId(Number(lastItem.id));
+      const itemId = Number(lastItem.id);
+      setLastAddedId(itemId);
+      setSelectedIds([itemId]); // Auto-select the newly added item
     } else if (currLen < prevLen) {
       setLastAddedId(null);
       setSelectedIds([]);
@@ -65,7 +69,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   // Delete selected
   const handleClearSelected = () => {
     if (selectedIds.length === 0) {
-      alert("Please select at least one item to delete.");
+      setToastMessage("Please select at least one item to delete.");
       return;
     }
     setCart((prev) =>
@@ -260,8 +264,16 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
   return (
-    <div className="w-1/6 min-w-[300px] bg-pos-bg-quaternary flex flex-col border-l border-pos-border-light h-screen">
-      {/* Header */}
+    <>
+      {toastMessage && (
+        <Toast
+          message={toastMessage}
+          type="error"
+          onClose={() => setToastMessage("")}
+        />
+      )}
+      <div className="w-1/6 min-w-[300px] bg-pos-bg-quaternary flex flex-col border-l border-pos-border-light h-screen">
+        {/* Header */}
       <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light">
         <div className="grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
           <span>Item</span>
@@ -527,7 +539,20 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             const discountValueInput = parseFloat(rawInput);
             const discountAmount = isNaN(discountValueInput) ? 0 : discountValueInput;
 
+            // Validate percentage doesn't exceed 100%
+            if (mode === "percentage" && discountAmount > 100) {
+              setToastMessage("Percentage discount cannot exceed 100%");
+              return;
+            }
+
             if (selectedIds.length === 0) {
+              // Validate discount doesn't exceed total for whole order
+              const totalCartValue = calculateTotal();
+              if (mode === "amount" && discountAmount > totalCartValue) {
+                setToastMessage("Discount amount cannot exceed the total");
+                return;
+              }
+
               // Apply discount to all items in the cart
               setCart((prev) =>
                 prev.map((item) => {
@@ -538,12 +563,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                     discountValue = (itemTotal * discountAmount) / 100;
                   } else {
                     // For fixed amount, distribute proportionally across all items
-                    const totalCartValue = calculateTotal();
                     const itemProportion = itemTotal / totalCartValue;
                     discountValue = discountAmount * itemProportion;
                   }
 
-                  const updatedTotal = itemTotal - discountValue;
+                  const updatedTotal = Math.max(0, itemTotal - discountValue);
                   return {
                     ...item,
                     originalPrice: item.originalPrice || item.price,
@@ -557,6 +581,16 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                 })
               );
             } else {
+              // Validate discount doesn't exceed selected items total
+              const selectedTotal = cart
+                .filter((item) => selectedIds.includes(item.id))
+                .reduce((sum, i) => sum + i.price * i.quantity, 0);
+              
+              if (mode === "amount" && discountAmount > selectedTotal) {
+                setToastMessage("Discount amount cannot exceed the selected items total");
+                return;
+              }
+
               // Apply to selected items
               setCart((prev) =>
                 prev.map((item) => {
@@ -570,10 +604,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                       discountValue = discountAmount;
                     }
 
-                    const updatedTotal = itemTotal - discountValue;
+                    const updatedTotal = Math.max(0, itemTotal - discountValue);
                     return {
                       ...item,
-                      originalPrice: item.originalPrice || item.price, // store the base price once
+                      originalPrice: item.originalPrice || item.price,
                       price: updatedTotal / item.quantity,
                       appliedDiscount:
                         mode === "percentage"
@@ -603,7 +637,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         title={noteModalTitle}
         currentNote={currentNoteValue}
       />
-    </div>
+      </div>
+    </>
   );
 };
 
