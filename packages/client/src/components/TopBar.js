@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TableSelectionModal from './TableSelectionModal';
+import ApiService from '../services/api';
 
 const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder }) => {
   const [showTableModal, setShowTableModal] = useState(false);
+  const [kitchenOrderCount, setKitchenOrderCount] = useState(0);
 
   const handleTableClick = () => {
     setShowTableModal(true);
@@ -23,6 +25,27 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     }
     onSendToKitchen();
   };
+
+  // Fetch kitchen orders count
+  useEffect(() => {
+    const fetchKitchenOrderCount = async () => {
+      try {
+        const response = await ApiService.getOrders();
+        const kitchenOrders = response.data.filter(order => order.status === 'send_kitchen');
+        setKitchenOrderCount(kitchenOrders.length);
+      } catch (error) {
+        console.error('Failed to fetch kitchen orders:', error);
+      }
+    };
+
+    // Fetch immediately
+    fetchKitchenOrderCount();
+
+    // Set up polling every 5 seconds to keep count updated
+    const interval = setInterval(fetchKitchenOrderCount, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
@@ -46,7 +69,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
           </button>
           <button className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white">
             <span className="text-lg">📋</span>
-            Orders (0)
+            Orders ({kitchenOrderCount})
           </button>
         </div>
         <div className="flex gap-2.5">
