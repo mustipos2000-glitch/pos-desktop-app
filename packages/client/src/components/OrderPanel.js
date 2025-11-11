@@ -36,7 +36,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     if (currLen > prevLen) {
       const lastItem = cart[cart.length - 1];
-      const itemId = Number(lastItem.id);
+      const itemId = lastItem.cartItemId || `${lastItem.id}_${lastItem.name}`;
       setLastAddedId(itemId);
       setSelectedIds([itemId]); // Auto-select the newly added item
     } else if (currLen < prevLen) {
@@ -49,7 +49,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
   // Select item
   const handleSelect = (id) => {
-    id = Number(id);
     setSelectedIds((prev) => {
       const alreadySelected = prev.includes(id);
       if (alreadySelected) {
@@ -63,7 +62,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
   // Select all
   const handleSelectAll = () => {
-    setSelectedIds(cart.map((item) => Number(item.id)));
+    setSelectedIds(cart.map((item) => item.cartItemId || `${item.id}_${item.name}`));
   };
 
   // Delete selected
@@ -73,7 +72,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       return;
     }
     setCart((prev) =>
-      prev.filter((item) => !selectedIds.includes(Number(item.id)))
+      prev.filter((item) => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return !selectedIds.includes(itemCartId);
+      })
     );
     setSelectedIds([]);
     setLastAddedId(null);
@@ -196,14 +198,20 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       setShowNoteModal(true);
     } else if (selectedIds.length === 1) {
       // Single item selected - add note to that item
-      const selectedItem = cart.find((item) => item.id === selectedIds[0]);
+      const selectedItem = cart.find((item) => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return itemCartId === selectedIds[0];
+      });
       setNoteModalTitle(selectedItem?.name || "Item");
       setCurrentNoteValue(selectedItem?.notes || "");
       setShowNoteModal(true);
     } else {
       // Multiple items selected - add same note to all
       const itemNames = cart
-        .filter((item) => selectedIds.includes(item.id))
+        .filter((item) => {
+          const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+          return selectedIds.includes(itemCartId);
+        })
         .map((i) => i.name)
         .join(", ");
       setNoteModalTitle(`${selectedIds.length} Items`);
@@ -220,7 +228,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       // Update item-level notes
       setCart((prev) =>
         prev.map((item) => {
-          if (selectedIds.includes(item.id)) {
+          const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+          if (selectedIds.includes(itemCartId)) {
             return { ...item, notes: noteText };
           }
           return item;
@@ -291,10 +300,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           </div>
         ) : (
           cart.map((item) => {
-            const id = Number(item.id);
-            const isSelected = selectedIds.includes(id);
+            const cartItemId = item.cartItemId || `${item.id}_${item.name}`;
+            const isSelected = selectedIds.includes(cartItemId);
  
-            const isLastAdded = id === lastAddedId;
+            const isLastAdded = cartItemId === lastAddedId;
 
             const bgColor = isLastAdded
               ? "bg-green-500"
@@ -306,8 +315,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
             return (
               <div
-                key={id}
-                onClick={() => handleSelect(id)}
+                key={cartItemId}
+                onClick={() => handleSelect(cartItemId)}
                 className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-1 px-2 cursor-pointer ${bgColor}`}
               >
                 {/* Product Name */}
@@ -333,7 +342,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                     className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm font-semibold justify-center hover:bg-pos-interactive-hover`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onUpdateQuantity(item.id, item.quantity - 1);
+                      onUpdateQuantity(cartItemId, item.quantity - 1);
                     }}
                   >
                     -
@@ -343,7 +352,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                     className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm justify-center hover:bg-pos-interactive-hover`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      onUpdateQuantity(item.id, item.quantity + 1);
+                      onUpdateQuantity(cartItemId, item.quantity + 1);
                     }}
                   >
                     +
@@ -521,9 +530,15 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             selectedIds.length === 0
               ? "Whole Order"
               : selectedIds.length === 1
-                ? cart.find((item) => item.id === selectedIds[0])?.name
+                ? cart.find((item) => {
+                    const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+                    return itemCartId === selectedIds[0];
+                  })?.name
                 : cart
-                  .filter((item) => selectedIds.includes(item.id))
+                  .filter((item) => {
+                    const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+                    return selectedIds.includes(itemCartId);
+                  })
                   .map((i) => i.name)
                   .join(", ")
           }
@@ -531,7 +546,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             selectedIds.length === 0
               ? calculateTotal()
               : cart
-                .filter((item) => selectedIds.includes(item.id))
+                .filter((item) => {
+                  const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+                  return selectedIds.includes(itemCartId);
+                })
                 .reduce((sum, i) => sum + i.price * i.quantity, 0)
           }
           onClose={() => setShowDiscountModal(false)}
@@ -583,7 +601,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             } else {
               // Validate discount doesn't exceed selected items total
               const selectedTotal = cart
-                .filter((item) => selectedIds.includes(item.id))
+                .filter((item) => {
+                  const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+                  return selectedIds.includes(itemCartId);
+                })
                 .reduce((sum, i) => sum + i.price * i.quantity, 0);
               
               if (mode === "amount" && discountAmount > selectedTotal) {
@@ -594,7 +615,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               // Apply to selected items
               setCart((prev) =>
                 prev.map((item) => {
-                  if (selectedIds.includes(item.id)) {
+                  const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+                  if (selectedIds.includes(itemCartId)) {
                     const itemTotal = item.price * item.quantity;
                     let discountValue = 0;
 

@@ -61,27 +61,40 @@ const POSScreen = () => {
   }, []);
   const addToCart = (product, quantity = 1) => {
   const finalQuantity = quantity > 0 ? quantity : 1;
-  const existingItem = cart.find(item => item.id === product.id);
+  
+  // Create a unique cart item ID that combines product ID with name to handle sub-products
+  // This ensures that products and sub-products with the same ID are treated as separate items
+  const cartItemId = `${product.id}_${product.name}`;
+  
+  const existingItem = cart.find(item => {
+    const existingCartItemId = `${item.id}_${item.name}`;
+    return existingCartItemId === cartItemId;
+  });
 
   if (existingItem) {
-    setCart(cart.map(item =>
-      item.id === product.id
+    setCart(cart.map(item => {
+      const itemCartId = `${item.id}_${item.name}`;
+      return itemCartId === cartItemId
         ? { ...item, quantity: item.quantity + finalQuantity }
-        : item
-    ));
+        : item;
+    }));
   } else {
-    setCart([...cart, { ...product, quantity: finalQuantity }]);
+    setCart([...cart, { ...product, quantity: finalQuantity, cartItemId }]);
   }
 };
 
 
-  const updateQuantity = (id, quantity) => {
+  const updateQuantity = (cartItemId, quantity) => {
     if (quantity <= 0) {
-      setCart(cart.filter(item => item.id !== id));
+      setCart(cart.filter(item => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return itemCartId !== cartItemId;
+      }));
     } else {
-      setCart(cart.map(item =>
-        item.id === id ? { ...item, quantity } : item
-      ));
+      setCart(cart.map(item => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return itemCartId === cartItemId ? { ...item, quantity } : item;
+      }));
     }
   };
 
@@ -139,9 +152,10 @@ const POSScreen = () => {
             }
           }
           
+          const productName = detail.product_name || detail.name || 'Unknown';
           return {
             id: detail.product_id,
-            name: detail.product_name || detail.name || 'Unknown',
+            name: productName,
             price: isNaN(currentUnitPrice) ? 0 : currentUnitPrice,
             quantity: detailQty,
             notes: detail.notes || '',
@@ -151,6 +165,7 @@ const POSScreen = () => {
             color: detail.color || product?.color || '#3b82f6',
             image: detail.image || product?.image || '📦',
             category: product?.category || 'Uncategorized',
+            cartItemId: `${detail.product_id}_${productName}`,
           };
         });
         

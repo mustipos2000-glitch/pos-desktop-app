@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import KeypadNumpad from './KeypadNumpad';
 
-const ProductFormModal = ({ 
-  isOpen, 
-  onClose, 
-  onSubmit, 
-  product = null, 
+const ProductFormModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  product = null,
   categories = [],
-  selectedCategoryId = null 
+  selectedCategoryId = null
 }) => {
   const [productForm, setProductForm] = useState({
     name: '',
@@ -93,49 +93,49 @@ const ProductFormModal = ({
       });
       setImageFile(null);
       setFieldErrors({});
-  setHasEditedButtonOrProduction(false);
+      setHasEditedButtonOrProduction(false);
     }
     setFieldErrors({});
   }, [product, selectedCategoryId, isOpen]);
 
 
-const [hasEditedButtonOrProduction, setHasEditedButtonOrProduction] = useState(false);
+  const [hasEditedButtonOrProduction, setHasEditedButtonOrProduction] = useState(false);
 
-const handleInputChange = (e) => {
-  const { name, value, type, checked } = e.target;
-  const newValue = type === "checkbox" ? checked : value;
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const newValue = type === "checkbox" ? checked : value;
 
-  setProductForm((prevForm) => {
-    // Only sync fields if adding a new product (not editing)
-    // and user hasn't edited button_name or production_name manually
-    if (name === "name" && !product && !hasEditedButtonOrProduction) {
+    setProductForm((prevForm) => {
+      // Only sync fields if adding a new product (not editing)
+      // and user hasn't edited button_name or production_name manually
+      if (name === "name" && !product && !hasEditedButtonOrProduction) {
+        return {
+          ...prevForm,
+          name: newValue,
+          button_name: newValue,
+          production_name: newValue,
+        };
+      }
+
+      // If user edits button_name or production_name manually, stop syncing
+      if (name === "button_name" || name === "production_name") {
+        setHasEditedButtonOrProduction(true);
+      }
+
       return {
         ...prevForm,
-        name: newValue,
-        button_name: newValue,
-        production_name: newValue,
+        [name]: newValue,
       };
-    }
-
-    // If user edits button_name or production_name manually, stop syncing
-    if (name === "button_name" || name === "production_name") {
-      setHasEditedButtonOrProduction(true);
-    }
-
-    return {
-      ...prevForm,
-      [name]: newValue,
-    };
-  });
-
-  // Clear field error when user starts typing
-  if (fieldErrors[name]) {
-    setFieldErrors({
-      ...fieldErrors,
-      [name]: "",
     });
-  }
-};
+
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [name]: "",
+      });
+    }
+  };
 
 
   const handleFileChange = (e) => {
@@ -219,16 +219,16 @@ const handleInputChange = (e) => {
           <h3 className="text-lg font-semibold text-pos-text-primary">
             {product ? 'Edit Product' : 'Add New Product'}
           </h3>
-          <button 
+          <button
             onClick={onClose}
             className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-xl leading-none"
           >
             ×
           </button>
         </div>
-        
+
         {/* Modal Body - Form Section */}
-        <div className="px-4 py-2" style={{maxWidth:"30rem"}}>
+        <div className="px-4 py-2" style={{ maxWidth: "30rem" }}>
           <div className="grid grid-cols-3 gap-3 mb-2">
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">
@@ -245,7 +245,7 @@ const handleInputChange = (e) => {
               />
               {fieldErrors.name && <p className="text-pos-error text-xs mt-0.5">{fieldErrors.name}</p>}
             </div>
-            
+
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">Button Name</label>
               <input
@@ -258,7 +258,7 @@ const handleInputChange = (e) => {
                 placeholder="Display name"
               />
             </div>
-            
+
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">Production Name</label>
               <input
@@ -285,7 +285,7 @@ const handleInputChange = (e) => {
                 placeholder="0.00"
               />
             </div>
-                        
+
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">Barcode</label>
               <input
@@ -312,7 +312,7 @@ const handleInputChange = (e) => {
                 placeholder="0.00"
               />
             </div>
-            
+
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">VAT Eat-in (%)</label>
               <input
@@ -341,7 +341,7 @@ const handleInputChange = (e) => {
                 ))}
               </select>
             </div>
-             <div>
+            <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">Product Image</label>
               <input
                 type="file"
@@ -351,10 +351,7 @@ const handleInputChange = (e) => {
                 className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1  text-xs focus:outline-none focus:border-pos-info transition-colors file:mr-2 file:py-0.5 file:px-2 file: file:border-0 file:text-xs file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
               />
             </div>
-          </div>
-          </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-2">
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">Addition Type</label>
               <input
@@ -383,20 +380,19 @@ const handleInputChange = (e) => {
                 ))}
               </div>
             </div>
-            
-           
 
-          <div className="mb-2 flex items-center">
-            <label className="flex items-center cursor-pointer mt-4">
-              <input
-                type="checkbox"
-                name="sub_product_group"
-                checked={productForm.sub_product_group}
-                onChange={handleInputChange}
-                className="w-3 h-3 text-pos-info bg-pos-bg-primary border-pos-border-secondary  focus:ring-pos-info focus:ring-1"
-              />
-              <span className="ml-2 text-xs text-pos-text-primary">Sub-Product Group</span>
-            </label>
+            <div className="flex items-center">
+              <label className="flex items-center cursor-pointer mt-4">
+                <input
+                  type="checkbox"
+                  name="sub_product_group"
+                  checked={productForm.sub_product_group}
+                  onChange={handleInputChange}
+                  className="w-3 h-3 text-pos-info bg-pos-bg-primary border-pos-border-secondary  focus:ring-pos-info focus:ring-1"
+                />
+                <span className="ml-2 text-xs text-pos-text-primary">Sub-Product Group</span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -419,28 +415,27 @@ const handleInputChange = (e) => {
             </div>
           </div>
         )}
-        
+
         {/* Modal Footer */}
         <div className="bg-pos-bg-tertiary border-t border-pos-border-secondary px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0">
-           {/* Keypad Toggle Button */}
+          {/* Keypad Toggle Button */}
           <button
             type="button"
             onClick={() => setShowKeypad(!showKeypad)}
-            className={`px-3 py-1.5  text-sm font-medium transition-colors ${
-              showKeypad
-                ? 'bg-pos-info text-white'
-                : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
-            }`}>
+            className={`px-3 py-1.5  text-sm font-medium transition-colors ${showKeypad
+              ? 'bg-pos-info text-white'
+              : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
+              }`}>
             {showKeypad ? 'Hide Keyboard' : 'Show Keyboard'} ⌨️
           </button>
           <div className='flex gap-2'>
-            <button 
+            <button
               onClick={onClose}
               className="px-4 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleSubmit}
               className="px-5 py-2 bg-pos-bg-primary text-white  text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
             >
