@@ -15,6 +15,26 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
     return image && (image.startsWith('http') || image.startsWith('/uploads/'));
   };
 
+  // Hide button and inline sub-products when category changes
+  useEffect(() => {
+    // Check if the product with subproducts button is still in the current products list
+    if (productWithSubproducts) {
+      const productStillVisible = products.some(p => p.id === productWithSubproducts.id);
+      if (!productStillVisible) {
+        setProductWithSubproducts(null);
+      }
+    }
+    
+    // Check if the selected product with inline sub-products is still in the current products list
+    if (selectedProductId) {
+      const productStillVisible = products.some(p => p.id === selectedProductId);
+      if (!productStillVisible) {
+        setSelectedProductId(null);
+        setSubProducts([]);
+      }
+    }
+  }, [products, productWithSubproducts, selectedProductId]);
+
   // Handle clicking outside to close sub-products
   useEffect(() => {
     const handleClickOutside = (event) => {

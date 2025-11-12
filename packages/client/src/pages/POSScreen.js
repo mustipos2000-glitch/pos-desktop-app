@@ -18,6 +18,76 @@ const POSScreen = () => {
   const [selectedTable, setSelectedTable] = useState(null);
   const [currentOrderId, setCurrentOrderId] = useState(null);
 
+  // Auto-save cart to table whenever cart changes and table is selected
+  useEffect(() => {
+    // Only auto-save if we have a table selected and items in cart
+    if (!selectedTable || cart.length === 0) {
+      return;
+    }
+
+    const autoSaveOrder = async () => {
+      try {
+        const subTotal = cart.reduce((sum, item) => {
+          const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+          const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+          return sum + (price * quantity);
+        }, 0);
+
+        const orderData = {
+          status: 'send_kitchen',
+          note: '',
+          sub_total: subTotal,
+          total: subTotal,
+          discount: 0,
+          table_id: selectedTable.id,
+          details: cart.map((item) => ({
+            product_id: item.id,
+            qty: item.quantity,
+            total: item.price * item.quantity,
+            notes: item.notes || null,
+            discount: item.discount || 0,
+          })),
+        };
+
+        if (currentOrderId) {
+          // Update existing order
+          await ApiService.updateOrder(currentOrderId, orderData);
+          console.log(`Auto-saved order #${currentOrderId} for table ${selectedTable.table_no}`);
+        } else {
+          // Create new order
+          const response = await ApiService.createOrder(orderData);
+          console.log(`Auto-created order for table ${selectedTable.table_no}`, response);
+          
+          // Store the new order ID
+          if (response.data && response.data.id) {
+            setCurrentOrderId(response.data.id);
+          }
+        }
+
+        // Update table status to reserved if it's available
+        if (selectedTable.status === 'available') {
+          try {
+            await ApiService.updatePrTable(selectedTable.id, {
+              ...selectedTable,
+              status: 'reserved'
+            });
+            console.log(`Table ${selectedTable.table_no} status changed to reserved`);
+          } catch (error) {
+            console.error('Error updating table status:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error auto-saving order:', error);
+      }
+    };
+
+    // Debounce the auto-save to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      autoSaveOrder();
+    }, 800); // Wait 800ms after last cart change
+
+    return () => clearTimeout(timeoutId);
+  }, [cart, selectedTable, currentOrderId]);
 
   // Fetch categories and products from backend
   useEffect(() => {
@@ -103,6 +173,11 @@ const POSScreen = () => {
   };
 
   const handleTableSelect = async (table) => {
+    // Store current cart items and order ID before switching
+    const currentCartItems = [...cart];
+    const hadOrderId = currentOrderId !== null;
+    
+    // Simply switch to the selected table without confirmation
     setSelectedTable(table);
     
     // Check if this table has an existing order
@@ -112,12 +187,12 @@ const POSScreen = () => {
       console.log('Order response for table:', table.id, response);
       
       if (response.data && response.data.details && response.data.details.length > 0) {
-        // Load existing order into cart
+        // Table has an existing order - load it
         const existingOrder = response.data;
         setCurrentOrderId(existingOrder.id);
         
         // Convert order details to cart format
-        const cartItems = existingOrder.details.map(detail => {
+        const existingCartItems = existingOrder.details.map(detail => {
           // Find the product in our products list to get category and original price
           const product = products.find(p => p.id === detail.product_id);
           
@@ -169,33 +244,73 @@ const POSScreen = () => {
           };
         });
         
-        console.log('Loading cart items:', cartItems);
-        setCart(cartItems);
+        // Load existing order items directly
+        console.log('Loading cart items:', existingCartItems);
+        setCart(existingCartItems);
       } else {
-        // No existing order, start fresh
+        // No existing order for this table
         console.log('No existing order found for table:', table.id);
         setCurrentOrderId(null);
-        setCart([]);
+        
+        // Only preserve cart items if they haven't been saved to another table yet
+        // If hadOrderId is true, it means items were already saved to a previous table
+        // so we should NOT carry them over to this new empty table
+        if (currentCartItems.length > 0 && !hadOrderId) {
+          console.log('Preserving unsaved cart items for new table assignment');
+          setCart(currentCartItems);
+        } else {
+          // Clear cart if switching from a table with saved order to empty table
+          console.log('Clearing cart - switching to empty table');
+          setCart([]);
+        }
       }
     } catch (error) {
       console.error('Error loading table order:', error);
+      // On error, only preserve items if they weren't saved to a table yet
       setCurrentOrderId(null);
-      setCart([]);
+      if (currentCartItems.length > 0 && !hadOrderId) {
+        console.log('Error occurred, preserving unsaved cart items');
+        setCart(currentCartItems);
+      } else {
+        setCart([]);
+      }
     }
   };
 
   const handleSendToKitchen = async () => {
+    // Edge case: Validate table selection
     if (!selectedTable) {
-      alert('Please select a table first');
+      console.log('No table selected');
       return;
     }
+    
+    // Edge case: Validate cart has items
     if (cart.length === 0) {
-      alert('Cart is empty. Add items before sending to kitchen.');
+      console.log('Cart is empty');
       return;
     }
 
     try {
-      const subTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      // Edge case: Validate all cart items have valid data
+      const invalidItems = cart.filter(item => 
+        !item.id || 
+        typeof item.quantity !== 'number' || 
+        item.quantity <= 0 || 
+        typeof item.price !== 'number' || 
+        item.price < 0
+      );
+      
+      if (invalidItems.length > 0) {
+        console.error('Invalid items in cart:', invalidItems);
+        return;
+      }
+
+      const subTotal = cart.reduce((sum, item) => {
+        const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+        const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+        return sum + (price * quantity);
+      }, 0);
+      
       const total = subTotal;
 
       const orderData = {
@@ -217,12 +332,19 @@ const POSScreen = () => {
       if (currentOrderId) {
         // Update existing order
         await ApiService.updateOrder(currentOrderId, orderData);
+        console.log(`Updated order #${currentOrderId} for table ${selectedTable.table_no}`);
       } else {
         // Create new order
-        await ApiService.createOrder(orderData);
+        const response = await ApiService.createOrder(orderData);
+        console.log(`Created new order for table ${selectedTable.table_no}`, response);
+        
+        // Edge case: Store the new order ID for future updates
+        if (response.data && response.data.id) {
+          setCurrentOrderId(response.data.id);
+        }
       }
 
-      // Update table status from 'available' to 'reserved' if needed
+      // Edge case: Update table status only if it's available
       if (selectedTable.status === 'available') {
         try {
           await ApiService.updatePrTable(selectedTable.id, {
@@ -230,18 +352,25 @@ const POSScreen = () => {
             status: 'reserved'
           });
           console.log(`Table ${selectedTable.table_no} status changed to reserved`);
+          
+          // Update local selectedTable state to reflect new status
+          setSelectedTable({
+            ...selectedTable,
+            status: 'reserved'
+          });
         } catch (error) {
           console.error('Error updating table status:', error);
+          // Don't fail the entire operation if table status update fails
         }
       }
       
-      // Clear cart and table selection after successful order
-      setCart([]);
-      setSelectedTable(null);
-      setCurrentOrderId(null);
+      // Edge case: Don't clear cart and table after sending to kitchen
+      // Keep them so user can add more items or make changes
+      console.log(`Order sent to kitchen for Table ${selectedTable.table_no}`);
+      
     } catch (error) {
       console.error('Error sending order to kitchen:', error);
-      alert('Failed to send order to kitchen. Please try again.');
+      // Silently fail - error is logged to console
     }
   };
 

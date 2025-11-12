@@ -136,7 +136,7 @@ const PaymentModal = ({
 
     // Ensure total is a valid number
     const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
-    const remaining = Math.max(0, validTotal - assigned);
+    // const remaining = Math.max(0, validTotal - assigned);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -177,57 +177,57 @@ const PaymentModal = ({
                     {/* Left Side - Controls */}
                     <div>
                         {/* Quick Amount Buttons */}
-                        <div className="grid grid-cols-4 gap-1 mb-3">
+                        <div className="grid grid-cols-3 gap-1 mb-2">
                             <button
                                 onClick={() => handleQuickAmount('exact')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-1 px-2 text-xs rounded"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded"
                             >
                                 Exact
                             </button>
                             <button
                                 onClick={() => handleQuickAmount('ceiling')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-1 px-2 text-xs rounded"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded"
                             >
                                 {Math.ceil(validTotal)}€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(50)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-1 px-2 text-xs rounded"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded"
                             >
                                 50€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(100)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-1 px-2 text-xs rounded"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded"
                             >
                                 100€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(200)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-1 px-2 text-xs rounded"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded"
                             >
                                 200€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(500)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-1 px-2 text-xs rounded"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded"
                             >
                                 500€
                             </button>
-                            <button
+                            {/* <button
                                 onClick={() => handleQuickAmount(remaining)}
                                 disabled={remaining <= 0}
                                 className="bg-pos-bg-primary hover:bg-pos-interactive-hover disabled:bg-gray-500 disabled:cursor-not-allowed text-pos-text-primary py-1 px-2 text-xs rounded"
                             >
                                 €{remaining.toFixed(2)}
-                            </button>
+                            </button> */}
                         </div>
 
                         {/* Payment Method Selection */}
                         <div className="grid grid-cols-2 gap-2 mb-3">
                             <button
                                 onClick={() => setPaymentMethod('cash')}
-                                className={`flex items-center justify-between px-2 py-2 rounded text-sm ${paymentMethod === 'cash'
+                                className={`flex items-center justify-between px-2 py-1 rounded text-sm ${paymentMethod === 'cash'
                                     ? 'bg-pos-interactive-hover text-white'
                                     : 'bg-pos-bg-primary text-pos-text-primary hover:bg-pos-interactive-hover'
                                     }`}
@@ -239,7 +239,7 @@ const PaymentModal = ({
 
                             <button
                                 onClick={() => setPaymentMethod('card')}
-                                className={`flex items-center justify-between px-2 py-2 rounded text-sm ${paymentMethod === 'card'
+                                className={`flex items-center justify-between px-2 py-1 rounded text-sm ${paymentMethod === 'card'
                                     ? 'bg-pos-interactive-hover text-white'
                                     : 'bg-pos-bg-primary text-pos-text-primary hover:bg-pos-interactive-hover'
                                     }`}

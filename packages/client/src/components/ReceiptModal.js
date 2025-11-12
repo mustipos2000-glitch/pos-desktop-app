@@ -23,7 +23,7 @@ const ReceiptModal = ({ cart, total, subTotal, tax, discount, onClose, onPrint }
   const orderNumber = `${Date.now().toString().slice(-6)}`;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-md w-full mx-4 max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="relative">
           <button className="absolute top-4 right-4 text-pos-text-muted hover:text-pos-text-primary text-xl z-10" onClick={onClose}>✕</button>

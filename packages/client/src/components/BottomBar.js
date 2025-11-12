@@ -12,11 +12,11 @@ const BottomBar = ({ onOpenSettings }) => {
       <button className="btn-primary flex items-center gap-2" onClick={onOpenSettings}>
         ⚙️ Settings
       </button>
-      <button className="btn-primary">Eat In</button>
+      {/* <button className="btn-primary">Eat In</button>
       <button className="btn-primary">New Return</button>
       <button className="btn-primary">Customer</button>
       <button className="btn-primary">Drawer</button>
-      <button className="btn-primary flex items-center gap-2">💳 Card</button>
+      <button className="btn-primary flex items-center gap-2">💳 Card</button> */}
     </div>
   );
 };
