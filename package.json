@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.sohailkhan.po-desktop",
-    "productName": "POS Desktop",
+    "productName": "Point of Sale Application",
     "files": [
       "electron/**/*",
       "packages/client/build/**/*",
