@@ -173,6 +173,10 @@ const POSScreen = () => {
   };
 
   const handleTableSelect = async (table) => {
+    // Store current cart items and order ID before switching
+    const currentCartItems = [...cart];
+    const hadOrderId = currentOrderId !== null;
+    
     // Simply switch to the selected table without confirmation
     setSelectedTable(table);
     
@@ -244,16 +248,32 @@ const POSScreen = () => {
         console.log('Loading cart items:', existingCartItems);
         setCart(existingCartItems);
       } else {
-        // No existing order for this table - show empty cart
+        // No existing order for this table
         console.log('No existing order found for table:', table.id);
         setCurrentOrderId(null);
-        setCart([]);
+        
+        // Only preserve cart items if they haven't been saved to another table yet
+        // If hadOrderId is true, it means items were already saved to a previous table
+        // so we should NOT carry them over to this new empty table
+        if (currentCartItems.length > 0 && !hadOrderId) {
+          console.log('Preserving unsaved cart items for new table assignment');
+          setCart(currentCartItems);
+        } else {
+          // Clear cart if switching from a table with saved order to empty table
+          console.log('Clearing cart - switching to empty table');
+          setCart([]);
+        }
       }
     } catch (error) {
       console.error('Error loading table order:', error);
-      // On error, clear cart and order ID
+      // On error, only preserve items if they weren't saved to a table yet
       setCurrentOrderId(null);
-      setCart([]);
+      if (currentCartItems.length > 0 && !hadOrderId) {
+        console.log('Error occurred, preserving unsaved cart items');
+        setCart(currentCartItems);
+      } else {
+        setCart([]);
+      }
     }
   };
 

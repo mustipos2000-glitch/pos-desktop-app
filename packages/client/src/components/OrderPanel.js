@@ -277,7 +277,16 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     }
   };
 
-  const handleCloseReceipt = () => setShowReceipt(false);
+  const handleCloseReceipt = () =>{
+     setShowReceipt(false);
+      setCart([]);
+      setDiscount(0);
+      setNote("");
+      if (onOrderComplete) {
+        onOrderComplete();
+      }
+    
+    }
 
   const handlePrintReceipt = () => {
     setShowReceipt(false);
@@ -314,7 +323,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           onClose={() => setToastMessage("")}
         />
       )}
-      <div className="w-1/6 min-w-[300px] bg-pos-bg-quaternary flex flex-col border-l border-pos-border-light h-screen">
+      <div className="w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen">
         {/* Header */}
       <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light">
         <div className="grid grid-cols-[2fr_1fr_1fr_0.5fr] gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
@@ -326,7 +335,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       </div>
 
       {/* Cart Items */}
-      <div className="flex-1 overflow-y-auto   flex flex-col bg-pos-bg-secondary min-h-[160px] scrollbar-custom">
+      <div className="flex-1 overflow-y-auto   flex flex-col min-h-[160px] scrollbar-custom">
         {cart.length === 0 ? (
           <div className="text-center text-pos-text-disabled py-10 px-5 text-sm">
             No items in cart
