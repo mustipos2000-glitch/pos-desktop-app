@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import KeypadNumpad from './KeypadNumpad';
+import SearchBar from './SearchBar';
 import { useMessageModal } from '../hooks/useMessageModal';
 import GroupFormModal from './GroupFormModal';
 
@@ -512,16 +513,25 @@ const SubProductManager = () => {
   };
 
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredSubProducts = selectedGroup
-    ? subProducts.filter(sp => sp.group_id === selectedGroup.id)
+    ? subProducts.filter(sp => 
+        sp.group_id === selectedGroup.id &&
+        (!searchQuery || sp.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
     : [];
 
   return (
     <div className="admin-section h-screen flex flex-col">
       {/* Header */}
-      <div className="text-center bg-pos-bg-secondary border-pos-border-primary">
-        <h2 className="m-0 text-pos-text-primary text-2xl font-medium">Subproducts</h2>
+      <div className="flex items-center justify-between px-4 py-2 bg-pos-bg-secondary border-pos-border-primary">
+        <h2 className="m-0 text-pos-text-primary text-2xl font-medium flex-1 text-center">Subproducts</h2>
+        <SearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Search groups, subproducts..."
+        />
       </div>
 
       {/* Action Buttons */}
@@ -583,7 +593,9 @@ const SubProductManager = () => {
               Loading...
             </div>
           ) : (
-            groups.map(group => (
+            groups.filter(group =>
+              !searchQuery || group.name.toLowerCase().includes(searchQuery.toLowerCase())
+            ).map(group => (
               <div
                 key={group.id}
                 onClick={() => setSelectedGroup(group)}

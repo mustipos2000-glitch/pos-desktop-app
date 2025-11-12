@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-const SubproductModal = ({ isOpen, onClose, onAddToCart, productId }) => {
+const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery }) => {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
@@ -54,9 +54,18 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId }) => {
   }, [productId]);
 
   const filterSubProductsByGroup = useCallback((groupId) => {
-    const filtered = allSubProducts.filter(sp => sp.group_id === groupId);
+    let filtered = allSubProducts.filter(sp => sp.group_id === groupId);
+    
+    // Apply search filter if search query exists
+    if (searchQuery && searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(sp => 
+        sp.name.toLowerCase().includes(query)
+      );
+    }
+    
     setSubProducts(filtered);
-  }, [allSubProducts]);
+  }, [allSubProducts, searchQuery]);
 
   useEffect(() => {
     if (isOpen && productId) {

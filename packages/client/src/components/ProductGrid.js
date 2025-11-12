@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ApiService from '../services/api';
 import SubproductModal from './SubproductModal';
 
-const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity }) => {
+const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity, searchQuery }) => {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
   const [loadingSubProducts, setLoadingSubProducts] = useState(false);
@@ -80,6 +80,15 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
         return;
       }
 
+      // Filter sub-products based on search query if exists
+      let filteredSubProducts = productSubProducts;
+      if (searchQuery && searchQuery.trim() !== '') {
+        const query = searchQuery.toLowerCase().trim();
+        filteredSubProducts = productSubProducts.filter(subProduct =>
+          subProduct.name.toLowerCase().includes(query)
+        );
+      }
+
       // Has sub-products → check sub_product_group setting
       if (product.sub_product_group) {
         // sub_product_group is checked → show button only
@@ -94,9 +103,9 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
         setCustomQuantity(''); // ✅ reset quantity input
         setProductWithSubproducts(null);
 
-        // Set sub-products for inline display
+        // Set sub-products for inline display (filtered if search query exists)
         setSubProducts(
-          productSubProducts.map((subProduct) => ({
+          filteredSubProducts.map((subProduct) => ({
             id: subProduct.id,
             name: subProduct.name,
             price: subProduct.price,
@@ -128,9 +137,18 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
 
   return (
     <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden relative">
+     
+      
       {/* Main products grid */}
       <div className="flex-1 p-2 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2 overflow-y-auto content-start scrollbar-custom">
-        {products.map((product) => (
+        {products.length === 0 && searchQuery && searchQuery.trim() !== '' ? (
+          <div className="col-span-full flex flex-col items-center justify-center h-full text-pos-text-muted">
+            <span className="text-4xl mb-2">🔍</span>
+            <span className="text-lg">No products found</span>
+            <span className="text-sm mt-1">Try a different search term</span>
+          </div>
+        ) : (
+          products.map((product) => (
           <div
             key={product.id}
             className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative overflow-hidden"
@@ -172,7 +190,8 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
             </div>
           </div>
 
-        ))}
+          ))
+        )}
       </div>
 
       {/* Sub-products section */}
@@ -254,6 +273,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity 
           onClose={() => setShowSubproductModal(false)}
           onAddToCart={onAddToCart}
           productId={productWithSubproducts.id}
+          searchQuery={searchQuery}
         />
       )}
     </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
+import SearchBar from './SearchBar';
 import { useMessageModal } from '../hooks/useMessageModal';
 import ApiService from '../services/api';
 
@@ -27,6 +28,7 @@ const PrTableManager = () => {
     tableId: null,
     tableName: ''
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
   const fetchTables = async () => {
@@ -155,17 +157,32 @@ const PrTableManager = () => {
     return statusColors[status] || statusColors.available;
   };
 
+  const filteredTables = tables.filter(table =>
+    !searchQuery ||
+    table.table_no.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (table.customer_name && table.customer_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (table.waiter_name && table.waiter_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (table.room_name && table.room_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <div className="admin-section">
       <div className="section-header">
         <h2>Manage Tables</h2>
-        <button className="add-btn" onClick={() => {
+        <div className="flex gap-2 items-center">
+          <SearchBar 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            placeholder="Search tables..."
+          />
+          <button className="add-btn" onClick={() => {
           setEditingTable(null);
-          setTableForm({ table_no: '', room_id: '', order_id: '', status: 'available', description: '', customer_name: '', waiter_name: '', table_size: '' });
-          setShowAddTable(true);
-        }}>
-          + Add Table
-        </button>
+            setTableForm({ table_no: '', room_id: '', order_id: '', status: 'available', description: '', customer_name: '', waiter_name: '', table_size: '' });
+            setShowAddTable(true);
+          }}>
+            + Add Table
+          </button>
+        </div>
       </div>
 
       <div className="categories-table">
@@ -185,14 +202,14 @@ const PrTableManager = () => {
               </tr>
             </thead>
             <tbody>
-              {tables.length === 0 ? (
+              {filteredTables.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="empty-state">
-                    No tables found. Click "Add Table" to create your first table.
+                    {searchQuery ? 'No tables match your search.' : 'No tables found. Click "Add Table" to create your first table.'}
                   </td>
                 </tr>
               ) : (
-                tables.map((table) => (
+                filteredTables.map((table) => (
                   <tr key={table.id}>
                     <td className="font-medium">{table.table_no}</td>
                     <td>{table.room_name || '-'}</td>

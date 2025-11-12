@@ -3,6 +3,7 @@ import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import GroupFormModal from './GroupFormModal';
+import SearchBar from './SearchBar';
 import { useMessageModal } from '../hooks/useMessageModal';
 
 const GroupManager = () => {
@@ -15,6 +16,7 @@ const GroupManager = () => {
     groupId: null,
     groupName: ''
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
   const fetchGroups = async () => {
@@ -118,12 +120,19 @@ const GroupManager = () => {
     <div className="admin-section">
       <div className="section-header">
         <h2>Manage Groups</h2>
-        <button className="add-btn" onClick={() => {
-          setEditingGroup(null);
-          setShowAddGroup(true);
-        }}>
-          + Add Group
-        </button>
+        <div className="flex gap-2 items-center">
+          <SearchBar 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            placeholder="Search groups..."
+          />
+          <button className="add-btn" onClick={() => {
+            setEditingGroup(null);
+            setShowAddGroup(true);
+          }}>
+            + Add Group
+          </button>
+        </div>
       </div>
 
       <div className="categories-table">
@@ -139,14 +148,18 @@ const GroupManager = () => {
               </tr>
             </thead>
             <tbody>
-              {groups.length === 0 ? (
+              {groups.filter(group =>
+                !searchQuery || group.name.toLowerCase().includes(searchQuery.toLowerCase())
+              ).length === 0 ? (
                 <tr>
                   <td colSpan="3" className="empty-state">
-                    No groups found. Click "Add Group" to create your first group.
+                    {searchQuery ? 'No groups match your search.' : 'No groups found. Click "Add Group" to create your first group.'}
                   </td>
                 </tr>
               ) : (
-                groups.map((group) => (
+                groups.filter(group =>
+                  !searchQuery || group.name.toLowerCase().includes(searchQuery.toLowerCase())
+                ).map((group) => (
                   <tr key={group.id}>
                     <td className="">{group.name || 'Unnamed Group'}</td>
                     <td className="">

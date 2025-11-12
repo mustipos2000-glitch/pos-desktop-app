@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import IconButton from './IconButton';
 import ConfirmationModal from './ConfirmationModal';
 import UserFormModal from './UserFormModal';
+import SearchBar from './SearchBar';
 
 const UserManager = () => {
   const [users, setUsers] = useState([]);
@@ -12,6 +13,7 @@ const UserManager = () => {
     userId: null,
     userName: ''
   });
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchUsers = async () => {
     try {
@@ -51,7 +53,7 @@ const UserManager = () => {
 
   const handleSaveUser = async (userForm) => {
     const errors = validateForm(userForm);
-    
+
     if (Object.keys(errors).length > 0) {
       // You could pass errors back to modal if needed
       console.error('Validation errors:', errors);
@@ -131,9 +133,17 @@ const UserManager = () => {
   };
 
   return (
-    <div className="admin-section">
-      <div className="section-header">
-        <h2>Manage Users</h2>
+    <div className="p-2 overflow-y-auto scrollbar-custom">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-pos-text-primary text-xl font-semibold text-center flex-1">
+          Manage Users</h2>
+        <SearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Search users..."
+        />
+      </div>
+      <div className="flex gap-2 mb-4">
         <button className="add-btn" onClick={() => {
           setEditingUser(null);
           setShowUserModal(true);
@@ -155,19 +165,30 @@ const UserManager = () => {
             </tr>
           </thead>
           <tbody>
-            {users.length === 0 ? (
+            {users.filter(user =>
+              !searchQuery ||
+              user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
+              (user.social_security && user.social_security.includes(searchQuery))
+            ).length === 0 ? (
               <tr>
                 <td colSpan="6" className="text-center py-8 text-pos-text-muted">
-                  No users found. Click "Add User" to create one.
+                  {searchQuery ? 'No users match your search.' : 'No users found. Click "Add User" to create one.'}
                 </td>
               </tr>
             ) : (
               users
+                .filter(user =>
+                  !searchQuery ||
+                  user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (user.role && user.role.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                  (user.social_security && user.social_security.includes(searchQuery))
+                )
                 .sort((a, b) => a.id - b.id)
                 .map((user, index) => (
                   <tr key={user.id}>
                     <td>
-                      <div 
+                      <div
                         className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md"
                         style={{ backgroundColor: user.avatar_color }}
                       >
@@ -178,13 +199,12 @@ const UserManager = () => {
                     </td>
                     <td className="font-medium text-pos-text-primary">{user.name}</td>
                     <td>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'Admin' 
-                          ? 'bg-pos-error bg-opacity-20 text-pos-error' 
-                          : user.role === 'Manager'
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'Admin'
+                        ? 'bg-pos-error bg-opacity-20 text-pos-error'
+                        : user.role === 'Manager'
                           ? 'bg-pos-warning bg-opacity-20 text-pos-warning'
                           : 'bg-pos-info bg-opacity-20 text-pos-info'
-                      }`}>
+                        }`}>
                         {user.role}
                       </span>
                     </td>

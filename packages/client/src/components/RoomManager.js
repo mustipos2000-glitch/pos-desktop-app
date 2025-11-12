@@ -3,6 +3,7 @@ import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import RoomFormModal from './RoomFormModal';
 import TableFormModal from './TableFormModal';
+import SearchBar from './SearchBar';
 import { useMessageModal } from '../hooks/useMessageModal';
 import ApiService from '../services/api';
 
@@ -25,6 +26,7 @@ const RoomManager = () => {
     tableId: null,
     tableName: ''
   });
+  const [searchQuery, setSearchQuery] = useState('');
   const { messageModal, showError, showWarning, closeModal } = useMessageModal();
 
   const fetchRooms = async () => {
@@ -235,14 +237,26 @@ const RoomManager = () => {
   };
 
   const filteredTables = selectedRoom
-    ? tables.filter(t => t.room_id === selectedRoom.id)
+    ? tables.filter(t => 
+        t.room_id === selectedRoom.id &&
+        (!searchQuery || 
+          t.table_no.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (t.customer_name && t.customer_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (t.waiter_name && t.waiter_name.toLowerCase().includes(searchQuery.toLowerCase()))
+        )
+      )
     : [];
 
   return (
     <div className="admin-section h-screen flex flex-col">
       {/* Header */}
-      <div className="text-center bg-pos-bg-secondary border-pos-border-primary">
-        <h2 className="m-0 text-pos-text-primary text-2xl font-medium">Rooms & Tables</h2>
+      <div className="flex items-center justify-between px-4 py-2 bg-pos-bg-secondary border-pos-border-primary">
+        <h2 className="m-0 text-pos-text-primary text-2xl font-medium flex-1 text-center">Rooms & Tables</h2>
+        <SearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Search rooms, tables..."
+        />
       </div>
 
       {/* Action Buttons */}
@@ -301,7 +315,9 @@ const RoomManager = () => {
               Loading...
             </div>
           ) : (
-            rooms.map(room => (
+            rooms.filter(room =>
+              !searchQuery || room.name.toLowerCase().includes(searchQuery.toLowerCase())
+            ).map(room => (
               <div
                 key={room.id}
                 onClick={() => setSelectedRoom(room)}
