@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import TableSelectionModal from './TableSelectionModal';
 import ApiService from '../services/api';
 
-const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder }) => {
+const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange }) => {
   const [showTableModal, setShowTableModal] = useState(false);
   const [kitchenOrderCount, setKitchenOrderCount] = useState(0);
 
@@ -43,8 +43,8 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     // Fetch immediately
     fetchKitchenOrderCount();
 
-    // Set up polling every 5 seconds to keep count updated
-    const interval = setInterval(fetchKitchenOrderCount, 5000);
+    // Set up polling every 30 seconds to keep count updated
+    const interval = setInterval(fetchKitchenOrderCount, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -74,10 +74,20 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
             Orders ({kitchenOrderCount})
           </button>
         </div>
-        <div className="flex gap-2.5">
-          <button className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white">
-            On Hold
-          </button>
+        <div className="flex gap-2.5 items-center">
+          {/* Search Bar */}
+          <div className="flex gap-2 items-center">
+            <div className="relative">
+              <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-pos-text-muted text-sm">🔍</span>
+              <input
+                type="text"
+                value={searchQuery || ''}
+                onChange={(e) => onSearchChange(e.target.value)}
+                placeholder="Search products..."
+                className="bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors w-64"
+              />
+            </div>
+                     </div>
           <button 
             onClick={handleSendToKitchen}
             disabled={!selectedTable || !cart || cart.length === 0}

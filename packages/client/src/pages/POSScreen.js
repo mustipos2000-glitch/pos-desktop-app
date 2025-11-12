@@ -17,6 +17,7 @@ const POSScreen = () => {
   const [customQuantity, setCustomQuantity] = useState('');
   const [selectedTable, setSelectedTable] = useState(null);
   const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Auto-save cart to table whenever cart changes and table is selected
   useEffect(() => {
@@ -170,6 +171,27 @@ const POSScreen = () => {
 
   const clearCart = () => {
     setCart([]);
+  };
+
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+  };
+
+  // Filter products based on search query WITHIN the selected category
+  const getFilteredProducts = () => {
+    // First filter by selected category
+    const categoryProducts = products.filter(p => p.category === selectedCategory);
+    
+    // If no search query, return all products in the category
+    if (!searchQuery || searchQuery.trim() === '') {
+      return categoryProducts;
+    }
+    
+    // If search query exists, filter within the selected category
+    const query = searchQuery.toLowerCase().trim();
+    return categoryProducts.filter(product => 
+      product.name.toLowerCase().includes(query)
+    );
   };
 
   const handleTableSelect = async (table) => {
@@ -395,18 +417,25 @@ const POSScreen = () => {
           onSendToKitchen={handleSendToKitchen}
           cart={cart}
           hasExistingOrder={!!currentOrderId}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
         />
         <div className="flex-1 flex overflow-hidden">
           <Sidebar
             categories={categories}
             selectedCategory={selectedCategory}
-            onSelectCategory={setSelectedCategory}
+            onSelectCategory={(category) => {
+              setSelectedCategory(category);
+              // Keep search active when changing categories
+              // This allows users to search within the new category
+            }}
           />
           <ProductGrid
-            products={products.filter(p => p.category === selectedCategory)}
+            products={getFilteredProducts()}
             onAddToCart={addToCart}
             customQuantity={customQuantity}
             setCustomQuantity={setCustomQuantity}
+            searchQuery={searchQuery}
           />
         </div>
         <BottomBar onOpenSettings={() => setShowSettings(true)} />

@@ -3,6 +3,7 @@ import ConfirmationModal from "./ConfirmationModal";
 import MessageModal from "./MessageModal";
 import ProductFormModal from "./ProductFormModal";
 import CategoryFormModal from "./CategoryFormModal";
+import SearchBar from "./SearchBar";
 import { useMessageModal } from "../hooks/useMessageModal";
 
 const CategoryManager = () => {
@@ -25,6 +26,7 @@ const CategoryManager = () => {
   const [loadingAttachedSubProducts, setLoadingAttachedSubProducts] = useState(false);
   const [selectedGroupSubProducts, setSelectedGroupSubProducts] = useState([]);
   const [selectedAttachedSubProducts, setSelectedAttachedSubProducts] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
@@ -510,6 +512,11 @@ const CategoryManager = () => {
         <h2 className="text-pos-text-primary text-xl font-semibold text-center flex-1">
           Products
         </h2>
+        <SearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Search categories, products..."
+        />
       </div>
       <div className="flex gap-2">
         <button
@@ -594,7 +601,9 @@ const CategoryManager = () => {
             </div>
           ) : (
             <div className="min-h-[300px] min-w-[160px] max-w-[200px] border border-pos-border-secondary p-2">
-              {categories.map((category, index) => (
+              {categories.filter(category => 
+                !searchQuery || category.name.toLowerCase().includes(searchQuery.toLowerCase())
+              ).map((category, index) => (
                 <div
                   key={category.id}
                   className={`flex text-sm mt-1 cursor-pointer transition-colors rounded ${selectedCategory?.id === category.id
@@ -655,7 +664,9 @@ const CategoryManager = () => {
             </div>
           ) : (
             <div className="min-h-[300px] min-w-[160px] border border-pos-border-secondary p-2 rounded">
-              {products.map((product) => (
+              {products.filter(product =>
+                !searchQuery || product.name.toLowerCase().includes(searchQuery.toLowerCase())
+              ).map((product) => (
                 <div
                   key={product.id}
                   className={`flex justify-between items-center text-sm mt-1 cursor-pointer transition-colors rounded px-1 py-1 ${selectedProduct?.id === product.id
@@ -712,7 +723,9 @@ const CategoryManager = () => {
                 </button>
               </div>
               <div className="min-w-[100px] border border-pos-border-secondary min-h-[272px] rounded p-2">
-                {attachedSubProducts.map((subProduct) => (
+                {attachedSubProducts.filter(subProduct =>
+                  !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase())
+                ).map((subProduct) => (
                   <div
                     key={subProduct.id}
                     className={`text-sm  cursor-pointer px-2 py-1 ${selectedAttachedSubProducts.includes(subProduct.id)
@@ -840,7 +853,9 @@ const CategoryManager = () => {
                   </button>
                 </div>
                 <div className="min-h-[244px] min-w-[160px] border border-pos-border-secondary p-2 rounded">
-                  {groupProducts.map((subProduct) => (
+                  {groupProducts.filter(subProduct =>
+                    !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase())
+                  ).map((subProduct) => (
                     <div
                       key={subProduct.id}
                       className={`text-sm mt-1 min-w-[100px] cursor-pointer px-1 py-1 ${selectedGroupSubProducts.includes(subProduct.id)
