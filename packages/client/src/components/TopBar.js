@@ -87,16 +87,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
                 className="bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors w-64"
               />
             </div>
-            {/* {searchQuery && (
-              <button
-                onClick={() => onSearchChange('')}
-                className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white flex items-center gap-1"
-                title="Reset search"
-              >
-                <span>✕</span> Reset
-              </button>
-            )} */}
-          </div>
+                     </div>
           <button 
             onClick={handleSendToKitchen}
             disabled={!selectedTable || !cart || cart.length === 0}
