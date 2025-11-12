@@ -510,7 +510,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
       {/* Bottom Buttons */}
-      <div className="grid grid-cols-2 gap-2 px-2 bg-pos-bg-primary border-t border-pos-border-light">
+      <div className="grid grid-cols-2 gap-2 px-1 bg-pos-bg-primary border-t border-pos-border-light">
         {/* Card */}
         <button
           className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 hover:bg-pos-interactive-hover disabled:opacity-50"
