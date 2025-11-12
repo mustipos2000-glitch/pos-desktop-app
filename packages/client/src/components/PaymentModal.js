@@ -136,7 +136,7 @@ const PaymentModal = ({
 
     // Ensure total is a valid number
     const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
-    const remaining = Math.max(0, validTotal - assigned);
+    // const remaining = Math.max(0, validTotal - assigned);
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
