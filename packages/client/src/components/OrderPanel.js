@@ -7,7 +7,7 @@ import NoteModal from "./NoteModal";
 import Toast from "./Toast";
 import ApiService from "../services/api";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll }) => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
@@ -87,6 +87,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setDiscount(0);
     setNote("");
     setCustomQuantity("");
+    
+    // Notify parent to deselect table and clear order
+    if (onDeleteAll) {
+      onDeleteAll();
+    }
   };
 
   const totalProductCount = () =>

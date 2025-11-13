@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import TableSelectionModal from './TableSelectionModal';
 import ApiService from '../services/api';
 
-const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange }) => {
+const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount }) => {
   const [showTableModal, setShowTableModal] = useState(false);
   const [kitchenOrderCount, setKitchenOrderCount] = useState(0);
 
@@ -14,7 +14,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     onTableSelect(table);
   };
 
-  const handleSendToKitchen = () => {
+  const handleSendToKitchen = async () => {
     // Validate and call parent handler
     if (!selectedTable || !cart || cart.length === 0) {
       return;
@@ -25,29 +25,33 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
       return;
     }
     
-    onSendToKitchen();
+    await onSendToKitchen();
+    // Refresh kitchen order count after sending to kitchen
+    fetchKitchenOrderCount();
   };
 
   // Fetch kitchen orders count
+  const fetchKitchenOrderCount = async () => {
+    try {
+      const response = await ApiService.getOrders();
+      const kitchenOrders = response.data.filter(order => order.status === 'send_kitchen');
+      setKitchenOrderCount(kitchenOrders.length);
+    } catch (error) {
+      console.error('Failed to fetch kitchen orders:', error);
+    }
+  };
+
   useEffect(() => {
-    const fetchKitchenOrderCount = async () => {
-      try {
-        const response = await ApiService.getOrders();
-        const kitchenOrders = response.data.filter(order => order.status === 'send_kitchen');
-        setKitchenOrderCount(kitchenOrders.length);
-      } catch (error) {
-        console.error('Failed to fetch kitchen orders:', error);
-      }
-    };
-
-    // Fetch immediately
+    // Fetch only once on component mount
     fetchKitchenOrderCount();
-
-    // Set up polling every 30 seconds to keep count updated
-    const interval = setInterval(fetchKitchenOrderCount, 30000);
-
-    return () => clearInterval(interval);
   }, []);
+
+  // Expose fetchKitchenOrderCount to parent via callback
+  useEffect(() => {
+    if (onRefreshKitchenCount) {
+      onRefreshKitchenCount(fetchKitchenOrderCount);
+    }
+  }, [onRefreshKitchenCount]);
 
   return (
     <>
