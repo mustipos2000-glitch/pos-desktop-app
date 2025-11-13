@@ -58,20 +58,33 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
     onClose();
   };
 
+  const handleDeselectTable = () => {
+    onSelectTable(null);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-pos-bg-secondary rounded-lg w-[90%] max-w-4xl max-h-[80vh] flex flex-col">
+      <div className="bg-pos-bg-secondary w-[90%] max-w-4xl max-h-[80vh] flex flex-col">
         {/* Header */}
         <div className="px-6 py-4 border-b border-pos-border-primary flex justify-between items-center">
           <h2 className="text-xl font-semibold text-pos-text-primary">Select Table</h2>
+            <button
+              onClick={handleDeselectTable}
+              className="bg-pos-bg-tertiary border-2 border-pos-border-primary px-2 hover:bg-pos-interactive-primary hover:border-pos-interactive-primary hover:text-white transition-colors text-pos-text-primary font-medium flex items-center justify-center gap-2"
+            >
+              {/* <span className="text-xl">🚫</span> */}
+              <span>No Table / Take Away</span>
+            </button>
           <button
             onClick={onClose}
             className="text-pos-text-secondary hover:text-pos-text-primary text-2xl"
           >
             ×
           </button>
+            
         </div>
 
         {/* Content */}
@@ -115,13 +128,13 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
                   <div
                     key={table.id}
                     onClick={() => handleTableSelect(table)}
-                    className="bg-pos-bg-primary border border-pos-border-primary rounded p-4 cursor-pointer hover:bg-pos-bg-tertiary transition-colors"
+                    className="bg-pos-bg-primary border border-pos-border-primary p-4 cursor-pointer hover:bg-pos-bg-tertiary transition-colors"
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-lg font-semibold text-pos-text-primary">
                         {table.table_no}
                       </span>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(table.status)}`}>
+                      <span className={`px-2 py-1 text-xs font-medium ${getStatusBadge(table.status)}`}>
                         {table.status}
                       </span>
                     </div>

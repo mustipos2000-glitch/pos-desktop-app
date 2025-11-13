@@ -18,6 +18,7 @@ const POSScreen = () => {
   const [selectedTable, setSelectedTable] = useState(null);
   const [currentOrderId, setCurrentOrderId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshKitchenCount, setRefreshKitchenCount] = useState(null);
 
   // Auto-save cart to table whenever cart changes and table is selected
   useEffect(() => {
@@ -155,12 +156,31 @@ const POSScreen = () => {
 };
 
 
-  const updateQuantity = (cartItemId, quantity) => {
+  const updateQuantity = async (cartItemId, quantity) => {
     if (quantity <= 0) {
-      setCart(cart.filter(item => {
+      const newCart = cart.filter(item => {
         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
         return itemCartId !== cartItemId;
-      }));
+      });
+      setCart(newCart);
+      
+      // If cart becomes empty and we have an order ID, delete the order
+      if (newCart.length === 0 && currentOrderId && selectedTable) {
+        try {
+          await ApiService.deleteOrder(currentOrderId);
+          console.log(`Deleted order #${currentOrderId} as cart is now empty`);
+          setCurrentOrderId(null);
+          
+          // Update table status back to available
+          await ApiService.updatePrTable(selectedTable.id, {
+            ...selectedTable,
+            status: 'available'
+          });
+          console.log(`Table ${selectedTable.table_no} status changed to available`);
+        } catch (error) {
+          console.error('Error deleting order:', error);
+        }
+      }
     } else {
       setCart(cart.map(item => {
         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
@@ -195,11 +215,7 @@ const POSScreen = () => {
   };
 
   const handleTableSelect = async (table) => {
-    // Store current cart items and order ID before switching
-    const currentCartItems = [...cart];
-    const hadOrderId = currentOrderId !== null;
-    
-    // Simply switch to the selected table without confirmation
+    // Simply switch to the selected table
     setSelectedTable(table);
     
     // Check if this table has an existing order
@@ -270,32 +286,16 @@ const POSScreen = () => {
         console.log('Loading cart items:', existingCartItems);
         setCart(existingCartItems);
       } else {
-        // No existing order for this table
+        // No existing order for this table - clear cart
         console.log('No existing order found for table:', table.id);
         setCurrentOrderId(null);
-        
-        // Only preserve cart items if they haven't been saved to another table yet
-        // If hadOrderId is true, it means items were already saved to a previous table
-        // so we should NOT carry them over to this new empty table
-        if (currentCartItems.length > 0 && !hadOrderId) {
-          console.log('Preserving unsaved cart items for new table assignment');
-          setCart(currentCartItems);
-        } else {
-          // Clear cart if switching from a table with saved order to empty table
-          console.log('Clearing cart - switching to empty table');
-          setCart([]);
-        }
+        setCart([]);
       }
     } catch (error) {
       console.error('Error loading table order:', error);
-      // On error, only preserve items if they weren't saved to a table yet
+      // On error, clear cart and order
       setCurrentOrderId(null);
-      if (currentCartItems.length > 0 && !hadOrderId) {
-        console.log('Error occurred, preserving unsaved cart items');
-        setCart(currentCartItems);
-      } else {
-        setCart([]);
-      }
+      setCart([]);
     }
   };
 
@@ -374,21 +374,17 @@ const POSScreen = () => {
             status: 'reserved'
           });
           console.log(`Table ${selectedTable.table_no} status changed to reserved`);
-          
-          // Update local selectedTable state to reflect new status
-          setSelectedTable({
-            ...selectedTable,
-            status: 'reserved'
-          });
         } catch (error) {
           console.error('Error updating table status:', error);
           // Don't fail the entire operation if table status update fails
         }
       }
       
-      // Edge case: Don't clear cart and table after sending to kitchen
-      // Keep them so user can add more items or make changes
-      console.log(`Order sent to kitchen for Table ${selectedTable.table_no}`);
+      // Clear cart and deselect table (select "No-table") after sending to kitchen
+      setCart([]);
+      setSelectedTable(null);
+      setCurrentOrderId(null);
+      console.log(`Order sent to kitchen and cleared`);
       
     } catch (error) {
       console.error('Error sending order to kitchen:', error);
@@ -419,6 +415,7 @@ const POSScreen = () => {
           hasExistingOrder={!!currentOrderId}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
+          onRefreshKitchenCount={(fn) => setRefreshKitchenCount(() => fn)}
         />
         <div className="flex-1 flex overflow-hidden">
           <Sidebar
@@ -451,6 +448,32 @@ const POSScreen = () => {
         selectedTable={selectedTable}
         onOrderComplete={() => {
           setCart([]);
+          setSelectedTable(null);
+          setCurrentOrderId(null);
+          // Refresh kitchen order count after payment completion
+          if (refreshKitchenCount) {
+            refreshKitchenCount();
+          }
+        }}
+        onDeleteAll={async () => {
+          // Delete the order if it exists
+          if (currentOrderId && selectedTable) {
+            try {
+              await ApiService.deleteOrder(currentOrderId);
+              console.log(`Deleted order #${currentOrderId}`);
+              
+              // Update table status back to available
+              await ApiService.updatePrTable(selectedTable.id, {
+                ...selectedTable,
+                status: 'available'
+              });
+              console.log(`Table ${selectedTable.table_no} status changed to available`);
+            } catch (error) {
+              console.error('Error deleting order:', error);
+            }
+          }
+          
+          // Clear table selection and order ID
           setSelectedTable(null);
           setCurrentOrderId(null);
         }}
