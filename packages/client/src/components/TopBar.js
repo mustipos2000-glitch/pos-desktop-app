@@ -51,7 +51,8 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     if (onRefreshKitchenCount) {
       onRefreshKitchenCount(fetchKitchenOrderCount);
     }
-  }, [onRefreshKitchenCount]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

@@ -215,8 +215,20 @@ const POSScreen = () => {
   };
 
   const handleTableSelect = async (table) => {
-    // Simply switch to the selected table
-    setSelectedTable(table);
+    // Handle "No Table / Take Away" case (table is null)
+    if (!table) {
+      // If a table was previously selected, clear the cart
+      if (selectedTable) {
+        setCart([]);
+        console.log('Deselected table - clearing cart');
+      }
+      setSelectedTable(null);
+      setCurrentOrderId(null);
+      return;
+    }
+    
+    // Check if we have items in the current cart (no table selected yet)
+    const hasCurrentCartItems = cart.length > 0 && !selectedTable;
     
     // Check if this table has an existing order
     try {
@@ -285,17 +297,37 @@ const POSScreen = () => {
         // Load existing order items directly
         console.log('Loading cart items:', existingCartItems);
         setCart(existingCartItems);
+        setSelectedTable(table);
       } else {
-        // No existing order for this table - clear cart
+        // No existing order for this table
         console.log('No existing order found for table:', table.id);
         setCurrentOrderId(null);
-        setCart([]);
+        
+        // If we have items in cart (added without table), keep them and assign to this table
+        if (hasCurrentCartItems) {
+          console.log('Assigning current cart to table:', table.table_no);
+          setSelectedTable(table);
+          // Cart items remain, auto-save will trigger and create order
+        } else {
+          // No cart items, just select the table with empty cart
+          setSelectedTable(table);
+          setCart([]);
+        }
       }
     } catch (error) {
       console.error('Error loading table order:', error);
-      // On error, clear cart and order
-      setCurrentOrderId(null);
-      setCart([]);
+      
+      // On error, if we have cart items without table, still assign them to this table
+      if (hasCurrentCartItems) {
+        console.log('Error loading order, but assigning current cart to table:', table.table_no);
+        setSelectedTable(table);
+        // Cart items remain
+      } else {
+        // No cart items, clear everything
+        setCurrentOrderId(null);
+        setSelectedTable(table);
+        setCart([]);
+      }
     }
   };
 
