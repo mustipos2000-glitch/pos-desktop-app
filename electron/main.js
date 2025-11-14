@@ -14,36 +14,52 @@ function startServer() {
 
   // In production, start the Node.js server from unpacked location
   const serverPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'server', 'server.js');
-  // Point to node_modules in the asar file
-  const nodeModulesInAsar = path.join(process.resourcesPath, 'app.asar', 'node_modules');
-  const nodeModulesUnpacked = path.join(process.resourcesPath, 'app.asar.unpacked', 'node_modules');
+  const serverDir = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'server');
+  
+  console.log('Starting server...');
+  console.log('Server path:', serverPath);
+  console.log('Server dir:', serverDir);
+  console.log('Resources path:', process.resourcesPath);
   
   // Use Electron's node executable instead of system node
   const nodePath = process.execPath;
   
   serverProcess = spawn(nodePath, [serverPath], {
-    cwd: path.join(process.resourcesPath, 'app.asar.unpacked'),
-    stdio: 'inherit',
+    cwd: serverDir,
+    stdio: ['ignore', 'pipe', 'pipe'],
     env: { 
       ...process.env, 
       NODE_ENV: 'production', 
-      ELECTRON_RUN_AS_NODE: '1',
-      // Include both asar and unpacked node_modules
-      NODE_PATH: `${nodeModulesInAsar}${path.delimiter}${nodeModulesUnpacked}`
+      ELECTRON_RUN_AS_NODE: '1'
     }
+  });
+
+  serverProcess.stdout.on('data', (data) => {
+    console.log('Server:', data.toString());
+  });
+
+  serverProcess.stderr.on('data', (data) => {
+    console.error('Server Error:', data.toString());
   });
 
   serverProcess.on('error', (err) => {
     console.error('Failed to start server:', err);
   });
+
+  serverProcess.on('exit', (code) => {
+    console.log(`Server process exited with code ${code}`);
+  });
 }
 
 function createWindow() {
+  const preloadPath = path.join(__dirname, 'preload.js');
+  console.log('Preload path:', preloadPath);
+  
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      preload: preloadPath,
       nodeIntegration: false,
       contextIsolation: true
     }
@@ -55,11 +71,19 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
   } else {
-    // Wait a bit for server to start, then load the app
+    console.log('Production mode - waiting for server...');
+    // Wait for server to start, then load the app
     setTimeout(() => {
-      mainWindow.loadURL('http://localhost:5000');
-    }, 2000);
+      console.log('Loading http://localhost:5000');
+      mainWindow.loadURL('http://localhost:5000').catch(err => {
+        console.error('Failed to load URL:', err);
+      });
+    }, 5000);
   }
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription);
+  });
 }
 
 app.whenReady().then(() => {

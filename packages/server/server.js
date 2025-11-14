@@ -1,12 +1,19 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isDev = process.env.NODE_ENV !== 'production';
 
-app.use('/uploads', express.static('uploads'));
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+app.use('/uploads', express.static(uploadsDir));
 
 // Middleware
 app.use(cors());
@@ -25,8 +32,11 @@ if (!isDev) {
   let clientBuildPath;
 
   if (process.resourcesPath) {
-    // Running as packaged app
-    clientBuildPath = path.join(process.resourcesPath, 'app.asar', 'packages', 'client', 'build');
+    // Running as packaged app - check unpacked location first
+    clientBuildPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'client', 'build');
+    if (!require('fs').existsSync(clientBuildPath)) {
+      clientBuildPath = path.join(process.resourcesPath, 'app.asar', 'packages', 'client', 'build');
+    }
     if (!require('fs').existsSync(clientBuildPath)) {
       clientBuildPath = path.join(process.resourcesPath, 'app', 'packages', 'client', 'build');
     }
@@ -35,6 +45,7 @@ if (!isDev) {
     clientBuildPath = path.join(__dirname, '../client/build');
   }
 
+  console.log('Client build path:', clientBuildPath);
   app.use(express.static(clientBuildPath));
 
   // Handle React routing - send all non-API requests to index.html
