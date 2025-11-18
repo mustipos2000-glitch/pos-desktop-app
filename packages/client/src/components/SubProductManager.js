@@ -426,7 +426,6 @@ const SubProductManager = () => {
   // };
 
   const handleAddGroup = async (groupForm) => {
-    console.log("handle Add Group is Called " , groupForm.name);
     if (!groupForm.name) {
       return;
     }

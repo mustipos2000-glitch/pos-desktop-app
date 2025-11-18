@@ -46,7 +46,6 @@ const ProductFormModal = ({
 
   useEffect(() => {
     if (product) {
-      console.log('Editing product:', product);
       // Edit mode - populate form with product data
       setProductForm({
         name: product.name || '',

@@ -5,6 +5,7 @@ import ProductGrid from '../components/ProductGrid';
 import OrderPanel from '../components/OrderPanel';
 import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
+import UnifiedTableModal from '../components/UnifiedTableModal';
 import ApiService from '../services/api';
 
 const POSScreen = () => {
@@ -19,6 +20,8 @@ const POSScreen = () => {
   const [currentOrderId, setCurrentOrderId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKitchenCount, setRefreshKitchenCount] = useState(null);
+  const [showSplitCartModal, setShowSplitCartModal] = useState(false);
+  const [splitCartSelectedItems, setSplitCartSelectedItems] = useState([]);
 
   // Auto-save cart to table whenever cart changes and table is selected
   useEffect(() => {
@@ -54,11 +57,9 @@ const POSScreen = () => {
         if (currentOrderId) {
           // Update existing order
           await ApiService.updateOrder(currentOrderId, orderData);
-          console.log(`Auto-saved order #${currentOrderId} for table ${selectedTable.table_no}`);
         } else {
           // Create new order
           const response = await ApiService.createOrder(orderData);
-          console.log(`Auto-created order for table ${selectedTable.table_no}`, response);
           
           // Store the new order ID
           if (response.data && response.data.id) {
@@ -73,7 +74,6 @@ const POSScreen = () => {
               ...selectedTable,
               status: 'reserved'
             });
-            console.log(`Table ${selectedTable.table_no} status changed to reserved`);
           } catch (error) {
             console.error('Error updating table status:', error);
           }
@@ -168,7 +168,6 @@ const POSScreen = () => {
       if (newCart.length === 0 && currentOrderId && selectedTable) {
         try {
           await ApiService.deleteOrder(currentOrderId);
-          console.log(`Deleted order #${currentOrderId} as cart is now empty`);
           setCurrentOrderId(null);
           
           // Update table status back to available
@@ -176,7 +175,6 @@ const POSScreen = () => {
             ...selectedTable,
             status: 'available'
           });
-          console.log(`Table ${selectedTable.table_no} status changed to available`);
         } catch (error) {
           console.error('Error deleting order:', error);
         }
@@ -220,7 +218,6 @@ const POSScreen = () => {
       // If a table was previously selected, clear the cart
       if (selectedTable) {
         setCart([]);
-        console.log('Deselected table - clearing cart');
       }
       setSelectedTable(null);
       setCurrentOrderId(null);
@@ -233,9 +230,7 @@ const POSScreen = () => {
     // Check if this table has an existing order
     try {
       const response = await ApiService.getOrderByTableId(table.id);
-      
-      console.log('Order response for table:', table.id, response);
-      
+          
       if (response.data && response.data.details && response.data.details.length > 0) {
         // Table has an existing order - load it
         const existingOrder = response.data;
@@ -295,17 +290,14 @@ const POSScreen = () => {
         });
         
         // Load existing order items directly
-        console.log('Loading cart items:', existingCartItems);
         setCart(existingCartItems);
         setSelectedTable(table);
       } else {
         // No existing order for this table
-        console.log('No existing order found for table:', table.id);
         setCurrentOrderId(null);
         
         // If we have items in cart (added without table), keep them and assign to this table
         if (hasCurrentCartItems) {
-          console.log('Assigning current cart to table:', table.table_no);
           setSelectedTable(table);
           // Cart items remain, auto-save will trigger and create order
         } else {
@@ -319,7 +311,6 @@ const POSScreen = () => {
       
       // On error, if we have cart items without table, still assign them to this table
       if (hasCurrentCartItems) {
-        console.log('Error loading order, but assigning current cart to table:', table.table_no);
         setSelectedTable(table);
         // Cart items remain
       } else {
@@ -334,13 +325,11 @@ const POSScreen = () => {
   const handleSendToKitchen = async () => {
     // Edge case: Validate table selection
     if (!selectedTable) {
-      console.log('No table selected');
       return;
     }
     
     // Edge case: Validate cart has items
     if (cart.length === 0) {
-      console.log('Cart is empty');
       return;
     }
 
@@ -386,11 +375,9 @@ const POSScreen = () => {
       if (currentOrderId) {
         // Update existing order
         await ApiService.updateOrder(currentOrderId, orderData);
-        console.log(`Updated order #${currentOrderId} for table ${selectedTable.table_no}`);
       } else {
         // Create new order
         const response = await ApiService.createOrder(orderData);
-        console.log(`Created new order for table ${selectedTable.table_no}`, response);
         
         // Edge case: Store the new order ID for future updates
         if (response.data && response.data.id) {
@@ -405,7 +392,6 @@ const POSScreen = () => {
             ...selectedTable,
             status: 'reserved'
           });
-          console.log(`Table ${selectedTable.table_no} status changed to reserved`);
         } catch (error) {
           console.error('Error updating table status:', error);
           // Don't fail the entire operation if table status update fails
@@ -416,7 +402,6 @@ const POSScreen = () => {
       setCart([]);
       setSelectedTable(null);
       setCurrentOrderId(null);
-      console.log(`Order sent to kitchen and cleared`);
       
     } catch (error) {
       console.error('Error sending order to kitchen:', error);
@@ -478,6 +463,11 @@ const POSScreen = () => {
         setCustomQuantity={setCustomQuantity}
         currentOrderId={currentOrderId}
         selectedTable={selectedTable}
+        onSplitCart={(items, confirmCallback) => {
+          setSplitCartSelectedItems(items);
+          setShowSplitCartModal(true);
+          window.splitCartConfirmCallback = confirmCallback;
+        }}
         onOrderComplete={() => {
           setCart([]);
           setSelectedTable(null);
@@ -492,14 +482,12 @@ const POSScreen = () => {
           if (currentOrderId && selectedTable) {
             try {
               await ApiService.deleteOrder(currentOrderId);
-              console.log(`Deleted order #${currentOrderId}`);
               
               // Update table status back to available
               await ApiService.updatePrTable(selectedTable.id, {
                 ...selectedTable,
                 status: 'available'
               });
-              console.log(`Table ${selectedTable.table_no} status changed to available`);
             } catch (error) {
               console.error('Error deleting order:', error);
             }
@@ -511,6 +499,26 @@ const POSScreen = () => {
         }}
       />
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+      {showSplitCartModal && (
+        <UnifiedTableModal
+          isOpen={showSplitCartModal}
+          onClose={() => {
+            setShowSplitCartModal(false);
+            setSplitCartSelectedItems([]);
+          }}
+          onSelectTable={(destinationTable) => {
+            if (window.splitCartConfirmCallback) {
+              window.splitCartConfirmCallback(destinationTable);
+              window.splitCartConfirmCallback = null;
+            }
+            setShowSplitCartModal(false);
+            setSplitCartSelectedItems([]);
+          }}
+          mode="split"
+          selectedItems={splitCartSelectedItems}
+          currentTable={selectedTable}
+        />
+      )}
     </div>
   );
 };
