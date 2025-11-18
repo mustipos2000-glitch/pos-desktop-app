@@ -4,10 +4,9 @@ const db = require('../config/database');
 class SubProduct {
     static getAll(filters = {}) {
         let sql = `
-      SELECT sp.*, c.name as category_name, p.name as product_name, g.name as group_name
+      SELECT sp.*, c.name as category_name, g.name as group_name
       FROM sub_products sp
       LEFT JOIN categories c ON sp.category_id = c.id
-      LEFT JOIN products p ON sp.product_id = p.id
       LEFT JOIN groups g ON sp.group_id = g.id
     `;
         
@@ -32,10 +31,9 @@ class SubProduct {
 
     static getById(id) {
         const sql = `
-      SELECT sp.*, c.name as category_name, p.name as product_name, g.name as group_name
+      SELECT sp.*, c.name as category_name, g.name as group_name
       FROM sub_products sp
       LEFT JOIN categories c ON sp.category_id = c.id
-      LEFT JOIN products p ON sp.product_id = p.id
       LEFT JOIN groups g ON sp.group_id = g.id
       WHERE sp.id = ?
     `;
@@ -44,12 +42,12 @@ class SubProduct {
 
     static getByProductId(productId) {
         const sql = `
-      SELECT sp.*, c.name as category_name, p.name as product_name, g.name as group_name
+      SELECT sp.*, c.name as category_name, g.name as group_name
       FROM sub_products sp
       LEFT JOIN categories c ON sp.category_id = c.id
-      LEFT JOIN products p ON sp.product_id = p.id
       LEFT JOIN groups g ON sp.group_id = g.id
-      WHERE sp.product_id = ?
+      INNER JOIN product_sub_products psp ON sp.id = psp.sub_product_id
+      WHERE psp.product_id = ?
       ORDER BY sp.display_index ASC, sp.id ASC
     `;
         return db.prepare(sql).all(productId);
