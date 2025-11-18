@@ -217,15 +217,15 @@ const SubProductController = {
                 return res.status(404).json({ error: 'One or more sub-products do not exist' });
             }
 
-            // Update all sub-products with the product_id
-            const updateStmt = db.prepare('UPDATE sub_products SET product_id = ? WHERE id = ?');
-            const updateMany = db.transaction((productId, subProductIds) => {
+            // Insert into junction table (using INSERT OR IGNORE to prevent duplicates)
+            const insertStmt = db.prepare('INSERT OR IGNORE INTO product_sub_products (product_id, sub_product_id) VALUES (?, ?)');
+            const insertMany = db.transaction((productId, subProductIds) => {
                 for (const subProductId of subProductIds) {
-                    updateStmt.run(productId, subProductId);
+                    insertStmt.run(productId, subProductId);
                 }
             });
 
-            updateMany(product_id, sub_product_ids);
+            insertMany(product_id, sub_product_ids);
 
             res.json({
                 message: 'Sub-products assigned to product successfully',
@@ -242,12 +242,16 @@ const SubProductController = {
         }
     },
 
-    // Unassign multiple sub-products from a product (set product_id to NULL)
+    // Unassign multiple sub-products from a product
     unassignSubProductsFromProduct: (req, res) => {
         try {
-            const { sub_product_ids } = req.body;
+            const { product_id, sub_product_ids } = req.body;
 
             // Validate required fields
+            if (!product_id) {
+                return res.status(400).json({ error: 'product_id is required' });
+            }
+
             if (!sub_product_ids || !Array.isArray(sub_product_ids) || sub_product_ids.length === 0) {
                 return res.status(400).json({ error: 'sub_product_ids must be a non-empty array' });
             }
@@ -260,19 +264,20 @@ const SubProductController = {
                 return res.status(404).json({ error: 'One or more sub-products do not exist' });
             }
 
-            // Update all sub-products to set product_id to NULL
-            const updateStmt = db.prepare('UPDATE sub_products SET product_id = NULL WHERE id = ?');
-            const updateMany = db.transaction((subProductIds) => {
+            // Delete from junction table
+            const deleteStmt = db.prepare('DELETE FROM product_sub_products WHERE product_id = ? AND sub_product_id = ?');
+            const deleteMany = db.transaction((productId, subProductIds) => {
                 for (const subProductId of subProductIds) {
-                    updateStmt.run(subProductId);
+                    deleteStmt.run(productId, subProductId);
                 }
             });
 
-            updateMany(sub_product_ids);
+            deleteMany(product_id, sub_product_ids);
 
             res.json({
                 message: 'Sub-products unassigned from product successfully',
                 unassigned_count: sub_product_ids.length,
+                product_id: product_id,
                 sub_product_ids: sub_product_ids
             });
         } catch (error) {

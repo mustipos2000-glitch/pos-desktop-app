@@ -110,9 +110,8 @@ const CategoryManager = () => {
         : `http://localhost:5000/api/sub-products`;
       const response = await fetch(url);
       const result = await response.json();
-      // Filter to show only unattached sub-products (those without a product_id)
-      const unattachedSubProducts = (result.data || []).filter(sp => !sp.product_id);
-      setGroupProducts(unattachedSubProducts);
+      // Show all sub-products, allowing them to be assigned to multiple products
+      setGroupProducts(result.data || []);
     } catch (error) {
       console.error("Error fetching group products:", error);
       showError(
@@ -471,6 +470,7 @@ const CategoryManager = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            product_id: selectedProduct.id,
             sub_product_ids: selectedAttachedSubProducts,
           }),
         }
@@ -802,7 +802,7 @@ const CategoryManager = () => {
             <span>Sub Product Group</span>
             {groupProducts.length > 0 && (
               <span className="text-xs bg-pos-bg-primary px-2 py-0.5 rounded">
-                {groupProducts.length}
+                {groupProducts.filter(sp => !selectedProduct || !attachedSubProducts.some(asp => asp.id === sp.id)).length}
               </span>
             )}
           </h3>
@@ -840,7 +840,13 @@ const CategoryManager = () => {
                 <div className="flex gap-1 mb-1">
                   <button
                     className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
-                    onClick={() => setSelectedGroupSubProducts(groupProducts.map(sp => sp.id))}
+                    onClick={() => {
+                      // Select only sub-products not already attached to the current product
+                      const availableSubProducts = groupProducts.filter(sp => 
+                        !selectedProduct || !attachedSubProducts.some(asp => asp.id === sp.id)
+                      );
+                      setSelectedGroupSubProducts(availableSubProducts.map(sp => sp.id));
+                    }}
                   >
                     Select All
                   </button>
@@ -853,9 +859,13 @@ const CategoryManager = () => {
                   </button>
                 </div>
                 <div className="min-h-[244px] min-w-[160px] border border-pos-border-secondary p-2 rounded">
-                  {groupProducts.filter(subProduct =>
-                    !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase())
-                  ).map((subProduct) => (
+                  {groupProducts.filter(subProduct => {
+                    // Filter by search query
+                    const matchesSearch = !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase());
+                    // Exclude sub-products already attached to the currently selected product
+                    const notAttachedToCurrentProduct = !selectedProduct || !attachedSubProducts.some(asp => asp.id === subProduct.id);
+                    return matchesSearch && notAttachedToCurrentProduct;
+                  }).map((subProduct) => (
                     <div
                       key={subProduct.id}
                       className={`text-sm mt-1 min-w-[100px] cursor-pointer px-1 py-1 ${selectedGroupSubProducts.includes(subProduct.id)

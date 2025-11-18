@@ -88,8 +88,8 @@ class Product {
     }
 
     static delete(id) {
-        // Check if product has sub-products linked to it
-        const checkSubProducts = 'SELECT COUNT(*) as count FROM sub_products WHERE product_id = ?';
+        // Check if product has sub-products linked to it via junction table
+        const checkSubProducts = 'SELECT COUNT(*) as count FROM product_sub_products WHERE product_id = ?';
         const subProductCount = db.prepare(checkSubProducts).get(id);
         
         if (subProductCount.count > 0) {

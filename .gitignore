@@ -50,5 +50,5 @@ coverage/
 
 *.md
 package-lock.json
-
+seeder.js
 uploads/
