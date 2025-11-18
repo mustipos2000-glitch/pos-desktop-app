@@ -151,7 +151,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
           products.map((product) => (
           <div
             key={product.id}
-            className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative overflow-hidden"
+            className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative"
             onClick={() => handleProductClick(product)}
             style={{
               borderWidth: "2px",
