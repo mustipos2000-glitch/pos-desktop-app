@@ -197,7 +197,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
       {/* Sub-products section */}
       {(selectedProductId && (subProducts.length > 0 || loadingSubProducts)) && (
         <div
-          className="p-1 max-h-[40vh] overflow-y-auto scrollbar-custom animate-slideUp"
+          className="p-1 max-h-[30vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-6"
           ref={subProductsRef}
         >
           {loadingSubProducts ? (

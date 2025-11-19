@@ -36,6 +36,7 @@ const POSScreen = () => {
         }, 0);
 
         const orderData = {
+          tax: 0,  // Add tax field
           status: 'send_kitchen',
           note: '',
           sub_total: subTotal,
@@ -368,6 +369,7 @@ const POSScreen = () => {
       const total = subTotal;
 
       const orderData = {
+        tax: 0,  // Add tax field
         status: 'send_kitchen',
         note: '',
         sub_total: subTotal,
