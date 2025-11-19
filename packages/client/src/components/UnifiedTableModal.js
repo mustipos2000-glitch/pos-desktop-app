@@ -34,7 +34,7 @@ const UnifiedTableModal = ({
       setTables(tablesResult.data || []);
       if (roomsResult.data && roomsResult.data.length > 0) {
         setSelectedRoom(roomsResult.data[0]);
-      }
+      }      
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
