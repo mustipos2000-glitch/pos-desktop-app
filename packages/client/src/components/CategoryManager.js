@@ -596,11 +596,11 @@ const CategoryManager = () => {
               Loading categories...
             </div>
           ) : categories.length === 0 ? (
-            <div className="min-h-[300px] text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded">
+            <div className="h-[500px] text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded overflow-y-auto scrollbar-custom">
               No categories found.
             </div>
           ) : (
-            <div className="min-h-[300px] min-w-[160px] max-w-[200px] border border-pos-border-secondary p-2">
+            <div className="h-[500px] min-w-[160px] max-w-[200px] border border-pos-border-secondary p-2 overflow-y-auto scrollbar-custom">
               {categories.filter(category => 
                 !searchQuery || category.name.toLowerCase().includes(searchQuery.toLowerCase())
               ).map((category, index) => (
@@ -651,19 +651,19 @@ const CategoryManager = () => {
           </h3>
 
           {!selectedCategory ? (
-            <div className="min-h-[300px] text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error">
+            <div className="h-[500px] text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error">
               Select a category to view its products
             </div>
           ) : loadingProducts ? (
-            <div className="min-h-[300px] text-pos-text-muted text-sm p-4 text-center">
+            <div className="h-[500px] text-pos-text-muted text-sm p-4 text-center">
               Loading products...
             </div>
           ) : products.length === 0 ? (
-            <div className="min-h-[300px] text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error">
+            <div className="h-[500px] text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error">
               No products
             </div>
           ) : (
-            <div className="min-h-[300px] min-w-[160px] border border-pos-border-secondary p-2 rounded">
+            <div className="h-[500px] min-w-[160px] border border-pos-border-secondary p-2 rounded overflow-y-auto scrollbar-custom">
               {products.filter(product =>
                 !searchQuery || product.name.toLowerCase().includes(searchQuery.toLowerCase())
               ).map((product) => (
@@ -694,15 +694,15 @@ const CategoryManager = () => {
             )}
           </h3>
           {!selectedProduct ? (
-            <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error min-h-[300px]">
+            <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error h-[500px]">
               Select a product to view attached sub-products
             </div>
           ) : loadingAttachedSubProducts ? (
-            <div className="text-pos-text-muted text-sm p-4 text-center min-h-[300px]">
+            <div className="text-pos-text-muted text-sm p-4 text-center h-[500px]">
               Loading attached sub-products...
             </div>
           ) : attachedSubProducts.length === 0 ? (
-            <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error min-h-[300px]">
+            <div className="text-pos-text-muted text-sm border border-pos-border-secondary p-2 rounded text-pos-error h-[500px]">
               No attached sub-products
             </div>
           ) : (
@@ -722,7 +722,7 @@ const CategoryManager = () => {
                   Clear
                 </button>
               </div>
-              <div className="min-w-[100px] border border-pos-border-secondary min-h-[272px] rounded p-2">
+              <div className="min-w-[100px] border border-pos-border-secondary h-[460px] rounded p-2 overflow-y-auto scrollbar-custom">
                 {attachedSubProducts.filter(subProduct =>
                   !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase())
                 ).map((subProduct) => (
@@ -858,7 +858,7 @@ const CategoryManager = () => {
                     Clear
                   </button>
                 </div>
-                <div className="min-h-[244px] min-w-[160px] border border-pos-border-secondary p-2 rounded">
+                <div className="h-[432px] min-w-[160px] border border-pos-border-secondary p-2 rounded overflow-y-auto scrollbar-custom">
                   {groupProducts.filter(subProduct => {
                     // Filter by search query
                     const matchesSearch = !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase());

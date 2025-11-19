@@ -586,7 +586,7 @@ const SubProductManager = () => {
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar - Groups */}
-        <div className="w-[156px] bg-pos-bg-secondary border-r-2 border-pos-border-primary overflow-y-auto scrollbar-custom px-2">
+        <div className="w-[156px] bg-pos-bg-secondary border-r-2 border-pos-border-primary overflow-y-auto scrollbar-custom px-2 py-2">
           {loading ? (
             <div className="p-5 text-pos-text-primary text-center">
               Loading...

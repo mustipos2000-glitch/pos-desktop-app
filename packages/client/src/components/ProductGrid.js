@@ -151,7 +151,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
           products.map((product) => (
           <div
             key={product.id}
-            className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative overflow-hidden"
+            className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative"
             onClick={() => handleProductClick(product)}
             style={{
               borderWidth: "2px",
@@ -197,7 +197,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
       {/* Sub-products section */}
       {(selectedProductId && (subProducts.length > 0 || loadingSubProducts)) && (
         <div
-          className="p-1 max-h-[40vh] overflow-y-auto scrollbar-custom animate-slideUp"
+          className="p-1 max-h-[30vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-6"
           ref={subProductsRef}
         >
           {loadingSubProducts ? (

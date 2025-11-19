@@ -84,7 +84,7 @@
 
   /* Scrollbar styles */
   .scrollbar-custom {
-    scrollbar-width: thin;
+    /* scrollbar-width: thin; */
   }
 
   .scrollbar-custom::-webkit-scrollbar {

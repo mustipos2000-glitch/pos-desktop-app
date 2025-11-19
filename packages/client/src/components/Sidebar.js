@@ -11,7 +11,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
   };
 
   return (
-    <div className="w-1/4 min-w-[180px] bg-pos-bg-primary flex flex-col border-r border-pos-border-primary">
+    <div className="w-1/4 min-w-[156px] bg-pos-bg-primary flex flex-col border-r border-pos-border-primary">
       <div className="flex-1 overflow-y-auto py-4 px-2.5 flex flex-col gap-2 scrollbar-custom">
         {categories.map((category) => (
           <button
