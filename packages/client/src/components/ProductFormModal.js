@@ -33,6 +33,8 @@ const ProductFormModal = ({
   const [fieldErrors, setFieldErrors] = useState({});
   const [activeField, setActiveField] = useState('name');
   const [showKeypad, setShowKeypad] = useState(true);
+  const [printers, setPrinters] = useState([]);
+  const [selectedPrinters, setSelectedPrinters] = useState([]);
 
   // Color options for product color picker
   const productColors = [
@@ -45,6 +47,21 @@ const ProductFormModal = ({
   ];
 
   useEffect(() => {
+    // Fetch printers
+    const fetchPrinters = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/printers');
+        const result = await response.json();
+        setPrinters(result.data || []);
+      } catch (error) {
+        console.error('Error fetching printers:', error);
+      }
+    };
+    
+    if (isOpen) {
+      fetchPrinters();
+    }
+
     if (product) {
       // Edit mode - populate form with product data
       setProductForm({
@@ -67,6 +84,14 @@ const ProductFormModal = ({
         // price_vat_inc: product.price_vat_inc || '',
         sub_product_group: product.sub_product_group === 1
       });
+      
+      // Initialize selected printers from product data
+      const existingPrinters = [];
+      if (product.printer1) existingPrinters.push(product.printer1);
+      if (product.printer2) existingPrinters.push(product.printer2);
+      if (product.printer3) existingPrinters.push(product.printer3);
+      setSelectedPrinters(existingPrinters);
+      
       setImageFile(null);
     } else {
       // Add mode - reset form
@@ -90,6 +115,7 @@ const ProductFormModal = ({
         // price_vat_inc: '',
         sub_product_group: false
       });
+      setSelectedPrinters([]);
       setImageFile(null);
       setFieldErrors({});
       setHasEditedButtonOrProduction(false);
@@ -154,6 +180,23 @@ const ProductFormModal = ({
     }
   };
 
+  const handleAddPrinter = () => {
+    if (selectedPrinters.length < 3) {
+      setSelectedPrinters([...selectedPrinters, '']);
+    }
+  };
+
+  const handleRemovePrinter = (index) => {
+    const newPrinters = selectedPrinters.filter((_, i) => i !== index);
+    setSelectedPrinters(newPrinters);
+  };
+
+  const handlePrinterChange = (index, value) => {
+    const newPrinters = [...selectedPrinters];
+    newPrinters[index] = value;
+    setSelectedPrinters(newPrinters);
+  };
+
   const handleSubmit = () => {
     // Validate required fields
     const errors = {};
@@ -167,7 +210,15 @@ const ProductFormModal = ({
     }
 
     setFieldErrors({});
-    onSubmit(productForm, imageFile);
+    
+    // Update printer fields in form
+    const updatedForm = {
+      ...productForm,
+      printer1: selectedPrinters[0] || '',
+      printer2: selectedPrinters[1] || '',
+      printer3: selectedPrinters[2] || ''
+    };
+    onSubmit(updatedForm, imageFile);
   };
 
   const handleKeypadInput = (input) => {
@@ -391,6 +442,50 @@ const ProductFormModal = ({
                 />
                 <span className="ml-2 text-xs text-pos-text-primary">Sub-Product Group</span>
               </label>
+            </div>
+
+            {/* Printer Selection - Integrated in Grid */}
+            <div className="col-span-3">
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-xs font-medium text-pos-text-muted">
+                  Printers (Max 3) {selectedPrinters.length < 3 && (
+                    <button
+                      type="button"
+                      onClick={handleAddPrinter}
+                      className="ml-2 text-pos-info hover:text-pos-info-hover text-xs"
+                    >
+                      + Add Printer
+                    </button>
+                  )}
+                </label>
+              </div>
+              {selectedPrinters.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2">
+                  {selectedPrinters.map((printer, index) => (
+                    <div key={index} className="flex gap-1 items-center">
+                      <select
+                        value={printer}
+                        onChange={(e) => handlePrinterChange(index, e.target.value)}
+                        className="flex-1 bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1 text-xs focus:outline-none focus:border-pos-info transition-colors"
+                      >
+                        <option value="">Select Printer</option>
+                        {printers.map(p => (
+                          <option key={p.id} value={p.name}>{p.name}</option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePrinter(index)}
+                        className="px-1.5 py-1 bg-pos-error text-white text-xs hover:bg-opacity-80 transition-colors"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-pos-text-muted">No printers assigned</div>
+              )}
             </div>
           </div>
         </div>
