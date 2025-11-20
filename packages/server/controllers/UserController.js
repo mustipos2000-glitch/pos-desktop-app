@@ -24,13 +24,13 @@ const UserController = {
 
   createUser: (req, res) => {
     try {
-      const { name, pincode, social_security, identification, role, avatar_color } = req.body;
+      const { name, pincode, social_security, identification, role, avatar_color, permissions } = req.body;
       
       if (!name || !pincode) {
         return res.status(400).json({ error: 'Name and pincode are required' });
       }
 
-      const newUser = User.create(name, pincode, social_security, identification, role, avatar_color);
+      const newUser = User.create(name, pincode, social_security, identification, role, avatar_color, permissions || '[]');
       res.status(201).json(newUser);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -39,7 +39,7 @@ const UserController = {
 
   updateUser: (req, res) => {
     try {
-      const { name, pincode, social_security, identification, role, avatar_color } = req.body;
+      const { name, pincode, social_security, identification, role, avatar_color, permissions } = req.body;
       
       const updatedUser = User.update(
         req.params.id, 
@@ -48,8 +48,29 @@ const UserController = {
         social_security, 
         identification, 
         role, 
-        avatar_color
+        avatar_color,
+        permissions || '[]'
       );
+
+      if (!updatedUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  updatePermissions: (req, res) => {
+    try {
+      const { permissions } = req.body;
+      
+      if (!permissions) {
+        return res.status(400).json({ error: 'Permissions are required' });
+      }
+
+      const updatedUser = User.updatePermissions(req.params.id, permissions);
 
       if (!updatedUser) {
         return res.status(404).json({ error: 'User not found' });

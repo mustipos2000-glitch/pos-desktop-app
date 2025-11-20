@@ -1,12 +1,8 @@
 const db = require('./config/database');
 const Category = require('./models/Category');
 const Product = require('./models/Product');
-
-console.log('Initializing database with sample data...');
-
 // Check if categories exist, if not create some sample ones
 const categories = Category.getAll();
-console.log('Existing categories:', categories);
 
 if (categories.length === 0) {
   console.log('Creating sample categories...');
@@ -14,21 +10,15 @@ if (categories.length === 0) {
   Category.create('Starters');
   Category.create('Main Course');
   Category.create('Desserts');
-  console.log('Sample categories created.');
 } else {
   console.log('Categories already exist.');
 }
 
 // Check if products exist, if not create some sample ones
 const products = Product.getAll();
-console.log('Existing products:', products);
-
-if (products.length === 0) {
-  console.log('Creating sample products...');
-  
+if (products.length === 0) {  
   // Get categories to reference
   const allCategories = Category.getAll();
-  console.log('All categories:', allCategories);
   
   // Find the "Beverages" category
   const beveragesCategory = allCategories.find(c => c.name === 'Beverages');
@@ -90,10 +80,7 @@ if (products.length === 0) {
       display_index: 0
     });
   }
-  
-  console.log('Sample products created.');
-} else {
+  } else {
   console.log('Products already exist.');
 }
 
-console.log('Database initialization complete.');

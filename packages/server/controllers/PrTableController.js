@@ -12,6 +12,7 @@ const PrTableController = {
 
     getPrTableById: (req, res) => {
         try {
+            
             const id = req.params.id;
             const table = PrTable.getById(id);
             if (!table) {

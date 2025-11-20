@@ -14,6 +14,10 @@ const UserManager = () => {
     userName: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Get current logged-in user to check permissions
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const isAdmin = currentUser.role === 'Admin';
 
   const fetchUsers = async () => {
     try {
@@ -84,6 +88,10 @@ const UserManager = () => {
   };
 
   const handleEditUser = (user) => {
+    // Admin cannot edit Super Admin users
+    if (isAdmin && user.role === 'Super Admin') {
+      return;
+    }
     setEditingUser(user);
     setShowUserModal(true);
   };
@@ -106,6 +114,10 @@ const UserManager = () => {
   };
 
   const openDeleteConfirmation = (user) => {
+    // Admin cannot delete Super Admin users
+    if (isAdmin && user.role === 'Super Admin') {
+      return;
+    }
     setDeleteConfirmation({
       isOpen: true,
       userId: user.id,
@@ -199,11 +211,12 @@ const UserManager = () => {
                     </td>
                     <td className="font-medium text-pos-text-primary">{user.name}</td>
                     <td>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === 'Admin'
-                        ? 'bg-pos-error bg-opacity-20 text-pos-error'
-                        : user.role === 'Manager'
-                          ? 'bg-pos-warning bg-opacity-20 text-pos-warning'
-                          : 'bg-pos-info bg-opacity-20 text-pos-info'
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        user.role === 'Super Admin'
+                          ? 'bg-purple-500 bg-opacity-20 text-purple-400'
+                          : user.role === 'Admin'
+                            ? 'bg-pos-error bg-opacity-20 text-pos-error'
+                            : 'bg-pos-info bg-opacity-20 text-pos-info'
                         }`}>
                         {user.role}
                       </span>
@@ -212,13 +225,17 @@ const UserManager = () => {
                     <td className="text-pos-text-secondary">{user.social_security || '-'}</td>
                     <td>
                       <div className="flex items-center justify-center gap-2">
-                        <IconButton
-                          icon="✏️"
-                          className="edit"
-                          onClick={() => handleEditUser(user)}
-                          title="Edit user"
-                        />
-                        {index !== 0 && (
+                        {/* Admin cannot edit Super Admin users */}
+                        {!(isAdmin && user.role === 'Super Admin') && (
+                          <IconButton
+                            icon="✏️"
+                            className="edit"
+                            onClick={() => handleEditUser(user)}
+                            title="Edit user"
+                          />
+                        )}
+                        {/* Cannot delete first user, and Admin cannot delete Super Admin users */}
+                        {index !== 0 && !(isAdmin && user.role === 'Super Admin') && (
                           <IconButton
                             icon="🗑️"
                             className="delete"

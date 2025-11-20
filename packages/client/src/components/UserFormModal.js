@@ -21,6 +21,11 @@ const UserFormModal = ({
   const [activeField, setActiveField] = useState('name');
   const [showKeypad, setShowKeypad] = useState(true);
 
+  // Get current logged-in user to check permissions
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const isSuperAdmin = currentUser.role === 'Super Admin';
+  const isAdmin = currentUser.role === 'Admin';
+
   const avatarColors = [
     '#3b82f6', '#10b981', '#f59e0b', '#ef4444',
     '#8b5cf6', '#ec4899', '#06b6d4'
@@ -59,6 +64,7 @@ const UserFormModal = ({
       ...prev,
       [name]: value
     }));
+    
 
     // Clear field error when user starts typing
     if (errors[name]) {
@@ -201,7 +207,8 @@ const UserFormModal = ({
               >
                 <option value="User">User</option>
                 <option value="Admin">Admin</option>
-                <option value="Manager">Manager</option>
+                {/* Only Super Admin can create or assign Super Admin role */}
+                {isSuperAdmin && <option value="Super Admin">Super Admin</option>}
               </select>
             </div>
           </div>

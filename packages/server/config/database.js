@@ -361,7 +361,7 @@ if (userCount.count === 0) {
   db.prepare(`
     INSERT INTO users (name, pincode, social_security, identification, role, avatar_color)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run('admin', '1234', '', '', 'Admin', '#ef4444');
+  `).run('Super Admin', '1234', '', '', 'Super Admin', '#ef4444');
 }
 
 module.exports = db;
