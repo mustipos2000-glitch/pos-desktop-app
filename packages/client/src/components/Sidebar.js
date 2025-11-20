@@ -16,7 +16,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
         {categories.map((category) => (
           <button
             key={category}
-            className={`border-2 rounded-lg px-3 text-lg py-1 cursor-pointer text-left transition-all duration-200 whitespace-normal break-words leading-tight ${
+            className={`border-2 border-pos-border-secondary rounded-lg px-3 text-lg py-1 cursor-pointer text-left transition-all duration-200 whitespace-normal break-words leading-tight ${
               selectedCategory === category 
                 ? 'bg-pos-bg-secondary text-white' 
                 : 'text-pos-text-muted hover:bg-pos-bg-secondary hover:text-white'

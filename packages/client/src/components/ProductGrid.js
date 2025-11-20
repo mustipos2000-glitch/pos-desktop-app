@@ -167,12 +167,12 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
             </div>
 
             {/* Image */}
-            <div className="w-full h-20 flex mt-2 p-1 items-center justify-center overflow-hidden">
+            <div className="w-full h-20 flex p-1 items-center justify-center overflow-hidden">
               {isImageUrl(product.image) ? (
                 <img
                   src={`http://localhost:5000${product.image}`}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-2xl"
                 />
               ) : (
                 <span className="text-3xl">{product.image || '📦'}</span>
@@ -180,7 +180,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
             </div>
 
             {/* Product Name */}
-            <div className="w-full px-2 py-2">
+            <div className="w-full px-2 py-1">
               <div
                 className="text-sm font-semibold text-white leading-tight break-words text-center"
                 style={{ wordBreak: 'break-word' }}

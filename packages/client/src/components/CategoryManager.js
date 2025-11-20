@@ -722,7 +722,7 @@ const CategoryManager = () => {
                   Clear
                 </button>
               </div>
-              <div className="min-w-[100px] border border-pos-border-secondary h-[460px] rounded p-2 overflow-y-auto scrollbar-custom">
+              <div className="min-w-[100px] border border-pos-border-secondary h-[472px] rounded p-2 overflow-y-auto scrollbar-custom">
                 {attachedSubProducts.filter(subProduct =>
                   !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase())
                 ).map((subProduct) => (

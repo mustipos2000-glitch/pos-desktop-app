@@ -625,18 +625,18 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         <button
           onClick={() => setShowDeleteAllModal(true)}
           disabled={cart.length === 0}
-          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${cart.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${cart.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
           <span className="relative inline-block">
             🛒
-            <span className="absolute -top-1 -right-1 text-sm text-red-500 font-bold">✕</span>
+            <span className="absolute -top-1 -right-1 text-red-500 font-bold">✕</span>
           </span>
         </button>
 
         <button
           onClick={handleNotes}
           disabled={cart.length === 0}
-          className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${cart.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
+          className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${cart.length === 0 ? "opacity-50 cursor-not-allowed" : "hover:bg-pos-interactive-hover"}`}
         >
           📝
         </button>
@@ -670,7 +670,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           <button
             key={val}
             onClick={() => handleNumpadInput(val)}
-            className={`aspect-auto flex items-center py-2  justify-center text-sm transition-all duration-150 
+            className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 
         ${val === "C"
                 ? "bg-red-500 hover:bg-red-600 text-white"
                 : "bg-pos-interactive-primary hover:bg-pos-interactive-primary text-gray-100 active:scale-95"
@@ -684,10 +684,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
       {/* Bottom Buttons */}
-      <div className="grid grid-cols-2 gap-2 px-1 bg-pos-bg-primary border-t border-pos-border-light">
+      <div className="grid grid-cols-2 gap-2 px-1 bg-pos-bg-primary">
         {/* Card */}
         <button
-          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-interactive-primary text-pos-text-secondary  font-medium py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCardPayment}
           disabled={isProcessing || cart.length === 0}
         >
@@ -696,7 +696,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
         {/* Cash */}
         <button
-          className="bg-pos-interactive-primary text-pos-text-secondary text-sm font-medium py-2 hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-interactive-primary text-pos-text-secondary font-medium py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCashPayment}
           disabled={isProcessing || cart.length === 0}
         >
