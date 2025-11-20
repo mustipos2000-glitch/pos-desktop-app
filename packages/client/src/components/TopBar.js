@@ -56,7 +56,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
 
   return (
     <>
-      <div className="flex justify-between items-center bg-pos-bg-secondary px-5 py-2.5 border-b border-pos-border-primary">
+      <div className="flex justify-between items-center bg-pos-bg-secondary px-5 py-2.5 border-b border-pos-border-primary rounded-lg">
         <div className="flex gap-2.5">
           <button 
             onClick={handleTableClick}

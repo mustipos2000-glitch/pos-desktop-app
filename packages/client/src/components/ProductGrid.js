@@ -162,7 +162,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
           >
 
             {/* Price - Top Right */}
-            <div className="absolute  right-0  rounded-md text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
+            <div className="absolute rounded-md text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
               €{product.price.toFixed(2)}
             </div>
 
@@ -222,7 +222,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                     onClick={() => handleSubProductSelect(subProduct)}
                   >
                     {/* Price - Top Right */}
-                    <div className="absolute right-0 rounded-md text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px]">
+                    <div className="absolute rounded-md text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px]">
                       €{subProduct.price.toFixed(2)}
                     </div>
 

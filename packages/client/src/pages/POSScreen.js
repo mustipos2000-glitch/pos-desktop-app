@@ -430,7 +430,7 @@ const POSScreen = () => {
     return (
       <div className="h-screen flex flex-col bg-pos-bg-primary">
         <TopBar />
-        <div className="flex-1 flex justify-center items-center">
+        <div className="flex-1 flex justify-center items-center rounded-lg">
           <div className="text-pos-text-primary">Loading data...</div>
         </div>
         <BottomBar onOpenSettings={() => setShowSettings(true)} />

@@ -163,7 +163,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery 
                     }}
                   >
                     {/* Price */}
-                    <div className="absolute right-0 rounded-md text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px]">
+                    <div className="absolute rounded-md text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px]">
                       {subProduct.price ? `€${parseFloat(subProduct.price).toFixed(2)}` : '0.00'}
                     </div>
 

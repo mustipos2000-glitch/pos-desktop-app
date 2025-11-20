@@ -11,12 +11,12 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
   };
 
   return (
-    <div className="w-1/4 min-w-[156px] bg-pos-bg-primary flex flex-col border-r border-pos-border-primary">
+    <div className="bg-pos-bg-primary flex flex-col border-r border-pos-border-primary">
       <div className="flex-1 overflow-y-auto py-4 px-2.5 flex flex-col gap-2 scrollbar-custom">
         {categories.map((category) => (
           <button
             key={category}
-            className={`bg-transparent border-2 border-transparent px-2 py-0.5 cursor-pointer text-sm text-left transition-all duration-200 whitespace-normal break-words leading-tight ${
+            className={`border-2 rounded-lg px-3 text-lg py-1 cursor-pointer text-left transition-all duration-200 whitespace-normal break-words leading-tight ${
               selectedCategory === category 
                 ? 'bg-pos-bg-secondary text-white' 
                 : 'text-pos-text-muted hover:bg-pos-bg-secondary hover:text-white'
