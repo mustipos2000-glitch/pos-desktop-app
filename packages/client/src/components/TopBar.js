@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import TableSelectionModal from './TableSelectionModal';
+import UnifiedTableModal from './UnifiedTableModal';
 import ApiService from '../services/api';
 
 const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount }) => {
@@ -19,12 +19,12 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     if (!selectedTable || !cart || cart.length === 0) {
       return;
     }
-    
+
     // Validate table is not in cleaning status
     if (selectedTable.status === 'cleaning') {
       return;
     }
-    
+
     await onSendToKitchen();
     // Refresh kitchen order count after sending to kitchen
     fetchKitchenOrderCount();
@@ -58,13 +58,12 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     <>
       <div className="flex justify-between items-center bg-pos-bg-secondary px-5 py-2.5 border-b border-pos-border-primary rounded-lg">
         <div className="flex gap-2.5">
-          <button 
+          <button
             onClick={handleTableClick}
-            className={`border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${
-              selectedTable 
-                ? 'bg-green-600 text-white hover:bg-green-700' 
+            className={`border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${selectedTable
+                ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-pos-interactive-primary text-white hover:bg-pos-interactive-hover'
-            }`}
+              }`}
           >
             <span className="text-lg">🪑</span>
             {selectedTable ? (
@@ -92,8 +91,8 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
                 className="bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary pl-8 pr-3 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors w-64"
               />
             </div>
-                     </div>
-          <button 
+          </div>
+          <button
             onClick={handleSendToKitchen}
             disabled={!selectedTable || !cart || cart.length === 0}
             className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -106,10 +105,12 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
         </div>
       </div>
 
-      <TableSelectionModal
+      <UnifiedTableModal
         isOpen={showTableModal}
         onClose={() => setShowTableModal(false)}
         onSelectTable={handleTableSelect}
+        mode="select"
+        showNoTableOption={true}
       />
     </>
   );

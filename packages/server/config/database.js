@@ -342,13 +342,26 @@ try {
 
 
 
+// Create product_sub_products junction table for many-to-many relationship
+db.exec(`
+  CREATE TABLE IF NOT EXISTS product_sub_products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL,
+    sub_product_id INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY(sub_product_id) REFERENCES sub_products(id) ON DELETE CASCADE,
+    UNIQUE(product_id, sub_product_id)
+  )
+`);
+
 // Insert default admin user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
 if (userCount.count === 0) {
   db.prepare(`
     INSERT INTO users (name, pincode, social_security, identification, role, avatar_color)
     VALUES (?, ?, ?, ?, ?, ?)
-  `).run('admin', '1234', '', '', 'Admin', '#ef4444');
+  `).run('Super Admin', '1234', '', '', 'Super Admin', '#ef4444');
 }
 
 module.exports = db;

@@ -7,12 +7,13 @@ import NoteModal from "./NoteModal";
 import Toast from "./Toast";
 import ApiService from "../services/api";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart }) => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("error");
 
 
 
@@ -66,6 +67,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   // Delete selected
   const handleClearSelected = () => {
     if (selectedIds.length === 0) {
+      setToastType("error");
       setToastMessage("Please select at least one item to delete.");
       return;
     }
@@ -184,7 +186,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         }
         
         await ApiService.updateOrder(currentOrderId, orderData);
-        console.log(`Updated existing order #${currentOrderId} to completed status`);
         
         // Edge case: Update table status to 'available' after payment only if table exists
         if (selectedTable) {
@@ -193,7 +194,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               ...selectedTable,
               status: 'available'
             });
-            console.log(`Table ${selectedTable.table_no} status changed to available`);
           } catch (error) {
             console.error('Error updating table status:', error);
             // Don't fail the entire operation if table status update fails
@@ -207,7 +207,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         }
         
         const response = await ApiService.createOrder(orderData);
-        console.log('Created new completed order', response);
         
         // Edge case: Update table status even for new orders
         if (selectedTable) {
@@ -216,7 +215,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               ...selectedTable,
               status: 'available'
             });
-            console.log(`Table ${selectedTable.table_no} status changed to available`);
           } catch (error) {
             console.error('Error updating table status:', error);
           }
@@ -282,6 +280,137 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     }
   };
 
+  const handleSplitCart = () => {
+    if (selectedIds.length === 0) {
+      setToastType("error");
+      setToastMessage("Please select items to move to another table.");
+      return;
+    }
+    if (!selectedTable) {
+      setToastType("error");
+      setToastMessage("No table selected. Cannot split cart.");
+      return;
+    }
+    
+    // Get selected items
+    const itemsToSplit = cart.filter((item) => {
+      const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+      return selectedIds.includes(itemCartId);
+    });
+    
+    // Call parent handler with selected items and callback
+    if (onSplitCart) {
+      onSplitCart(itemsToSplit, handleSplitCartConfirm);
+    }
+  };
+
+  const handleSplitCartConfirm = async (destinationTable) => {
+    try {
+      // Get selected items
+      const itemsToMove = cart.filter((item) => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return selectedIds.includes(itemCartId);
+      });
+
+      // Calculate subtotal for items to move
+      const subTotal = itemsToMove.reduce((sum, item) => {
+        const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+        const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+        return sum + (price * quantity);
+      }, 0);
+
+      // Check if destination table has an existing order
+      let destinationOrderId = null;
+      try {
+        const response = await ApiService.getOrderByTableId(destinationTable.id);
+        if (response.data && response.data.id) {
+          destinationOrderId = response.data.id;
+        }
+      } catch (error) {
+      }
+
+      // Prepare order data for destination table
+      const orderData = {
+        status: 'send_kitchen',
+        note: '',
+        sub_total: subTotal,
+        total: subTotal,
+        discount: 0,
+        table_id: destinationTable.id,
+        details: itemsToMove.map((item) => ({
+          product_id: item.id,
+          qty: item.quantity,
+          total: item.price * item.quantity,
+          notes: item.notes || null,
+          discount: item.discount || 0,
+        })),
+      };
+
+      if (destinationOrderId) {
+        // Destination table has an order - fetch and merge
+        const existingOrderResponse = await ApiService.getOrderByTableId(destinationTable.id);
+        const existingOrder = existingOrderResponse.data;
+        
+        // Merge existing items with new items
+        const mergedDetails = [...existingOrder.details, ...orderData.details];
+        const mergedSubTotal = existingOrder.sub_total + subTotal;
+        
+        await ApiService.updateOrder(destinationOrderId, {
+          ...orderData,
+          sub_total: mergedSubTotal,
+          total: mergedSubTotal,
+          details: mergedDetails,
+        });
+      } else {
+        // Create new order for destination table
+        await ApiService.createOrder(orderData);
+      }
+
+      // Update destination table status to reserved if available
+      if (destinationTable.status === 'available') {
+        await ApiService.updatePrTable(destinationTable.id, {
+          ...destinationTable,
+          status: 'reserved'
+        });
+      }
+
+      // Remove moved items from current cart
+      const remainingCart = cart.filter((item) => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return !selectedIds.includes(itemCartId);
+      });
+
+      setCart(remainingCart);
+      setSelectedIds([]);
+      setLastAddedId(null);
+
+      // If current cart is now empty, delete the current order
+      if (remainingCart.length === 0 && currentOrderId) {
+        await ApiService.deleteOrder(currentOrderId);
+        
+        // Update current table status to available
+        if (selectedTable) {
+          await ApiService.updatePrTable(selectedTable.id, {
+            ...selectedTable,
+            status: 'available'
+          });
+        }
+        
+        // Clear table selection
+        if (onDeleteAll) {
+          onDeleteAll();
+        }
+      }
+
+      setToastType("success");
+      setToastMessage(`Successfully moved ${itemsToMove.length} item(s) to Table ${destinationTable.table_no}`);
+    } catch (error) {
+      console.error('Error splitting cart:', error);
+      setToastType("error");
+      setToastMessage("Failed to move items. Please try again.");
+    }
+  };
+
   const handleCloseReceipt = () =>{
      setShowReceipt(false);
       setCart([]);
@@ -324,8 +453,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       {toastMessage && (
         <Toast
           message={toastMessage}
-          type="error"
-          onClose={() => setToastMessage("")}
+          type={toastType}
+          onClose={() => {
+            setToastMessage("");
+            setToastType("error");
+          }}
         />
       )}
       <div className="w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen">
@@ -438,6 +570,29 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         )}
       </div>
 
+      {/* Selection Info Banner */}
+      {hasSelection && (
+        <div className="bg-green-600 px-3 py-2 border-t border-green-700">
+          <div className="flex items-center justify-between text-white">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">✓</span>
+              <span className="text-sm font-semibold">
+                {selectedIds.length} item{selectedIds.length > 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setSelectedIds([]);
+                setLastAddedId(null);
+              }}
+              className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded transition-colors"
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Total row (label | amount | cash input) */}
       <div className="bg-pos-bg-secondary px-2 py-1 border-t border-pos-border-light">
         <div className="flex items-center justify-between gap-3">
@@ -457,8 +612,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         </div>
       </div>
 
-      {/* Icon row (4 icons) */}
-      <div className="grid grid-cols-4 gap-2 p-1 bg-pos-bg-secondary border-t border-pos-border-light">
+      {/* Icon row (5 icons) */}
+      <div className="grid grid-cols-5 gap-2 p-1 bg-pos-bg-secondary border-t border-pos-border-light">
         <button
           onClick={handleClearSelected}
           disabled={!hasSelection}
@@ -492,6 +647,20 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           disabled={isProcessing || cart.length === 0}
         >
           🏷️
+        </button>
+
+        <button
+          onClick={handleSplitCart}
+          disabled={!hasSelection || !selectedTable}
+          className={`relative text-pos-text-secondary py-2 ${(!hasSelection || !selectedTable) ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed" : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"}`}
+          title="Move selected items to another table"
+        >
+          <span className="text-lg">🔀</span>
+          {hasSelection && (
+            <span className="absolute -top-1 -right-1 bg-white text-green-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {selectedIds.length}
+            </span>
+          )}
         </button>
       </div>
 

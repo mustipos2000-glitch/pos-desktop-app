@@ -1,7 +1,102 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import ApiService from '../services/api';
 
 const SettingsModal = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('general');
+  const [rolePermissions, setRolePermissions] = useState({
+    'Super Admin': { admin: true, settings: true },
+    'Admin': { admin: false, settings: false },
+    'User': { admin: false, settings: false }
+  });
+  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  const isSuperAdmin = currentUser.role === 'Super Admin';
+
+  useEffect(() => {
+    if (isSuperAdmin && activeTab === 'permissions') {
+      fetchRolePermissions();
+    }
+  }, [activeTab, isSuperAdmin]);
+
+  const fetchRolePermissions = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/users');
+      const data = await response.json();
+      
+      // Get default permissions for Admin and User roles from first user of each role
+      const newRolePerms = {
+        'Super Admin': { admin: true, settings: true },
+        'Admin': { admin: false, settings: false },
+        'User': { admin: false, settings: false }
+      };
+      
+      data.forEach(user => {
+        if (user.role === 'Admin' || user.role === 'User') {
+          try {
+            const perms = user.permissions ? JSON.parse(user.permissions) : [];
+            newRolePerms[user.role] = {
+              admin: perms.includes('admin'),
+              settings: perms.includes('settings')
+            };
+          } catch (e) {
+            // Keep defaults
+          }
+        }
+      });
+      
+      setRolePermissions(newRolePerms);
+    } catch (error) {
+      console.error('Error fetching role permissions:', error);
+    }
+  };
+
+  const toggleRolePermission = async (role, permission) => {
+    if (role === 'Super Admin') return; // Cannot modify Super Admin
+    
+    const newValue = !rolePermissions[role][permission];
+    
+    setRolePermissions({
+      ...rolePermissions,
+      [role]: {
+        ...rolePermissions[role],
+        [permission]: newValue
+      }
+    });
+
+    // Update all users with this role
+    try {
+      const response = await fetch('http://localhost:5000/api/users');
+      const data = await response.json();
+      
+      const usersWithRole = data.filter(user => user.role === role);
+      
+      for (const user of usersWithRole) {
+        let perms = [];
+        try {
+          perms = user.permissions ? JSON.parse(user.permissions) : [];
+        } catch (e) {
+          perms = [];
+        }
+        
+        if (newValue) {
+          // Add permission if not exists
+          if (!perms.includes(permission)) {
+            perms.push(permission);
+          }
+        } else {
+          // Remove permission
+          perms = perms.filter(p => p !== permission);
+        }
+        
+        await fetch(`http://localhost:5000/api/users/${user.id}/permissions`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ permissions: JSON.stringify(perms) })
+        });
+      }
+    } catch (error) {
+      console.error('Error updating role permissions:', error);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
@@ -52,6 +147,18 @@ const SettingsModal = ({ onClose }) => {
           >
             Payment
           </button>
+          {isSuperAdmin && (
+            <button
+              className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'permissions' 
+                  ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('permissions')}
+            >
+              Permissions
+            </button>
+          )}
         </div>
 
         <div className="p-6 overflow-y-auto max-h-[60vh] scrollbar-custom">
@@ -160,11 +267,125 @@ const SettingsModal = ({ onClose }) => {
               </div>
             </div>
           )}
-        </div>
 
-        <div className="flex justify-end gap-3 p-6 border-t border-pos-border-primary">
-          <button className="btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn-success" onClick={onClose}>Save Changes</button>
+          {activeTab === 'permissions' && isSuperAdmin && (
+            <div className="space-y-6">
+              <div className="mb-4">
+                <p className="text-pos-text-muted text-sm">Manage user permissions for Admin Panel and Settings access</p>
+              </div>
+
+              {/* Role Permissions Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-pos-bg-tertiary border-b-2 border-pos-border-primary">
+                      <th className="text-left py-3 px-4 text-pos-text-primary text-sm font-semibold">Role</th>
+                      <th className="text-center py-3 px-4 text-pos-text-primary text-sm font-semibold">
+                        <div className="flex items-center justify-center gap-1">
+                          <span>🔌</span>
+                          <span>Admin Panel</span>
+                        </div>
+                      </th>
+                      <th className="text-center py-3 px-4 text-pos-text-primary text-sm font-semibold">
+                        <div className="flex items-center justify-center gap-1">
+                          <span>⚙️</span>
+                          <span>Settings</span>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Super Admin Role */}
+                    <tr className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary transition-colors">
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500 bg-opacity-20 text-purple-400">
+                          Super Admin
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-green-500 text-lg">✓</span>
+                          <span className="text-pos-text-muted text-xs">Always</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-green-500 text-lg">✓</span>
+                          <span className="text-pos-text-muted text-xs">Always</span>
+                        </div>
+                      </td>
+                    </tr>
+
+                    {/* Admin Role */}
+                    <tr className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary transition-colors bg-pos-bg-secondary">
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pos-error bg-opacity-20 text-pos-error">
+                          Admin
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => toggleRolePermission('Admin', 'admin')}
+                          className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
+                            rolePermissions['Admin'].admin
+                              ? 'bg-green-500 bg-opacity-20 text-green-400 border border-green-500 hover:bg-opacity-30'
+                              : 'bg-pos-bg-tertiary text-pos-text-muted border border-pos-border-secondary hover:border-pos-info'
+                          }`}
+                        >
+                          {rolePermissions['Admin'].admin ? '✓ Assigned' : 'Assign'}
+                        </button>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => toggleRolePermission('Admin', 'settings')}
+                          className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
+                            rolePermissions['Admin'].settings
+                              ? 'bg-green-500 bg-opacity-20 text-green-400 border border-green-500 hover:bg-opacity-30'
+                              : 'bg-pos-bg-tertiary text-pos-text-muted border border-pos-border-secondary hover:border-pos-info'
+                          }`}
+                        >
+                          {rolePermissions['Admin'].settings ? '✓ Assigned' : 'Assign'}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* User Role */}
+                    <tr className="hover:bg-pos-bg-tertiary transition-colors">
+                      <td className="py-3 px-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pos-info bg-opacity-20 text-pos-info">
+                          User
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => toggleRolePermission('User', 'admin')}
+                          className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
+                            rolePermissions['User'].admin
+                              ? 'bg-green-500 bg-opacity-20 text-green-400 border border-green-500 hover:bg-opacity-30'
+                              : 'bg-pos-bg-tertiary text-pos-text-muted border border-pos-border-secondary hover:border-pos-info'
+                          }`}
+                        >
+                          {rolePermissions['User'].admin ? '✓ Assigned' : 'Assign'}
+                        </button>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => toggleRolePermission('User', 'settings')}
+                          className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
+                            rolePermissions['User'].settings
+                              ? 'bg-green-500 bg-opacity-20 text-green-400 border border-green-500 hover:bg-opacity-30'
+                              : 'bg-pos-bg-tertiary text-pos-text-muted border border-pos-border-secondary hover:border-pos-info'
+                          }`}
+                        >
+                          {rolePermissions['User'].settings ? '✓ Assigned' : 'Assign'}
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

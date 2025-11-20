@@ -25,6 +25,7 @@
       "packages/client/build/**/*",
       "packages/server/**/*",
       "!packages/server/uploads/**/*",
+      "!packages/server/database.sqlite",
       "package.json",
       "database/**/*",
       "node_modules/**/*"
@@ -32,7 +33,7 @@
     "asarUnpack": [
       "packages/server/**/*",
       "packages/client/build/**/*",
-      "node_modules/better-sqlite3/**/*"
+      "node_modules/**/*"
     ],
     "directories": {
       "buildResources": "assets",
@@ -48,7 +49,9 @@
     "nsis": {
       "oneClick": false,
       "perMachine": true,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
     }
   },
   "author": "sohail & Rao",

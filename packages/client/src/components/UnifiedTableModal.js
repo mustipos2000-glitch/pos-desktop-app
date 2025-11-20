@@ -1,15 +1,25 @@
 import { useState, useEffect } from 'react';
 import ApiService from '../services/api';
 
-const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
+const UnifiedTableModal = ({ 
+  isOpen, 
+  onClose, 
+  onSelectTable,
+  mode = 'select', // 'select' or 'split'
+  currentTable = null,
+  selectedItems = [],
+  showNoTableOption = false
+}) => {
   const [rooms, setRooms] = useState([]);
   const [tables, setTables] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [selectedTable, setSelectedTable] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
       fetchData();
+      setSelectedTable(null); // Reset selection when modal opens
     }
   }, [isOpen]);
 
@@ -24,7 +34,7 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
       setTables(tablesResult.data || []);
       if (roomsResult.data && roomsResult.data.length > 0) {
         setSelectedRoom(roomsResult.data[0]);
-      }
+      }      
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -33,7 +43,13 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
   };
 
   const filteredTables = selectedRoom
-    ? tables.filter(t => t.room_id === selectedRoom.id)
+    ? tables.filter(t => {
+        // For split mode, exclude current table
+        if (mode === 'split' && currentTable && t.id === currentTable.id) {
+          return false;
+        }
+        return t.room_id === selectedRoom.id;
+      })
     : [];
 
   const getStatusBadge = (status) => {
@@ -46,45 +62,64 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
     return statusColors[status] || statusColors.available;
   };
 
-  const handleTableSelect = (table) => {
-    // Prevent selecting tables in cleaning status only
+  const handleTableClick = (table) => {
     if (table.status === 'cleaning') {
       alert(`Table ${table.table_no} is currently being cleaned. Please select another table.`);
       return;
     }
-    
-    // Allow selection of any other table without confirmation
-    onSelectTable(table);
+
+    if (mode === 'select') {
+      // Direct selection for table selection mode
+      onSelectTable(table);
+      onClose();
+    } else {
+      // Two-step selection for split mode
+      setSelectedTable(table);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (!selectedTable) {
+      alert('Please select a destination table');
+      return;
+    }
+    onSelectTable(selectedTable);
     onClose();
   };
 
-  const handleDeselectTable = () => {
+  const handleNoTable = () => {
     onSelectTable(null);
     onClose();
   };
 
   if (!isOpen) return null;
 
+  const isSplitMode = mode === 'split';
+  const title = isSplitMode ? 'Move Items to Another Table' : 'Select Table';
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-pos-bg-secondary w-[90%] max-w-4xl max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[9999] pr-[100px]">
+      <div className="bg-pos-bg-secondary w-[90%] max-w-3xl max-h-[85vh] flex flex-col shadow-2xl rounded-lg overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-pos-border-primary flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-pos-text-primary">Select Table</h2>
+        <div className={`px-6 py-4 border-b border-pos-border-primary ${isSplitMode ? 'bg-pos-bg-tertiary' : ''}`}>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-xl font-semibold text-pos-text-primary">{title}</h2>
+            {showNoTableOption && !isSplitMode && (
+              <button
+                onClick={handleNoTable}
+                className="bg-pos-bg-tertiary border-2 border-pos-border-primary px-3 py-1 hover:bg-pos-interactive-primary hover:border-pos-interactive-primary hover:text-white transition-colors text-pos-text-primary font-medium text-sm"
+              >
+                No Table / Take Away
+              </button>
+            )}
             <button
-              onClick={handleDeselectTable}
-              className="bg-pos-bg-tertiary border-2 border-pos-border-primary px-2 hover:bg-pos-interactive-primary hover:border-pos-interactive-primary hover:text-white transition-colors text-pos-text-primary font-medium flex items-center justify-center gap-2"
+              onClick={onClose}
+              className="text-pos-text-secondary hover:text-pos-text-primary text-2xl"
             >
-              {/* <span className="text-xl">🚫</span> */}
-              <span>No Table / Take Away</span>
+              ×
             </button>
-          <button
-            onClick={onClose}
-            className="text-pos-text-secondary hover:text-pos-text-primary text-2xl"
-          >
-            ×
-          </button>
-            
+          </div>
+
         </div>
 
         {/* Content */}
@@ -120,15 +155,19 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
               </div>
             ) : filteredTables.length === 0 ? (
               <div className="text-pos-text-secondary text-center mt-12">
-                No tables found for this room
+                {isSplitMode ? 'No available tables in this room' : 'No tables found for this room'}
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {filteredTables.map(table => (
                   <div
                     key={table.id}
-                    onClick={() => handleTableSelect(table)}
-                    className="bg-pos-bg-primary border border-pos-border-primary p-4 cursor-pointer hover:bg-pos-bg-tertiary transition-colors"
+                    onClick={() => handleTableClick(table)}
+                    className={`bg-pos-bg-primary border p-4 cursor-pointer transition-colors ${
+                      isSplitMode && selectedTable?.id === table.id
+                        ? 'border-green-500 bg-green-500/10'
+                        : 'border-pos-border-primary hover:bg-pos-bg-tertiary'
+                    }`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-lg font-semibold text-pos-text-primary">
@@ -159,9 +198,31 @@ const TableSelectionModal = ({ isOpen, onClose, onSelectTable }) => {
             )}
           </div>
         </div>
+
+        {/* Footer - Only for Split Mode */}
+        {isSplitMode && (
+          <div className="px-6 py-4 border-t border-pos-border-primary bg-pos-bg-tertiary">
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-pos-bg-tertiary text-pos-text-primary hover:bg-pos-interactive-primary hover:text-white transition-colors border border-pos-border-primary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                disabled={!selectedTable}
+                className="px-6 py-2 ms-1 bg-pos-bg-primary text-white  hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2"
+              >
+                <span>Confirm Move</span>
+                <span className="text-lg">→</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
-export default TableSelectionModal;
+export default UnifiedTableModal;

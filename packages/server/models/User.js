@@ -10,6 +10,7 @@ db.exec(`
     identification TEXT DEFAULT '',
     role TEXT DEFAULT 'User',
     avatar_color TEXT DEFAULT '#3b82f6',
+    permissions TEXT DEFAULT '[]',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
@@ -25,22 +26,28 @@ class User {
     return db.prepare(sql).get(id);
   }
 
-  static create(name, pincode, social_security = '', identification = '', role = 'User', avatar_color = '#3b82f6') {
+  static create(name, pincode, social_security = '', identification = '', role = 'User', avatar_color = '#3b82f6', permissions = '[]') {
     const sql = `
-      INSERT INTO users (name, pincode, social_security, identification, role, avatar_color)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO users (name, pincode, social_security, identification, role, avatar_color, permissions)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    const result = db.prepare(sql).run(name, pincode, social_security, identification, role, avatar_color);
+    const result = db.prepare(sql).run(name, pincode, social_security, identification, role, avatar_color, permissions);
     return this.getById(result.lastInsertRowid);
   }
 
-  static update(id, name, pincode, social_security = '', identification = '', role = 'User', avatar_color = '#3b82f6') {
+  static update(id, name, pincode, social_security = '', identification = '', role = 'User', avatar_color = '#3b82f6', permissions = '[]') {
     const sql = `
       UPDATE users 
-      SET name = ?, pincode = ?, social_security = ?, identification = ?, role = ?, avatar_color = ?
+      SET name = ?, pincode = ?, social_security = ?, identification = ?, role = ?, avatar_color = ?, permissions = ?
       WHERE id = ?
     `;
-    const result = db.prepare(sql).run(name, pincode, social_security, identification, role, avatar_color, id);
+    const result = db.prepare(sql).run(name, pincode, social_security, identification, role, avatar_color, permissions, id);
+    return result.changes > 0 ? this.getById(id) : null;
+  }
+
+  static updatePermissions(id, permissions) {
+    const sql = `UPDATE users SET permissions = ? WHERE id = ?`;
+    const result = db.prepare(sql).run(permissions, id);
     return result.changes > 0 ? this.getById(id) : null;
   }
 
