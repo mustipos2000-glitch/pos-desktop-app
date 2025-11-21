@@ -197,7 +197,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
       {/* Sub-products section */}
       {(selectedProductId && (subProducts.length > 0 || loadingSubProducts)) && (
         <div
-          className="p-1 max-h-[30vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-6"
+          className="p-1 max-h-[20vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-2"
           ref={subProductsRef}
         >
           {loadingSubProducts ? (
@@ -207,46 +207,33 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
             </div>
           ) : (
             <>
-              {/* Sub-product grid */}
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2">
+              {/* Sub-product grid - Compact layout */}
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-1.5">
                 {subProducts.map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className="cursor-pointer transition-all duration-200 flex flex-col items-center justify-between text-center relative overflow-hidden"
+                    className="cursor-pointer transition-all duration-200 flex items-center justify-between px-2 py-2 rounded"
                     style={{
-                      borderWidth: "2px",
+                      borderWidth: "1px",
                       borderStyle: "solid",
                       borderColor: subProduct.color || "#3b82f6",
-                      boxShadow: `0 0 0 1px ${subProduct.color || "#3b82f6"} inset`,
+                      backgroundColor: `${subProduct.color || "#3b82f6"}15`,
                     }}
                     onClick={() => handleSubProductSelect(subProduct)}
                   >
-                    {/* Price - Top Right */}
-                    <div className="absolute rounded-md text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px]">
-                      €{subProduct.price.toFixed(2)}
-                    </div>
-
-                    {/* Image */}
-                    <div className="w-full h-20 flex mt-2 p-1 items-center justify-center overflow-hidden">
-                      {isImageUrl(subProduct.image) ? (
-                        <img
-                          src={`http://localhost:5000${subProduct.image}`}
-                          alt={subProduct.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-3xl">{subProduct.image || '📦'}</span>
-                      )}
-                    </div>
-
                     {/* Product Name */}
-                    <div className="w-full px-2 py-2">
+                    <div className="flex-1 min-w-0 mr-2">
                       <div
-                        className="text-sm font-semibold text-white leading-tight break-words text-center"
-                        style={{ wordBreak: 'break-word' }}
+                        className="text-base font-medium text-white leading-tight truncate"
+                        title={subProduct.name}
                       >
                         {subProduct.name}
                       </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="text-xs font-semibold text-white whitespace-nowrap">
+                      €{subProduct.price.toFixed(2)}
                     </div>
                   </div>
                 ))}
