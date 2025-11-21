@@ -760,13 +760,22 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           }
           basePrice={
             selectedIds.length === 0
-              ? calculateTotal()
-              : cart
+              ? // For whole order, calculate total using original prices
+                cart.reduce((sum, i) => {
+                  const priceToUse = i.originalPrice || i.price;
+                  return sum + priceToUse * i.quantity;
+                }, 0)
+              : // For selected items, use original prices
+                cart
                 .filter((item) => {
                   const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
                   return selectedIds.includes(itemCartId);
                 })
-                .reduce((sum, i) => sum + i.price * i.quantity, 0)
+                .reduce((sum, i) => {
+                  // Use original price if available, otherwise use current price
+                  const priceToUse = i.originalPrice || i.price;
+                  return sum + priceToUse * i.quantity;
+                }, 0)
           }
           onClose={() => setShowDiscountModal(false)}
           onConfirm={({ finalPrice, mode, rawInput }) => {
@@ -780,48 +789,85 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             }
 
             if (selectedIds.length === 0) {
-              // Validate discount doesn't exceed total for whole order
-              const totalCartValue = calculateTotal();
-              if (mode === "amount" && discountAmount > totalCartValue) {
+              // Calculate total using original prices for validation
+              const totalCartValueOriginal = cart.reduce((sum, item) => {
+                const priceToUse = item.originalPrice || item.price;
+                return sum + priceToUse * item.quantity;
+              }, 0);
+              
+              if (mode === "amount" && discountAmount > totalCartValueOriginal) {
                 setToastMessage("Discount amount cannot exceed the total");
                 return;
               }
 
-              // Apply discount to all items in the cart
+              // Filter items: skip only those with SPECIFIC discount (not whole order discount)
+              const itemsWithSpecificDiscount = cart.filter(item => 
+                item.discount && item.discount > 0 && item.discountType === 'specific'
+              );
+              
+              const itemsToApplyDiscount = cart.filter(item => 
+                !item.discount || item.discount === 0 || item.discountType === 'whole'
+              );
+              
+              // Calculate total of items to apply discount using original prices
+              const totalToApplyDiscount = itemsToApplyDiscount.reduce((sum, item) => {
+                const priceToUse = item.originalPrice || item.price;
+                return sum + priceToUse * item.quantity;
+              }, 0);
+
+              // If all items have specific discount, show message
+              if (itemsToApplyDiscount.length === 0) {
+                setToastMessage("All items already have a specific discount applied");
+                return;
+              }
+
+              // Apply discount to items without specific discount (allows modifying whole order discount)
               setCart((prev) =>
                 prev.map((item) => {
-                  const itemTotal = item.price * item.quantity;
+                  // Skip items that have a SPECIFIC discount
+                  if (item.discount && item.discount > 0 && item.discountType === 'specific') {
+                    return item;
+                  }
+
+                  // Always use original price for calculation
+                  const originalPricePerUnit = item.originalPrice || item.price;
+                  const originalTotal = originalPricePerUnit * item.quantity;
                   let discountValue = 0;
 
                   if (mode === "percentage") {
-                    discountValue = (itemTotal * discountAmount) / 100;
+                    // Calculate discount based on original price
+                    discountValue = (originalTotal * discountAmount) / 100;
                   } else {
-                    // For fixed amount, distribute proportionally across all items
-                    const itemProportion = itemTotal / totalCartValue;
+                    // For fixed amount, distribute proportionally based on original prices
+                    const itemProportion = originalTotal / totalToApplyDiscount;
                     discountValue = discountAmount * itemProportion;
                   }
 
-                  const updatedTotal = Math.max(0, itemTotal - discountValue);
+                  const updatedTotal = Math.max(0, originalTotal - discountValue);
                   return {
                     ...item,
-                    originalPrice: item.originalPrice || item.price,
+                    originalPrice: originalPricePerUnit,
                     price: updatedTotal / item.quantity,
                     appliedDiscount:
                       mode === "percentage"
                         ? `${discountAmount}%`
                         : `€${discountValue.toFixed(2)}`,
                     discount: discountValue,
+                    discountType: 'whole', // Mark as whole order discount
                   };
                 })
               );
             } else {
-              // Validate discount doesn't exceed selected items total
+              // Validate discount doesn't exceed selected items total (using original prices)
               const selectedTotal = cart
                 .filter((item) => {
                   const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
                   return selectedIds.includes(itemCartId);
                 })
-                .reduce((sum, i) => sum + i.price * i.quantity, 0);
+                .reduce((sum, i) => {
+                  const priceToUse = i.originalPrice || i.price;
+                  return sum + priceToUse * i.quantity;
+                }, 0);
               
               if (mode === "amount" && discountAmount > selectedTotal) {
                 setToastMessage("Discount amount cannot exceed the selected items total");
@@ -833,25 +879,29 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                 prev.map((item) => {
                   const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
                   if (selectedIds.includes(itemCartId)) {
-                    const itemTotal = item.price * item.quantity;
+                    // Always use original price for discount calculation
+                    const originalPricePerUnit = item.originalPrice || item.price;
+                    const originalTotal = originalPricePerUnit * item.quantity;
                     let discountValue = 0;
 
                     if (mode === "percentage") {
-                      discountValue = (itemTotal * discountAmount) / 100;
+                      // Calculate discount based on original price
+                      discountValue = (originalTotal * discountAmount) / 100;
                     } else {
                       discountValue = discountAmount;
                     }
 
-                    const updatedTotal = Math.max(0, itemTotal - discountValue);
+                    const updatedTotal = Math.max(0, originalTotal - discountValue);
                     return {
                       ...item,
-                      originalPrice: item.originalPrice || item.price,
+                      originalPrice: originalPricePerUnit,
                       price: updatedTotal / item.quantity,
                       appliedDiscount:
                         mode === "percentage"
                           ? `${discountAmount}%`
                           : `€${discountValue.toFixed(2)}`,
                       discount: discountValue,
+                      discountType: 'specific', // Mark as specific item discount
                     };
                   }
                   return item;
