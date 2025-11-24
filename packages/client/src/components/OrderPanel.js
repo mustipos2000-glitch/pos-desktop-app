@@ -460,9 +460,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           }}
         />
       )}
-      <div className="w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen">
+      <div className="w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen bg-pos-bg-secondary rounded-2xl">
         {/* Header */}
-      <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light">
+      <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
         <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
           <span className="col-span-4">Item</span>
           <span className="col-span-2  flex justify-center items-center ">Quantity</span>
@@ -541,7 +541,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
                 {/* Price Section */}
 
-                <div className="flex gap-2  col-span-6 items-end ps-4 text-center ">
+                <div className="flex gap-2 col-span-6 items-end ps-4 text-center ">
                   {/* Actual Price (before discount) */}
                   <span className="text-xs line-through ">
                     {item.originalPrice
@@ -684,7 +684,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
       {/* Bottom Buttons */}
-      <div className="grid grid-cols-2 gap-2 px-1 bg-pos-bg-primary">
+      <div className="grid grid-cols-2 gap-2 px-1 ">
         {/* Card */}
         <button
           className="bg-pos-interactive-primary text-pos-text-secondary  font-medium py-1 hover:bg-pos-interactive-hover disabled:opacity-50"

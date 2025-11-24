@@ -136,7 +136,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
 
 
   return (
-    <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden relative">
+    <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden relative mr-1 rounded-lg">
      
       
       {/* Main products grid */}

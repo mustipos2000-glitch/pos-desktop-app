@@ -13,8 +13,8 @@ const AdminPanel = () => {
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
-      <div className="bg-pos-bg-secondary border-b border-pos-border-primary p-4 h-full">
-        <div className="flex items-center gap-4">
+      <div className="bg-pos-bg-primary border-b border-pos-border-primary p-4 h-full">
+        <div className="flex items-center gap-4 bg-pos-bg-secondary rounded-lg p-1">
           <button className="btn-secondary flex items-center gap-2" onClick={() => navigate('/pos')}>
             POS
           </button>
@@ -90,7 +90,7 @@ const AdminPanel = () => {
 
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-hidden">
-            {activeTab === 'products' && <ProductManager />}
+            {/* {activeTab === 'products' && <ProductManager />} */}
             {activeTab === 'sub-products' && <SubProductManager />}
             {activeTab === 'categories' && <CategoryManager />}
             {activeTab === 'groups' && <GroupManager />}
