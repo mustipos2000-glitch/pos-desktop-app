@@ -508,7 +508,7 @@ const CategoryManager = () => {
 
   return (
     <div className="overflow-y-auto scrollbar-custom mt-1">
-      <div className="flex gap-2 bg-pos-bg-secondary rounded-lg py-2 px-3">
+      <div className="flex gap-2 bg-pos-bg-secondary rounded-lg py-2 px-1">
         <button
           className="btn-primary"
           onClick={() => {
@@ -573,7 +573,7 @@ const CategoryManager = () => {
             Delete Product
           </button>
         </div>
-         <SearchBar 
+        <SearchBar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           placeholder="Search categories, products..."
@@ -596,12 +596,12 @@ const CategoryManager = () => {
             </div>
           ) : (
             <div className="h-[500px] min-w-[160px] max-w-[200px] border border-pos-border-secondary p-2 overflow-y-auto scrollbar-custom bg-pos-bg-secondary rounded-lg">
-              {categories.filter(category => 
+              {categories.filter(category =>
                 !searchQuery || category.name.toLowerCase().includes(searchQuery.toLowerCase())
               ).map((category, index) => (
                 <div
                   key={category.id}
-                  className={`flex text-lg mt-1 cursor-pointer transition-colors rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
+                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-colors rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
                     ? "text-white bg-pos-bg-primary"
                     : "hover:bg-black/5"
                     }`}
@@ -664,7 +664,7 @@ const CategoryManager = () => {
               ).map((product) => (
                 <div
                   key={product.id}
-                  className={`flex justify-between items-center text-lg mt-1 cursor-pointer transition-colors rounded-lg px-1 py-1 ${selectedProduct?.id === product.id
+                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-colors rounded-lg px-1 py-1 ${selectedProduct?.id === product.id
                     ? "bg-pos-bg-primary"
                     : "hover:bg-black/5"
                     }`}
@@ -704,13 +704,13 @@ const CategoryManager = () => {
             <>
               <div className="flex gap-1 mb-1">
                 <button
-                  className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded-lg transition-colors"
+                  className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-lg transition-colors"
                   onClick={() => setSelectedAttachedSubProducts(attachedSubProducts.map(sp => sp.id))}
                 >
                   Select All
                 </button>
                 <button
-                  className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded-lg transition-colors"
+                  className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-lg transition-colors"
                   onClick={() => setSelectedAttachedSubProducts([])}
                   disabled={selectedAttachedSubProducts.length === 0}
                 >
@@ -723,9 +723,9 @@ const CategoryManager = () => {
                 ).map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className={`cursor-pointer px-2 py-1 ${selectedAttachedSubProducts.includes(subProduct.id)
+                    className={`cursor-pointer px-2 py-1 mt-1 mb-2 border border-pos-border-primary rounded-lg ${selectedAttachedSubProducts.includes(subProduct.id)
                       ? "bg-pos-bg-primary text-white font-medium shadow-md"
-                      : "hover:bg-black/5 hover:shadow-sm"
+                      : "hover:bg-black/5 hover:shadow-sm "
                       }`}
                     onClick={() => toggleAttachedSubProductSelection(subProduct.id)}
                   >
@@ -756,7 +756,7 @@ const CategoryManager = () => {
               disabled={!selectedProduct || selectedGroupSubProducts.length === 0}
               title={`Attach ${selectedGroupSubProducts.length} selected sub-product(s) to ${selectedProduct?.name || 'product'}`}
             >
-             &lt;&lt;
+              &lt;&lt;
             </button>
             <button
               className={`btn-primary px-2 py-1 text-lg font-bold transition-all ${selectedAttachedSubProducts.length === 0
@@ -774,13 +774,13 @@ const CategoryManager = () => {
                 <div className="font-semibold text-pos-text-primary mb-1">
                   {selectedProduct.name}
                 </div>
-                <div>
+                <div className="flex flex-col">
                   {selectedGroupSubProducts.length > 0 && (
                     <span className="text-pos-success">
                       {selectedGroupSubProducts.length} to attach
                     </span>
                   )}
-                  {selectedGroupSubProducts.length > 0 && selectedAttachedSubProducts.length > 0 && " | "}
+                  {selectedGroupSubProducts.length > 0 && selectedAttachedSubProducts.length > 0}
                   {selectedAttachedSubProducts.length > 0 && (
                     <span className="text-pos-warning">
                       {selectedAttachedSubProducts.length} to detach
@@ -834,10 +834,10 @@ const CategoryManager = () => {
               <>
                 <div className="flex gap-1 mb-1">
                   <button
-                    className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                    className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded transition-colors"
                     onClick={() => {
                       // Select only sub-products not already attached to the current product
-                      const availableSubProducts = groupProducts.filter(sp => 
+                      const availableSubProducts = groupProducts.filter(sp =>
                         !selectedProduct || !attachedSubProducts.some(asp => asp.id === sp.id)
                       );
                       setSelectedGroupSubProducts(availableSubProducts.map(sp => sp.id));
@@ -846,7 +846,7 @@ const CategoryManager = () => {
                     Select All
                   </button>
                   <button
-                    className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                    className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded transition-colors"
                     onClick={() => setSelectedGroupSubProducts([])}
                     disabled={selectedGroupSubProducts.length === 0}
                   >
@@ -863,7 +863,7 @@ const CategoryManager = () => {
                   }).map((subProduct) => (
                     <div
                       key={subProduct.id}
-                      className={`text-base mt-1 min-w-[100px] cursor-pointer px-1 py-1 ${selectedGroupSubProducts.includes(subProduct.id)
+                      className={`text-base mt-1 min-w-[100px] cursor-pointer border border-pos-border-primary rounded-lg mt-1 mb-2 px-1 py-1 ${selectedGroupSubProducts.includes(subProduct.id)
                         ? "bg-pos-bg-primary text-white font-medium shadow-md"
                         : "hover:bg-black/5 hover:shadow-sm"
                         }`}

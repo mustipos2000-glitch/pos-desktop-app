@@ -5,7 +5,7 @@ const BottomBar = ({ onOpenSettings }) => {
   const navigate = useNavigate();
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const userRole = currentUser.role || 'User';
-  
+
   // Parse user permissions
   let userPermissions = [];
   try {
@@ -16,14 +16,14 @@ const BottomBar = ({ onOpenSettings }) => {
 
   // Super Admin: always show everything
   // Admin & User: show buttons only if permission granted
-  const showAdminButton = userRole === 'Super Admin' || 
-                          userPermissions.includes('admin');
-  
-  const showSettingsButton = userRole === 'Super Admin' || 
-                             userPermissions.includes('settings');
+  const showAdminButton = userRole === 'Super Admin' ||
+    userPermissions.includes('admin');
+
+  const showSettingsButton = userRole === 'Super Admin' ||
+    userPermissions.includes('settings');
 
   return (
-    <div className="flex gap-2 p-2 bg-pos-bg-primary border-t border-pos-border-primary">
+    <div className="flex gap-2 p-2 bg-pos-bg-primary border-t bg-pos-bg-tertiary">
       {showAdminButton && (
         <button className="btn-primary flex items-center gap-2" onClick={() => navigate('/admin')}>
           🔌 admin

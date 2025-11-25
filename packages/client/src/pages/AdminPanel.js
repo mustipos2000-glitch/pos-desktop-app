@@ -15,12 +15,12 @@ const AdminPanel = () => {
     <div className="h-screen bg-pos-bg-primary flex flex-col">
       <div className="bg-pos-bg-primary border-b border-pos-border-primary p-4 h-full">
         <div className="flex items-center gap-4 bg-pos-bg-secondary rounded-lg p-1">
-          <button className="btn-secondary flex items-center gap-2" onClick={() => navigate('/pos')}>
+          <button className="btn-secondary flex items-center gap-2 px-4" onClick={() => navigate('/pos')}>
             POS
           </button>
           <div className="flex gap-1">
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'categories'
+              className={`btn-secondary text-base font-medium ${activeTab === 'categories'
                 ? 'bg-pos-interactive-primary text-pos-text-primary'
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
                 }`}
@@ -49,7 +49,7 @@ const AdminPanel = () => {
               Products
             </button> */}
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'sub-products'
+              className={`btn-secondary text-base font-medium ${activeTab === 'sub-products'
                 ? 'bg-pos-interactive-primary text-pos-text-primary'
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
                 }`}
@@ -68,7 +68,7 @@ const AdminPanel = () => {
               Groups
             </button> */}
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'users'
+              className={`btn-secondary text-base font-medium ${activeTab === 'users'
                 ? 'bg-pos-interactive-primary text-pos-text-primary'
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
                 }`}
@@ -77,7 +77,7 @@ const AdminPanel = () => {
               Users
             </button>
             <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${activeTab === 'rooms'
+              className={`btn-secondary text-base font-medium ${activeTab === 'rooms'
                 ? 'bg-pos-interactive-primary text-pos-text-primary'
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
                 }`}

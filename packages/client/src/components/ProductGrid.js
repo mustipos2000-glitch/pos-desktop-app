@@ -24,7 +24,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
         setProductWithSubproducts(null);
       }
     }
-    
+
     // Check if the selected product with inline sub-products is still in the current products list
     if (selectedProductId) {
       const productStillVisible = products.some(p => p.id === selectedProductId);
@@ -137,8 +137,8 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
 
   return (
     <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden relative mr-1 rounded-lg">
-     
-      
+
+
       {/* Main products grid */}
       <div className="flex-1 p-2 grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-2 overflow-y-auto content-start scrollbar-custom">
         {products.length === 0 && searchQuery && searchQuery.trim() !== '' ? (
@@ -149,46 +149,46 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
           </div>
         ) : (
           products.map((product) => (
-          <div
-            key={product.id}
-            className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative"
-            onClick={() => handleProductClick(product)}
-            style={{
-              borderWidth: "2px",
-              borderStyle: "solid",
-              borderColor: product.color || "#3b82f6",
-              boxShadow: `0 0 0 1px ${product.color || "#3b82f6"} inset`, // ensures color visibility
-            }}
-          >
+            <div
+              key={product.id}
+              className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative hover:-translate-y-1 hover:shadow-lg"
+              onClick={() => handleProductClick(product)}
+              style={{
+                borderWidth: "2px",
+                borderStyle: "solid",
+                borderColor: product.color || "#3b82f6",
+                boxShadow: `0 0 0 1px ${product.color || "#3b82f6"} inset`, // ensures color visibility
+              }}
+            >
 
-            {/* Price - Top Right */}
-            <div className="absolute rounded-md text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
-              €{product.price.toFixed(2)}
-            </div>
+              {/* Price - Top Right */}
+              <div className="absolute rounded-md text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
+                €{product.price.toFixed(2)}
+              </div>
 
-            {/* Image */}
-            <div className="w-full h-20 flex p-1 items-center justify-center overflow-hidden">
-              {isImageUrl(product.image) ? (
-                <img
-                  src={`http://localhost:5000${product.image}`}
-                  alt={product.name}
-                  className="w-full h-full object-cover rounded-2xl"
-                />
-              ) : (
-                <span className="text-3xl">{product.image || '📦'}</span>
-              )}
-            </div>
+              {/* Image */}
+              <div className="w-full h-20 flex p-1 items-center justify-center overflow-hidden">
+                {isImageUrl(product.image) ? (
+                  <img
+                    src={`http://localhost:5000${product.image}`}
+                    alt={product.name}
+                    className="w-full h-full object-cover rounded-2xl"
+                  />
+                ) : (
+                  <span className="text-3xl">{product.image || '📦'}</span>
+                )}
+              </div>
 
-            {/* Product Name */}
-            <div className="w-full px-2 py-1">
-              <div
-                className="text-sm font-semibold text-white leading-tight break-words text-center"
-                style={{ wordBreak: 'break-word' }}
-              >
-                {product.name}
+              {/* Product Name */}
+              <div className="w-full px-2 py-1">
+                <div
+                  className="text-sm font-semibold text-white leading-tight break-words text-center"
+                  style={{ wordBreak: 'break-word' }}
+                >
+                  {product.name}
+                </div>
               </div>
             </div>
-          </div>
 
           ))
         )}
@@ -197,7 +197,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
       {/* Sub-products section */}
       {(selectedProductId && (subProducts.length > 0 || loadingSubProducts)) && (
         <div
-          className="p-1 max-h-[20vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-2"
+          className="p-1 max-h-[20vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-2 bg-pos-bg-secondary"
           ref={subProductsRef}
         >
           {loadingSubProducts ? (
@@ -212,7 +212,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                 {subProducts.map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className="cursor-pointer transition-all duration-200 flex items-center justify-between px-2 py-2 rounded"
+                    className="cursor-pointer transition-all duration-200 flex items-center justify-between px-2 py-2 rounded hover:brightness-110 hover:scale-[1.02]"
                     style={{
                       borderWidth: "1px",
                       borderStyle: "solid",

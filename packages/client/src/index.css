@@ -54,7 +54,7 @@
     color: var(--text-main);
     border: 2px solid var(--interactive-border);
     border-radius: var(--radius-lg);
-    padding: 0.3rem;
+    padding: 0.1rem .4rem;
     cursor: pointer;
     font-size: 0.875rem;
     font-weight: 500;
@@ -78,7 +78,7 @@
     color: var(--text-muted);
     border: 2px solid var(--interactive-border);
     border-radius: var(--radius-lg);
-    padding: 0.3rem;
+    padding: 0.1rem .4rem;
     cursor: pointer;
     font-size: 0.875rem;
     transition: all var(--transition-normal);
@@ -96,23 +96,23 @@
   }
 
   .btn-danger {
-    background-color: rgba(239,68,68,0.18);
+    background-color: rgba(239, 68, 68, 0.18);
     color: #fecaca;
     border: 2px solid var(--accent-red);
     border-radius: var(--radius-lg);
-    padding: 0.5rem 0.75rem;
+    padding: 0.1rem .4rem;
     cursor: pointer;
     font-size: 0.875rem;
     transition: all var(--transition-normal);
   }
 
   .btn-danger:hover {
-    background-color: rgba(239,68,68,0.3);
+    background-color: rgba(239, 68, 68, 0.3);
   }
 
   .btn-danger:active,
   .btn-danger.active {
-    background-color: rgba(239,68,68,0.5);
+    background-color: rgba(239, 68, 68, 0.5);
   }
 
   .btn-warning {
@@ -120,7 +120,7 @@
     color: white;
     border: 2px solid var(--interactive-border);
     border-radius: var(--radius-lg);
-    padding: 0.5rem 0.75rem;
+    padding: 0.1rem .4rem;
     cursor: pointer;
     font-size: 0.875rem;
     transition: all var(--transition-normal);
@@ -141,7 +141,7 @@
     color: white;
     border: 2px solid var(--interactive-border);
     border-radius: var(--radius-lg);
-    padding: 0.5rem 0.75rem;
+    padding: 0.1rem .4rem;
     cursor: pointer;
     font-size: 0.875rem;
     transition: all var(--transition-normal);
@@ -162,7 +162,7 @@
     color: white;
     border: 2px solid var(--interactive-border);
     border-radius: var(--radius-lg);
-    padding: 0.5rem 0.75rem;
+    padding: 0.1rem .4rem;
     cursor: pointer;
     font-size: 0.875rem;
     transition: all var(--transition-normal);
@@ -183,7 +183,7 @@
     background-color: transparent;
     border: none;
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 0.1rem .4rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -225,28 +225,30 @@
   .scrollbar-custom {
     /* scrollbar-width: thin; */
   }
-  
-  button, input {
+
+  button,
+  input {
     border-radius: var(--radius-md);
   }
-  
+
   .product-card {
     border-radius: var(--radius-lg);
   }
-  
-  .product-card > .absolute {
+
+  .product-card>.absolute {
     margin-right: -3.5rem;
     margin-top: 2px;
   }
-  
-  .bg-green-500, .bg-blue-500 {
+
+  .bg-green-500,
+  .bg-blue-500 {
     border-radius: var(--radius-md);
   }
-  
-  .product-card > img {
+
+  .product-card>img {
     border-radius: var(--radius-md);
   }
-  
+
   .scrollbar-custom::-webkit-scrollbar {
     width: 6px;
   }

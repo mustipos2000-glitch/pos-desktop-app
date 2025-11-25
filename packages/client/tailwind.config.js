@@ -29,30 +29,30 @@ module.exports = {
         pos: {
           // Main backgrounds
           'bg-primary': '#263544',      // Main background (from reference)
-          'bg-secondary': '#344963',    // Secondary background gradient
-          'bg-tertiary': '#445b71',     // Panel/Card backgrounds (from reference)
+          'bg-secondary': '#445b71',    // Secondary background gradient
+          'bg-tertiary': '#344963',     // Panel/Card backgrounds (from reference)
           'bg-quaternary': '#1b2836',   // Darker background variant
           'bg-accent': '#1b2430',       // Accent background
-          
+
           // Borders and dividers
-          'border-primary': '#1b2430',  // Primary border (from reference)
+          'border-primary': '#a3aebc',  // Primary border (from reference)
           'border-secondary': '#3b4f66', // Secondary border
           'border-accent': '#ffffff',   // Accent border (white from reference)
           'border-light': '#2a3544',    // Light border variant
-          
+
           // Text colors
           'text-primary': '#f5f5f7',    // Primary text (from reference)
           'text-secondary': '#e5e7eb',  // Secondary text
           'text-muted': '#cbd5f5',      // Muted text
           'text-disabled': '#8b92b0',   // Disabled text
-          
+
           // Interactive elements (buttons, cards, etc.)
           'interactive-primary': '#445b71',     // Primary button/card (from reference)
           'interactive-hover': '#5a7189',       // Hover state (lighter)
           'interactive-active': '#3b4f66',      // Active/pressed state (darker)
           'interactive-border': 'rgba(255,255,255,0.35)', // Interactive border
           'interactive-border-hover': '#ffffff', // Hover border
-          
+
           // Status colors
           'success': '#10b981',
           'warning': '#f59e0b',
