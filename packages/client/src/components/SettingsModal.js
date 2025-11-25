@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../services/api';
+import ConfirmationModal from './ConfirmationModal';
+import IconButton from './IconButton';
 
 const SettingsModal = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('general');
@@ -8,6 +10,20 @@ const SettingsModal = ({ onClose }) => {
     'Admin': { admin: false, settings: false },
     'User': { admin: false, settings: false }
   });
+  const [printers, setPrinters] = useState([]);
+  const [showAddPrinter, setShowAddPrinter] = useState(false);
+  const [editingPrinter, setEditingPrinter] = useState(null);
+  const [printerForm, setPrinterForm] = useState({
+    name: '',
+    type: 'serial',
+    connection_string: ''
+  });
+  const [printerFormErrors, setPrinterFormErrors] = useState({});
+  const [deleteConfirmation, setDeleteConfirmation] = useState({
+    isOpen: false,
+    printerId: null,
+    printerName: ''
+  });
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const isSuperAdmin = currentUser.role === 'Super Admin';
 
@@ -15,7 +31,146 @@ const SettingsModal = ({ onClose }) => {
     if (isSuperAdmin && activeTab === 'permissions') {
       fetchRolePermissions();
     }
+    if (activeTab === 'printer') {
+      fetchPrinters();
+    }
   }, [activeTab, isSuperAdmin]);
+
+  const fetchPrinters = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/printers');
+      const result = await response.json();
+      setPrinters(result.data || []);
+    } catch (error) {
+      console.error('Error fetching printers:', error);
+    }
+  };
+
+  const handlePrinterFormChange = (e) => {
+    const { name, value } = e.target;
+    setPrinterForm({
+      ...printerForm,
+      [name]: value
+    });
+    
+    // Clear error for this field when user starts typing
+    if (printerFormErrors[name]) {
+      setPrinterFormErrors({
+        ...printerFormErrors,
+        [name]: ''
+      });
+    }
+  };
+
+  const handleAddPrinter = async () => {
+    // Validate form
+    const errors = {};
+    if (!printerForm.name.trim()) {
+      errors.name = 'Printer name is required';
+    }
+    if (!printerForm.type) {
+      errors.type = 'Printer type is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setPrinterFormErrors(errors);
+      return;
+    }
+
+    try {
+      const response = await fetch('http://localhost:5000/api/printers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(printerForm)
+      });
+
+      if (response.ok) {
+        await fetchPrinters();
+        setShowAddPrinter(false);
+        setPrinterForm({ name: '', type: 'serial', connection_string: '' });
+        setPrinterFormErrors({});
+      }
+    } catch (error) {
+      console.error('Error adding printer:', error);
+    }
+  };
+
+  const handleEditPrinter = (printer) => {
+    setEditingPrinter(printer);
+    setPrinterForm({
+      name: printer.name,
+      type: printer.type,
+      connection_string: printer.connection_string || ''
+    });
+    setPrinterFormErrors({});
+    setShowAddPrinter(true);
+  };
+
+  const handleUpdatePrinter = async () => {
+    // Validate form
+    const errors = {};
+    if (!printerForm.name.trim()) {
+      errors.name = 'Printer name is required';
+    }
+    if (!printerForm.type) {
+      errors.type = 'Printer type is required';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setPrinterFormErrors(errors);
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/printers/${editingPrinter.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(printerForm)
+      });
+
+      if (response.ok) {
+        await fetchPrinters();
+        setShowAddPrinter(false);
+        setEditingPrinter(null);
+        setPrinterForm({ name: '', type: 'serial', connection_string: '' });
+        setPrinterFormErrors({});
+      }
+    } catch (error) {
+      console.error('Error updating printer:', error);
+    }
+  };
+
+  const openDeleteConfirmation = (printer) => {
+    setDeleteConfirmation({
+      isOpen: true,
+      printerId: printer.id,
+      printerName: printer.name
+    });
+  };
+
+  const closeDeleteConfirmation = () => {
+    setDeleteConfirmation({
+      isOpen: false,
+      printerId: null,
+      printerName: ''
+    });
+  };
+
+  const handleDeletePrinter = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/printers/${deleteConfirmation.printerId}`, {
+        method: 'DELETE'
+      });
+
+      if (response.ok) {
+        await fetchPrinters();
+        closeDeleteConfirmation();
+      }
+    } catch (error) {
+      console.error('Error deleting printer:', error);
+      closeDeleteConfirmation();
+    }
+  };
 
   const fetchRolePermissions = async () => {
     try {
@@ -220,26 +375,167 @@ const SettingsModal = ({ onClose }) => {
           )}
 
           {activeTab === 'printer' && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Receipt Printer</label>
-                <select defaultValue="default" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
-                  <option value="default">Default Printer</option>
-                  <option value="thermal">Thermal Printer</option>
-                  <option value="none">No Printer</option>
-                </select>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-pos-text-primary text-lg font-semibold">Manage Printers</h3>
+                <button 
+                  onClick={() => {
+                    setShowAddPrinter(true);
+                    setEditingPrinter(null);
+                    setPrinterForm({ name: '', type: 'serial', connection_string: '' });
+                  }}
+                  className="add-btn"
+                >
+                  + Add Printer
+                </button>
               </div>
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Kitchen Printer</label>
-                <select defaultValue="none" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
-                  <option value="none">No Printer</option>
-                  <option value="kitchen1">Kitchen Printer 1</option>
-                </select>
+
+              <div className="overflow-x-auto">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th className="w-48">Printer Name</th>
+                      <th className="w-32">Type</th>
+                      <th className="w-64">Connection String</th>
+                      <th className="w-32 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {printers.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="text-center py-8 text-pos-text-muted">
+                          No printers configured. Click "Add Printer" to get started.
+                        </td>
+                      </tr>
+                    ) : (
+                      printers.map(printer => (
+                        <tr key={printer.id}>
+                          <td className="font-medium text-pos-text-primary">{printer.name}</td>
+                          <td>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              printer.type === 'serial'
+                                ? 'bg-pos-info bg-opacity-20 text-pos-info'
+                                : printer.type === 'windows'
+                                  ? 'bg-purple-500 bg-opacity-20 text-purple-400'
+                                  : 'bg-pos-warning bg-opacity-20 text-pos-warning'
+                            }`}>
+                              {printer.type.charAt(0).toUpperCase() + printer.type.slice(1)}
+                            </span>
+                          </td>
+                          <td className="text-pos-text-secondary font-mono text-sm">
+                            {printer.connection_string || '-'}
+                          </td>
+                          <td>
+                            <div className="flex items-center justify-center gap-2">
+                              <IconButton
+                                icon="✏️"
+                                className="edit"
+                                onClick={() => handleEditPrinter(printer)}
+                                title="Edit printer"
+                              />
+                              <IconButton
+                                icon="🗑️"
+                                className="delete"
+                                onClick={() => openDeleteConfirmation(printer)}
+                                title="Delete printer"
+                              />
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="auto-print" className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
-                <label htmlFor="auto-print" className="text-pos-text-primary text-sm">Auto Print Receipt</label>
-              </div>
+
+              {showAddPrinter && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+                  setShowAddPrinter(false);
+                  setPrinterFormErrors({});
+                }}>
+                  <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-between items-center p-4 border-b border-pos-border-primary">
+                      <h3 className="text-pos-text-primary text-lg font-semibold">
+                        {editingPrinter ? 'Edit Printer' : 'Add New Printer'}
+                      </h3>
+                      <button className="text-pos-text-muted hover:text-pos-text-primary text-2xl" onClick={() => {
+                        setShowAddPrinter(false);
+                        setPrinterFormErrors({});
+                      }}>×</button>
+                    </div>
+                    
+                    <div className="p-4 space-y-4">
+                      <div>
+                        <label className="block text-pos-text-primary text-sm font-medium mb-2">
+                          Printer Name <span className="text-pos-error">*</span>
+                        </label>
+                        <input 
+                          type="text" 
+                          name="name"
+                          value={printerForm.name}
+                          onChange={handlePrinterFormChange}
+                          className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${printerFormErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
+                          placeholder="e.g., Kitchen Printer"
+                        />
+                        {printerFormErrors.name && (
+                          <p className="text-pos-error text-xs mt-1">{printerFormErrors.name}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label className="block text-pos-text-primary text-sm font-medium mb-2">
+                          Printer Type <span className="text-pos-error">*</span>
+                        </label>
+                        <select 
+                          name="type"
+                          value={printerForm.type}
+                          onChange={handlePrinterFormChange}
+                          className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${printerFormErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
+                        >
+                          <option value="serial">Serial Printer</option>
+                          <option value="windows">Windows Printer</option>
+                          <option value="thermal">Thermal Printer</option>
+                        </select>
+                        {printerFormErrors.type && (
+                          <p className="text-pos-error text-xs mt-1">{printerFormErrors.type}</p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label className="block text-pos-text-primary text-sm font-medium mb-2">
+                          Connection String
+                        </label>
+                        <input 
+                          type="text" 
+                          name="connection_string"
+                          value={printerForm.connection_string}
+                          onChange={handlePrinterFormChange}
+                          className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" 
+                          placeholder="e.g., COM3, \\\\server\\printer, 192.168.1.100"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-end gap-2 p-4 border-t border-pos-border-primary">
+                      <button 
+                        onClick={() => {
+                          setShowAddPrinter(false);
+                          setPrinterFormErrors({});
+                        }}
+                        className="px-4 py-2 bg-pos-bg-tertiary text-pos-text-primary border border-pos-border-secondary rounded hover:bg-pos-interactive-primary transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={editingPrinter ? handleUpdatePrinter : handleAddPrinter}
+                        className="px-4 py-2 bg-pos-interactive-primary text-pos-text-primary rounded hover:bg-pos-interactive-hover transition-colors"
+                      >
+                        {editingPrinter ? 'Update' : 'Add'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -388,6 +684,17 @@ const SettingsModal = ({ onClose }) => {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={closeDeleteConfirmation}
+        onConfirm={handleDeletePrinter}
+        title="Delete Printer"
+        message={`Are you sure you want to delete "${deleteConfirmation.printerName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

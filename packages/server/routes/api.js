@@ -9,6 +9,7 @@ const SubProductController = require('../controllers/SubProductController');
 const OrderController = require('../controllers/OrderController');
 const RoomController = require('../controllers/RoomController');
 const PrTableController = require('../controllers/PrTableController');
+const PrinterController = require('../controllers/printerController');
 
 
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
@@ -77,5 +78,12 @@ router.get('/pr-tables/:id', PrTableController.getPrTableById);
 router.post('/pr-tables', PrTableController.createPrTable);
 router.put('/pr-tables/:id', PrTableController.updatePrTable);
 router.delete('/pr-tables/:id', PrTableController.deletePrTable);
+
+// Printer routes
+router.get('/printers', PrinterController.getAllPrinters);
+router.get('/printers/:id', PrinterController.getPrinterById);
+router.post('/printers', PrinterController.createPrinter);
+router.put('/printers/:id', PrinterController.updatePrinter);
+router.delete('/printers/:id', PrinterController.deletePrinter);
 
 module.exports = router;

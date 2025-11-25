@@ -355,6 +355,17 @@ db.exec(`
   )
 `);
 
+// Create printers table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS printers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    connection_string TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
 // Insert default admin user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
 if (userCount.count === 0) {
