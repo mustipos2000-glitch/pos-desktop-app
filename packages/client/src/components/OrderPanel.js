@@ -460,10 +460,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           }}
         />
       )}
-      <div className="w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen bg-pos-bg-secondary rounded-2xl">
+      <div className="mt-2 mb-2 w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen bg-pos-bg-secondary rounded-2xl">
         {/* Header */}
-      <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
-        <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-disabled font-semibold uppercase">
+      <div className="px-4 py-2 mt-2 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
+        <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-muted font-semibold uppercase">
           <span className="col-span-4">Item</span>
           <span className="col-span-2  flex justify-center items-center ">Quantity</span>
           <span className="col-span-6 ps-5 ">Total</span>
@@ -673,7 +673,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 
         ${val === "C"
                 ? "bg-red-500 hover:bg-red-600 text-white"
-                : "bg-pos-interactive-primary hover:bg-pos-interactive-primary text-gray-100 active:scale-95"
+                : "bg-pos-bg-quaternary hover:bg-pos-bg-tertiary text-white active:scale-95"
               }`}
           >
             {val}
@@ -684,10 +684,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
       {/* Bottom Buttons */}
-      <div className="grid grid-cols-2 gap-2 px-1 ">
+      <div className="grid grid-cols-2 gap-2 px-1 mb-3">
         {/* Card */}
         <button
-          className="bg-pos-interactive-primary text-pos-text-secondary  font-medium py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCardPayment}
           disabled={isProcessing || cart.length === 0}
         >
@@ -696,7 +696,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
         {/* Cash */}
         <button
-          className="bg-pos-interactive-primary text-pos-text-secondary font-medium py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCashPayment}
           disabled={isProcessing || cart.length === 0}
         >
