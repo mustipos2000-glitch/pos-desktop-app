@@ -583,7 +583,7 @@ const CategoryManager = () => {
       <div className="flex gap-2 mt-4">
         {/* This is category Column  */}
         <div className="flex-1 max-w-[11rem]">
-          <h3 className="text-lg font-medium text-pos-text-primary mb-2">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
             Categories
           </h3>
           {loading ? (
@@ -601,9 +601,9 @@ const CategoryManager = () => {
               ).map((category, index) => (
                 <div
                   key={category.id}
-                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-colors rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
-                    ? "text-white bg-pos-bg-primary"
-                    : "hover:bg-black/5"
+                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
+                    ? "text-white bg-pos-bg-primary shadow-md"
+                    : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
                     }`}
                   onClick={() => setSelectedCategory(category)}
                 >
@@ -641,7 +641,7 @@ const CategoryManager = () => {
         </div>
         {/* This is product Column */}
         <div className="flex-[2] max-w-[13rem] min-w-[160px]">
-          <h3 className="text-sm font-medium text-pos-text-primary mb-2">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
             Products
           </h3>
 
@@ -664,9 +664,9 @@ const CategoryManager = () => {
               ).map((product) => (
                 <div
                   key={product.id}
-                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-colors rounded-lg px-1 py-1 ${selectedProduct?.id === product.id
-                    ? "bg-pos-bg-primary"
-                    : "hover:bg-black/5"
+                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-1 py-1 ${selectedProduct?.id === product.id
+                    ? "bg-pos-bg-primary shadow-md"
+                    : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
                     }`}
                   onClick={() => setSelectedProduct(product)}
                 >
@@ -680,7 +680,7 @@ const CategoryManager = () => {
         </div>
         {/* This is sub-product Column */}
         <div className="flex-1 min-w-[160px] max-w-[200px]">
-          <h3 className="text-sm font-medium text-pos-text-primary mb-2 flex items-center justify-between">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2 flex items-center justify-between">
             <span>Attached Sub Products</span>
             {attachedSubProducts.length > 0 && (
               <span className="text-xs bg-pos-bg-primary px-2 py-0.5 rounded-lg">
@@ -723,9 +723,9 @@ const CategoryManager = () => {
                 ).map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className={`cursor-pointer px-2 py-1 mt-1 mb-2 border border-pos-border-primary rounded-lg ${selectedAttachedSubProducts.includes(subProduct.id)
+                    className={`cursor-pointer px-2 py-1 mt-1 mb-2 border border-pos-border-primary rounded-lg transition-all duration-200 ${selectedAttachedSubProducts.includes(subProduct.id)
                       ? "bg-pos-bg-primary text-white font-medium shadow-md"
-                      : "hover:bg-black/5 hover:shadow-sm "
+                      : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
                       }`}
                     onClick={() => toggleAttachedSubProductSelection(subProduct.id)}
                   >
@@ -793,7 +793,7 @@ const CategoryManager = () => {
         </div>
         {/* This is Group of Subproduct */}
         <div className="flex-1 min-w-[160px] max-w-[200px]">
-          <h3 className="text-sm font-medium text-pos-text-primary mb-2 flex items-center justify-between">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2 flex items-center justify-between">
             <span>Sub Product Group</span>
             {groupProducts.length > 0 && (
               <span className="text-xs bg-pos-bg-primary px-2 py-0.5 rounded-lg">
@@ -863,9 +863,9 @@ const CategoryManager = () => {
                   }).map((subProduct) => (
                     <div
                       key={subProduct.id}
-                      className={`text-base mt-1 min-w-[100px] cursor-pointer border border-pos-border-primary rounded-lg mt-1 mb-2 px-1 py-1 ${selectedGroupSubProducts.includes(subProduct.id)
+                      className={`text-base mt-1 min-w-[100px] cursor-pointer border border-pos-border-primary rounded-lg mt-1 mb-2 px-1 py-1 transition-all duration-200 ${selectedGroupSubProducts.includes(subProduct.id)
                         ? "bg-pos-bg-primary text-white font-medium shadow-md"
-                        : "hover:bg-black/5 hover:shadow-sm"
+                        : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
                         }`}
                       onClick={() => toggleGroupSubProductSelection(subProduct.id)}
                     >

@@ -522,19 +522,9 @@ const SubProductManager = () => {
     : [];
 
   return (
-    <div className="admin-section h-screen flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-pos-bg-secondary border-pos-border-primary">
-        <h2 className="m-0 text-pos-text-primary text-2xl font-medium flex-1 text-center">Subproducts</h2>
-        <SearchBar 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          placeholder="Search groups, subproducts..."
-        />
-      </div>
-
-      {/* Action Buttons */}
-      <div className="px-2 py-1 flex gap-1 border-pos-border-primary">
+    <div className="overflow-y-auto scrollbar-custom mt-1">
+      {/* Header with Action Buttons */}
+      <div className="flex gap-2 bg-pos-bg-secondary rounded-lg py-2 px-1">
         <button
           onClick={() => {
             resetForm();
@@ -542,7 +532,7 @@ const SubProductManager = () => {
             setGroupForm({ name: '', is_visible: 0 });
             setShowAddGroup(true);
           }}
-          className="btn-primary font-semibold"
+          className="btn-primary"
         >
           Add Group
         </button>
@@ -553,7 +543,10 @@ const SubProductManager = () => {
             }
           }}
           disabled={!selectedGroup}
-          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`btn-primary ${!selectedGroup
+            ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+            : ""
+            }`}
         >
           Edit Group
         </button>
@@ -564,111 +557,116 @@ const SubProductManager = () => {
             }
           }}
           disabled={!selectedGroup}
-          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`btn-primary ${!selectedGroup
+            ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+            : ""
+            }`}
         >
           Delete Group
         </button>
-        <button
-          onClick={() => {
-            if (selectedGroup) {
-              resetForm();
-              setSubProductForm({ ...subProductForm, group_id: selectedGroup.id });
-              setShowAddSubProduct(true);
-            }
-          }}
-          disabled={!selectedGroup}
-          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Add Subproduct
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (selectedGroup) {
+                resetForm();
+                setSubProductForm({ ...subProductForm, group_id: selectedGroup.id });
+                setShowAddSubProduct(true);
+              }
+            }}
+            disabled={!selectedGroup}
+            className={`btn-primary ${!selectedGroup
+              ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+              : ""
+              }`}
+          >
+            Add Subproduct
+          </button>
+        </div>
+        <SearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Search groups, subproducts..."
+        />
       </div>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex gap-2 mt-4">
         {/* Left Sidebar - Groups */}
-        <div className="w-[156px] bg-pos-bg-secondary border-r-2 border-pos-border-primary overflow-y-auto scrollbar-custom px-2 py-2">
+        <div className="flex-1 max-w-[11rem]">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
+            Groups
+          </h3>
           {loading ? (
-            <div className="p-5 text-pos-text-primary text-center">
-              Loading...
+            <div className="text-pos-text-muted text-lg p-4 text-center">
+              Loading groups...
+            </div>
+          ) : groups.length === 0 ? (
+            <div className="h-[500px] text-pos-text-muted text-sm border border-pos-border-secondary bg-pos-bg-secondary rounded-lg p-2 overflow-y-auto scrollbar-custom">
+              No groups found.
             </div>
           ) : (
-            groups.filter(group =>
-              !searchQuery || group.name.toLowerCase().includes(searchQuery.toLowerCase())
-            ).map(group => (
-              <div
-                key={group.id}
-                onClick={() => setSelectedGroup(group)}
-                className={`bg-pos-bg-primary py-2 px-2 mb-1 text-pos-text-primary cursor-pointer text-sm ${selectedGroup?.id === group.id
-                  ? 'bg-pos-bg-tertiary'
-                  : 'hover:bg-pos-interactive-primary'
-                  }`}
-              >
-                {group.name}
-              </div>
-            ))
+            <div className="h-[500px] min-w-[160px] max-w-[200px] border border-pos-border-secondary p-2 overflow-y-auto scrollbar-custom bg-pos-bg-secondary rounded-lg">
+              {groups.filter(group =>
+                !searchQuery || group.name.toLowerCase().includes(searchQuery.toLowerCase())
+              ).map(group => (
+                <div
+                  key={group.id}
+                  onClick={() => setSelectedGroup(group)}
+                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary px-1 py-1 ${selectedGroup?.id === group.id
+                    ? 'text-white bg-pos-bg-primary shadow-md'
+                    : 'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                    }`}
+                >
+                  <div className="px-1 py-1 flex-1">
+                    {group.name}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Right Content - Sub Products Table */}
-        <div className="flex-1 bg-pos-bg-primary overflow-y-auto scrollbar-custom">
+        {/* Right Content - Sub Products */}
+        <div className="flex-[2] max-w-[26rem] min-w-[320px]">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
+            Sub Products
+          </h3>
           {!selectedGroup ? (
-            <div className="text-pos-text-primary text-center mt-12 text-base">
+            <div className="h-[500px] text-pos-text-muted text-lg border border-pos-border-secondary bg-pos-bg-secondary p-2 rounded-lg text-pos-error">
               Select a group to view sub-products
             </div>
+          ) : filteredSubProducts.length === 0 ? (
+            <div className="h-[500px] text-pos-text-muted text-lg border border-pos-border-secondary p-2 rounded-lg bg-pos-bg-secondary text-pos-error">
+              No sub-products
+            </div>
           ) : (
-            <div>
-              <table className="w-full border-collapse bg-pos-bg-secondary overflow-hidden">
-                <thead>
-                  <tr className="bg-pos-bg-tertiary">
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Id</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Product Name</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Price VAT incl</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">VAT Take out</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">VAT Eat in</th>
-                    <th className="p-1 text-right text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredSubProducts.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="p-4 text-center text-pos-text-secondary text-sm">
-                        No sub-products found for this group
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredSubProducts.map(subProduct => (
-                      <tr key={subProduct.id} className="border-b border-pos-border-primary hover:bg-pos-bg-tertiary transition-colors">
-                        <td className="p-1 text-pos-text-primary text-sm">{subProduct.id}</td>
-                        <td className="p-1 text-pos-text-primary text-sm">
-                          <div>
-                            {subProduct.name}
-                            <div
-                              className="w-full"
-                            ></div>
-                          </div>
-                        </td>
-                        <td className="p-1 text-pos-text-primary text-sm">{parseFloat(subProduct.price).toFixed(2)}</td>
-                        <td className="p-1 text-pos-text-primary text-sm">{subProduct.vat_takeout || 0}</td>
-                        <td className="p-1 text-pos-text-primary text-sm">{subProduct.vat_eat_in || 0}</td>
-                        <td className="p-1 text-right">
-                          <button
-                            onClick={() => handleEditSubProduct(subProduct)}
-                            className="btn-secondary mr-2 py-1"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => openDeleteConfirmation(subProduct)}
-                            className="btn-secondary py-1"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="h-[500px] min-w-[320px] border border-pos-border-secondary p-2 text-lg overflow-y-auto scrollbar-custom rounded-lg bg-pos-bg-secondary">
+              {filteredSubProducts.map((subProduct) => (
+                <div
+                  key={subProduct.id}
+                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-2 py-1 ${
+                    'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                  }`}
+                >
+                  <div className="flex-1">
+                    {subProduct.name || "Unnamed Sub-Product"}
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleEditSubProduct(subProduct)}
+                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => openDeleteConfirmation(subProduct)}
+                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -677,7 +675,7 @@ const SubProductManager = () => {
       {/* Add Sub-Product Modal */}
       {showAddSubProduct && (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowAddSubProduct(false)}>
-          <div className="bg-pos-bg-tertiary shadow-2xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl max-h-[95vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-3 py-2 flex items-center justify-between z-10">
               <h3 className="text-xl font-semibold text-pos-text-primary">Add New Sub Product</h3>
@@ -896,7 +894,7 @@ const SubProductManager = () => {
       {
         showEditSubProduct && (
           <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => setShowEditSubProduct(false)}>
-            <div className="bg-pos-bg-tertiary shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl w-[500px] max-w-6xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               {/* Modal Header */}
               <div className="sticky top-0 bg-pos-bg-tertiary border-b border-pos-border-secondary px-6 py-4 flex items-center justify-between z-10">
                 <h3 className="text-xl font-semibold text-pos-text-primary">Edit Sub Product</h3>

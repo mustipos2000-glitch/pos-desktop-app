@@ -102,7 +102,7 @@ const CategoryFormModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-pos-bg-tertiary  shadow-2xl max-w-6xl max-h-[90vh] overflow-y-auto"
+        className="bg-pos-bg-tertiary rounded-lg shadow-2xl max-w-6xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >

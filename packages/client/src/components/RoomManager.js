@@ -248,25 +248,15 @@ const RoomManager = () => {
     : [];
 
   return (
-    <div className="admin-section h-screen flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-pos-bg-secondary border-pos-border-primary">
-        <h2 className="m-0 text-pos-text-primary text-2xl font-medium flex-1 text-center">Rooms & Tables</h2>
-        <SearchBar 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          placeholder="Search rooms, tables..."
-        />
-      </div>
-
-      {/* Action Buttons */}
-      <div className="px-2 py-1 flex gap-1 border-pos-border-primary">
+    <div className="overflow-y-auto scrollbar-custom mt-1">
+      {/* Header with Action Buttons */}
+      <div className="flex gap-2 bg-pos-bg-secondary rounded-lg py-2 px-1">
         <button
           onClick={() => {
             setEditingRoom(null);
             setShowRoomModal(true);
           }}
-          className="btn-primary font-semibold"
+          className="btn-primary"
         >
           Add Room
         </button>
@@ -277,7 +267,10 @@ const RoomManager = () => {
             }
           }}
           disabled={!selectedRoom}
-          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`btn-primary ${!selectedRoom
+            ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+            : ""
+            }`}
         >
           Edit Room
         </button>
@@ -288,107 +281,123 @@ const RoomManager = () => {
             }
           }}
           disabled={!selectedRoom}
-          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`btn-primary ${!selectedRoom
+            ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+            : ""
+            }`}
         >
           Delete Room
         </button>
-        <button
-          onClick={() => {
-            if (selectedRoom) {
-              setEditingTable(null);
-              setShowTableModal(true);
-            }
-          }}
-          disabled={!selectedRoom}
-          className="btn-primary font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Add Table
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              if (selectedRoom) {
+                setEditingTable(null);
+                setShowTableModal(true);
+              }
+            }}
+            disabled={!selectedRoom}
+            className={`btn-primary ${!selectedRoom
+              ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+              : ""
+              }`}
+          >
+            Add Table
+          </button>
+        </div>
+        <SearchBar 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          placeholder="Search rooms, tables..."
+        />
       </div>
 
       {/* Main Content Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex gap-2 mt-4">
         {/* Left Sidebar - Rooms */}
-        <div className="w-[156px] bg-pos-bg-secondary border-r-2 border-pos-border-primary overflow-y-auto scrollbar-custom px-2">
+        <div className="flex-1 max-w-[11rem]">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
+            Rooms
+          </h3>
           {loading ? (
-            <div className="p-5 text-pos-text-primary text-center">
-              Loading...
+            <div className="text-pos-text-muted text-lg p-4 text-center">
+              Loading rooms...
+            </div>
+          ) : rooms.length === 0 ? (
+            <div className="h-[500px] text-pos-text-muted text-sm border border-pos-border-secondary bg-pos-bg-secondary rounded-lg p-2 overflow-y-auto scrollbar-custom">
+              No rooms found.
             </div>
           ) : (
-            rooms.filter(room =>
-              !searchQuery || room.name.toLowerCase().includes(searchQuery.toLowerCase())
-            ).map(room => (
-              <div
-                key={room.id}
-                onClick={() => setSelectedRoom(room)}
-                className={`bg-pos-bg-primary py-2 px-2 mb-1 text-pos-text-primary cursor-pointer text-sm ${selectedRoom?.id === room.id
-                  ? 'bg-pos-bg-tertiary'
-                  : 'hover:bg-pos-interactive-primary'
-                  }`}
-              >
-                {room.name}
-              </div>
-            ))
+            <div className="h-[500px] min-w-[160px] max-w-[200px] border border-pos-border-secondary p-2 overflow-y-auto scrollbar-custom bg-pos-bg-secondary rounded-lg">
+              {rooms.filter(room =>
+                !searchQuery || room.name.toLowerCase().includes(searchQuery.toLowerCase())
+              ).map(room => (
+                <div
+                  key={room.id}
+                  onClick={() => setSelectedRoom(room)}
+                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary px-1 py-1 ${selectedRoom?.id === room.id
+                    ? 'text-white bg-pos-bg-primary shadow-md'
+                    : 'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                    }`}
+                >
+                  <div className="px-1 py-1 flex-1">
+                    {room.name}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
 
         {/* Right Content - Tables */}
-        <div className="flex-1 bg-pos-bg-primary overflow-y-auto scrollbar-custom">
+        <div className="flex-[3] min-w-[300px]">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
+            Tables
+          </h3>
           {!selectedRoom ? (
-            <div className="text-pos-text-primary text-center mt-12 text-base">
+            <div className="h-[500px] text-pos-text-muted text-lg border border-pos-border-secondary bg-pos-bg-secondary p-2 rounded-lg text-pos-error">
               Select a room to view tables
             </div>
+          ) : filteredTables.length === 0 ? (
+            <div className="h-[500px] text-pos-text-muted text-lg border border-pos-border-secondary p-2 rounded-lg bg-pos-bg-secondary text-pos-error">
+              No tables
+            </div>
           ) : (
-            <div>
-              <table className="w-full border-collapse bg-pos-bg-secondary overflow-hidden">
-                <thead>
-                  <tr className="bg-pos-bg-tertiary">
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Table No</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Customer</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Waiter</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Size</th>
-                    <th className="p-1 text-left text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium">Status</th>
-                    <th className="p-1 text-right text-pos-text-primary border-b-2 border-pos-border-primary text-sm font-medium"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTables.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="p-4 text-center text-pos-text-secondary text-sm">
-                        No tables found for this room
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredTables.map(table => (
-                      <tr key={table.id} className="border-b border-pos-border-primary hover:bg-pos-bg-tertiary transition-colors">
-                        <td className="p-1 text-pos-text-primary text-sm font-medium">{table.table_no}</td>
-                        <td className="p-1 text-pos-text-primary text-sm">{table.customer_name || '-'}</td>
-                        <td className="p-1 text-pos-text-primary text-sm">{table.waiter_name || '-'}</td>
-                        <td className="p-1 text-pos-text-primary text-sm">{table.table_size || '-'}</td>
-                        <td className="p-1 text-pos-text-primary text-sm">
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(table.status)}`}>
-                            {table.status}
-                          </span>
-                        </td>
-                        <td className="p-1 text-right">
-                          <button
-                            onClick={() => handleEditTable(table)}
-                            className="btn-secondary mr-2 py-1"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => openDeleteTableConfirmation(table)}
-                            className="btn-secondary py-1"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            <div className="h-[500px] border border-pos-border-secondary p-2 text-base overflow-y-auto scrollbar-custom rounded-lg bg-pos-bg-secondary">
+              {filteredTables.map((table) => (
+                <div
+                  key={table.id}
+                  className={`flex justify-between items-center border border-pos-border-primary mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-2 py-1 ${
+                    'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                  }`}
+                >
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="font-medium min-w-[80px]">{table.table_no}</div>
+                    <div className="text-sm text-pos-text-muted flex gap-4">
+                      {table.customer_name && <span>Customer: {table.customer_name}</span>}
+                      {table.waiter_name && <span>Waiter: {table.waiter_name}</span>}
+                      {table.table_size && <span>Size: {table.table_size}</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(table.status)}`}>
+                      {table.status}
+                    </span>
+                    <button
+                      onClick={() => handleEditTable(table)}
+                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => openDeleteTableConfirmation(table)}
+                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

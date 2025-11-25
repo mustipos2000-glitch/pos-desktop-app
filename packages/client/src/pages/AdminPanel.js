@@ -14,7 +14,7 @@ const AdminPanel = () => {
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
       <div className="bg-pos-bg-primary border-b border-pos-border-primary p-4 h-full">
-        <div className="flex items-center gap-4 bg-pos-bg-secondary rounded-lg p-1">
+        <div className="flex items-center gap-4 bg-pos-bg-secondary rounded-lg p-1 py-1.5 mb-1">
           <button className="btn-secondary flex items-center gap-2 px-4" onClick={() => navigate('/pos')}>
             POS
           </button>
