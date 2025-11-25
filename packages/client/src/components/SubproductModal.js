@@ -98,7 +98,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery 
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-      <div className="bg-pos-bg-secondary w-4/5 h-[80vh] flex flex-col">
+      <div className="bg-pos-bg-secondary w-4/5 h-[80vh] flex flex-col rounded-lg">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-2 border-b border-pos-border-secondary">
           <h2 className="text-xl font-semibold text-pos-text-primary">Select subproduct</h2>

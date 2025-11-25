@@ -39,18 +39,18 @@
 
 .category-item:hover,
 .product-item:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-overlay);
 }
 
 .category-item.selected,
 .product-item.selected {
-    background-color: #252a3f;
-    color: white;
+    background-color: var(--interactive-primary);
+    color: var(--text-main);
 }
 
 .category-item.selected:hover,
 .product-item.selected:hover {
-    background-color: #353c5a;
+    background-color: var(--interactive-hover);
 }
 
 .product-item {

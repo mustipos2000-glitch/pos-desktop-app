@@ -93,7 +93,7 @@ const GroupFormModal = ({
       onClick={onClose}
     >
       <div
-        className="bg-pos-bg-tertiary  max-h-[90vh] overflow-y-auto max-w-2xl"
+        className="bg-pos-bg-tertiary rounded-lg max-h-[90vh] overflow-y-auto max-w-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >

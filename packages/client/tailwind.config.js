@@ -25,36 +25,38 @@ module.exports = {
           800: '#1e293b',
           900: '#0f172a',
         },
-        // Custom POS colors based on existing design
+        // Custom POS colors - POSPOINT Theme
         pos: {
           // Main backgrounds
-          'bg-primary': '#1a1d2e',    // Main background
-          'bg-secondary': '#252a3f',   // Secondary background
-          'bg-tertiary': '#2d3348',    // Card backgrounds
-          'bg-quaternary': '#1e2139',  // Order panel background
-          'bg-accent': '#1e2332',      // Sub-products section
-          
+          'bg-primary': '#263544',      // Main background (from reference)
+          'bg-secondary': '#445b71',    // Secondary background gradient
+          'bg-tertiary': '#344963',     // Panel/Card backgrounds (from reference)
+          'bg-quaternary': '#1b2836',   // Darker background variant
+          'bg-accent': '#1b2430',       // Accent background
+
           // Borders and dividers
-          'border-primary': '#2d3348',
-          'border-secondary': '#3d4461',
-          'border-accent': '#3f4765',
-          'border-light': '#2a2e47',
-          
+          'border-primary': '#a3aebc',  // Primary border (from reference)
+          'border-secondary': '#3b4f66', // Secondary border
+          'border-accent': '#ffffff',   // Accent border (white from reference)
+          'border-light': '#2a3544',    // Light border variant
+
           // Text colors
-          'text-primary': '#ffffff',
-          'text-secondary': '#e5e7eb',
-          'text-muted': '#8b92b0',
-          'text-disabled': '#6b7280',
-          
-          // Interactive elements
-          'interactive-primary': '#3d4461',
-          'interactive-hover': '#4a5170',
-          'interactive-active': '#5a6282',
-          
+          'text-primary': '#f5f5f7',    // Primary text (from reference)
+          'text-secondary': '#e5e7eb',  // Secondary text
+          'text-muted': '#cbd5f5',      // Muted text
+          'text-disabled': '#8b92b0',   // Disabled text
+
+          // Interactive elements (buttons, cards, etc.)
+          'interactive-primary': '#445b71',     // Primary button/card (from reference)
+          'interactive-hover': '#5a7189',       // Hover state (lighter)
+          'interactive-active': '#3b4f66',      // Active/pressed state (darker)
+          'interactive-border': 'rgba(255,255,255,0.35)', // Interactive border
+          'interactive-border-hover': '#ffffff', // Hover border
+
           // Status colors
           'success': '#10b981',
           'warning': '#f59e0b',
-          'error': '#ef4444',
+          'error': '#ef4444',          // Error/Danger (from reference)
           'info': '#3b82f6',
         }
       },
