@@ -15,8 +15,8 @@ const SettingsModal = ({ onClose }) => {
   const [editingPrinter, setEditingPrinter] = useState(null);
   const [printerForm, setPrinterForm] = useState({
     name: '',
-    type: 'serial',
-    connection_string: ''
+    type: 'EPSON',
+    connection_string: 'tcp://192.168.1.100:9100'
   });
   const [printerFormErrors, setPrinterFormErrors] = useState({});
   const [deleteConfirmation, setDeleteConfirmation] = useState({
@@ -24,6 +24,7 @@ const SettingsModal = ({ onClose }) => {
     printerId: null,
     printerName: ''
   });
+  const [testingPrinter, setTestingPrinter] = useState(null);
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const isSuperAdmin = currentUser.role === 'Super Admin';
 
@@ -169,6 +170,28 @@ const SettingsModal = ({ onClose }) => {
     } catch (error) {
       console.error('Error deleting printer:', error);
       closeDeleteConfirmation();
+    }
+  };
+
+  const handleTestPrinter = async (printerId) => {
+    setTestingPrinter(printerId);
+    try {
+      const response = await fetch(`http://localhost:5000/api/printers/${printerId}/test`, {
+        method: 'POST'
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('✅ Test print sent successfully! Check your printer.');
+      } else {
+        alert('❌ Test print failed: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error testing printer:', error);
+      alert('❌ Test print failed: ' + error.message);
+    } finally {
+      setTestingPrinter(null);
     }
   };
 
@@ -382,7 +405,7 @@ const SettingsModal = ({ onClose }) => {
                   onClick={() => {
                     setShowAddPrinter(true);
                     setEditingPrinter(null);
-                    setPrinterForm({ name: '', type: 'serial', connection_string: '' });
+                    setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
                   }}
                   className="add-btn"
                 >
@@ -427,6 +450,14 @@ const SettingsModal = ({ onClose }) => {
                           </td>
                           <td>
                             <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleTestPrinter(printer.id)}
+                                disabled={testingPrinter === printer.id}
+                                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                title="Test printer"
+                              >
+                                {testingPrinter === printer.id ? '⏳ Testing...' : '🖨️ Test'}
+                              </button>
                               <IconButton
                                 icon="✏️"
                                 className="edit"
@@ -492,18 +523,23 @@ const SettingsModal = ({ onClose }) => {
                           onChange={handlePrinterFormChange}
                           className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${printerFormErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
                         >
-                          <option value="serial">Serial Printer</option>
-                          <option value="windows">Windows Printer</option>
-                          <option value="thermal">Thermal Printer</option>
+                          <option value="EPSON">EPSON (Most Common)</option>
+                          <option value="STAR">STAR Micronics</option>
+                          <option value="TANCA">TANCA</option>
+                          <option value="DARUMA">DARUMA</option>
+                          <option value="BROTHER">BROTHER</option>
                         </select>
                         {printerFormErrors.type && (
                           <p className="text-pos-error text-xs mt-1">{printerFormErrors.type}</p>
                         )}
+                        <p className="text-pos-text-muted text-xs mt-1">
+                          Select your thermal printer brand. If unsure, try EPSON first.
+                        </p>
                       </div>
                       
                       <div>
                         <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                          Connection String
+                          Connection String <span className="text-pos-error">*</span>
                         </label>
                         <input 
                           type="text" 
@@ -511,8 +547,13 @@ const SettingsModal = ({ onClose }) => {
                           value={printerForm.connection_string}
                           onChange={handlePrinterFormChange}
                           className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" 
-                          placeholder="e.g., COM3, \\\\server\\printer, 192.168.1.100"
+                          placeholder="tcp://192.168.1.100:9100"
                         />
+                        <div className="text-pos-text-muted text-xs mt-1 space-y-1">
+                          <p><strong>Network:</strong> tcp://192.168.1.100:9100</p>
+                          <p><strong>USB (Windows):</strong> \\.\COM3</p>
+                          <p><strong>USB (Linux):</strong> /dev/usb/lp0</p>
+                        </div>
                       </div>
                     </div>
                     

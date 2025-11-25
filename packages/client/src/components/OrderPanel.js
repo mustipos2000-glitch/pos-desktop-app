@@ -6,6 +6,7 @@ import DiscountModal from "./DiscountModal";
 import NoteModal from "./NoteModal";
 import Toast from "./Toast";
 import ApiService from "../services/api";
+import { printerService } from "../services/printerService";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart }) => {
   const [showReceipt, setShowReceipt] = useState(false);
@@ -14,6 +15,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const [isProcessing, setIsProcessing] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("error");
+  const [printers, setPrinters] = useState([]);
+  const [completedOrderId, setCompletedOrderId] = useState(null);
 
 
 
@@ -27,6 +30,19 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteModalTitle, setNoteModalTitle] = useState("");
   const [currentNoteValue, setCurrentNoteValue] = useState("");
+
+  // Fetch printers on component mount
+  useEffect(() => {
+    const fetchPrinters = async () => {
+      try {
+        const response = await printerService.getAllPrinters();
+        setPrinters(response.data || []);
+      } catch (error) {
+        console.error('Error fetching printers:', error);
+      }
+    };
+    fetchPrinters();
+  }, []);
 
   // Track last added item
   useEffect(() => {
@@ -177,6 +193,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         })),
       };
 
+      let finalOrderId = currentOrderId;
+
       // If we have a currentOrderId, update the existing order
       // Otherwise create a new order
       if (currentOrderId) {
@@ -208,6 +226,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         
         const response = await ApiService.createOrder(orderData);
         
+        // Store the new order ID
+        if (response && response.data && response.data.id) {
+          finalOrderId = response.data.id;
+        }
+        
         // Edge case: Update table status even for new orders
         if (selectedTable) {
           try {
@@ -223,6 +246,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       
       // Reset order-level note after successful order creation
       setNote("");
+      
+      // Store the order ID for printing
+      setCompletedOrderId(finalOrderId);
       
       setShowPaymentModal(false);
       setShowReceipt(true);
@@ -422,18 +448,73 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     
     }
 
-  const handlePrintReceipt = () => {
+  const handlePrintReceipt = async () => {
+    // Try to print to thermal printers assigned to products
+    if (printers.length > 0 && completedOrderId && cart.length > 0) {
+      try {
+        // Collect all unique printer names from cart items
+        const printerNames = new Set();
+        cart.forEach(item => {
+          if (item.printer1) printerNames.add(item.printer1);
+          if (item.printer2) printerNames.add(item.printer2);
+          if (item.printer3) printerNames.add(item.printer3);
+        });
+
+        // If no printers assigned to products, use browser print
+        if (printerNames.size === 0) {
+          console.log('No printers assigned to products. Using browser print.');
+          window.print();
+        } else {
+          // Print to each assigned printer
+          const printPromises = [];
+          printerNames.forEach(printerName => {
+            // Find printer by name
+            const printer = printers.find(p => p.name === printerName && p.is_active);
+            if (printer) {
+              console.log(`Sending receipt to printer: ${printer.name}`);
+              printPromises.push(
+                printerService.printReceipt(printer.id, completedOrderId)
+                  .catch(err => console.error(`Failed to print to ${printer.name}:`, err))
+              );
+            } else {
+              console.warn(`Printer "${printerName}" not found or not active`);
+            }
+          });
+
+          // Wait for all print jobs to complete (or fail)
+          const results = await Promise.allSettled(printPromises);
+          const successCount = results.filter(r => r.status === 'fulfilled').length;
+          
+          if (successCount > 0) {
+            setToastType("success");
+            setToastMessage(`Receipt sent to ${successCount} printer(s) successfully!`);
+          } else {
+            setToastType("error");
+            setToastMessage("Failed to print to thermal printers. Using browser print.");
+            window.print();
+          }
+        }
+      } catch (error) {
+        console.error('Error printing to thermal printer:', error);
+        setToastType("error");
+        setToastMessage("Failed to print to thermal printer. Using browser print.");
+        window.print();
+      }
+    } else {
+      // No printer configured or no order, use browser print
+      window.print();
+    }
+    
     setShowReceipt(false);
     setCart([]);
     setDiscount(0);
     setNote(""); // Reset order-level note after order completion
+    setCompletedOrderId(null);
     
     // Call onOrderComplete to clear table and order selection in parent
     if (onOrderComplete) {
       onOrderComplete();
     }
-    
-    window.print();
   };
 
   
