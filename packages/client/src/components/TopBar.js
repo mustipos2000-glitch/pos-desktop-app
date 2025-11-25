@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import UnifiedTableModal from './UnifiedTableModal';
 import ApiService from '../services/api';
+import { printerService } from '../services/printerService';
 
 const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount }) => {
   const [showTableModal, setShowTableModal] = useState(false);
   const [kitchenOrderCount, setKitchenOrderCount] = useState(0);
+  const [printers, setPrinters] = useState([]);
 
   const handleTableClick = () => {
     setShowTableModal(true);
@@ -26,6 +28,56 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     }
 
     await onSendToKitchen();
+    
+    // Try to print kitchen order to thermal printers assigned to products
+    if (printers.length > 0 && cart.length > 0) {
+      try {
+        // Collect all unique printer names from cart items
+        const printerNames = new Set();
+        cart.forEach(item => {
+          if (item.printer1) printerNames.add(item.printer1);
+          if (item.printer2) printerNames.add(item.printer2);
+          if (item.printer3) printerNames.add(item.printer3);
+        });
+
+        // If no printers assigned to products, don't print
+        if (printerNames.size === 0) {
+          console.log('No printers assigned to products in cart');
+          fetchKitchenOrderCount();
+          return;
+        }
+
+        // Get the current order ID from the API
+        const orderResponse = await ApiService.getOrderByTableId(selectedTable.id);
+        if (orderResponse.data && orderResponse.data.id) {
+          const orderId = orderResponse.data.id;
+          
+          // Print to each assigned printer
+          const printPromises = [];
+          printerNames.forEach(printerName => {
+            // Find printer by name
+            const printer = printers.find(p => p.name === printerName && p.is_active);
+            if (printer) {
+              console.log(`Sending kitchen order to printer: ${printer.name}`);
+              printPromises.push(
+                printerService.printKitchenOrder(printer.id, orderId)
+                  .catch(err => console.error(`Failed to print to ${printer.name}:`, err))
+              );
+            } else {
+              console.warn(`Printer "${printerName}" not found or not active`);
+            }
+          });
+
+          // Wait for all print jobs to complete (or fail)
+          await Promise.allSettled(printPromises);
+          console.log(`Kitchen order sent to ${printPromises.length} printer(s)`);
+        }
+      } catch (error) {
+        console.error('Error printing kitchen order to thermal printer:', error);
+        // Don't block the operation if printing fails
+      }
+    }
+    
     // Refresh kitchen order count after sending to kitchen
     fetchKitchenOrderCount();
   };
@@ -44,6 +96,17 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
   useEffect(() => {
     // Fetch only once on component mount
     fetchKitchenOrderCount();
+    
+    // Fetch printers
+    const fetchPrinters = async () => {
+      try {
+        const response = await printerService.getAllPrinters();
+        setPrinters(response.data || []);
+      } catch (error) {
+        console.error('Error fetching printers:', error);
+      }
+    };
+    fetchPrinters();
   }, []);
 
   // Expose fetchKitchenOrderCount to parent via callback
