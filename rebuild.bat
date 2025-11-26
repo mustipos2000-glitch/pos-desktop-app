@@ -16,7 +16,8 @@ echo Done!
 echo.
 
 echo Step 3: Rebuilding better-sqlite3 for Electron...
-call npm rebuild better-sqlite3 --build-from-source
+call npx electron-rebuild --module-dir node_modules/better-sqlite3 --force --arch=x64 --version 38.7.1 --use-prebuilt-binaries=false
+@REM call npm rebuild better-sqlite3 --build-from-source
 echo Done!
 echo.
 

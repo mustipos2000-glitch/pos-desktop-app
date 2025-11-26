@@ -136,7 +136,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
 
 
   return (
-    <div className="flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden relative mr-1 rounded-lg">
+    <div className="mt-1 mr-2 ml-2 mb-2 flex-1 bg-pos-bg-secondary flex flex-col overflow-hidden relative mr-1 rounded-lg">
 
 
       {/* Main products grid */}
@@ -197,7 +197,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
       {/* Sub-products section */}
       {(selectedProductId && (subProducts.length > 0 || loadingSubProducts)) && (
         <div
-          className="p-1 max-h-[20vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-2 bg-pos-bg-secondary"
+          className="p-1 max-h-[20vh] overflow-y-auto scrollbar-custom animate-slideUp border-t pt-2 bg-pos-bg-tertiary"
           ref={subProductsRef}
         >
           {loadingSubProducts ? (
@@ -212,7 +212,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                 {subProducts.map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className="cursor-pointer transition-all duration-200 flex items-center justify-between px-2 py-2 rounded hover:brightness-110 hover:scale-[1.02]"
+                    className="cursor-pointer transition-all duration-200 flex items-center justify-between px-2 py-2 rounded hover:brightness-110 hover:scale-[1.02] mb-2"
                     style={{
                       borderWidth: "1px",
                       borderStyle: "solid",
