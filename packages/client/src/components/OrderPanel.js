@@ -120,7 +120,18 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     cart.reduce((sum, item) => {
       const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
       const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
-      return sum + (price * quantity);
+      let itemTotal = price * quantity;
+      
+      // Add sub-products to total
+      if (item.subProducts && item.subProducts.length > 0) {
+        item.subProducts.forEach(subItem => {
+          const subPrice = typeof subItem.price === 'number' && !isNaN(subItem.price) ? subItem.price : 0;
+          const subQty = typeof subItem.quantity === 'number' && !isNaN(subItem.quantity) ? subItem.quantity : 0;
+          itemTotal += subPrice * subQty;
+        });
+      }
+      
+      return sum + itemTotal;
     }, 0);
 
   // const calculateTax = () =>
@@ -184,13 +195,40 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         card_amount: paymentData.cardAmount || 0,
         total_paid: paymentData.totalPaid,
         change_due: paymentData.changeDue || 0,
-        details: cart.map((item) => ({
-          product_id: item.id,
-          qty: item.quantity,
-          total: item.price * item.quantity,
-          notes: item.notes || null,
-          discount: item.discount || 0,
-        })),
+        details: (() => {
+          const allDetails = [];
+          let detailIndex = 0;
+          
+          cart.forEach((item) => {
+            const parentDetailIndex = detailIndex;
+            
+            // Add parent item
+            allDetails.push({
+              product_id: item.id,
+              qty: item.quantity,
+              total: item.price * item.quantity,
+              notes: item.notes || null,
+              discount: item.discount || 0,
+            });
+            detailIndex++;
+            
+            // Add sub-products with correct parent index
+            if (item.subProducts && item.subProducts.length > 0) {
+              item.subProducts.forEach(subItem => {
+                allDetails.push({
+                  product_id: subItem.id,
+                  qty: subItem.quantity,
+                  total: subItem.price * subItem.quantity,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ''}`,
+                  discount: 0,
+                });
+                detailIndex++;
+              });
+            }
+          });
+          
+          return allDetails;
+        })(),
       };
 
       let finalOrderId = currentOrderId;
@@ -342,7 +380,18 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       const subTotal = itemsToMove.reduce((sum, item) => {
         const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
         const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
-        return sum + (price * quantity);
+        let itemTotal = price * quantity;
+        
+        // Add sub-products to total
+        if (item.subProducts && item.subProducts.length > 0) {
+          item.subProducts.forEach(subItem => {
+            const subPrice = typeof subItem.price === 'number' && !isNaN(subItem.price) ? subItem.price : 0;
+            const subQty = typeof subItem.quantity === 'number' && !isNaN(subItem.quantity) ? subItem.quantity : 0;
+            itemTotal += subPrice * subQty;
+          });
+        }
+        
+        return sum + itemTotal;
       }, 0);
 
       // Check if destination table has an existing order
@@ -363,13 +412,40 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         total: subTotal,
         discount: 0,
         table_id: destinationTable.id,
-        details: itemsToMove.map((item) => ({
-          product_id: item.id,
-          qty: item.quantity,
-          total: item.price * item.quantity,
-          notes: item.notes || null,
-          discount: item.discount || 0,
-        })),
+        details: (() => {
+          const allDetails = [];
+          let detailIndex = 0;
+          
+          itemsToMove.forEach((item) => {
+            const parentDetailIndex = detailIndex;
+            
+            // Add parent item
+            allDetails.push({
+              product_id: item.id,
+              qty: item.quantity,
+              total: item.price * item.quantity,
+              notes: item.notes || null,
+              discount: item.discount || 0,
+            });
+            detailIndex++;
+            
+            // Add sub-products with correct parent index
+            if (item.subProducts && item.subProducts.length > 0) {
+              item.subProducts.forEach(subItem => {
+                allDetails.push({
+                  product_id: subItem.id,
+                  qty: subItem.quantity,
+                  total: subItem.price * subItem.quantity,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ''}`,
+                  discount: 0,
+                });
+                detailIndex++;
+              });
+            }
+          });
+          
+          return allDetails;
+        })(),
       };
 
       if (destinationOrderId) {
@@ -574,79 +650,146 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
             return (
-              <div
-                key={cartItemId}
-                onClick={() => handleSelect(cartItemId)}
-                className={`grid grid-cols-12 mb-1 gap-3 items-center text-sm py-1 px-2 cursor-pointer ${bgColor}`}
-              >
-                {/* Product Name */}
-                <div className={`font-light col-span-4 ${textColor} flex items-center gap-1`}>
-                  <span>
-                    {item.name
-                      ? item.name.split(" ").length > 1
-                        ? item.name.split(" ").slice(0, 5).join(" ") + (item.name.split(" ").length > 5 ? "..." : "")
-                        : item.name.length > 20
-                          ? item.name.slice(0, 14) + "..."
-                          : item.name
-                      : ""}
-                  </span>
-                  {item.notes && (
-                    <span className="text-xs" title={item.notes}>📝</span>
+              <div key={cartItemId} className="mb-1">
+                {/* Parent Product Row - Expanded to include sub-products */}
+                <div
+                  onClick={() => handleSelect(cartItemId)}
+                  className={`cursor-pointer ${bgColor}`}
+                >
+                  {/* Main Product Info */}
+                  <div className="grid grid-cols-12 gap-3 items-center text-sm py-1 px-2">
+                    {/* Product Name */}
+                    <div className={`font-light col-span-4 ${textColor} flex items-center gap-1`}>
+                      <span>
+                        {item.name
+                          ? item.name.split(" ").length > 1
+                            ? item.name.split(" ").slice(0, 5).join(" ") + (item.name.split(" ").length > 5 ? "..." : "")
+                            : item.name.length > 20
+                              ? item.name.slice(0, 14) + "..."
+                              : item.name
+                          : ""}
+                      </span>
+                      {item.notes && (
+                        <span className="text-xs" title={item.notes}>📝</span>
+                      )}
+                    </div>
+
+                    {/* Quantity Controls */}
+                    <div className={`flex items-center col-span-2 gap-2 justify-center ${textColor}`}>
+                      <button
+                        className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm font-semibold justify-center hover:bg-pos-interactive-hover`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateQuantity(cartItemId, item.quantity - 1);
+                        }}
+                      >
+                        -
+                      </button>
+                      <span>{item.quantity}</span>
+                      <button
+                        className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm justify-center hover:bg-pos-interactive-hover`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onUpdateQuantity(cartItemId, item.quantity + 1);
+                        }}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    {/* Price Section */}
+                    <div className="flex gap-2 col-span-6 items-end ps-4 text-center ">
+                      {/* Actual Price (before discount) */}
+                      <span className="text-xs line-through ">
+                        {item.originalPrice
+                          ? (item.originalPrice * item.quantity).toFixed(2)
+                          : ""}
+                      </span>
+
+                      {/* Discount Info */}
+                      {item.appliedDiscount && (
+                        <span className="text-xs italic text-white">
+                          {item.appliedDiscount}
+                        </span>
+                      )}
+
+                      {/* Final Price after discount */}
+                      <span className={`text-xs mt-1 ${textColor}`}>
+                        €{(item.price * item.quantity).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Sub-Products - Inside the same parent row with same grid structure */}
+                  {item.subProducts && item.subProducts.length > 0 && (
+                    <div className="pb-1">
+                      {item.subProducts.map((subItem, subIndex) => {
+                        const isFree = !subItem.price || subItem.price === 0;
+                        
+                        return (
+                          <div
+                            key={subItem.cartItemId}
+                            className={`grid grid-cols-12 gap-3 items-center text-xs py-0.5 px-2 ${textColor}`}
+                          >
+                            {/* Sub-product Name with prefix - col-span-4 like parent */}
+                            <div className="col-span-4 flex items-center gap-1 pl-4">
+                              <span className="font-light">{subItem.name}</span>
+                            </div>
+
+                            {/* Quantity Controls - col-span-2 like parent */}
+                            <div className="col-span-2 flex items-center gap-2 justify-center">
+                              <button
+                                className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-xs font-semibold justify-center hover:bg-pos-interactive-hover`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Decrease sub-product quantity
+                                  const newCart = [...cart];
+                                  const parentIndex = cart.findIndex(c => c.cartItemId === cartItemId);
+                                  if (parentIndex !== -1 && newCart[parentIndex].subProducts[subIndex]) {
+                                    if (newCart[parentIndex].subProducts[subIndex].quantity > 1) {
+                                      newCart[parentIndex].subProducts[subIndex].quantity -= 1;
+                                    } else {
+                                      // Remove sub-product if quantity becomes 0
+                                      newCart[parentIndex].subProducts.splice(subIndex, 1);
+                                    }
+                                    setCart(newCart);
+                                  }
+                                }}
+                              >
+                                -
+                              </button>
+                              <span>{subItem.quantity}</span>
+                              <button
+                                className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-xs justify-center hover:bg-pos-interactive-hover`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Increase sub-product quantity
+                                  const newCart = [...cart];
+                                  const parentIndex = cart.findIndex(c => c.cartItemId === cartItemId);
+                                  if (parentIndex !== -1 && newCart[parentIndex].subProducts[subIndex]) {
+                                    newCart[parentIndex].subProducts[subIndex].quantity += 1;
+                                    setCart(newCart);
+                                  }
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            {/* Sub-product Price - col-span-6 like parent */}
+                            <div className="col-span-4 flex items-center gap-2 justify-center">
+                              {!isFree && (
+                                <span>€{(subItem.price * subItem.quantity).toFixed(2)}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-
-                {/* Quantity Controls */}
-
-                <div className={`flex items-center col-span-2 gap-2 justify-center ${textColor}`}>
-                  <button
-                    className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm font-semibold justify-center hover:bg-pos-interactive-hover`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpdateQuantity(cartItemId, item.quantity - 1);
-                    }}
-                  >
-                    -
-                  </button>
-                  <span>{item.quantity}</span>
-                  <button
-                    className={`bg-pos-interactive-primary ${textColor} px-1.5 flex items-center text-sm justify-center hover:bg-pos-interactive-hover`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpdateQuantity(cartItemId, item.quantity + 1);
-                    }}
-                  >
-                    +
-                  </button>
-                </div>
-
-
-                {/* Price Section */}
-
-                <div className="flex gap-2 col-span-6 items-end ps-4 text-center ">
-                  {/* Actual Price (before discount) */}
-                  <span className="text-xs line-through ">
-                    {item.originalPrice
-                      ? (item.originalPrice * item.quantity).toFixed(2)
-                      : ""}
-                  </span>
-
-                  {/* Discount Info */}
-                  {item.appliedDiscount && (
-                    <span className="text-xs italic text-white">
-                      {item.appliedDiscount}
-                    </span>
-                  )}
-
-                  {/* Final Price after discount */}
-                  <span className={`text-xs mt-1 ${textColor}`}>
-                    {(item.price * item.quantity).toFixed(2)}
-                  </span>
-                </div>
-
               </div>
             );
-
-
           })
         )}
       </div>
