@@ -53,3 +53,5 @@ package-lock.json
 seeder.js
 seed-tables.js
 uploads/
+*.txt
+package-lock.json

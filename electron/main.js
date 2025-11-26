@@ -3,7 +3,7 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 // Check if running in development or production
-const isDev = !app.isPackaged;
+const isDev = !app.isPackaged && process.env.NODE_ENV !== 'production';
 let serverProcess = null;
 
 function startServer() {
@@ -12,9 +12,18 @@ function startServer() {
     return;
   }
 
-  // In production, start the Node.js server from unpacked location
-  const serverPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'server', 'server.js');
-  const serverDir = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'server');
+  // In production, determine server path based on whether app is packaged
+  let serverPath, serverDir;
+  
+  if (app.isPackaged) {
+    // Packaged app - use asar.unpacked location
+    serverPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'server', 'server.js');
+    serverDir = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'server');
+  } else {
+    // Not packaged but in production mode (for testing)
+    serverPath = path.join(__dirname, '..', 'packages', 'server', 'server.js');
+    serverDir = path.join(__dirname, '..', 'packages', 'server');
+  }
   
   console.log('Starting server...');
   console.log('Server path:', serverPath);
