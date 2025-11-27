@@ -87,7 +87,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery 
       category: subProduct.group_name || 'Subproduct',
       image: subProduct.image || '📦',
       color: subProduct.color || '#3b82f6',
-    });
+    }, 1, true); // Pass true as third parameter to indicate it's a sub-product
   };
 
   const isImageUrl = (image) => {

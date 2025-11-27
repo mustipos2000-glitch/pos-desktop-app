@@ -22,6 +22,8 @@ const POSScreen = () => {
   const [refreshKitchenCount, setRefreshKitchenCount] = useState(null);
   const [showSplitCartModal, setShowSplitCartModal] = useState(false);
   const [splitCartSelectedItems, setSplitCartSelectedItems] = useState([]);
+  const [lastClickedProductId, setLastClickedProductId] = useState(null);
+  const [activeParentRowIndex, setActiveParentRowIndex] = useState(null);
 
   // Auto-save cart to table whenever cart changes and table is selected
   useEffect(() => {
@@ -35,7 +37,18 @@ const POSScreen = () => {
         const subTotal = cart.reduce((sum, item) => {
           const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
           const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
-          return sum + (price * quantity);
+          let itemTotal = price * quantity;
+          
+          // Add sub-products to total
+          if (item.subProducts && item.subProducts.length > 0) {
+            item.subProducts.forEach(subItem => {
+              const subPrice = typeof subItem.price === 'number' && !isNaN(subItem.price) ? subItem.price : 0;
+              const subQty = typeof subItem.quantity === 'number' && !isNaN(subItem.quantity) ? subItem.quantity : 0;
+              itemTotal += subPrice * subQty;
+            });
+          }
+          
+          return sum + itemTotal;
         }, 0);
 
         const orderData = {
@@ -46,13 +59,40 @@ const POSScreen = () => {
           total: subTotal,
           discount: 0,
           table_id: selectedTable.id,
-          details: cart.map((item) => ({
-            product_id: item.id,
-            qty: item.quantity,
-            total: item.price * item.quantity,
-            notes: item.notes || null,
-            discount: item.discount || 0,
-          })),
+          details: (() => {
+            const allDetails = [];
+            let detailIndex = 0;
+            
+            cart.forEach((item) => {
+              const parentDetailIndex = detailIndex;
+              
+              // Add parent item
+              allDetails.push({
+                product_id: item.id,
+                qty: item.quantity,
+                total: item.price * item.quantity,
+                notes: item.notes || null,
+                discount: item.discount || 0,
+              });
+              detailIndex++;
+              
+              // Add sub-products with correct parent index
+              if (item.subProducts && item.subProducts.length > 0) {
+                item.subProducts.forEach(subItem => {
+                  allDetails.push({
+                    product_id: subItem.id,
+                    qty: subItem.quantity,
+                    total: subItem.price * subItem.quantity,
+                    notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ''}`,
+                    discount: 0,
+                  });
+                  detailIndex++;
+                });
+              }
+            });
+            
+            return allDetails;
+          })(),
         };
 
         if (currentOrderId) {
@@ -120,6 +160,9 @@ const POSScreen = () => {
           image: product.image || '📦',
           color: product.color || '#3b82f6',
           sub_product_group: product.sub_product_group || false,
+          printer1: product.printer1 || '',
+          printer2: product.printer2 || '',
+          printer3: product.printer3 || '',
         }));
       
         
@@ -132,33 +175,114 @@ const POSScreen = () => {
     };
     fetchData();
   }, []);
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = (product, quantity = 1, isSubProduct = false) => {
   const finalQuantity = quantity > 0 ? quantity : 1;
   
-  // Create a unique cart item ID that combines product ID with name to handle sub-products
-  // This ensures that products and sub-products with the same ID are treated as separate items
-  const cartItemId = `${product.id}_${product.name}`;
+  // If it's a sub-product, handle special logic
+  if (isSubProduct && cart.length > 0 && lastClickedProductId && activeParentRowIndex !== null) {
+    const newCart = [...cart];
+    const targetParent = newCart[activeParentRowIndex];
+    
+    // Verify the active parent still exists and matches
+    if (targetParent && targetParent.id === lastClickedProductId) {
+      
+      // If parent has quantity > 1, split it
+      if (targetParent.quantity > 1) {
+        // Decrease parent quantity by 1
+        newCart[activeParentRowIndex] = {
+          ...targetParent,
+          quantity: targetParent.quantity - 1,
+          subProducts: targetParent.subProducts || []
+        };
+        
+        // Create new row with qty 1 and the sub-product
+        const newParentCartItemId = `${targetParent.id}_${targetParent.name}_${Date.now()}`;
+        const subProductCartItemId = `${product.id}_${product.name}_${Date.now()}`;
+        
+        const newParentRow = {
+          ...targetParent,
+          quantity: 1,
+          cartItemId: newParentCartItemId,
+          subProducts: [{
+            ...product,
+            quantity: finalQuantity,
+            cartItemId: subProductCartItemId,
+            isSubProduct: true
+          }]
+        };
+        
+        newCart.push(newParentRow);
+        // Update active parent to the new row
+        setActiveParentRowIndex(newCart.length - 1);
+        setCart(newCart);
+        return;
+      }
+      
+      // Parent has qty 1 - add/update sub-product in active parent
+      // Initialize subProducts array if it doesn't exist
+      if (!targetParent.subProducts) {
+        targetParent.subProducts = [];
+      }
+      
+      // Check if this sub-product already exists in active parent
+      const existingSubProduct = targetParent.subProducts.find(
+        subItem => subItem.id === product.id && subItem.name === product.name
+      );
+      
+      if (existingSubProduct) {
+        // Same sub-product - update quantity
+        existingSubProduct.quantity += finalQuantity;
+      } else {
+        // Different sub-product - add to active parent
+        const cartItemId = `${product.id}_${product.name}_${Date.now()}`;
+        targetParent.subProducts.push({
+          ...product,
+          quantity: finalQuantity,
+          cartItemId,
+          isSubProduct: true
+        });
+      }
+      
+      setCart(newCart);
+      return;
+    }
+  }
   
-  const existingItem = cart.find(item => {
-    const existingCartItemId = `${item.id}_${item.name}`;
-    return existingCartItemId === cartItemId;
-  });
+  // For regular products, track which product was clicked and set as active parent
+  setLastClickedProductId(product.id);
+  
+  // Find existing item with same product ID WITHOUT sub-products
+  let existingItemWithoutSubProducts = -1;
+  for (let i = cart.length - 1; i >= 0; i--) {
+    if (cart[i].id === product.id && 
+        !cart[i].isSubProduct && 
+        (!cart[i].subProducts || cart[i].subProducts.length === 0)) {
+      existingItemWithoutSubProducts = i;
+      break;
+    }
+  }
 
-  if (existingItem) {
-    setCart(cart.map(item => {
-      const itemCartId = `${item.id}_${item.name}`;
-      return itemCartId === cartItemId
+  if (existingItemWithoutSubProducts !== -1) {
+    // Update the product without sub-products and set as active
+    setActiveParentRowIndex(existingItemWithoutSubProducts);
+    setCart(cart.map((item, index) => {
+      return index === existingItemWithoutSubProducts
         ? { ...item, quantity: item.quantity + finalQuantity }
         : item;
     }));
   } else {
-    setCart([...cart, { ...product, quantity: finalQuantity, cartItemId }]);
+    // Add new product and set as active parent
+    const newCartItemId = `${product.id}_${product.name}_${Date.now()}`;
+    const newCart = [...cart, { ...product, quantity: finalQuantity, cartItemId: newCartItemId, isSubProduct: false, subProducts: [] }];
+    setCart(newCart);
+    setActiveParentRowIndex(newCart.length - 1); // Set the newly added item as active
   }
 };
 
 
   const updateQuantity = async (cartItemId, quantity) => {
     if (quantity <= 0) {
+      // Remove item from cart (this will also remove its sub-products)
       const newCart = cart.filter(item => {
         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
         return itemCartId !== cartItemId;
@@ -181,6 +305,7 @@ const POSScreen = () => {
         }
       }
     } else {
+      // Simple quantity update - no splitting
       setCart(cart.map(item => {
         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
         return itemCartId === cartItemId ? { ...item, quantity } : item;
@@ -238,9 +363,26 @@ const POSScreen = () => {
         setCurrentOrderId(existingOrder.id);
         
         // Convert order details to cart format
-        const existingCartItems = existingOrder.details.map(detail => {
-          // Find the product in our products list to get category and original price
-          const product = products.find(p => p.id === detail.product_id);
+        // Fetch sub-products data for proper reconstruction
+        const existingCartItems = await Promise.all(existingOrder.details.map(async (detail, index) => {
+          const notes = detail.notes || '';
+          const isMarkedAsSubProduct = notes.startsWith('__SUBPRODUCT_OF_');
+          
+          // For sub-products, fetch from sub_products table
+          let itemData;
+          if (isMarkedAsSubProduct) {
+            try {
+              const subProductResponse = await ApiService.getSubProductById(detail.product_id);
+              itemData = subProductResponse.data;
+            } catch (error) {
+              console.error('Error fetching sub-product:', error);
+              // Fallback to product if sub-product not found
+              itemData = products.find(p => p.id === detail.product_id);
+            }
+          } else {
+            // Regular product
+            itemData = products.find(p => p.id === detail.product_id);
+          }
           
           // Calculate current unit price from total with validation
           const detailTotal = typeof detail.total === 'number' ? detail.total : 0;
@@ -252,17 +394,12 @@ const POSScreen = () => {
           let appliedDiscount = null;
           
           if (detail.discount && detail.discount > 0) {
-            // The discount is stored as the total discount amount for all quantities
             const discountPerUnit = detail.discount / detail.qty;
             originalPrice = currentUnitPrice + discountPerUnit;
             
-            // Try to determine if it was a percentage or fixed discount
-            // If the original price matches the product price, show the discount info
-            if (product && Math.abs(originalPrice - product.price) < 0.01) {
-              // Calculate what percentage this discount represents
+            if (itemData && Math.abs(originalPrice - itemData.price) < 0.01) {
               const discountPercent = (detail.discount / (originalPrice * detail.qty)) * 100;
               
-              // If it's close to a round percentage, show as percentage
               if (Math.abs(discountPercent - Math.round(discountPercent)) < 0.1) {
                 appliedDiscount = `${Math.round(discountPercent)}%`;
               } else {
@@ -273,25 +410,68 @@ const POSScreen = () => {
             }
           }
           
-          const productName = detail.product_name || detail.name || 'Unknown';
+          const productName = itemData?.name || detail.product_name || detail.name || 'Unknown';
+          const actualNotes = isMarkedAsSubProduct ? notes.replace(/^__SUBPRODUCT_OF_\d+__/, '') : notes;
+          
           return {
             id: detail.product_id,
             name: productName,
             price: isNaN(currentUnitPrice) ? 0 : currentUnitPrice,
             quantity: detailQty,
-            notes: detail.notes || '',
+            notes: actualNotes,
             discount: typeof detail.discount === 'number' ? detail.discount : 0,
             originalPrice: originalPrice,
             appliedDiscount: appliedDiscount,
-            color: detail.color || product?.color || '#3b82f6',
-            image: detail.image || product?.image || '📦',
-            category: product?.category || 'Uncategorized',
-            cartItemId: `${detail.product_id}_${productName}`,
+            color: detail.color || itemData?.color || '#3b82f6',
+            image: detail.image || itemData?.image || '📦',
+            category: itemData?.category || 'Uncategorized',
+            cartItemId: `${detail.product_id}_${productName}_${index}`,
+            isSubProduct: false,
+            subProducts: [],
+            _isMarkedAsSubProduct: isMarkedAsSubProduct,
+            _originalNotes: notes,
+            _detailIndex: index
           };
+        }));
+        
+        // Group items with sub-product markers
+        const finalCart = [];
+        const subProductsByParent = new Map();
+        
+        existingCartItems.forEach((item) => {
+          if (item._isMarkedAsSubProduct) {
+            // Extract parent index from marker
+            const match = item._originalNotes.match(/^__SUBPRODUCT_OF_(\d+)__/);
+            if (match) {
+              const parentIndex = parseInt(match[1]);
+              if (!subProductsByParent.has(parentIndex)) {
+                subProductsByParent.set(parentIndex, []);
+              }
+              subProductsByParent.get(parentIndex).push({
+                ...item,
+                isSubProduct: true
+              });
+            }
+          } else {
+            // Regular parent item
+            finalCart.push(item);
+          }
         });
         
-        // Load existing order items directly
-        setCart(existingCartItems);
+        // Attach sub-products to their parents
+        finalCart.forEach((item) => {
+          const detailIndex = item._detailIndex;
+          if (subProductsByParent.has(detailIndex)) {
+            item.subProducts = subProductsByParent.get(detailIndex);
+          }
+          // Clean up temporary properties
+          delete item._isMarkedAsSubProduct;
+          delete item._originalNotes;
+          delete item._detailIndex;
+        });
+        
+        // Load existing order items
+        setCart(finalCart);
         setSelectedTable(table);
       } else {
         // No existing order for this table
@@ -352,7 +532,18 @@ const POSScreen = () => {
       const subTotal = cart.reduce((sum, item) => {
         const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
         const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
-        return sum + (price * quantity);
+        let itemTotal = price * quantity;
+        
+        // Add sub-products to total
+        if (item.subProducts && item.subProducts.length > 0) {
+          item.subProducts.forEach(subItem => {
+            const subPrice = typeof subItem.price === 'number' && !isNaN(subItem.price) ? subItem.price : 0;
+            const subQty = typeof subItem.quantity === 'number' && !isNaN(subItem.quantity) ? subItem.quantity : 0;
+            itemTotal += subPrice * subQty;
+          });
+        }
+        
+        return sum + itemTotal;
       }, 0);
       
       const total = subTotal;
@@ -365,13 +556,40 @@ const POSScreen = () => {
         total: total,
         discount: 0,
         table_id: selectedTable.id,
-        details: cart.map((item) => ({
-          product_id: item.id,
-          qty: item.quantity,
-          total: item.price * item.quantity,
-          notes: item.notes || null,
-          discount: item.discount || 0,
-        })),
+        details: (() => {
+          const allDetails = [];
+          let detailIndex = 0;
+          
+          cart.forEach((item) => {
+            const parentDetailIndex = detailIndex;
+            
+            // Add parent item
+            allDetails.push({
+              product_id: item.id,
+              qty: item.quantity,
+              total: item.price * item.quantity,
+              notes: item.notes || null,
+              discount: item.discount || 0,
+            });
+            detailIndex++;
+            
+            // Add sub-products with correct parent index
+            if (item.subProducts && item.subProducts.length > 0) {
+              item.subProducts.forEach(subItem => {
+                allDetails.push({
+                  product_id: subItem.id,
+                  qty: subItem.quantity,
+                  total: subItem.price * subItem.quantity,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ''}`,
+                  discount: 0,
+                });
+                detailIndex++;
+              });
+            }
+          });
+          
+          return allDetails;
+        })(),
       };
 
       if (currentOrderId) {

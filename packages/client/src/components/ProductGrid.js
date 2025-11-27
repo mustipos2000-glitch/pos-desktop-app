@@ -128,7 +128,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
   };
 
   const handleSubProductSelect = (subProduct) => {
-    onAddToCart(subProduct, Number(customQuantity) || 1);
+    onAddToCart(subProduct, Number(customQuantity) || 1, true); // Pass true to indicate it's a sub-product
     setCustomQuantity(''); // ✅ reset quantity input
     // Keep subproducts visible - don't clear them
   };
