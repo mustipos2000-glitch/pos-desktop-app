@@ -27,15 +27,11 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
       return;
     }
 
-    // Debug: Check cart items for printer fields
-    console.log('🔍 Checking cart items for printers:', cart.map(item => ({
-      name: item.name,
-      printer1: item.printer1,
-      printer2: item.printer2,
-      printer3: item.printer3
-    })));
+    // Send to kitchen first
+    await onSendToKitchen();
 
-    // Collect all unique printer names from cart items
+    // Try to print kitchen order to thermal printers assigned to products
+    // Only check printers if we actually need to print
     const printerNames = new Set();
     cart.forEach(item => {
       if (item.printer1) printerNames.add(item.printer1);
@@ -43,68 +39,19 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
       if (item.printer3) printerNames.add(item.printer3);
     });
 
-    console.log('🖨️ Found printers:', Array.from(printerNames));
-
-    // Check assigned printers BEFORE sending to kitchen (same as test printer)
-    if (printerNames.size > 0) {
-      const printerCheckResults = [];
-      
-      for (const printerName of printerNames) {
-        // Find printer by name
-        const printer = printers.find(p => p.name === printerName);
-        
-        if (!printer) {
-          printerCheckResults.push({
-            name: printerName,
-            status: 'not_found',
-            message: `❌ Printer "${printerName}" not found in system`
-          });
-        } else if (!printer.connection_string || !printer.connection_string.trim()) {
-          printerCheckResults.push({
-            name: printerName,
-            status: 'no_connection',
-            message: `❌ Printer "${printerName}" has no connection string configured`
-          });
-        } else {
-          printerCheckResults.push({
-            name: printerName,
-            status: 'ready',
-            message: `✅ Printer "${printerName}" is ready`,
-            printer: printer
-          });
-        }
-      }
-
-      // Show warnings for problematic printers
-      const problemPrinters = printerCheckResults.filter(r => r.status !== 'ready');
-      if (problemPrinters.length > 0) {
-        const warningMessage = problemPrinters.map(p => p.message).join('\n');
-        const proceed = window.confirm(
-          `⚠️ Printer Issues Detected:\n\n${warningMessage}\n\nDo you want to continue anyway?`
-        );
-        
-        if (!proceed) {
-          return;
-        }
-      }
-    }
-
-    await onSendToKitchen();
-    
-    // Try to print kitchen order to thermal printers assigned to products
     if (printerNames.size > 0 && printers.length > 0) {
       try {
         // Get the current order ID from the API
         const orderResponse = await ApiService.getOrderByTableId(selectedTable.id);
         if (orderResponse.data && orderResponse.data.id) {
           const orderId = orderResponse.data.id;
-          
+
           console.log(`📋 Order ID: ${orderId}, sending to printers...`);
-          
-          // Print to each assigned printer (even if inactive - let backend handle validation)
+
+          // Print to each assigned printer
           const printPromises = [];
           printerNames.forEach(printerName => {
-            // Find printer by name (don't check is_active here, backend will validate)
+            // Find printer by name
             const printer = printers.find(p => p.name === printerName);
             if (printer) {
               console.log(`📤 Calling API: POST /api/printers/print-kitchen with printerId=${printer.id}, orderId=${orderId}`);
@@ -116,9 +63,10 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
                   })
                   .catch(err => {
                     console.error(`❌ Failed: ${printer.name}`, err);
-                    // Show user-friendly error
-                    alert(`❌ Failed to print to ${printer.name}\n\nError: ${err.message || 'Connection failed'}\n\nPlease check if the printer is ON and connected.`);
-                    throw err;
+                    // Show user-friendly error but don't block the operation
+                    alert(`❌ Failed to print to ${printer.name} Error: ${err.message || 'Connection failed'} Please check if the printer is ON and connected.`);
+                    // Return a resolved promise to prevent Promise.allSettled from failing
+                    return { success: false, error: err.message };
                   })
               );
             } else {
@@ -128,11 +76,11 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
 
           // Wait for all print jobs to complete (or fail)
           const results = await Promise.allSettled(printPromises);
-          const successCount = results.filter(r => r.status === 'fulfilled').length;
-          const failedCount = results.filter(r => r.status === 'rejected').length;
-          
+          const successCount = results.filter(r => r.status === 'fulfilled' && r.value && r.value.success !== false).length;
+          const failedCount = results.length - successCount;
+
           console.log(`📊 Print Results: ${successCount} succeeded, ${failedCount} failed`);
-          
+
           if (successCount > 0) {
             console.log(`✅ Kitchen order sent to ${successCount} printer(s) successfully`);
           }
@@ -146,7 +94,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     } else {
       console.log('ℹ️ No printers to send to (printerNames.size=0 or printers.length=0)');
     }
-    
+
     // Refresh kitchen order count after sending to kitchen
     fetchKitchenOrderCount();
   };
@@ -165,7 +113,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
   useEffect(() => {
     // Fetch only once on component mount
     fetchKitchenOrderCount();
-    
+
     // Fetch printers
     const fetchPrinters = async () => {
       try {
@@ -193,8 +141,8 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
           <button
             onClick={handleTableClick}
             className={`btn-primary px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${selectedTable
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-pos-interactive-primary text-white hover:bg-pos-interactive-hover'
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-pos-interactive-primary text-white hover:bg-pos-interactive-hover'
               }`}
           >
             <span className="text-lg">🪑</span>
