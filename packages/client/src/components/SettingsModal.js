@@ -88,7 +88,7 @@ const SettingsModal = ({ onClose }) => {
       if (response.ok) {
         await fetchPrinters();
         setShowAddPrinter(false);
-        setPrinterForm({ name: '', type: 'serial', connection_string: '' });
+        setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
         setPrinterFormErrors({});
       }
     } catch (error) {
@@ -133,7 +133,7 @@ const SettingsModal = ({ onClose }) => {
         await fetchPrinters();
         setShowAddPrinter(false);
         setEditingPrinter(null);
-        setPrinterForm({ name: '', type: 'serial', connection_string: '' });
+        setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
         setPrinterFormErrors({});
       }
     } catch (error) {
@@ -274,6 +274,15 @@ const SettingsModal = ({ onClose }) => {
     } catch (error) {
       console.error('Error updating role permissions:', error);
     }
+  };
+
+  // Function to generate connection string examples based on type
+  const getConnectionExamples = () => {
+    return [
+      { type: 'Network (LAN)', example: 'tcp://192.168.1.100:9100' },
+      { type: 'USB (Windows)', example: '\\\\.\\COM3' },
+      { type: 'USB (Linux/Mac)', example: '/dev/usb/lp0' }
+    ];
   };
 
   return (
@@ -523,7 +532,7 @@ const SettingsModal = ({ onClose }) => {
                           onChange={handlePrinterFormChange}
                           className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${printerFormErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
                         >
-                          <option value="EPSON">EPSON (Most Common)</option>
+                          <option value="EPSON">EPSON </option>
                           <option value="STAR">STAR Micronics</option>
                           <option value="TANCA">TANCA</option>
                           <option value="DARUMA">DARUMA</option>
@@ -550,9 +559,10 @@ const SettingsModal = ({ onClose }) => {
                           placeholder="tcp://192.168.1.100:9100"
                         />
                         <div className="text-pos-text-muted text-xs mt-1 space-y-1">
-                          <p><strong>Network:</strong> tcp://192.168.1.100:9100</p>
-                          <p><strong>USB (Windows):</strong> \\.\COM3</p>
-                          <p><strong>USB (Linux):</strong> /dev/usb/lp0</p>
+                          <p className="font-medium">Connection Examples:</p>
+                          {getConnectionExamples().map((example, index) => (
+                            <p key={index}><strong>{example.type}:</strong> {example.example}</p>
+                          ))}
                         </div>
                       </div>
                     </div>

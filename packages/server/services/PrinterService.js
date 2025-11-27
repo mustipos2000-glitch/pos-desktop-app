@@ -21,9 +21,29 @@ class PrinterService {
    * Create thermal printer instance
    */
   static createPrinterInstance(printerConfig) {
+    // Handle different connection types
+    let interfaceString = printerConfig.connection_string || 'tcp://localhost:9100';
+    
+    // Ensure proper formatting for different connection types
+    if (interfaceString.startsWith('COM') || interfaceString.includes('COM')) {
+      // Windows COM port format
+      if (!interfaceString.startsWith('\\\\.\\')) {
+        interfaceString = `\\\\.\\${interfaceString}`;
+      }
+    } else if (interfaceString.startsWith('/dev/') || interfaceString.startsWith('/usb/')) {
+      // Unix-like device file format
+      // Already in correct format
+    } else if (!interfaceString.startsWith('tcp://') && interfaceString.includes(':')) {
+      // Assume IP:Port format, convert to tcp://IP:Port
+      interfaceString = `tcp://${interfaceString}`;
+    } else if (!interfaceString.startsWith('tcp://') && !interfaceString.startsWith('\\\\.\\') && !interfaceString.startsWith('/')) {
+      // Default to TCP if no protocol specified
+      interfaceString = `tcp://${interfaceString}`;
+    }
+    
     const printer = new ThermalPrinter({
       type: this.getPrinterType(printerConfig.type),
-      interface: printerConfig.connection_string || 'tcp://localhost:9100',
+      interface: interfaceString,
       characterSet: 'PC437_USA',
       removeSpecialCharacters: false,
       lineCharacter: '-',
@@ -122,13 +142,13 @@ class PrinterService {
       printer.alignCenter();
       printer.setTextSize(1, 1);
       printer.bold(true);
-      printer.println('YOUR RESTAURANT NAME');
+      printer.println('Alphinex Solution Printer');
       printer.bold(false);
       printer.setTextNormal();
-      printer.println('123 Main Street, City');
-      printer.println('State, ZIP Code');
+      printer.println('3rd Floor,Ali Arcade, Alphinex Solution');
+      printer.println('Rawalpindi');
       printer.println('Tel: +1 (555) 123-4567');
-      printer.println('www.yourrestaurant.com');
+      printer.println('https://alphinex.com');
       printer.newLine();
       
       // ============ RECEIPT TITLE ============
@@ -150,128 +170,63 @@ class PrinterService {
       printer.println(`Time: ${orderDate.toLocaleTimeString()}`);
       
       if (tableInfo) {
-        printer.println(`Table: ${tableInfo.table_no}`);
-        if (tableInfo.customer_name) {
-          printer.println(`Customer: ${tableInfo.customer_name}`);
-        }
-        if (tableInfo.waiter_name) {
-          printer.println(`Server: ${tableInfo.waiter_name}`);
-        }
+        printer.println(`Table: ${tableInfo.table_no}${tableInfo.room_name ? ` (${tableInfo.room_name})` : ''}`);
       }
       
       printer.drawLine();
       
-      // ============ ITEMS HEADER ============
+      // ============ ITEMS ============
       printer.bold(true);
-      // Using left alignment for better readability
-      const itemHeader = 'Item'.padEnd(20) + 'Qty'.padStart(4) + 'Price'.padStart(8) + 'Total'.padStart(8);
-      printer.println(itemHeader);
+      printer.println('Items');
       printer.bold(false);
-      printer.drawLine();
       
-      // ============ ORDER ITEMS ============
-      if (orderData.details && orderData.details.length > 0) {
-        orderData.details.forEach(item => {
-          const itemName = (item.product_name || item.name || 'Item').substring(0, 20).padEnd(20);
-          const qty = item.qty.toString().padStart(4);
-          const price = `$${(item.price || 0).toFixed(2)}`.padStart(8);
-          const total = `$${item.total.toFixed(2)}`.padStart(8);
-          
-          printer.println(itemName + qty + price + total);
-          
-          // Print notes if any
-          if (item.notes) {
-            printer.println(`  * ${item.notes}`);
-          }
-        });
+      let subtotal = 0;
+      for (const item of orderData.items) {
+        const itemTotal = item.qty * item.price;
+        subtotal += itemTotal;
+        
+        printer.println(`${item.qty} x ${item.name}`);
+        printer.println(`   ${itemTotal.toFixed(2)}`);
+        
+        // Print item notes if any
+        if (item.notes) {
+          printer.println(`   Note: ${item.notes}`);
+        }
       }
       
       printer.drawLine();
       
       // ============ TOTALS ============
-      const subtotal = orderData.sub_total || 0;
       const discount = orderData.discount || 0;
       const tax = orderData.tax || 0;
-      const total = orderData.total || 0;
+      const total = subtotal - discount + tax;
       
-      printer.alignRight();
-      
-      // Show original subtotal if there's a discount
+      printer.println(`Subtotal: ${subtotal.toFixed(2)}`);
       if (discount > 0) {
-        printer.println(`Subtotal: $${(subtotal + discount).toFixed(2)}`);
-        printer.println(`Discount: -$${discount.toFixed(2)}`);
-        printer.drawLine();
+        printer.println(`Discount: -${discount.toFixed(2)}`);
       }
-      
-      printer.println(`Subtotal: $${subtotal.toFixed(2)}`);
-      printer.println(`Tax (${this.calculateTaxRate(subtotal, tax)}%): $${tax.toFixed(2)}`);
+      printer.println(`Tax: ${tax.toFixed(2)}`);
+      printer.bold(true);
+      printer.println(`TOTAL: ${total.toFixed(2)}`);
+      printer.bold(false);
       
       printer.newLine();
-      printer.bold(true);
-      printer.setTextSize(1, 1);
-      printer.println(`TOTAL: $${total.toFixed(2)}`);
-      printer.bold(false);
-      printer.setTextNormal();
-      
-      printer.drawLine();
-      
-      // ============ PAYMENT INFO ============
-      printer.alignLeft();
-      if (orderData.payment_method) {
-        printer.println(`Payment Method: ${orderData.payment_method}`);
-      }
-      if (orderData.payment_amount) {
-        printer.println(`Amount Paid: $${orderData.payment_amount.toFixed(2)}`);
-        const change = orderData.payment_amount - total;
-        if (change > 0) {
-          printer.println(`Change: $${change.toFixed(2)}`);
-        }
-      }
-      
-      // ============ ORDER NOTES ============
-      if (orderData.note) {
-        printer.drawLine();
-        printer.bold(true);
-        printer.println('Note:');
-        printer.bold(false);
-        printer.println(orderData.note);
-      }
       
       // ============ FOOTER ============
-      printer.drawLine();
       printer.alignCenter();
+      printer.println('Thank you for your business!');
+      printer.println('Please come again soon.');
       printer.newLine();
-      printer.println('Thank you for dining with us!');
-      printer.println('We hope to see you again soon');
-      printer.newLine();
-      printer.setTextSize(0, 0);
-      printer.println('Please visit us at:');
-      printer.println('www.yourrestaurant.com');
-      printer.setTextNormal();
-      printer.newLine();
-      
-      // QR Code placeholder (if you want to add later)
-      // printer.println('Scan for feedback:');
-      // printer.printQR('https://yourrestaurant.com/feedback');
-      
-      printer.newLine();
+      printer.println('--- End of Receipt ---');
       printer.newLine();
       printer.cut();
-
+      
       await printer.execute();
-      return { success: true, message: 'Receipt printed successfully' };
+      return { success: true };
     } catch (error) {
-      console.error('Print receipt error:', error);
+      console.error('Receipt print error:', error);
       return { success: false, message: error.message };
     }
-  }
-
-  /**
-   * Calculate tax rate percentage
-   */
-  static calculateTaxRate(subtotal, tax) {
-    if (subtotal === 0) return 0;
-    return ((tax / subtotal) * 100).toFixed(1);
   }
 
   /**
@@ -292,7 +247,7 @@ class PrinterService {
         tableInfo = PrTable.getById(orderData.table_id);
       }
       
-      // Header
+      // ============ HEADER ============
       printer.alignCenter();
       printer.setTextSize(1, 1);
       printer.bold(true);
@@ -300,62 +255,45 @@ class PrinterService {
       printer.bold(false);
       printer.drawLine();
       
-      // Order Info
+      // ============ ORDER INFO ============
       printer.alignLeft();
-      printer.setTextSize(1, 1);
       printer.bold(true);
-      printer.println(`Order #${orderData.id}`);
+      printer.println(`Order #: ${orderData.id}`);
       printer.bold(false);
-      printer.setTextNormal();
-      printer.println(`Time: ${new Date(orderData.created_at).toLocaleTimeString()}`);
+      
+      const orderDate = new Date(orderData.created_at);
+      printer.println(`Date: ${orderDate.toLocaleDateString()}`);
+      printer.println(`Time: ${orderDate.toLocaleTimeString()}`);
+      
       if (tableInfo) {
-        printer.bold(true);
-        printer.setTextSize(1, 1);
-        printer.println(`TABLE: ${tableInfo.table_no}`);
-        printer.setTextNormal();
-        printer.bold(false);
-        if (tableInfo.waiter_name) {
-          printer.println(`Waiter: ${tableInfo.waiter_name}`);
+        printer.println(`Table: ${tableInfo.table_no}${tableInfo.room_name ? ` (${tableInfo.room_name})` : ''}`);
+      }
+      
+      printer.drawLine();
+      
+      // ============ ITEMS ============
+      printer.bold(true);
+      printer.println('Items to Prepare');
+      printer.bold(false);
+      
+      for (const item of orderData.items) {
+        printer.println(`${item.qty} x ${item.name}`);
+        
+        // Print item notes if any
+        if (item.notes) {
+          printer.println(`   Note: ${item.notes}`);
         }
       }
-      printer.drawLine();
-      
-      // Items
-      if (orderData.details && orderData.details.length > 0) {
-        orderData.details.forEach(item => {
-          printer.bold(true);
-          printer.setTextSize(1, 1);
-          printer.println(`${item.qty}x ${item.product_name || item.name || 'Item'}`);
-          printer.setTextNormal();
-          printer.bold(false);
-          
-          // Print notes if any
-          if (item.notes) {
-            printer.println(`  ** ${item.notes} **`);
-          }
-          printer.newLine();
-        });
-      }
-      
-      printer.drawLine();
-      
-      // Footer
-      if (orderData.note) {
-        printer.bold(true);
-        printer.println(`ORDER NOTE:`);
-        printer.bold(false);
-        printer.println(orderData.note);
-        printer.drawLine();
-      }
       
       printer.newLine();
+      printer.println('--- End of Order ---');
       printer.newLine();
       printer.cut();
-
+      
       await printer.execute();
-      return { success: true, message: 'Kitchen order printed successfully' };
+      return { success: true };
     } catch (error) {
-      console.error('Print kitchen order error:', error);
+      console.error('Kitchen order print error:', error);
       return { success: false, message: error.message };
     }
   }
@@ -363,7 +301,7 @@ class PrinterService {
   /**
    * Print custom text
    */
-  static async printCustom(printerId, text) {
+  static async printCustom(printerId, textLines) {
     try {
       const printerConfig = Printer.getById(printerId);
       if (!printerConfig) {
@@ -372,16 +310,16 @@ class PrinterService {
 
       const printer = this.createPrinterInstance(printerConfig);
       
-      printer.alignLeft();
-      printer.println(text);
-      printer.newLine();
-      printer.newLine();
+      // Print each line
+      for (const line of textLines) {
+        printer.println(line);
+      }
+      
       printer.cut();
-
       await printer.execute();
-      return { success: true, message: 'Custom text printed successfully' };
+      return { success: true };
     } catch (error) {
-      console.error('Print custom error:', error);
+      console.error('Custom print error:', error);
       return { success: false, message: error.message };
     }
   }
