@@ -23,7 +23,7 @@ const BottomBar = ({ onOpenSettings }) => {
     userPermissions.includes('settings');
 
   return (
-    <div className="flex gap-2 p-2 bg-pos-bg-primary border-t bg-pos-bg-tertiary">
+    <div className="flex gap-2 ml-2 mb-1 mr-2 rounded-lg p-2 bg-pos-bg-primary border-t bg-pos-bg-tertiary">
       {showAdminButton && (
         <button className="btn-primary flex items-center gap-2" onClick={() => navigate('/admin')}>
           🔌 admin

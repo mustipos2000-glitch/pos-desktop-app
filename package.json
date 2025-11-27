@@ -1,6 +1,6 @@
 {
   "name": "po-desktop",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "POS Desktop Application - Monorepo with React, Node.js, and Electron",
   "private": true,
   "workspaces": [
@@ -13,7 +13,10 @@
     "dev:client": "npm run dev --workspace=client",
     "dev:electron": "wait-on http://localhost:3000 http://localhost:5000 && electron .",
     "build": "npm run build --workspace=client && npm run build --workspace=server",
-    "build:electron": "npm run build && electron-builder",
+    "clean": "rimraf dist packages/client/build",
+    "rebuild:native": "npx electron-rebuild --module-dir node_modules/better-sqlite3 --arch=x64 --version=38.7.1 --force --use-prebuilt-binaries=false",
+    "package:win": "npm run clean && npm run rebuild:native && npm run build && electron-builder",
+    "build:electron": "npm run package:win",
     "start": "electron .",
     "test": "npm run test --workspaces"
   },
@@ -60,6 +63,7 @@
     "concurrently": "^8.2.2",
     "electron": "^38.2.2",
     "electron-builder": "^26.0.12",
+    "rimraf": "^6.0.1",
     "wait-on": "^7.2.0"
   },
   "dependencies": {

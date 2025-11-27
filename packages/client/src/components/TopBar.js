@@ -29,15 +29,11 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
       return;
     }
 
-    // Debug: Check cart items for printer fields
-    console.log('🔍 Checking cart items for printers:', cart.map(item => ({
-      name: item.name,
-      printer1: item.printer1,
-      printer2: item.printer2,
-      printer3: item.printer3
-    })));
+    // Send to kitchen first
+    await onSendToKitchen();
 
-    // Collect all unique printer names from cart items
+    // Try to print kitchen order to thermal printers assigned to products
+    // Only check printers if we actually need to print
     const printerNames = new Set();
     cart.forEach(item => {
       console.log(`  Product "${item.name}": printer1="${item.printer1}", printer2="${item.printer2}", printer3="${item.printer3}"`);
@@ -138,7 +134,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     } else {
       console.log('ℹ️ No printers to send to or no order ID');
     }
-    
+
     // Refresh kitchen order count after sending to kitchen
     fetchKitchenOrderCount();
   };
@@ -157,7 +153,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
   useEffect(() => {
     // Fetch only once on component mount
     fetchKitchenOrderCount();
-    
+
     // Fetch printers
     const fetchPrinters = async () => {
       try {
@@ -180,13 +176,13 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
 
   return (
     <>
-      <div className="mt-2 mb-2 flex justify-between items-center bg-pos-bg-secondary px-5 py-2.5 border-b border-pos-border-primary rounded-lg mr-1">
+      <div className="mt-2 mb-2 ml-2 flex justify-between items-center bg-pos-bg-secondary px-5 py-2.5 border-b border-pos-border-primary rounded-lg mr-1">
         <div className="flex gap-2.5">
           <button
             onClick={handleTableClick}
             className={`btn-primary px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${selectedTable
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-pos-interactive-primary text-white hover:bg-pos-interactive-hover'
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-pos-interactive-primary text-white hover:bg-pos-interactive-hover'
               }`}
           >
             <span className="text-lg">🪑</span>
