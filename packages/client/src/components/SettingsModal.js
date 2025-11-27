@@ -297,7 +297,7 @@ const SettingsModal = ({ onClose }) => {
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
               activeTab === 'general' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                ? 'bg-pos-bg-primary text-pos-text-primary' 
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
             }`}
             onClick={() => setActiveTab('general')}
@@ -307,7 +307,7 @@ const SettingsModal = ({ onClose }) => {
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
               activeTab === 'display' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                ? 'bg-pos-bg-primary text-pos-text-primary' 
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
             }`}
             onClick={() => setActiveTab('display')}
@@ -317,7 +317,7 @@ const SettingsModal = ({ onClose }) => {
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
               activeTab === 'printer' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                ? 'bg-pos-bg-primary text-pos-text-primary' 
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
             }`}
             onClick={() => setActiveTab('printer')}
@@ -327,7 +327,7 @@ const SettingsModal = ({ onClose }) => {
           <button
             className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
               activeTab === 'payment' 
-                ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                ? 'bg-pos-bg-primary text-pos-text-primary' 
                 : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
             }`}
             onClick={() => setActiveTab('payment')}
@@ -338,7 +338,7 @@ const SettingsModal = ({ onClose }) => {
             <button
               className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
                 activeTab === 'permissions' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary border-b-2 border-pos-info' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
                   : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
               }`}
               onClick={() => setActiveTab('permissions')}
@@ -416,7 +416,7 @@ const SettingsModal = ({ onClose }) => {
                     setEditingPrinter(null);
                     setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
                   }}
-                  className="add-btn"
+                  className="btn-primary py-2"
                 >
                   + Add Printer
                 </button>
@@ -573,13 +573,13 @@ const SettingsModal = ({ onClose }) => {
                           setShowAddPrinter(false);
                           setPrinterFormErrors({});
                         }}
-                        className="px-4 py-2 bg-pos-bg-tertiary text-pos-text-primary border border-pos-border-secondary rounded hover:bg-pos-interactive-primary transition-colors"
+                        className="btn-secondary px-4 py-2"
                       >
                         Cancel
                       </button>
                       <button 
                         onClick={editingPrinter ? handleUpdatePrinter : handleAddPrinter}
-                        className="px-4 py-2 bg-pos-interactive-primary text-pos-text-primary rounded hover:bg-pos-interactive-hover transition-colors"
+                        className="btn-secondary px-6 py-2"
                       >
                         {editingPrinter ? 'Update' : 'Add'}
                       </button>
