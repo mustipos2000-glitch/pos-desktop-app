@@ -175,7 +175,7 @@ const PrTableManager = () => {
             onSearchChange={setSearchQuery}
             placeholder="Search tables..."
           />
-          <button className="add-btn" onClick={() => {
+          <button className="btn-primary" onClick={() => {
           setEditingTable(null);
             setTableForm({ table_no: '', room_id: '', order_id: '', status: 'available', description: '', customer_name: '', waiter_name: '', table_size: '' });
             setShowAddTable(true);

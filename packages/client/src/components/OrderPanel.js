@@ -526,6 +526,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
   const handlePrintReceipt = async () => {
     // Try to print to thermal printers assigned to products
+    console.log("Handle preinter");
+    
     if (printers.length > 0 && completedOrderId && cart.length > 0) {
       try {
         // Debug: Check cart items for printer fields
