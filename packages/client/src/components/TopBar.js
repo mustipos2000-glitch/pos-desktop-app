@@ -17,13 +17,15 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
   };
 
   const handleSendToKitchen = async () => {
-    // Validate and call parent handler
-    if (!selectedTable || !cart || cart.length === 0) {
+    console.log('🟢 TopBar: handleSendToKitchen called');
+    
+    // Validate cart has items
+    if (!cart || cart.length === 0) {
       return;
     }
 
-    // Validate table is not in cleaning status
-    if (selectedTable.status === 'cleaning') {
+    // Validate table is not in cleaning status (if table is selected)
+    if (selectedTable && selectedTable.status === 'cleaning') {
       return;
     }
 
@@ -38,12 +40,13 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     // Collect all unique printer names from cart items
     const printerNames = new Set();
     cart.forEach(item => {
+      console.log(`  Product "${item.name}": printer1="${item.printer1}", printer2="${item.printer2}", printer3="${item.printer3}"`);
       if (item.printer1) printerNames.add(item.printer1);
       if (item.printer2) printerNames.add(item.printer2);
       if (item.printer3) printerNames.add(item.printer3);
     });
 
-    console.log('🖨️ Found printers:', Array.from(printerNames));
+    console.log('🖨️ Found unique printers:', Array.from(printerNames));
 
     // Check assigned printers BEFORE sending to kitchen (same as test printer)
     if (printerNames.size > 0) {
@@ -89,62 +92,51 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
       }
     }
 
-    await onSendToKitchen();
+    // onSendToKitchen now returns the order ID
+    const orderId = await onSendToKitchen();
     
     // Try to print kitchen order to thermal printers assigned to products
-    if (printerNames.size > 0 && printers.length > 0) {
+    if (printerNames.size > 0 && printers.length > 0 && orderId) {
       try {
-        // Get the current order ID from the API
-        const orderResponse = await ApiService.getOrderByTableId(selectedTable.id);
-        if (orderResponse.data && orderResponse.data.id) {
-          const orderId = orderResponse.data.id;
-          
-          console.log(`📋 Order ID: ${orderId}, sending to printers...`);
-          
-          // Print to each assigned printer (even if inactive - let backend handle validation)
-          const printPromises = [];
-          printerNames.forEach(printerName => {
-            // Find printer by name (don't check is_active here, backend will validate)
-            const printer = printers.find(p => p.name === printerName);
-            if (printer) {
-              console.log(`📤 Calling API: POST /api/printers/print-kitchen with printerId=${printer.id}, orderId=${orderId}`);
-              printPromises.push(
-                printerService.printKitchenOrder(printer.id, orderId)
-                  .then(response => {
-                    console.log(`✅ Success: ${printer.name}`, response);
-                    return response;
-                  })
-                  .catch(err => {
-                    console.error(`❌ Failed: ${printer.name}`, err);
-                    // Show user-friendly error
-                    alert(`❌ Failed to print to ${printer.name}\n\nError: ${err.message || 'Connection failed'}\n\nPlease check if the printer is ON and connected.`);
-                    throw err;
-                  })
-              );
-            } else {
-              console.warn(`⚠️ Printer "${printerName}" not found in printer list`);
-            }
-          });
-
-          // Wait for all print jobs to complete (or fail)
-          const results = await Promise.allSettled(printPromises);
-          const successCount = results.filter(r => r.status === 'fulfilled').length;
-          const failedCount = results.filter(r => r.status === 'rejected').length;
-          
-          console.log(`📊 Print Results: ${successCount} succeeded, ${failedCount} failed`);
-          
-          if (successCount > 0) {
-            console.log(`✅ Kitchen order sent to ${successCount} printer(s) successfully`);
+        console.log(`📋 Order ID: ${orderId}, sending to ${printerNames.size} printer(s)...`);
+        
+        // Collect printer IDs
+        const printerIds = [];
+        printerNames.forEach(printerName => {
+          const printer = printers.find(p => p.name === printerName);
+          if (printer) {
+            printerIds.push(printer.id);
+            console.log(`  - ${printer.name} (ID: ${printer.id})`);
+          } else {
+            console.warn(`⚠️ Printer "${printerName}" not found in printer list`);
           }
-        } else {
-          console.error('❌ No order ID found after sending to kitchen');
+        });
+
+        if (printerIds.length > 0) {
+          console.log(`📤 Calling BATCH API: POST /api/printers/print-kitchen-batch with printerIds=[${printerIds.join(', ')}], orderId=${orderId}`);
+          
+          // Single batch request to all printers
+          const result = await printerService.printKitchenOrderBatch(printerIds, orderId);
+          
+          console.log(`📊 Batch Print Result:`, result);
+          
+          if (result.success) {
+            console.log(`✅ Kitchen order sent to ${result.successCount} printer(s) successfully`);
+            if (result.failedCount > 0) {
+              console.warn(`⚠️ ${result.failedCount} printer(s) failed:`, result.errors);
+              alert(`⚠️ Partial Success\n\n✅ ${result.successCount} printer(s) succeeded\n❌ ${result.failedCount} printer(s) failed\n\n${result.errors.join('\n')}`);
+            }
+          } else {
+            console.error(`❌ All printers failed:`, result.errors);
+            alert(`❌ Failed to print to all printers\n\n${result.errors.join('\n')}\n\nPlease check if printers are ON and connected.`);
+          }
         }
       } catch (error) {
         console.error('❌ Error printing kitchen order:', error);
-        // Don't block the operation if printing fails
+        alert(`❌ Failed to print kitchen order\n\nError: ${error.message || 'Unknown error'}\n\nPlease check if printers are ON and connected.`);
       }
     } else {
-      console.log('ℹ️ No printers to send to (printerNames.size=0 or printers.length=0)');
+      console.log('ℹ️ No printers to send to or no order ID');
     }
     
     // Refresh kitchen order count after sending to kitchen
@@ -226,7 +218,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
           </div>
           <button
             onClick={handleSendToKitchen}
-            disabled={!selectedTable || !cart || cart.length === 0}
+            disabled={!cart || cart.length === 0}
             className="bg-pos-interactive-primary btn-primary text-pos-text-muted px-3 py-1.5 cursor-pointer text-sm transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send To Kitchen
