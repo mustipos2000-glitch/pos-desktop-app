@@ -428,6 +428,10 @@ const POSScreen = () => {
             cartItemId: `${detail.product_id}_${productName}_${index}`,
             isSubProduct: false,
             subProducts: [],
+            // Include printer fields from product data
+            printer1: itemData?.printer1 || '',
+            printer2: itemData?.printer2 || '',
+            printer3: itemData?.printer3 || '',
             _isMarkedAsSubProduct: isMarkedAsSubProduct,
             _originalNotes: notes,
             _detailIndex: index
@@ -504,14 +508,11 @@ const POSScreen = () => {
   };
 
   const handleSendToKitchen = async () => {
-    // Edge case: Validate table selection
-    if (!selectedTable) {
-      return;
-    }
+    console.log('🔵 POSScreen: handleSendToKitchen called');
     
     // Edge case: Validate cart has items
     if (cart.length === 0) {
-      return;
+      return null;
     }
 
     try {
@@ -555,7 +556,7 @@ const POSScreen = () => {
         sub_total: subTotal,
         total: total,
         discount: 0,
-        table_id: selectedTable.id,
+        table_id: selectedTable ? selectedTable.id : null,
         details: (() => {
           const allDetails = [];
           let detailIndex = 0;
@@ -592,6 +593,8 @@ const POSScreen = () => {
         })(),
       };
 
+      let finalOrderId = currentOrderId;
+      
       if (currentOrderId) {
         // Update existing order
         await ApiService.updateOrder(currentOrderId, orderData);
@@ -601,12 +604,13 @@ const POSScreen = () => {
         
         // Edge case: Store the new order ID for future updates
         if (response.data && response.data.id) {
-          setCurrentOrderId(response.data.id);
+          finalOrderId = response.data.id;
+          setCurrentOrderId(finalOrderId);
         }
       }
 
-      // Edge case: Update table status only if it's available
-      if (selectedTable.status === 'available') {
+      // Edge case: Update table status only if table is selected and available
+      if (selectedTable && selectedTable.status === 'available') {
         try {
           await ApiService.updatePrTable(selectedTable.id, {
             ...selectedTable,
@@ -623,9 +627,13 @@ const POSScreen = () => {
       setSelectedTable(null);
       setCurrentOrderId(null);
       
+      // Return the order ID for printing
+      return finalOrderId;
+      
     } catch (error) {
       console.error('Error sending order to kitchen:', error);
       // Silently fail - error is logged to console
+      return null;
     }
   };
 
