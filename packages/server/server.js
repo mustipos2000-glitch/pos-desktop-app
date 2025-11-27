@@ -45,7 +45,6 @@ if (!isDev) {
     clientBuildPath = path.join(__dirname, '../client/build');
   }
 
-  console.log('Client build path:', clientBuildPath);
   app.use(express.static(clientBuildPath));
 
   // Handle React routing - send all non-API requests to index.html

@@ -23,7 +23,6 @@ if (!fs.existsSync(dbDir)) {
 }
 
 const dbPath = path.join(dbDir, 'pos.db');
-console.log('Database path:', dbPath);
 const db = new Database(dbPath);
 
 // Create users table

@@ -94,7 +94,6 @@ const ProductController = {
                     const oldImagePath = path.join(__dirname, '../../', existingProduct.image);
                     if (fs.existsSync(oldImagePath)) {
                         fs.unlinkSync(oldImagePath);
-                        console.log(`🗑️ Deleted old image: ${oldImagePath}`);
                     }
                 }
 
