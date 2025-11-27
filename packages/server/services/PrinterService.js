@@ -107,10 +107,23 @@ class PrinterService {
     try {
       const printerConfig = Printer.getById(printerId);
       if (!printerConfig) {
-        throw new Error('Printer not found');
+        throw new Error('Printer not found in database');
       }
 
-      const printer = this.createPrinterInstance(printerConfig);
+      // Clean connection string (same as test printer)
+      const cleanConnection = printerConfig.connection_string ? printerConfig.connection_string.trim() : '';
+      
+      if (!cleanConnection) {
+        throw new Error('No connection string configured for this printer');
+      }
+
+      // Create config with cleaned connection string
+      const cleanConfig = {
+        ...printerConfig,
+        connection_string: cleanConnection
+      };
+
+      const printer = this.createPrinterInstance(cleanConfig);
       
       // Get table info if available
       let tableInfo = null;
@@ -281,10 +294,23 @@ class PrinterService {
     try {
       const printerConfig = Printer.getById(printerId);
       if (!printerConfig) {
-        throw new Error('Printer not found');
+        throw new Error('Printer not found in database');
       }
 
-      const printer = this.createPrinterInstance(printerConfig);
+      // Clean connection string (same as test printer)
+      const cleanConnection = printerConfig.connection_string ? printerConfig.connection_string.trim() : '';
+      
+      if (!cleanConnection) {
+        throw new Error('No connection string configured for this printer');
+      }
+
+      // Create config with cleaned connection string
+      const cleanConfig = {
+        ...printerConfig,
+        connection_string: cleanConnection
+      };
+
+      const printer = this.createPrinterInstance(cleanConfig);
       
       // Get table info if available
       let tableInfo = null;

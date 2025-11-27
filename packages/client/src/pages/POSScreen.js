@@ -160,6 +160,9 @@ const POSScreen = () => {
           image: product.image || '📦',
           color: product.color || '#3b82f6',
           sub_product_group: product.sub_product_group || false,
+          printer1: product.printer1 || '',
+          printer2: product.printer2 || '',
+          printer3: product.printer3 || '',
         }));
       
         

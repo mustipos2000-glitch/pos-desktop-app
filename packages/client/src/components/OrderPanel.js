@@ -528,6 +528,14 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     // Try to print to thermal printers assigned to products
     if (printers.length > 0 && completedOrderId && cart.length > 0) {
       try {
+        // Debug: Check cart items for printer fields
+        console.log('🔍 Checking cart items for printers:', cart.map(item => ({
+          name: item.name,
+          printer1: item.printer1,
+          printer2: item.printer2,
+          printer3: item.printer3
+        })));
+
         // Collect all unique printer names from cart items
         const printerNames = new Set();
         cart.forEach(item => {
@@ -536,30 +544,101 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           if (item.printer3) printerNames.add(item.printer3);
         });
 
+        console.log('🖨️ Found printers:', Array.from(printerNames));
+
         // If no printers assigned to products, use browser print
         if (printerNames.size === 0) {
-          console.log('No printers assigned to products. Using browser print.');
+          console.log('⚠️ No printers assigned to products. Using browser print.');
           window.print();
         } else {
-          // Print to each assigned printer
+          // Check assigned printers BEFORE printing (same as test printer)
+          const printerCheckResults = [];
+          
+          for (const printerName of printerNames) {
+            // Find printer by name
+            const printer = printers.find(p => p.name === printerName);
+            
+            if (!printer) {
+              printerCheckResults.push({
+                name: printerName,
+                status: 'not_found',
+                message: `❌ Printer "${printerName}" not found in system`
+              });
+            } else if (!printer.connection_string || !printer.connection_string.trim()) {
+              printerCheckResults.push({
+                name: printerName,
+                status: 'no_connection',
+                message: `❌ Printer "${printerName}" has no connection string configured`
+              });
+            } else {
+              printerCheckResults.push({
+                name: printerName,
+                status: 'ready',
+                message: `✅ Printer "${printerName}" is ready`,
+                printer: printer
+              });
+            }
+          }
+
+          // Show warnings for problematic printers
+          const problemPrinters = printerCheckResults.filter(r => r.status !== 'ready');
+          if (problemPrinters.length > 0) {
+            const warningMessage = problemPrinters.map(p => p.message).join('\n');
+            const proceed = window.confirm(
+              `⚠️ Printer Issues Detected:\n\n${warningMessage}\n\nDo you want to use browser print instead?`
+            );
+            
+            if (proceed) {
+              window.print();
+              setShowReceipt(false);
+              setCart([]);
+              setDiscount(0);
+              setNote("");
+              setCompletedOrderId(null);
+              if (onOrderComplete) {
+                onOrderComplete();
+              }
+              return;
+            } else {
+              // User cancelled, don't print
+              return;
+            }
+          }
+
+          console.log(`📋 Order ID: ${completedOrderId}, sending receipt to printers...`);
+          
+          // Print to each assigned printer (even if inactive - let backend handle validation)
           const printPromises = [];
           printerNames.forEach(printerName => {
-            // Find printer by name
-            const printer = printers.find(p => p.name === printerName && p.is_active);
+            // Find printer by name (don't check is_active here, backend will validate)
+            const printer = printers.find(p => p.name === printerName);
             if (printer) {
-              console.log(`Sending receipt to printer: ${printer.name}`);
+              console.log(`📤 Calling API: POST /api/printers/print-receipt with printerId=${printer.id}, orderId=${completedOrderId}`);
               printPromises.push(
                 printerService.printReceipt(printer.id, completedOrderId)
-                  .catch(err => console.error(`Failed to print to ${printer.name}:`, err))
+                  .then(response => {
+                    console.log(`✅ Success: ${printer.name}`, response);
+                    return response;
+                  })
+                  .catch(err => {
+                    console.error(`❌ Failed: ${printer.name}`, err);
+                    // Show user-friendly error
+                    setToastType("error");
+                    setToastMessage(`Failed to print to ${printer.name}: ${err.message || 'Connection failed'}`);
+                    throw err;
+                  })
               );
             } else {
-              console.warn(`Printer "${printerName}" not found or not active`);
+              console.warn(`⚠️ Printer "${printerName}" not found in printer list`);
             }
           });
 
           // Wait for all print jobs to complete (or fail)
           const results = await Promise.allSettled(printPromises);
           const successCount = results.filter(r => r.status === 'fulfilled').length;
+          const failedCount = results.filter(r => r.status === 'rejected').length;
+          
+          console.log(`📊 Print Results: ${successCount} succeeded, ${failedCount} failed`);
           
           if (successCount > 0) {
             setToastType("success");
