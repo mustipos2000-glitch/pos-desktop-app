@@ -1,13 +1,9 @@
 const db = require('./config/database');
-
-console.log('Starting migration: Adding display_order to existing categories...');
-
 try {
   // Get all categories ordered by ID
   const categories = db.prepare('SELECT id FROM categories ORDER BY id ASC').all();
   
   if (categories.length === 0) {
-    console.log('No categories found. Migration complete.');
     process.exit(0);
   }
 
@@ -17,10 +13,8 @@ try {
   categories.forEach((category, index) => {
     const displayOrder = index + 1;
     updateStmt.run(displayOrder, category.id);
-    console.log(`Updated category ID ${category.id} with display_order ${displayOrder}`);
   });
 
-  console.log(`Migration complete! Updated ${categories.length} categories.`);
 } catch (error) {
   console.error('Migration failed:', error);
   process.exit(1);

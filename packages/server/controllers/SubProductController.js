@@ -153,7 +153,6 @@ const SubProductController = {
                     const oldImagePath = path.join(__dirname, '../../', existingSubProduct.image);
                     if (fs.existsSync(oldImagePath)) {
                         fs.unlinkSync(oldImagePath);
-                        console.log(`🗑️ Deleted old image: ${oldImagePath}`);
                     }
                 }
                 payload.image = `/uploads/${req.file.filename}`;

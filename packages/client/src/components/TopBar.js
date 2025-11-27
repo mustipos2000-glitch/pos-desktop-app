@@ -16,9 +16,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     onTableSelect(table);
   };
 
-  const handleSendToKitchen = async () => {
-    console.log('🟢 TopBar: handleSendToKitchen called');
-    
+  const handleSendToKitchen = async () => {    
     // Validate cart has items
     if (!cart || cart.length === 0) {
       return;
@@ -36,13 +34,10 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     // Only check printers if we actually need to print
     const printerNames = new Set();
     cart.forEach(item => {
-      console.log(`  Product "${item.name}": printer1="${item.printer1}", printer2="${item.printer2}", printer3="${item.printer3}"`);
       if (item.printer1) printerNames.add(item.printer1);
       if (item.printer2) printerNames.add(item.printer2);
       if (item.printer3) printerNames.add(item.printer3);
     });
-
-    console.log('🖨️ Found unique printers:', Array.from(printerNames));
 
     // Check assigned printers BEFORE sending to kitchen (same as test printer)
     if (printerNames.size > 0) {
@@ -93,31 +88,23 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     
     // Try to print kitchen order to thermal printers assigned to products
     if (printerNames.size > 0 && printers.length > 0 && orderId) {
-      try {
-        console.log(`📋 Order ID: ${orderId}, sending to ${printerNames.size} printer(s)...`);
-        
+      try {        
         // Collect printer IDs
         const printerIds = [];
         printerNames.forEach(printerName => {
           const printer = printers.find(p => p.name === printerName);
           if (printer) {
             printerIds.push(printer.id);
-            console.log(`  - ${printer.name} (ID: ${printer.id})`);
           } else {
             console.warn(`⚠️ Printer "${printerName}" not found in printer list`);
           }
         });
 
-        if (printerIds.length > 0) {
-          console.log(`📤 Calling BATCH API: POST /api/printers/print-kitchen-batch with printerIds=[${printerIds.join(', ')}], orderId=${orderId}`);
-          
+        if (printerIds.length > 0) {          
           // Single batch request to all printers
           const result = await printerService.printKitchenOrderBatch(printerIds, orderId);
-          
-          console.log(`📊 Batch Print Result:`, result);
-          
+                    
           if (result.success) {
-            console.log(`✅ Kitchen order sent to ${result.successCount} printer(s) successfully`);
             if (result.failedCount > 0) {
               console.warn(`⚠️ ${result.failedCount} printer(s) failed:`, result.errors);
               alert(`⚠️ Partial Success\n\n✅ ${result.successCount} printer(s) succeeded\n❌ ${result.failedCount} printer(s) failed\n\n${result.errors.join('\n')}`);
