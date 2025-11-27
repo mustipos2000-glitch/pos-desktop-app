@@ -601,9 +601,9 @@ const CategoryManager = () => {
               ).map((category, index) => (
                 <div
                   key={category.id}
-                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
-                    ? "text-white bg-pos-bg-primary shadow-md"
-                    : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
+                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
+                    ? "text-white bg-pos-bg-primary shadow-lg"
+                    : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                     }`}
                   onClick={() => setSelectedCategory(category)}
                 >
@@ -664,9 +664,9 @@ const CategoryManager = () => {
               ).map((product) => (
                 <div
                   key={product.id}
-                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-1 py-1 ${selectedProduct?.id === product.id
-                    ? "bg-pos-bg-primary shadow-md"
-                    : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
+                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg px-2 py-2 ${selectedProduct?.id === product.id
+                    ? "bg-pos-bg-primary shadow-lg"
+                    : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                     }`}
                   onClick={() => setSelectedProduct(product)}
                 >
@@ -704,13 +704,13 @@ const CategoryManager = () => {
             <>
               <div className="flex gap-1 mb-1">
                 <button
-                  className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-lg transition-colors"
+                  className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-xl transition-colors"
                   onClick={() => setSelectedAttachedSubProducts(attachedSubProducts.map(sp => sp.id))}
                 >
                   Select All
                 </button>
                 <button
-                  className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-lg transition-colors"
+                  className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-xl transition-colors"
                   onClick={() => setSelectedAttachedSubProducts([])}
                   disabled={selectedAttachedSubProducts.length === 0}
                 >
@@ -723,9 +723,9 @@ const CategoryManager = () => {
                 ).map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className={`cursor-pointer px-2 py-1 mt-1 mb-2 border border-pos-border-primary rounded-lg transition-all duration-200 ${selectedAttachedSubProducts.includes(subProduct.id)
-                      ? "bg-pos-bg-primary text-white font-medium shadow-md"
-                      : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
+                    className={`cursor-pointer px-3 py-2 mt-1 mb-2 border border-pos-border-primary rounded-xl transition-all duration-300 ${selectedAttachedSubProducts.includes(subProduct.id)
+                      ? "bg-pos-bg-primary text-white font-medium shadow-lg"
+                      : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                       }`}
                     onClick={() => toggleAttachedSubProductSelection(subProduct.id)}
                   >
@@ -806,7 +806,7 @@ const CategoryManager = () => {
             <select
               value={selectedGroup}
               onChange={(e) => setSelectedGroup(e.target.value)}
-              className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-0.5 text-sm rounded focus:outline-none focus:border-pos-info transition-colors"
+              className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-0.5 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors"
             >
               <option value="">All Groups </option>
               {loadingGroups ? (
@@ -823,18 +823,18 @@ const CategoryManager = () => {
 
           <div className="mt-1">
             {loadingGroupProducts ? (
-              <div className="min-h-[272px] text-pos-text-muted text-lg p-4 text-center bg-pos-bg-secondary">
+              <div className="min-h-[272px] text-pos-text-muted text-lg p-4 text-center bg-pos-bg-secondary rounded-lg">
                 Loading sub-products...
               </div>
             ) : groupProducts.length === 0 ? (
-              <div className="min-h-[272px] text-pos-text-muted text-lg border border-pos-border-secondary p-2 rounded text-pos-error bg-pos-bg-secondary">
+              <div className="min-h-[272px] text-pos-text-muted text-lg border border-pos-border-secondary p-2 rounded-lg text-pos-error bg-pos-bg-secondary">
                 No sub-products {selectedGroup ? "in this group" : "available"}
               </div>
             ) : (
               <>
                 <div className="flex gap-1 mb-1">
                   <button
-                    className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded transition-colors"
+                    className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-xl transition-colors"
                     onClick={() => {
                       // Select only sub-products not already attached to the current product
                       const availableSubProducts = groupProducts.filter(sp =>
@@ -846,14 +846,14 @@ const CategoryManager = () => {
                     Select All
                   </button>
                   <button
-                    className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded transition-colors"
+                    className="text-xs px-2 py-1 bg-pos-bg-secondary hover:bg-pos-interactive-primary rounded-xl transition-colors"
                     onClick={() => setSelectedGroupSubProducts([])}
                     disabled={selectedGroupSubProducts.length === 0}
                   >
                     Clear
                   </button>
                 </div>
-                <div className="h-[442px] min-w-[160px] border border-pos-border-secondary p-2 rounded overflow-y-auto scrollbar-custom bg-pos-bg-secondary">
+                <div className="h-[442px] min-w-[160px] border border-pos-border-secondary p-2 rounded-lg overflow-y-auto scrollbar-custom bg-pos-bg-secondary">
                   {groupProducts.filter(subProduct => {
                     // Filter by search query
                     const matchesSearch = !searchQuery || subProduct.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -863,9 +863,9 @@ const CategoryManager = () => {
                   }).map((subProduct) => (
                     <div
                       key={subProduct.id}
-                      className={`text-base mt-1 min-w-[100px] cursor-pointer border border-pos-border-primary rounded-lg mt-1 mb-2 px-1 py-1 transition-all duration-200 ${selectedGroupSubProducts.includes(subProduct.id)
-                        ? "bg-pos-bg-primary text-white font-medium shadow-md"
-                        : "hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
+                      className={`text-base mt-1 min-w-[100px] cursor-pointer border border-pos-border-primary rounded-xl mt-1 mb-2 px-2 py-2 transition-all duration-300 ${selectedGroupSubProducts.includes(subProduct.id)
+                        ? "bg-pos-bg-primary text-white font-medium shadow-lg"
+                        : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                         }`}
                       onClick={() => toggleGroupSubProductSelection(subProduct.id)}
                     >

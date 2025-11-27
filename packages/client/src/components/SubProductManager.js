@@ -612,9 +612,9 @@ const SubProductManager = () => {
                 <div
                   key={group.id}
                   onClick={() => setSelectedGroup(group)}
-                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary px-1 py-1 ${selectedGroup?.id === group.id
-                    ? 'text-white bg-pos-bg-primary shadow-md'
-                    : 'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary px-2 py-2 ${selectedGroup?.id === group.id
+                    ? 'text-white bg-pos-bg-primary shadow-lg'
+                    : 'hover:bg-black/10 hover:shadow-md hover:scale-[1.02]'
                     }`}
                 >
                   <div className="px-1 py-1 flex-1">
@@ -644,8 +644,8 @@ const SubProductManager = () => {
               {filteredSubProducts.map((subProduct) => (
                 <div
                   key={subProduct.id}
-                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-2 py-1 ${
-                    'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg px-3 py-2 ${
+                    'hover:bg-black/10 hover:shadow-md hover:scale-[1.02]'
                   }`}
                 >
                   <div className="flex-1">
@@ -654,13 +654,13 @@ const SubProductManager = () => {
                   <div className="flex gap-1">
                     <button
                       onClick={() => handleEditSubProduct(subProduct)}
-                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded-xl transition-colors"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => openDeleteConfirmation(subProduct)}
-                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                      className="text-xs px-2 py-1 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded-xl transition-colors"
                     >
                       Delete
                     </button>
@@ -698,7 +698,7 @@ const SubProductManager = () => {
                     name="group_id"
                     value={subProductForm.group_id}
                     onChange={handleInputChange}
-                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors"
                   >
                     <option value="">Select Group</option>
                     {groups.map(group => (
@@ -716,7 +716,7 @@ const SubProductManager = () => {
                     value={subProductForm.name}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('name')}
-                    className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${fieldErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="Enter sub-product name"
                   />
                   {fieldErrors.name && <p className="text-pos-error text-xs mt-1">{fieldErrors.name}</p>}
@@ -730,7 +730,7 @@ const SubProductManager = () => {
                     value={subProductForm.button_name}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('button_name')}
-                    className={`w-full bg-pos-bg-primary border ${activeField === 'button_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'button_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="Display name"
                   />
                 </div>
@@ -742,7 +742,7 @@ const SubProductManager = () => {
                     value={subProductForm.production_name}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('production_name')}
-                    className={`w-full bg-pos-bg-primary border ${activeField === 'production_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'production_name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="Name for production"
                   />
                 </div>
@@ -755,7 +755,7 @@ const SubProductManager = () => {
                     value={subProductForm.price}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('price')}
-                    className={`w-full bg-pos-bg-primary border ${activeField === 'price' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'price' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="0.00"
                   />
                 </div>
@@ -769,7 +769,7 @@ const SubProductManager = () => {
                     value={subProductForm.vat_takeout}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('vat_takeout')}
-                    className={`w-full bg-pos-bg-primary border ${activeField === 'vat_takeout' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'vat_takeout' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="0.00"
                   />
                 </div>
@@ -783,7 +783,7 @@ const SubProductManager = () => {
                     value={subProductForm.vat_eat_in}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('vat_eat_in')}
-                    className={`w-full bg-pos-bg-primary border ${activeField === 'vat_eat_in' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'vat_eat_in' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="0.00"
                   />
                 </div>
@@ -795,7 +795,7 @@ const SubProductManager = () => {
                     value={subProductForm.barcode}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('barcode')}
-                    className={`w-full bg-pos-bg-primary border ${activeField === 'barcode' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'barcode' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="Product barcode"
                   />
                 </div>
@@ -807,7 +807,7 @@ const SubProductManager = () => {
                     value={subProductForm.addition_type}
                     onChange={handleInputChange}
                     onFocus={() => handleFieldFocus('addition_type')}
-                    className={`w-full bg-pos-bg-primary border ${activeField === 'addition_type' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'addition_type' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-3 py-2 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors`}
                     placeholder="Addition type"
                   />
                 </div>
@@ -1049,7 +1049,7 @@ const SubProductManager = () => {
                       name="image"
                       accept="image/*"
                       onChange={handleFileChange}
-                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1 text-sm focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-1 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors file:mr-4 file:py-1 file:px-3 file:border-0 file:text-sm file:bg-pos-interactive-primary file:text-pos-text-primary hover:file:bg-pos-interactive-hover file:cursor-pointer"
                     />
                   </div>
 
@@ -1060,7 +1060,7 @@ const SubProductManager = () => {
                       name="color"
                       value={subProductForm.color}
                       onChange={handleInputChange}
-                      className="w-full h-10 bg-pos-bg-primary border border-pos-border-secondary cursor-pointer"
+                      className="w-full h-10 bg-pos-bg-primary border border-pos-border-secondary rounded-xl cursor-pointer"
                     />
                   </div>
                 </div>

@@ -151,13 +151,13 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
           products.map((product) => (
             <div
               key={product.id}
-              className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative hover:-translate-y-1 hover:shadow-lg"
+              className="product-card flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-300 relative hover:-translate-y-1 hover:shadow-2xl"
               onClick={() => handleProductClick(product)}
               style={{
                 borderWidth: "2px",
                 borderStyle: "solid",
                 borderColor: product.color || "#3b82f6",
-                boxShadow: `0 0 0 1px ${product.color || "#3b82f6"} inset`, // ensures color visibility
+                boxShadow: `0 0 0 1px ${product.color || "#3b82f6"} inset`,
               }}
             >
 
@@ -172,7 +172,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                   <img
                     src={`http://localhost:5000${product.image}`}
                     alt={product.name}
-                    className="w-full h-full object-cover rounded-2xl"
+                    className="w-full h-full object-cover rounded-3xl"
                   />
                 ) : (
                   <span className="text-3xl">{product.image || '📦'}</span>
@@ -212,7 +212,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                 {subProducts.map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className="cursor-pointer transition-all duration-200 flex items-center justify-between px-2 py-2 rounded hover:brightness-110 hover:scale-[1.02] mb-2"
+                    className="cursor-pointer transition-all duration-300 flex items-center justify-between px-3 py-2 rounded-xl hover:brightness-110 hover:scale-[1.02] mb-2 shadow-md"
                     style={{
                       borderWidth: "1px",
                       borderStyle: "solid",

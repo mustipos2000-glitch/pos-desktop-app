@@ -16,10 +16,10 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
         {categories.map((category) => (
           <button
             key={category}
-            className={`category-btn border-2 min-w-[160px] border-pos-border-primary rounded-lg px-3 text-lg py-1 cursor-pointer text-left whitespace-normal break-words leading-tight ${
+            className={`category-btn border-2 min-w-[160px] border-pos-border-primary rounded-xl px-3 text-lg py-2 cursor-pointer text-left whitespace-normal break-words leading-tight transition-all duration-200 hover:scale-[1.02] shadow-md ${
               selectedCategory === category 
-                ? 'active text-white' 
-                : 'text-pos-text-muted hover:text-white'
+                ? 'active text-white bg-pos-interactive-primary' 
+                : 'text-pos-text-muted hover:text-white bg-pos-bg-panel'
             }`}
             onClick={() => onSelectCategory(category)}
           >

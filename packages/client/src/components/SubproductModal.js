@@ -154,7 +154,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery 
                 {subProducts.map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className="flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-200 relative overflow-hidden hover:scale-105"
+                    className="flex flex-col items-center justify-between text-center cursor-pointer transition-all duration-300 relative overflow-hidden hover:scale-105 rounded-lg shadow-lg"
                     onClick={() => handleSubProductClick(subProduct)}
                     style={{
                       borderWidth: '2px',
@@ -163,7 +163,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery 
                     }}
                   >
                     {/* Price */}
-                    <div className="absolute rounded-md text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px]">
+                    <div className="absolute rounded-full text-xs font-semibold text-gray-200 bg-[rgba(0,0,0,0.6)] px-2 py-1">
                       {subProduct.price ? `€${parseFloat(subProduct.price).toFixed(2)}` : '0.00'}
                     </div>
 
@@ -173,7 +173,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery 
                         <img
                           src={`http://localhost:5000${subProduct.image}`}
                           alt={subProduct.name}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover rounded-xl"
                         />
                       ) : (
                         <span className="text-3xl">{subProduct.image || '📦'}</span>
