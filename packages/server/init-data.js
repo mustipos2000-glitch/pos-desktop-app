@@ -5,7 +5,6 @@ const Product = require('./models/Product');
 const categories = Category.getAll();
 
 if (categories.length === 0) {
-  console.log('Creating sample categories...');
   Category.create('Beverages');
   Category.create('Starters');
   Category.create('Main Course');

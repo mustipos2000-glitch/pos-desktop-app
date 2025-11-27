@@ -37,7 +37,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       try {
         const response = await printerService.getAllPrinters();
         setPrinters(response.data || []);
-        console.log( response.data);
       } catch (error) {
         console.error('Error fetching printers:', error);
       }
@@ -526,9 +525,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     }
 
   const handlePrintReceipt = async () => {
-    // Try to print to thermal printers assigned to products
-    console.log("Handle printer");
-    
+    // Try to print to thermal printers assigned to products    
     if (printers.length > 0 && completedOrderId && cart.length > 0) {
       try {
         // First, check if there's a printer whose name contains "receipt"
@@ -536,10 +533,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         
         if (receiptPrinter) {
           // If a "Receipt" printer is found, print only to that printer
-          console.log(`📋 Order ID: ${completedOrderId}, sending receipt to 'Receipt' printer...`);
           try {
             const response = await printerService.printReceipt(receiptPrinter.id, completedOrderId);
-            console.log(`✅ Success: Receipt printed to ${receiptPrinter.name}`, response);
             setToastType("success");
             setToastMessage(`Receipt printed successfully to '${receiptPrinter.name}' printer!`);
           } catch (err) {
@@ -561,22 +556,17 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
           // If no printers assigned to products, use browser print
           if (printerNames.size === 0) {
-            console.log('⚠️ No printers assigned to products. Using browser print.');
             window.print();
-          } else {
-            console.log(`📋 Order ID: ${completedOrderId}, sending receipt to printers...`);
-            
+          } else {            
             // Print to each assigned printer
             const printPromises = [];
             printerNames.forEach(printerName => {
               // Find printer by name
               const printer = printers.find(p => p.name === printerName);
               if (printer) {
-                console.log(`📤 Calling API: POST /api/printers/print-receipt with printerId=${printer.id}, orderId=${completedOrderId}`);
                 printPromises.push(
                   printerService.printReceipt(printer.id, completedOrderId)
                     .then(response => {
-                      console.log(`✅ Success: ${printer.name}`, response);
                       return response;
                     })
                     .catch(err => {
@@ -597,9 +587,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             const results = await Promise.allSettled(printPromises);
             const successCount = results.filter(r => r.status === 'fulfilled' && r.value && r.value.success !== false).length;
             const failedCount = results.length - successCount;
-            
-            console.log(`📊 Print Results: ${successCount} succeeded, ${failedCount} failed`);
-            
+                        
             if (successCount > 0) {
               setToastType("success");
               setToastMessage(`Receipt sent to ${successCount} printer(s) successfully!`);
@@ -618,7 +606,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       }
     } else {
       // No printer configured or no order, use browser print
-      console.log("no Printer open window Printer");
       window.print();
     }
     

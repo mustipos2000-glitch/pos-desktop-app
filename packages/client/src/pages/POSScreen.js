@@ -507,9 +507,7 @@ const POSScreen = () => {
     }
   };
 
-  const handleSendToKitchen = async () => {
-    console.log('🔵 POSScreen: handleSendToKitchen called');
-    
+  const handleSendToKitchen = async () => {    
     // Edge case: Validate cart has items
     if (cart.length === 0) {
       return null;

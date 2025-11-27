@@ -94,12 +94,8 @@ const PrinterController = {
   // Test printer connection
   testPrinter: async (req, res) => {
     try {
-      const id = req.params.id;
-      console.log('Testing printer ID:', id);
-      
-      const result = await PrinterService.testPrinter(id);
-      console.log('Test result:', result);
-      
+      const id = req.params.id;      
+      const result = await PrinterService.testPrinter(id);      
       if (result.success) {
         res.json({ success: true, message: 'Test print successful' });
       } else {
@@ -173,9 +169,6 @@ const PrinterController = {
       if (!order) {
         return res.status(404).json({ error: 'Order not found' });
       }
-
-      console.log(`📦 Batch printing to ${printerIds.length} printer(s) for order #${orderId}`);
-
       // Print to all printers
       const results = await Promise.allSettled(
         printerIds.map(printerId => PrinterService.printKitchenOrder(printerId, order))

@@ -25,11 +25,6 @@ function startServer() {
     serverDir = path.join(__dirname, '..', 'packages', 'server');
   }
   
-  console.log('Starting server...');
-  console.log('Server path:', serverPath);
-  console.log('Server dir:', serverDir);
-  console.log('Resources path:', process.resourcesPath);
-  
   // Use Electron's node executable instead of system node
   const nodePath = process.execPath;
   
@@ -61,9 +56,7 @@ function startServer() {
 }
 
 function createWindow() {
-  const preloadPath = path.join(__dirname, 'preload.js');
-  console.log('Preload path:', preloadPath);
-  
+  const preloadPath = path.join(__dirname, 'preload.js');  
   const mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -80,7 +73,6 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
   } else {
-    console.log('Production mode - waiting for server...');
     // Wait for server to start, then load the app
     setTimeout(() => {
       console.log('Loading http://localhost:5000');
