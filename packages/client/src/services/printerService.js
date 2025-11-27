@@ -142,6 +142,17 @@ export const printerService = {
     }
   },
 
+  // Print kitchen order to multiple printers (batch)
+  printKitchenOrderBatch: async (printerIds, orderId) => {
+    const response = await fetch(`${API_URL}/printers/print-kitchen-batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ printerIds, orderId })
+    });
+    if (!response.ok) throw new Error('Failed to print kitchen order batch');
+    return response.json();
+  },
+
   // Print custom text
   printCustom: async (printerId, text) => {
     try {

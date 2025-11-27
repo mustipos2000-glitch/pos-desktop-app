@@ -88,6 +88,7 @@ router.delete('/printers/:id', PrinterController.deletePrinter);
 router.post('/printers/:id/test', PrinterController.testPrinter);
 router.post('/printers/print-receipt', PrinterController.printReceipt);
 router.post('/printers/print-kitchen', PrinterController.printKitchenOrder);
+router.post('/printers/print-kitchen-batch', PrinterController.printKitchenOrderBatch);
 router.post('/printers/print-custom', PrinterController.printCustom);
 
 module.exports = router;
