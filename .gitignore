@@ -49,6 +49,7 @@ coverage/
 *.log
 
 *.md
+*.ps1
 package-lock.json
 seeder.js
 seed-tables.js
