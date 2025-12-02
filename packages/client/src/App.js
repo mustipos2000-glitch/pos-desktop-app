@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
+import { VersionProvider } from './context/VersionContext';
+import VersionSelectionScreen from './pages/VersionSelectionScreen';
 import UserLoginScreen from './pages/UserLoginScreen';
 import POSScreen from './pages/POSScreen';
 import AdminPanel from './pages/AdminPanel';
@@ -10,29 +12,32 @@ import ProtectedRoute from './components/ProtectedRoute';
 function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<UserLoginScreen />} />
-          <Route 
-            path="/pos" 
-            element={
-              <ProtectedRoute>
-                <POSScreen />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedRoute requiredPermission="admin">
-                <AdminPanel />
-              </ProtectedRoute>
-            } 
-          />
-          {/* Catch-all route: redirect any invalid URL to /pos */}
-          <Route path="*" element={<Navigate to="/pos" replace />} />
-        </Routes>
-      </Router>
+      <VersionProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<VersionSelectionScreen />} />
+            <Route path="/login" element={<UserLoginScreen />} />
+            <Route 
+              path="/pos" 
+              element={
+                <ProtectedRoute>
+                  <POSScreen />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <ProtectedRoute requiredPermission="admin">
+                  <AdminPanel />
+                </ProtectedRoute>
+              } 
+            />
+            {/* Catch-all route: redirect any invalid URL to version selection */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </VersionProvider>
     </ThemeProvider>
   );
 }

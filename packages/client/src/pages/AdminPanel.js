@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useVersion } from '../context/VersionContext';
 import ProductManager from '../components/ProductManager';
 import SubProductManager from '../components/SubProductManager';
 import CategoryManager from '../components/CategoryManager';
@@ -11,7 +12,15 @@ import RoomManager from '../components/RoomManager';
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const [activeTab, setActiveTab] = useState('categories');
+  const { version, hasFeature } = useVersion();
+  
+  // Set default tab based on available features
+  const getDefaultTab = () => {
+    if (hasFeature('categoryProducts')) return 'categories';
+    return 'users';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getDefaultTab());
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
@@ -22,54 +31,28 @@ const AdminPanel = () => {
               POS
             </button>
             <div className="flex gap-1">
-            <button
-              className={`btn-secondary text-base font-medium ${activeTab === 'categories'
-                ? 'bg-pos-interactive-primary text-pos-text-primary'
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-                }`}
-              onClick={() => setActiveTab('categories')}
-            >
-              Product
-            </button>
-            {/* <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${
-                activeTab === 'groups' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+            {hasFeature('categoryProducts') && (
+              <button
+                className={`btn-secondary text-base font-medium ${activeTab === 'categories'
+                  ? 'bg-pos-interactive-primary text-pos-text-primary'
                   : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-              }`}
-              onClick={() => setActiveTab('groups')}
-            >
-              Groups
-            </button> */}
-            {/* <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${
-                activeTab === 'products' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
+                  }`}
+                onClick={() => setActiveTab('categories')}
+              >
+                Product
+              </button>
+            )}
+            {hasFeature('categoryProducts') && (
+              <button
+                className={`btn-secondary text-base font-medium ${activeTab === 'sub-products'
+                  ? 'bg-pos-interactive-primary text-pos-text-primary'
                   : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-              }`}
-              onClick={() => setActiveTab('products')}
-            >
-              Products
-            </button> */}
-            <button
-              className={`btn-secondary text-base font-medium ${activeTab === 'sub-products'
-                ? 'bg-pos-interactive-primary text-pos-text-primary'
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-                }`}
-              onClick={() => setActiveTab('sub-products')}
-            >
-              Sub-Products
-            </button>
-            {/* <button
-              className={`px-3 py-2 btn-secondary text-sm font-medium ${
-                activeTab === 'groups' 
-                  ? 'bg-pos-interactive-primary text-pos-text-primary' 
-                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-              }`}
-              onClick={() => setActiveTab('groups')}
-            >
-              Groups
-            </button> */}
+                  }`}
+                onClick={() => setActiveTab('sub-products')}
+              >
+                Sub-Products
+              </button>
+            )}
             <button
               className={`btn-secondary text-base font-medium ${activeTab === 'users'
                 ? 'bg-pos-interactive-primary text-pos-text-primary'
@@ -79,15 +62,17 @@ const AdminPanel = () => {
             >
               Users
             </button>
-            <button
-              className={`btn-secondary text-base font-medium ${activeTab === 'rooms'
-                ? 'bg-pos-interactive-primary text-pos-text-primary'
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-                }`}
-              onClick={() => setActiveTab('rooms')}
-            >
-              Rooms & Tables
-            </button>
+            {hasFeature('tables') && (
+              <button
+                className={`btn-secondary text-base font-medium ${activeTab === 'rooms'
+                  ? 'bg-pos-interactive-primary text-pos-text-primary'
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                  }`}
+                onClick={() => setActiveTab('rooms')}
+              >
+                Rooms & Tables
+              </button>
+            )}
             </div>
           </div>
           <button

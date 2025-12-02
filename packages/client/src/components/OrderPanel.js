@@ -7,8 +7,10 @@ import NoteModal from "./NoteModal";
 import Toast from "./Toast";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
+import { useVersion } from '../context/VersionContext';
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart }) => {
+  const { hasFeature } = useVersion();
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
@@ -901,19 +903,21 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           🏷️
         </button>
 
-        <button
-          onClick={handleSplitCart}
-          disabled={!hasSelection || !selectedTable}
-          className={`relative text-pos-text-secondary py-2 ${(!hasSelection || !selectedTable) ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed" : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"}`}
-          title="Move selected items to another table"
-        >
-          <span className="text-lg">🔀</span>
-          {hasSelection && (
-            <span className="absolute -top-1 -right-1 bg-white text-green-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-              {selectedIds.length}
-            </span>
-          )}
-        </button>
+        {hasFeature('splitTables') && (
+          <button
+            onClick={handleSplitCart}
+            disabled={!hasSelection || !selectedTable}
+            className={`relative text-pos-text-secondary py-2 ${(!hasSelection || !selectedTable) ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed" : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"}`}
+            title="Move selected items to another table"
+          >
+            <span className="text-lg">🔀</span>
+            {hasSelection && (
+              <span className="absolute -top-1 -right-1 bg-white text-green-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                {selectedIds.length}
+              </span>
+            )}
+          </button>
+        )}
       </div>
 
       {/* Numpad */}
