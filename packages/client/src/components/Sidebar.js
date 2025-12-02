@@ -7,28 +7,30 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
 
   const handleLogout = () => {
     localStorage.removeItem('currentUser');
-    navigate('/');
+    navigate('/login');
   };
 
   return (
     <div className="mt-1 mb-2 bg-pos-bg-secondary ml-2 rounded-lg flex flex-col border-r border-pos-border-primary">
-      <div className="flex-1 overflow-y-auto py-4 px-2.5 flex flex-col gap-2 scrollbar-custom">
-        {categories.map((category) => (
-          <button
-            key={category}
-            className={`category-btn border-2 min-w-[160px] border-pos-border-primary rounded-xl px-3 text-lg py-2 cursor-pointer text-left whitespace-normal break-words leading-tight transition-all duration-200 hover:scale-[1.02] shadow-md ${
-              selectedCategory === category 
-                ? 'active text-pos-text-primary bg-pos-interactive-primary' 
-                : 'text-pos-text-muted bg-pos-bg-panel'
-            }`}
-            onClick={() => onSelectCategory(category)}
-            style={selectedCategory !== category ? { color: 'var(--text-muted)' } : { color: 'var(--text-main)' }}
-          >
-            {category}
-          </button>
-        ))}
-      </div>
-      <div className="p-4 mb-0">
+      {categories && categories.length > 0 && (
+        <div className="flex-1 overflow-y-auto py-4 px-2.5 flex flex-col gap-2 scrollbar-custom">
+          {categories.map((category) => (
+            <button
+              key={category}
+              className={`category-btn border-2 min-w-[160px] border-pos-border-primary rounded-xl px-3 text-lg py-2 cursor-pointer text-left whitespace-normal break-words leading-tight transition-all duration-200 hover:scale-[1.02] shadow-md ${
+                selectedCategory === category 
+                  ? 'active text-pos-text-primary bg-pos-interactive-primary' 
+                  : 'text-pos-text-muted bg-pos-bg-panel'
+              }`}
+              onClick={() => onSelectCategory(category)}
+              style={selectedCategory !== category ? { color: 'var(--text-muted)' } : { color: 'var(--text-main)' }}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="p-4 mb-0 mt-auto">
         {currentUser.name && (
           <div className="flex justify-between items-center w-full">
             <div className="flex flex-col flex-1">

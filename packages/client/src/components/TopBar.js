@@ -5,10 +5,12 @@ import ConfirmationModal from './ConfirmationModal';
 import ApiService from '../services/api';
 import { printerService } from '../services/printerService';
 import { useTheme } from '../context/ThemeContext';
+import { useVersion } from '../context/VersionContext';
 import { useMessageModal } from '../hooks/useMessageModal';
 
 const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount }) => {
   const { theme, toggleTheme } = useTheme();
+  const { hasFeature } = useVersion();
   const [showTableModal, setShowTableModal] = useState(false);
   const [kitchenOrderCount, setKitchenOrderCount] = useState(0);
   const [printers, setPrinters] = useState([]);
@@ -196,25 +198,29 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     <>
       <div className="mt-2 mb-2 ml-2 flex justify-between items-center bg-pos-bg-secondary px-5 py-2.5 border-b border-pos-border-primary rounded-lg mr-1">
         <div className="flex gap-2.5">
-          <button
-            onClick={handleTableClick}
-            className={`btn-primary px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${selectedTable
-              ? 'bg-green-600 hover:bg-green-700'
-              : 'bg-pos-interactive-primary hover:bg-pos-interactive-hover'
-              }`}
-          >
-            <span className="text-lg">🪑</span>
-            {selectedTable ? (
-              <span>
-                Table: {selectedTable.table_no}
-                {hasExistingOrder && <span className="ml-1 text-xs"></span>}
-              </span>
-            ) : 'Select Table'}
-          </button>
-          <button className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white">
-            <span className="text-lg">📋</span>
-            Orders ({kitchenOrderCount})
-          </button>
+          {hasFeature('tables') && (
+            <button
+              onClick={handleTableClick}
+              className={`btn-primary px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${selectedTable
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-pos-interactive-primary hover:bg-pos-interactive-hover'
+                }`}
+            >
+              <span className="text-lg">🪑</span>
+              {selectedTable ? (
+                <span>
+                  Table: {selectedTable.table_no}
+                  {hasExistingOrder && <span className="ml-1 text-xs"></span>}
+                </span>
+              ) : 'Select Table'}
+            </button>
+          )}
+          {hasFeature('kitchenPrinter') && (
+            <button className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white">
+              <span className="text-lg">📋</span>
+              Orders ({kitchenOrderCount})
+            </button>
+          )}
         </div>
         <div className="flex gap-2.5 items-center">
           {/* Search Bar */}
@@ -230,13 +236,15 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
               />
             </div>
           </div>
-          <button
-            onClick={handleSendToKitchen}
-            disabled={!cart || cart.length === 0}
-            className="bg-pos-interactive-primary btn-primary text-pos-text-muted px-3 py-1.5 cursor-pointer text-sm transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Send To Kitchen
-          </button>
+          {hasFeature('kitchenPrinter') && (
+            <button
+              onClick={handleSendToKitchen}
+              disabled={!cart || cart.length === 0}
+              className="bg-pos-interactive-primary btn-primary text-pos-text-muted px-3 py-1.5 cursor-pointer text-sm transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send To Kitchen
+            </button>
+          )}
         </div>
         <div className="flex gap-2.5 items-center">
           {/* Theme Toggle Button */}

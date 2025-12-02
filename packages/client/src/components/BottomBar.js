@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useVersion } from '../context/VersionContext';
 
 const BottomBar = ({ onOpenSettings }) => {
   const navigate = useNavigate();
+  const { version } = useVersion();
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const userRole = currentUser.role || 'User';
 
@@ -19,8 +21,11 @@ const BottomBar = ({ onOpenSettings }) => {
   const showAdminButton = userRole === 'Super Admin' ||
     userPermissions.includes('admin');
 
-  const showSettingsButton = userRole === 'Super Admin' ||
-    userPermissions.includes('settings');
+  // Hide settings for mosque version
+  const showSettingsButton = version !== 'mosque' && (
+    userRole === 'Super Admin' ||
+    userPermissions.includes('settings')
+  );
 
   return (
     <div className="flex gap-2 ml-2 mb-1 mr-2 rounded-lg p-2 bg-pos-bg-primary border-t bg-pos-bg-tertiary">

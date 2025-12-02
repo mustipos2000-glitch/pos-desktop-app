@@ -7,8 +7,10 @@ import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
 import UnifiedTableModal from '../components/UnifiedTableModal';
 import ApiService from '../services/api';
+import { useVersion } from '../context/VersionContext';
 
 const POSScreen = () => {
+  const { hasFeature } = useVersion();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cart, setCart] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -662,7 +664,7 @@ const POSScreen = () => {
         />
         <div className="flex-1 flex overflow-hidden">
           <Sidebar
-            categories={categories}
+            categories={hasFeature('categoryProducts') ? categories : []}
             selectedCategory={selectedCategory}
             onSelectCategory={(category) => {
               setSelectedCategory(category);
