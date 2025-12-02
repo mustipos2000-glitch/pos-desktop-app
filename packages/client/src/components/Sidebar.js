@@ -18,10 +18,11 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
             key={category}
             className={`category-btn border-2 min-w-[160px] border-pos-border-primary rounded-xl px-3 text-lg py-2 cursor-pointer text-left whitespace-normal break-words leading-tight transition-all duration-200 hover:scale-[1.02] shadow-md ${
               selectedCategory === category 
-                ? 'active text-white bg-pos-interactive-primary' 
-                : 'text-pos-text-muted hover:text-white bg-pos-bg-panel'
+                ? 'active text-pos-text-primary bg-pos-interactive-primary' 
+                : 'text-pos-text-muted bg-pos-bg-panel'
             }`}
             onClick={() => onSelectCategory(category)}
+            style={selectedCategory !== category ? { color: 'var(--text-muted)' } : { color: 'var(--text-main)' }}
           >
             {category}
           </button>
@@ -31,7 +32,7 @@ const Sidebar = ({ categories, selectedCategory, onSelectCategory }) => {
         {currentUser.name && (
           <div className="flex justify-between items-center w-full">
             <div className="flex flex-col flex-1">
-              <span className="text-xs font-bold text-white leading-tight">{currentUser.name}</span>
+              <span className="text-xs font-bold leading-tight" style={{ color: 'var(--text-main)' }}>{currentUser.name}</span>
               <span className="text-xs text-pos-text-muted leading-tight">({currentUser.role})</span>
             </div>
             <button 

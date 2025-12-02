@@ -336,7 +336,7 @@ const RoomManager = () => {
                   key={room.id}
                   onClick={() => setSelectedRoom(room)}
                   className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary px-1 py-1 ${selectedRoom?.id === room.id
-                    ? 'text-white bg-pos-bg-primary shadow-md'
+                    ? 'bg-pos-bg-primary shadow-md'
                     : 'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
                     }`}
                 >

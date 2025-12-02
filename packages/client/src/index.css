@@ -18,7 +18,12 @@
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    @apply bg-pos-bg-primary text-pos-text-primary overflow-hidden;
+    @apply overflow-hidden;
+  }
+
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
   }
 
   #root {
@@ -97,7 +102,7 @@
 
   .btn-danger {
     background-color: rgba(239, 68, 68, 0.18);
-    color: #fecaca;
+    color: var(--text-main);
     border: 2px solid var(--accent-red);
     border-radius: var(--radius-sm);
     padding: 0.1rem .5rem;
@@ -293,7 +298,8 @@
 
   /* Modal and form styles for admin components */
   .modal {
-    @apply bg-pos-bg-tertiary max-h-[90vh] overflow-y-auto flex flex-col;
+    @apply max-h-[90vh] overflow-y-auto flex flex-col;
+    background-color: var(--bg-dark);
   }
 
   .modal-overlay {
@@ -309,19 +315,23 @@
   }
 
   .form-group label {
-    @apply text-sm font-medium text-pos-text-muted;
+    @apply text-sm font-medium;
+    color: var(--text-muted);
   }
 
   .form-group input,
   .form-group select,
   .form-group textarea {
-    @apply bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2 rounded text-sm focus:outline-none focus:border-pos-info;
+    @apply px-3 py-2 rounded text-sm focus:outline-none;
+    background-color: var(--bg-main);
+    border: 1px solid var(--border-primary);
+    color: var(--text-main);
   }
 
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
-    @apply border-pos-info;
+    border-color: var(--status-info);
   }
 
   .form-actions {
@@ -333,23 +343,33 @@
   }
 
   .admin-section h2 {
-    @apply text-pos-text-primary text-xl font-semibold mb-2 text-center;
+    @apply text-xl font-semibold mb-2 text-center;
+    color: var(--text-main);
   }
 
   .data-table {
-    @apply w-full bg-pos-bg-secondary rounded-lg overflow-hidden;
+    @apply w-full rounded-lg overflow-hidden;
+    background-color: var(--bg-panel);
   }
 
   .data-table th {
-    @apply bg-pos-bg-tertiary text-pos-text-primary text-left px-4 py-3 text-sm font-medium;
+    @apply text-left px-4 py-3 text-sm font-medium;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
   }
 
   .data-table td {
-    @apply px-4 py-3 text-pos-text-secondary text-sm border-t border-pos-border-primary;
+    @apply px-4 py-3 text-sm;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-primary);
   }
 
   .data-table tr:hover {
-    @apply bg-pos-bg-tertiary;
+    background-color: var(--bg-overlay);
+  }
+
+  .data-table tbody tr {
+    background-color: var(--bg-panel);
   }
 
   /* Color picker styles */
@@ -382,6 +402,87 @@
   .category-btn.active,
   .category-btn:active {
     background-color: rgba(0, 0, 0, 0.6);
+  }
+
+  /* Theme-aware utility classes using CSS variables */
+  .bg-pos-bg-primary {
+    background-color: var(--bg-main) !important;
+  }
+
+  .bg-pos-bg-secondary {
+    background-color: var(--bg-panel) !important;
+  }
+
+  .bg-pos-bg-tertiary {
+    background-color: var(--bg-dark) !important;
+  }
+
+  .text-pos-text-primary {
+    color: var(--text-main) !important;
+  }
+
+  .text-pos-text-secondary {
+    color: var(--text-secondary) !important;
+  }
+
+  .text-pos-text-muted {
+    color: var(--text-muted) !important;
+  }
+
+  .border-pos-border-primary {
+    border-color: var(--border-primary) !important;
+  }
+
+  .border-pos-border-secondary {
+    border-color: var(--border-soft) !important;
+  }
+
+  .bg-pos-interactive-primary {
+    background-color: var(--interactive-primary) !important;
+  }
+
+  .bg-pos-interactive-hover {
+    background-color: var(--interactive-hover) !important;
+  }
+
+  .bg-pos-bg-tertiary {
+    background-color: var(--bg-dark) !important;
+  }
+
+  .border-pos-info {
+    border-color: var(--status-info) !important;
+  }
+
+  .bg-pos-info {
+    background-color: var(--status-info) !important;
+  }
+
+  /* Add button style */
+  .add-btn {
+    background-color: var(--status-success);
+    color: white;
+    border: 2px solid var(--interactive-border);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+  }
+
+  .add-btn:hover {
+    background-color: #059669;
+    border-color: var(--interactive-border-hover);
+  }
+
+  /* Button text that should always be white (for colored buttons) */
+  .btn-text-white {
+    color: white !important;
+  }
+
+  /* Button text that adapts to theme */
+  .btn-text-theme {
+    color: var(--text-main) !important;
   }
 
 }

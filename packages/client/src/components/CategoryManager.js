@@ -602,7 +602,7 @@ const CategoryManager = () => {
                 <div
                   key={category.id}
                   className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
-                    ? "text-white bg-pos-bg-primary shadow-lg"
+                    ? "bg-pos-bg-primary shadow-lg"
                     : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                     }`}
                   onClick={() => setSelectedCategory(category)}
@@ -724,7 +724,7 @@ const CategoryManager = () => {
                   <div
                     key={subProduct.id}
                     className={`cursor-pointer px-3 py-2 mt-1 mb-2 border border-pos-border-primary rounded-xl transition-all duration-300 ${selectedAttachedSubProducts.includes(subProduct.id)
-                      ? "bg-pos-bg-primary text-white font-medium shadow-lg"
+                      ? "bg-pos-bg-primary  font-medium shadow-lg"
                       : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                       }`}
                     onClick={() => toggleAttachedSubProductSelection(subProduct.id)}
@@ -864,7 +864,7 @@ const CategoryManager = () => {
                     <div
                       key={subProduct.id}
                       className={`text-base mt-1 min-w-[100px] cursor-pointer border border-pos-border-primary rounded-xl mt-1 mb-2 px-2 py-2 transition-all duration-300 ${selectedGroupSubProducts.includes(subProduct.id)
-                        ? "bg-pos-bg-primary text-white font-medium shadow-lg"
+                        ? "bg-pos-bg-primary font-medium shadow-lg"
                         : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                         }`}
                       onClick={() => toggleGroupSubProductSelection(subProduct.id)}
