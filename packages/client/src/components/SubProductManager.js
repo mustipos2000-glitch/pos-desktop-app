@@ -613,7 +613,7 @@ const SubProductManager = () => {
                   key={group.id}
                   onClick={() => setSelectedGroup(group)}
                   className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary px-2 py-2 ${selectedGroup?.id === group.id
-                    ? 'text-white bg-pos-bg-primary shadow-lg'
+                    ? 'bg-pos-bg-primary shadow-lg'
                     : 'hover:bg-black/10 hover:shadow-md hover:scale-[1.02]'
                     }`}
                 >

@@ -97,22 +97,22 @@ export default function CalculatorModal({
         >
         {/* Header */}
         <div className="px-6 pt-6 pb-4 text-center">
-          <h3 className="text-lg font-medium text-white">{title}</h3>
+          <h3 className="text-lg font-semibold text-pos-text-primary">{title}</h3>
 
           <div className="mt-4 flex items-center justify-center gap-6">
             <div className="flex flex-col items-center">
-              <span className="text-xs text-gray-300 mb-1">Total</span>
-              <div className="text-white text-sm">€ {basePrice.toFixed(2)}</div>
+              <span className="text-xs text-pos-text-muted mb-1 font-medium">Total</span>
+              <div className="text-pos-text-primary text-base font-bold">€ {basePrice.toFixed(2)}</div>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-xs text-gray-300 mb-1">Discount</span>
-              <div className="bg-red-50 border border-red-300 text-red-700 text-sm px-3 py-1 rounded">
+              <span className="text-xs text-pos-text-muted mb-1 font-medium">Discount</span>
+              <div className="bg-red-100 border-2 border-red-400 text-red-700 text-sm font-bold px-3 py-1 rounded">
                 {discount < 0 ? `€ ${Math.abs(discount).toFixed(2)}` : "€ 0.00"}
               </div>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-xs text-gray-300 mb-1">Remaining</span>
-              <div className="text-green-500 font-semibold">
+              <span className="text-xs text-pos-text-muted mb-1 font-medium">Remaining</span>
+              <div className="text-green-600 font-bold text-base">
                 € {finalPrice.toFixed(2)}
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function CalculatorModal({
         {/* Body */}
         <div className="px-6 pb-6 flex flex-col items-center gap-4">
           {/* Input */}
-          <div className="w-4/5 bg-slate-50 rounded-md p-3 text-right text-lg font-medium text-slate-700">
+          <div className="w-4/5 bg-pos-bg-primary border-2 border-pos-border-primary rounded-md p-3 text-right text-xl font-bold text-pos-text-primary">
             {mode === "percentage"
               ? input
                 ? `${input}%`
@@ -138,7 +138,7 @@ export default function CalculatorModal({
               <button
                 key={k}
                 onClick={() => handleKey(k)}
-                className="py-2 rounded-lg bg-pos-bg-primary text-white text-lg shadow-sm"
+                className="py-3 rounded-lg bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary text-xl font-bold shadow-sm"
               >
                 {k}
               </button>
@@ -152,10 +152,10 @@ export default function CalculatorModal({
                 setMode("amount");
                 setInput("");
               }}
-              className={`flex-1 py-2 rounded-lg text-center shadow-sm ${
+              className={`flex-1 py-2 rounded-lg text-center shadow-sm font-semibold ${
                 mode === "amount"
-                  ? "bg-pos-bg-primary text-white"
-                  : "bg-pos-interactive-hover text-white"
+                  ? "bg-pos-info text-white"
+                  : "bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary"
               }`}
             >
               Amount
@@ -166,10 +166,10 @@ export default function CalculatorModal({
                 setMode("percentage");
                 setInput("");
               }}
-              className={`flex-1 py-2 rounded-lg text-center shadow-sm ${
+              className={`flex-1 py-2 rounded-lg text-center shadow-sm font-semibold ${
                 mode === "percentage"
-                  ? "bg-pos-bg-primary text-white"
-                  : "bg-pos-interactive-hover border-black text-white"
+                  ? "bg-pos-info text-white"
+                  : "bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary"
               }`}
             >
               Percentage
@@ -180,13 +180,13 @@ export default function CalculatorModal({
           <div className="flex justify-center items-center w-4/5 gap-4 mt-2 pb-4">
             <button
               onClick={onClose}
-              className="flex-1 py-2 rounded-lg text-center shadow-sm bg-pos-bg-primary text-white"
+              className="flex-1 py-2 rounded-lg text-center shadow-sm bg-pos-error hover:bg-red-600 text-white font-semibold"
             >
               Cancel
             </button>
             <button
               onClick={handleOk}
-              className="flex-1 py-2 rounded-lg text-center shadow-sm bg-pos-bg-primary text-white"
+              className="flex-1 py-2 rounded-lg text-center shadow-sm bg-pos-success hover:bg-green-600 text-white font-semibold"
             >
               Ok
             </button>

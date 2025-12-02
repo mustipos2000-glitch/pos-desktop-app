@@ -6,6 +6,9 @@
  * All components will automatically reflect the changes.
  */
 
+/* ========================================
+   DARK THEME (DEFAULT)
+   ======================================== */
 :root {
   /* ========================================
      BACKGROUND COLORS
@@ -48,6 +51,7 @@
   --interactive-active: #3b4f66;            /* Active/pressed state */
   --interactive-border: rgba(255,255,255,0.35); /* Interactive borders */
   --interactive-border-hover: #ffffff;      /* Hover border */
+  --interactive-dark: #1e293b;              /* Dark interactive elements (numpad) */
 
   /* ========================================
      ACCENT COLORS
@@ -92,6 +96,83 @@
      ======================================== */
   --scrollbar-track: #263544;
   --scrollbar-thumb: #3b4f66;
+}
+
+/* ========================================
+   LIGHT THEME
+   ======================================== */
+:root:not(.dark) {
+  /* ========================================
+     BACKGROUND COLORS
+     ======================================== */
+  --bg-main: #f5f7fa;           /* Main application background */
+  --bg-gradient-start: #e8ecf1; /* Gradient start color */
+  --bg-gradient-end: #f5f7fa;   /* Gradient end color */
+  --bg-panel: #ffffff;          /* Panels, cards, buttons background */
+  --bg-panel-soft: #f8f9fb;     /* Soft panel variant */
+  --bg-dark: #e5e9ef;           /* Darker background areas */
+  --bg-accent: #f0f3f7;         /* Accent background */
+  --bg-overlay: rgba(0,0,0,0.05); /* Overlay backgrounds */
+  --bg-overlay-dark: rgba(0,0,0,0.1); /* Darker overlay */
+  --bg-overlay-darker: rgba(0,0,0,0.2); /* Even darker overlay */
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --border-soft: #e5e9ef;       /* Soft borders */
+  --border-primary: #cbd5e1;    /* Primary borders */
+  --border-accent: rgba(0,0,0,0.15); /* Accent borders */
+  --border-hover: #64748b;      /* Hover state borders */
+  --border-light: rgba(0,0,0,0.08); /* Light borders */
+  --border-strong: rgba(0,0,0,0.25); /* Strong borders */
+
+  /* ========================================
+     TEXT COLORS
+     ======================================== */
+  --text-main: #000000;         /* Main text color - Black */
+  --text-secondary: #1e293b;    /* Secondary text - Dark gray */
+  --text-muted: #475569;        /* Muted/placeholder text - Medium gray */
+  --text-disabled: #94a3b8;     /* Disabled text */
+  --text-white: #ffffff;        /* Pure white text */
+
+  /* ========================================
+     INTERACTIVE COLORS (Buttons, Cards, etc.)
+     ======================================== */
+  --interactive-primary: #e8ecf1;           /* Primary interactive elements */
+  --interactive-hover: #d1d9e3;             /* Hover state */
+  --interactive-active: #b8c4d4;            /* Active/pressed state */
+  --interactive-border: rgba(0,0,0,0.15); /* Interactive borders */
+  --interactive-border-hover: #64748b;      /* Hover border */
+  --interactive-dark: #ffffff;              /* Light interactive elements (numpad in light theme) */
+
+  /* ========================================
+     ACCENT COLORS
+     ======================================== */
+  --accent-blue: #3b82f6;       /* Light accent (blue) */
+  --accent-red: #ef4444;        /* Error/danger accent */
+
+  /* ========================================
+     STATUS COLORS (same for both themes)
+     ======================================== */
+  --status-success: #10b981;    /* Success state */
+  --status-warning: #f59e0b;    /* Warning state */
+  --status-error: #ef4444;      /* Error state */
+  --status-info: #3b82f6;       /* Info state */
+
+  /* ========================================
+     SHADOWS
+     ======================================== */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 6px 18px rgba(0,0,0,0.12);
+  --shadow-xl: 0 8px 20px rgba(0,0,0,0.15);
+  --shadow-2xl: 0 10px 24px rgba(0,0,0,0.18);
+
+  /* ========================================
+     SCROLLBAR COLORS
+     ======================================== */
+  --scrollbar-track: #f5f7fa;
+  --scrollbar-thumb: #cbd5e1;
 }
 
 /* ========================================

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../services/api';
 import ConfirmationModal from './ConfirmationModal';
+import MessageModal from './MessageModal';
 import IconButton from './IconButton';
+import { useMessageModal } from '../hooks/useMessageModal';
 
 const SettingsModal = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('general');
@@ -18,6 +20,7 @@ const SettingsModal = ({ onClose }) => {
     type: 'EPSON',
     connection_string: 'tcp://192.168.1.100:9100'
   });
+  const { messageModal, showError, showInfo, closeModal } = useMessageModal();
   const [printerFormErrors, setPrinterFormErrors] = useState({});
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
@@ -183,13 +186,13 @@ const SettingsModal = ({ onClose }) => {
       const result = await response.json();
       
       if (result.success) {
-        alert('✅ Test print sent successfully! Check your printer.');
+        showInfo('Test print sent successfully! Check your printer.', '✅ Success');
       } else {
-        alert('❌ Test print failed: ' + (result.error || 'Unknown error'));
+        showError('Test print failed: ' + (result.error || 'Unknown error'), '❌ Test Failed');
       }
     } catch (error) {
       console.error('Error testing printer:', error);
-      alert('❌ Test print failed: ' + error.message);
+      showError('Test print failed: ' + error.message, '❌ Test Failed');
     } finally {
       setTestingPrinter(null);
     }
@@ -745,6 +748,14 @@ const SettingsModal = ({ onClose }) => {
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+      />
+
+      <MessageModal
+        isOpen={messageModal.isOpen}
+        onClose={closeModal}
+        title={messageModal.title}
+        message={messageModal.message}
+        type={messageModal.type}
       />
     </div>
   );
