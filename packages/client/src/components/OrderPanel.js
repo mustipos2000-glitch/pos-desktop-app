@@ -674,7 +674,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               : isSelected
                 ? "bg-green-500"
                 : "bg-blue-500";
-            const textColor = "text-white";
+            const textColor = "text-dark";
 
 
             return (
@@ -922,11 +922,15 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           <button
             key={val}
             onClick={() => handleNumpadInput(val)}
-            className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 
+            className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 rounded-lg font-semibold text-lg
         ${val === "C"
                 ? "bg-red-500 hover:bg-red-600 text-white"
-                : "bg-pos-bg-quaternary hover:bg-pos-bg-tertiary text-white active:scale-95"
+                : "hover:bg-pos-interactive-hover active:scale-95"
               }`}
+            style={val !== "C" ? { 
+              backgroundColor: 'var(--interactive-dark)', 
+              color: 'var(--text-main)' 
+            } : {}}
           >
             {val}
           </button>
@@ -939,7 +943,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       <div className="grid grid-cols-2 gap-2 px-1 mb-3">
         {/* Card */}
         <button
-          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50 text-pos-text-primary font-medium rounded-lg"
           onClick={handleCardPayment}
           disabled={isProcessing || cart.length === 0}
         >
@@ -948,7 +952,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
         {/* Cash */}
         <button
-          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50 text-pos-text-primary font-medium rounded-lg"
           onClick={handleCashPayment}
           disabled={isProcessing || cart.length === 0}
         >

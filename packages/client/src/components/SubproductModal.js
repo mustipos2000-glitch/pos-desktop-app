@@ -182,7 +182,7 @@ const SubproductModal = ({ isOpen, onClose, onAddToCart, productId, searchQuery 
 
                     {/* Name */}
                     <div className="w-full px-2 py-2">
-                      <div className="text-sm font-semibold text-white leading-tight break-words text-center">
+                      <div className="text-sm font-semibold leading-tight break-words text-center" style={{ color: 'var(--text-main)' }}>
                         {subProduct.name}
                       </div>
                     </div>

@@ -28,22 +28,17 @@ const PrinterController = {
   createPrinter: (req, res) => {
     try {
       const payload = req.body;
-      if (!payload.name || !payload.type) {
-        return res.status(400).json({ error: 'Name and type are required' });
+      
+      // Validate connection string format
+      const validationError = validateConnectionString(payload.connection_string);
+      if (validationError) {
+        return res.status(400).json({ error: validationError });
       }
-
-      // Validate connection string format if provided
-      if (payload.connection_string) {
-        const validationError = validateConnectionString(payload.connection_string);
-        if (validationError) {
-          return res.status(400).json({ error: validationError });
-        }
-      }
-
+      
       const printer = Printer.create(payload);
-      res.status(201).json({ message: 'Printer created successfully', data: printer });
-    } catch (error) {
-      res.status(500).json({ error: 'Internal server error', details: error.message });
+      res.json({ data: printer });
+    } catch (err) {
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 
@@ -51,25 +46,18 @@ const PrinterController = {
     try {
       const id = req.params.id;
       const payload = req.body;
-      if (!payload.name || !payload.type) {
-        return res.status(400).json({ error: 'Name and type are required' });
-      }
-
-      const existingPrinter = Printer.getById(id);
-      if (!existingPrinter) {
-        return res.status(404).json({ error: 'Printer not found' });
-      }
-
-      // Validate connection string format if provided
-      if (payload.connection_string) {
-        const validationError = validateConnectionString(payload.connection_string);
-        if (validationError) {
-          return res.status(400).json({ error: validationError });
-        }
+      
+      // Validate connection string format
+      const validationError = validateConnectionString(payload.connection_string);
+      if (validationError) {
+        return res.status(400).json({ error: validationError });
       }
 
       const printer = Printer.update(id, payload);
-      res.status(200).json({ message: 'Printer updated successfully', data: printer });
+      if (!printer) {
+        return res.status(404).json({ error: 'Printer not found' });
+      }
+      res.json({ data: printer });
     } catch (err) {
       res.status(500).json({ error: 'Internal server error' });
     }
@@ -78,19 +66,17 @@ const PrinterController = {
   deletePrinter: (req, res) => {
     try {
       const id = req.params.id;
-      const printer = Printer.getById(id);
-
-      if (!printer) {
+      const success = Printer.delete(id);
+      if (!success) {
         return res.status(404).json({ error: 'Printer not found' });
       }
-
-      Printer.delete(id);
-      res.json({ message: 'Printer deleted successfully' });
+      res.json({ success: true });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: 'Internal server error' });
     }
   },
 
+ 
   // Test printer connection
   testPrinter: async (req, res) => {
     try {
@@ -110,14 +96,24 @@ const PrinterController = {
   // Print receipt
   printReceipt: async (req, res) => {
     try {
-      const { printer_id, order_data } = req.body;
-      
+      let { printer_id, order_data, printerId, orderId } = req.body;
+
+      // Frontend sends { printerId, orderId } -> fallback mapping
+      if ((!printer_id || !order_data) && printerId && orderId) {
+        printer_id = printerId;
+        const order = Order.getById(orderId);
+        if (!order) {
+          return res.status(404).json({ error: 'Order not found' });
+        }
+        order_data = order;
+      }
+
       if (!printer_id || !order_data) {
         return res.status(400).json({ error: 'Printer ID and order data are required' });
       }
-      
+
       const result = await PrinterService.printReceipt(printer_id, order_data);
-      
+
       if (result.success) {
         res.json({ success: true, message: 'Receipt printed successfully' });
       } else {
@@ -154,24 +150,36 @@ const PrinterController = {
   // Print kitchen order to multiple printers (batch)
   printKitchenOrderBatch: async (req, res) => {
     try {
-      const { printerIds, orderId } = req.body;
-      
+      let { printerIds, printerId, orderId, orderData } = req.body;
+
+      // Allow single printerId from frontend
+      if ((!printerIds || !Array.isArray(printerIds) || printerIds.length === 0) && printerId) {
+        printerIds = [printerId];
+      }
+
       if (!printerIds || !Array.isArray(printerIds) || printerIds.length === 0) {
         return res.status(400).json({ error: 'Printer IDs array is required' });
       }
-      
-      if (!orderId) {
-        return res.status(400).json({ error: 'Order ID is required' });
+
+      // Get order data (from ID or directly)
+      let order = orderData;
+      if (!order) {
+        if (!orderId) {
+          return res.status(400).json({ error: 'Order ID is required' });
+        }
+
+        // Get order data with items/details from database
+        order = Order.getById(orderId);
+        if (!order) {
+          return res.status(404).json({ error: 'Order not found' });
+        }
       }
 
-      // Get order data with items
-      const order = Order.getById(orderId);
-      if (!order) {
-        return res.status(404).json({ error: 'Order not found' });
-      }
+      console.log(`📦 Batch printing to ${printerIds.length} printer(s) for order #${order.id || orderId}`);
+
       // Print to all printers
       const results = await Promise.allSettled(
-        printerIds.map(printerId => PrinterService.printKitchenOrder(printerId, order))
+        printerIds.map(id => PrinterService.printKitchenOrder(id, order))
       );
 
       // Count successes and failures
@@ -181,12 +189,13 @@ const PrinterController = {
       // Collect error messages
       const errors = results
         .filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success))
-        .map((r, index) => {
-          const printerId = printerIds[index];
-          const printer = Printer.getById(printerId);
-          const printerName = printer ? printer.name : `Printer ${printerId}`;
-          const errorMsg = r.status === 'rejected' ? r.reason.message : r.value.message;
-          return `${printerName}: ${errorMsg}`;
+        .map(r => {
+          if (r.status === 'rejected') {
+            return r.reason ? r.reason.message : 'Unknown error';
+          }
+          const printerResult = r.value;
+          const errorMsg = printerResult && printerResult.message ? printerResult.message : 'Unknown error';
+          return errorMsg;
         });
 
       if (successCount > 0) {
@@ -256,7 +265,7 @@ function validateConnectionString(connectionString) {
   const isValid = validFormats.some(format => format.test(trimmed));
   
   if (!isValid) {
-    return 'Invalid connection string format. Valid formats: tcp://IP:PORT, \\.\COM3, /dev/usb/lp0';
+    return 'Invalid connection string format. Valid formats: tcp://IP:PORT, \\\\.\\COM3, /dev/usb/lp0';
   }
   
   return null; // No error

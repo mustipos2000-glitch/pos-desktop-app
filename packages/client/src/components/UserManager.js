@@ -216,7 +216,7 @@ const UserManager = () => {
                           ? 'bg-purple-500 bg-opacity-20 text-purple-400'
                           : user.role === 'Admin'
                             ? 'bg-pos-error bg-opacity-20 text-pos-error'
-                            : 'bg-pos-info bg-opacity-20 text-pos-info'
+                            : 'bg-pos-warning bg-opacity-20 text-pos-warning'
                         }`}>
                         {user.role}
                       </span>

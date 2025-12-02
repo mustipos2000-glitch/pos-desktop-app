@@ -182,8 +182,11 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
               {/* Product Name */}
               <div className="w-full px-2 py-1">
                 <div
-                  className="text-sm font-semibold text-white leading-tight break-words text-center"
-                  style={{ wordBreak: 'break-word' }}
+                  className="text-sm font-semibold leading-tight break-words text-center"
+                  style={{ 
+                    wordBreak: 'break-word',
+                    color: 'var(--text-main)'
+                  }}
                 >
                   {product.name}
                 </div>
@@ -224,15 +227,16 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                     {/* Product Name */}
                     <div className="flex-1 min-w-0 mr-2">
                       <div
-                        className="text-base font-medium text-white leading-tight truncate"
+                        className="text-base font-medium leading-tight truncate"
                         title={subProduct.name}
+                        style={{ color: 'var(--text-main)' }}
                       >
                         {subProduct.name}
                       </div>
                     </div>
 
                     {/* Price */}
-                    <div className="text-xs font-semibold text-white whitespace-nowrap">
+                    <div className="text-xs font-semibold whitespace-nowrap" style={{ color: 'var(--text-main)' }}>
                       €{subProduct.price.toFixed(2)}
                     </div>
                   </div>

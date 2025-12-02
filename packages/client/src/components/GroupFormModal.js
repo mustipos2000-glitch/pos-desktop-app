@@ -192,7 +192,7 @@ const GroupFormModal = ({
             <button
               onClick={handleSubmit}
               disabled={!groupForm.name.trim()}
-              className="px-6 py-2.5 bg-pos-bg-primary text-white border border-pos-border-secondary text-sm font-medium rounded-xl hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {group ? 'Update' : 'Add'}
             </button>
