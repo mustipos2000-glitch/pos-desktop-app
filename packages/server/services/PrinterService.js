@@ -18,6 +18,39 @@ class PrinterService {
   }
 
   /**
+   * Normalize order data so that it always has an items[] array.
+   * Accepts both { items: [...] } and { details: [...] } as used by Order.getById.
+   */
+  static normalizeOrderData(orderData) {
+    if (!orderData) {
+      return null;
+    }
+
+    // Clone to avoid mutating original object unexpectedly
+    const normalized = { ...orderData };
+
+    // If items already exists and is an array, keep it
+    if (Array.isArray(normalized.items) && normalized.items.length > 0) {
+      return normalized;
+    }
+
+    // If details exists (from Order.getById), map to items
+    if (Array.isArray(orderData.details)) {
+      normalized.items = orderData.details.map(d => ({
+        name: d.product_name || d.name || '',
+        qty: d.qty || d.quantity || 1,
+        price: (typeof d.price === 'number' ? d.price : 0),
+        notes: d.notes || d.note || ''
+      }));
+      return normalized;
+    }
+
+    // Fallback: no items, ensure at least empty array
+    normalized.items = Array.isArray(normalized.items) ? normalized.items : [];
+    return normalized;
+  }
+
+  /**
    * Create thermal printer instance
    */
   static createPrinterInstance(printerConfig) {
@@ -40,22 +73,26 @@ class PrinterService {
       // Default to TCP if no protocol specified
       interfaceString = `tcp://${interfaceString}`;
     }
-    
+
+    // Map printer type string to PrinterTypes
+    const type = this.getPrinterType(printerConfig.type);
+
     const printer = new ThermalPrinter({
-      type: this.getPrinterType(printerConfig.type),
+      type: type,
       interface: interfaceString,
-      characterSet: 'PC437_USA',
-      removeSpecialCharacters: false,
-      lineCharacter: '-',
       options: {
         timeout: 5000
-      }
+      },
+      characterSet: 'SLOVENIA',
+      removeSpecialCharacters: false,
+      lineCharacter: '-'
     });
+
     return printer;
   }
 
   /**
-   * Test printer connection
+   * Test printer connection and basic printing
    */
   static async testPrinter(printerId) {
     try {
@@ -64,56 +101,57 @@ class PrinterService {
         throw new Error('Printer not found in database');
       }
 
-      // Clean connection string (remove extra spaces)
+      // Clean connection string (same as in createPrinterInstance)
       const cleanConnection = printerConfig.connection_string ? printerConfig.connection_string.trim() : '';
       
       if (!cleanConnection) {
         throw new Error('No connection string configured for this printer');
       }
 
-      // Create config with cleaned connection string
-      const cleanConfig = {
-        ...printerConfig,
-        connection_string: cleanConnection
-      };
+      const printer = this.createPrinterInstance(printerConfig);
 
-      const printer = this.createPrinterInstance(cleanConfig);
-      
+      // Connect to printer
+      const isConnected = await printer.isPrinterConnected();
+      if (!isConnected) {
+        throw new Error('Printer is not connected or not reachable');
+      }
+
+      // Print test content
       printer.alignCenter();
-      printer.setTextSize(1, 1);
       printer.bold(true);
-      printer.println('PRINTER TEST');
+      printer.setTextSize(1, 1);
+      printer.println('*** TEST PRINT ***');
       printer.bold(false);
+      printer.setTextNormal();
       printer.drawLine();
-      printer.alignLeft();
       printer.println(`Printer: ${printerConfig.name}`);
       printer.println(`Type: ${printerConfig.type}`);
-      printer.println(`Connection: ${cleanConnection}`);
-      printer.println(`Date: ${new Date().toLocaleString()}`);
+      printer.println(`Interface: ${cleanConnection}`);
       printer.drawLine();
-      printer.alignCenter();
-      printer.println('Test Successful!');
+      printer.println('If you can read this, the printer is working.');
+      printer.newLine();
+      printer.println('Thank you for using POS Printer Service.');
       printer.newLine();
       printer.cut();
 
       await printer.execute();
-      return { success: true, message: 'Test print successful' };
+      return { success: true };
     } catch (error) {
-      console.error('Printer test error:', error);
+      console.error('Test print error:', error);
       
-      // Provide more helpful error messages
-      let errorMessage = error.message || 'Unknown error';
+      // Map common errors to user-friendly messages
+      let errorMessage = 'Unknown error during test print';
       
-      if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('timeout')) {
-        errorMessage = 'Connection timeout - Check if printer is ON and IP address is correct';
-      } else if (errorMessage.includes('ECONNREFUSED')) {
-        errorMessage = 'Connection refused - Check if printer is ON and port is correct (try 9100, 9101, or 9102)';
-      } else if (errorMessage.includes('EHOSTUNREACH')) {
-        errorMessage = 'Host unreachable - Check if printer is on the same network';
-      } else if (errorMessage.includes('ENETUNREACH')) {
-        errorMessage = 'Network unreachable - Check your network connection';
-      } else if (errorMessage === 'Printer Error') {
-        errorMessage = 'Printer error - Check if printer is ON, has paper, and is ready';
+      if (error.message.includes('not reachable') || error.message.includes('ECONNREFUSED')) {
+        errorMessage = 'Cannot connect to printer. Check IP/Port or cable connection.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Printer connection timed out. Check if printer is turned on and reachable.';
+      } else if (error.message.includes('Printer not found')) {
+        errorMessage = 'Printer not found in the system. Please check printer configuration.';
+      } else if (error.message.includes('No connection string')) {
+        errorMessage = 'No connection string configured. Please set printer IP/Port or COM port.';
+      } else {
+        errorMessage = error.message;
       }
       
       return { success: false, message: errorMessage };
@@ -125,6 +163,12 @@ class PrinterService {
    */
   static async printReceipt(printerId, orderData) {
     try {
+      // Ensure order data has items[] array
+      orderData = PrinterService.normalizeOrderData(orderData);
+      if (!orderData || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+        throw new Error('Order has no items to print');
+      }
+
       const printerConfig = Printer.getById(printerId);
       if (!printerConfig) {
         throw new Error('Printer not found in database');
@@ -137,7 +181,6 @@ class PrinterService {
         throw new Error('No connection string configured for this printer');
       }
 
-      // Create config with cleaned connection string
       const cleanConfig = {
         ...printerConfig,
         connection_string: cleanConnection
@@ -150,19 +193,6 @@ class PrinterService {
       if (orderData.table_id) {
         tableInfo = PrTable.getById(orderData.table_id);
       }
-      
-      // ============ HEADER ============
-      printer.alignCenter();
-      printer.setTextSize(1, 1);
-      printer.bold(true);
-      printer.println('Alphinex Solution Printer');
-      printer.bold(false);
-      printer.setTextNormal();
-      printer.println('3rd Floor,Ali Arcade, Alphinex Solution');
-      printer.println('Rawalpindi');
-      printer.println('Tel: +1 (555) 123-4567');
-      printer.println('https://alphinex.com');
-      printer.newLine();
       
       // ============ RECEIPT TITLE ============
       printer.bold(true);
@@ -215,9 +245,7 @@ class PrinterService {
       const total = subtotal - discount + tax;
       
       printer.println(`Subtotal: ${subtotal.toFixed(2)}`);
-      if (discount > 0) {
-        printer.println(`Discount: -${discount.toFixed(2)}`);
-      }
+      printer.println(`Discount: ${discount.toFixed(2)}`);
       printer.println(`Tax: ${tax.toFixed(2)}`);
       printer.bold(true);
       printer.println(`TOTAL: ${total.toFixed(2)}`);
@@ -238,6 +266,63 @@ class PrinterService {
       return { success: true };
     } catch (error) {
       console.error('Receipt print error:', error);
+      
+      let errorMessage = 'Unknown error during receipt printing';
+      
+      if (error.message.includes('Printer not found')) {
+        errorMessage = 'Printer not found in the system. Please check printer configuration.';
+      } else if (error.message.includes('No connection string')) {
+        errorMessage = 'No connection string configured. Please set printer IP/Port or COM port.';
+      } else if (error.message.includes('no items')) {
+        errorMessage = 'Order has no items to print.';
+      } else {
+        errorMessage = error.message;
+      }
+      
+      return { success: false, message: errorMessage };
+    }
+  }
+
+  /**
+   * Print custom text (generic)
+   */
+  static async printCustom(printerId, textLines) {
+    try {
+      const printerConfig = Printer.getById(printerId);
+      if (!printerConfig) {
+        throw new Error('Printer not found in database');
+      }
+
+      const cleanConnection = printerConfig.connection_string ? printerConfig.connection_string.trim() : '';
+      if (!cleanConnection) {
+        throw new Error('No connection string configured for this printer');
+      }
+
+      const cleanConfig = {
+        ...printerConfig,
+        connection_string: cleanConnection
+      };
+
+      const printer = this.createPrinterInstance(cleanConfig);
+
+      printer.alignLeft();
+      if (Array.isArray(textLines)) {
+        for (const line of textLines) {
+          printer.println(line);
+        }
+      } else if (typeof textLines === 'string') {
+        printer.println(textLines);
+      } else {
+        throw new Error('Invalid text_lines format. Must be string or string[]');
+      }
+
+      printer.newLine();
+      printer.cut();
+
+      await printer.execute();
+      return { success: true };
+    } catch (error) {
+      console.error('Custom text print error:', error);
       return { success: false, message: error.message };
     }
   }
@@ -247,19 +332,24 @@ class PrinterService {
    */
   static async printKitchenOrder(printerId, orderData) {
     try {
+      // Ensure order data has items[] array
+      orderData = PrinterService.normalizeOrderData(orderData);
+      if (!orderData || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+        throw new Error('Order has no items to print');
+      }
+
       const printerConfig = Printer.getById(printerId);
       if (!printerConfig) {
         throw new Error('Printer not found in database');
       }
 
-      // Clean connection string (same as test printer)
+      // Clean connection string
       const cleanConnection = printerConfig.connection_string ? printerConfig.connection_string.trim() : '';
       
       if (!cleanConnection) {
         throw new Error('No connection string configured for this printer');
       }
 
-      // Create config with cleaned connection string
       const cleanConfig = {
         ...printerConfig,
         connection_string: cleanConnection
@@ -279,15 +369,13 @@ class PrinterService {
       printer.bold(true);
       printer.println('KITCHEN ORDER');
       printer.bold(false);
+      printer.setTextNormal();
       printer.drawLine();
       
       // ============ ORDER INFO ============
       printer.alignLeft();
-      printer.bold(true);
-      printer.println(`Order #: ${orderData.id}`);
-      printer.bold(false);
-      
       const orderDate = new Date(orderData.created_at);
+      printer.println(`Order #: ${orderData.id}`);
       printer.println(`Date: ${orderDate.toLocaleDateString()}`);
       printer.println(`Time: ${orderDate.toLocaleTimeString()}`);
       
@@ -299,20 +387,21 @@ class PrinterService {
       
       // ============ ITEMS ============
       printer.bold(true);
-      printer.println('Items to Prepare');
+      printer.println('Items');
       printer.bold(false);
       
       for (const item of orderData.items) {
         printer.println(`${item.qty} x ${item.name}`);
-        
-        // Print item notes if any
         if (item.notes) {
           printer.println(`   Note: ${item.notes}`);
         }
       }
       
-      printer.newLine();
-      printer.println('--- End of Order ---');
+      printer.drawLine();
+      
+      // ============ FOOTER ============
+      printer.alignCenter();
+      printer.println('--- End of Kitchen Order ---');
       printer.newLine();
       printer.cut();
       
@@ -320,32 +409,6 @@ class PrinterService {
       return { success: true };
     } catch (error) {
       console.error('Kitchen order print error:', error);
-      return { success: false, message: error.message };
-    }
-  }
-
-  /**
-   * Print custom text
-   */
-  static async printCustom(printerId, textLines) {
-    try {
-      const printerConfig = Printer.getById(printerId);
-      if (!printerConfig) {
-        throw new Error('Printer not found');
-      }
-
-      const printer = this.createPrinterInstance(printerConfig);
-      
-      // Print each line
-      for (const line of textLines) {
-        printer.println(line);
-      }
-      
-      printer.cut();
-      await printer.execute();
-      return { success: true };
-    } catch (error) {
-      console.error('Custom print error:', error);
       return { success: false, message: error.message };
     }
   }
