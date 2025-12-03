@@ -30,7 +30,13 @@ const VersionSelectionScreen = () => {
 
   const handleVersionSelect = (versionId) => {
     changeVersion(versionId);
-    navigate('/login');
+    
+    // For mosque version, go directly to payment screen (no login)
+    if (versionId === 'mosque') {
+      navigate('/mosque-payment');
+    } else {
+      navigate('/login');
+    }
   };
 
   return (

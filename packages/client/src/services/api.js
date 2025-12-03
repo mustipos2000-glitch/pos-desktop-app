@@ -216,6 +216,39 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Member methods
+  static async getMembers() {
+    return this.request('/members');
+  }
+
+  static async searchMembers(searchTerm) {
+    return this.request(`/members/search?q=${encodeURIComponent(searchTerm)}`);
+  }
+
+  static async getMemberById(id) {
+    return this.request(`/members/${id}`);
+  }
+
+  static async createMember(memberData) {
+    return this.request('/members', {
+      method: 'POST',
+      body: JSON.stringify(memberData),
+    });
+  }
+
+  static async updateMember(id, memberData) {
+    return this.request(`/members/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(memberData),
+    });
+  }
+
+  static async deleteMember(id) {
+    return this.request(`/members/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default ApiService;
