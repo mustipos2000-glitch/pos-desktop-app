@@ -4,9 +4,15 @@ import { ThemeProvider } from './context/ThemeContext';
 import { VersionProvider } from './context/VersionContext';
 import VersionSelectionScreen from './pages/VersionSelectionScreen';
 import UserLoginScreen from './pages/UserLoginScreen';
+import MosquePaymentScreen from './pages/MosquePaymentScreen';
+import MemberSelectionPage from './pages/MemberSelectionPage';
+import AmountEntryPage from './pages/AmountEntryPage';
+import PaymentMethodPage from './pages/PaymentMethodPage';
+import TicketSelectionPage from './pages/TicketSelectionPage';
 import POSScreen from './pages/POSScreen';
 import AdminPanel from './pages/AdminPanel';
 import ProtectedRoute from './components/ProtectedRoute';
+import MosqueProtectedRoute from './components/MosqueProtectedRoute';
 // import './App.css';
 
 function App() {
@@ -17,12 +23,19 @@ function App() {
           <Routes>
             <Route path="/" element={<VersionSelectionScreen />} />
             <Route path="/login" element={<UserLoginScreen />} />
+            <Route path="/mosque-payment" element={<MosquePaymentScreen />} />
+            <Route path="/member-selection" element={<MemberSelectionPage />} />
+            <Route path="/amount-entry" element={<AmountEntryPage />} />
+            <Route path="/payment-method" element={<PaymentMethodPage />} />
+            <Route path="/ticket-selection" element={<TicketSelectionPage />} />
             <Route 
               path="/pos" 
               element={
-                <ProtectedRoute>
-                  <POSScreen />
-                </ProtectedRoute>
+                <MosqueProtectedRoute>
+                  <ProtectedRoute>
+                    <POSScreen />
+                  </ProtectedRoute>
+                </MosqueProtectedRoute>
               } 
             />
             <Route 
