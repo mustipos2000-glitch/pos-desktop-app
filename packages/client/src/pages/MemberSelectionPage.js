@@ -116,8 +116,27 @@ const MemberSelectionPage = () => {
     // Store member info
     localStorage.setItem('selectedMember', JSON.stringify(selectedMember));
     
-    // Navigate to amount entry page
-    navigate('/amount-entry');
+    // Check payment type to determine next page
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+    const sadakaType = localStorage.getItem('sadakaType');
+    
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+      
+      // If it's sadaka payment (named), go to sadaka goal page
+      if (paymentType && paymentType.id === 'sadaka' && sadakaType === 'named') {
+        navigate('/sadaka-goal');
+      } else if (paymentType && paymentType.id === 'rent') {
+        // If it's rent space, go to date/time selection page
+        navigate('/rent-datetime');
+      } else {
+        // For membership or other types, go to amount entry
+        navigate('/amount-entry');
+      }
+    } catch (error) {
+      console.error('Error parsing payment type:', error);
+      navigate('/amount-entry');
+    }
   };
 
   const handleGoBack = () => {
@@ -128,8 +147,24 @@ const MemberSelectionPage = () => {
     setNewPhone('');
     setSelectedMember(null);
     
-    // Navigate back to mosque payment screen
-    navigate('/mosque-payment');
+    // Check payment type to determine where to go back
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+    const sadakaType = localStorage.getItem('sadakaType');
+    
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+      
+      // If it's sadaka payment with named type, go back to sadaka selection
+      if (paymentType && paymentType.id === 'sadaka' && sadakaType === 'named') {
+        navigate('/sadaka-selection');
+      } else {
+        // For membership or other types, go back to mosque payment screen
+        navigate('/mosque-payment');
+      }
+    } catch (error) {
+      console.error('Error parsing payment type:', error);
+      navigate('/mosque-payment');
+    }
   };
 
   return (
