@@ -4,6 +4,7 @@ const router = express.Router();
 const CategoryController = require('../controllers/CategoryController');
 const GroupController = require('../controllers/GroupController');
 const UserController = require('../controllers/UserController');
+const MemberController = require('../controllers/MemberController');
 const ProductController = require('../controllers/ProductController');
 const SubProductController = require('../controllers/SubProductController');
 const OrderController = require('../controllers/OrderController');
@@ -22,6 +23,14 @@ router.put('/users/:id', UserController.updateUser);
 router.patch('/users/:id/permissions', UserController.updatePermissions);
 router.delete('/users/:id', UserController.deleteUser);
 router.post('/users/verify', UserController.verifyPincode);
+
+// Member routes
+router.get('/members', MemberController.getAllMembers);
+router.get('/members/search', MemberController.searchMembers);
+router.get('/members/:id', MemberController.getMemberById);
+router.post('/members', MemberController.createMember);
+router.put('/members/:id', MemberController.updateMember);
+router.delete('/members/:id', MemberController.deleteMember);
 
 // Category routes
 router.get('/categories', CategoryController.getAllCategories);

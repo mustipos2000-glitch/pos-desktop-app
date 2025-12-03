@@ -531,7 +531,7 @@ const ProductFormModal = ({
             </button>
             <button
               onClick={handleSubmit}
-              className="px-5 py-2 bg-pos-bg-primary text-white  text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
+              className="px-6 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {product ? 'Update' : 'Add'}
             </button>

@@ -1,5 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
+
+const ThemeToggleButton = () => {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      className="bg-pos-interactive-primary text-pos-text-muted border-none px-4 py-2 cursor-pointer text-2xl flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white rounded-lg"
+      title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+    >
+      {theme === 'dark' ? '☀️' : '🌙'}
+    </button>
+  );
+};
 
 const UserLoginScreen = () => {
   const navigate = useNavigate();
@@ -105,8 +119,15 @@ const UserLoginScreen = () => {
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
-      <div className="flex justify-center items-center py-8">
+      <div className="flex justify-between items-center py-8 px-8">
+        <button
+          onClick={() => navigate('/')}
+          className="bg-pos-interactive-primary text-pos-text-muted border-none px-4 py-2 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white rounded-lg"
+        >
+          ← Back to Version Selection
+        </button>
         <div className="text-4xl font-bold text-pos-text-primary">{new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</div>
+        <ThemeToggleButton />
       </div>
 
       {!selectedUser ? (

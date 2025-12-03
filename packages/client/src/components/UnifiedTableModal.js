@@ -137,7 +137,7 @@ const UnifiedTableModal = ({
                   onClick={() => setSelectedRoom(room)}
                   className={`py-3 px-4 cursor-pointer text-sm ${
                     selectedRoom?.id === room.id
-                      ? 'bg-pos-interactive-primary text-white'
+                      ? 'bg-pos-interactive-primary'
                       : 'text-pos-text-primary hover:bg-pos-bg-secondary'
                   }`}
                 >
@@ -212,7 +212,7 @@ const UnifiedTableModal = ({
               <button
                 onClick={handleConfirm}
                 disabled={!selectedTable}
-                className="px-6 py-2 ms-1 bg-pos-bg-primary text-white  hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold flex items-center gap-2"
+              className="px-6 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary  text-sm font-medium hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>Confirm Move</span>
                 <span className="text-lg">→</span>
