@@ -1,26 +1,33 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { paymentService } from '../services/paymentService';
 
-/**
- * PaymentMethodPage - A page for selecting payment method (Cash/Card)
- * Shows member details and amount before confirming payment
- */
 const PaymentMethodPage = () => {
   const navigate = useNavigate();
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
   const [amount, setAmount] = useState('0');
   const [paymentType, setPaymentType] = useState(null);
+  const [sadakaGoal, setSadakaGoal] = useState(null);
+  const [sadakaType, setSadakaType] = useState(null);
+  const [rentDateTime, setRentDateTime] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState('');
 
   useEffect(() => {
-    // Load data from localStorage
     const member = JSON.parse(localStorage.getItem('selectedMember') || 'null');
     const amt = localStorage.getItem('paymentAmount') || '0';
     const type = JSON.parse(localStorage.getItem('mosquePaymentType') || 'null');
+    const goal = JSON.parse(localStorage.getItem('sadakaGoal') || 'null');
+    const sType = localStorage.getItem('sadakaType');
+    const rentDT = JSON.parse(localStorage.getItem('rentDateTime') || 'null');
     
     setMemberInfo(member);
     setAmount(amt);
     setPaymentType(type);
+    setSadakaGoal(goal);
+    setSadakaType(sType);
+    setRentDateTime(rentDT);
   }, []);
 
   const handleMethodSelect = (method) => {
@@ -31,23 +38,51 @@ const PaymentMethodPage = () => {
     navigate('/amount-entry');
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!selectedMethod) {
       alert('Please select a payment method');
       return;
     }
 
-    // Store payment method
-    localStorage.setItem('paymentMethod', selectedMethod);
+    setProcessing(true);
+    
+    try {
+      const paymentData = {
+        amount: parseFloat(amount),
+        member_id: memberInfo?.id,
+        payment_type: paymentType?.id,
+        reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.firstName} ${memberInfo?.name}`
+      };
 
-    // Navigate to ticket selection page
-    navigate('/ticket-selection');
+      let result;
+      
+      if (selectedMethod === 'cash') {
+        setProcessingMessage('Processing Cashmatic payment...');
+        result = await paymentService.processCashmaticPayment(paymentData);
+      } else if (selectedMethod === 'card') {
+        setProcessingMessage('Processing Bancontact payment...');
+        result = await paymentService.processBancontactPayment(paymentData);
+      }
+
+      if (result.success) {
+        localStorage.setItem('paymentMethod', selectedMethod);
+        localStorage.setItem('transactionId', result.transaction_id);
+        navigate('/ticket-selection');
+      } else {
+        alert(`Payment failed: ${result.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Payment processing failed. Please try again.');
+    } finally {
+      setProcessing(false);
+      setProcessingMessage('');
+    }
   };
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col items-center justify-center p-6">
       <div className="max-w-3xl w-full">
-        {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-pos-text-primary mb-1">
             Choose payment method
@@ -57,9 +92,7 @@ const PaymentMethodPage = () => {
           </p>
         </div>
 
-        {/* Payment Method Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Cashmatic Card */}
           <button
             onClick={() => handleMethodSelect('cash')}
             className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border-2 ${
@@ -69,22 +102,13 @@ const PaymentMethodPage = () => {
             } hover:border-pos-interactive-hover`}
           >
             <div className="text-center space-y-1">
-              <div className="text-lg font-semibold text-pos-text-primary">
-                Cashmatic
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Cashmatic
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Cashmatic
-              </div>
-              <div className="text-base text-pos-text-secondary" dir="rtl">
-                كاشماتيك
-              </div>
+              <div className="text-lg font-semibold text-pos-text-primary">Cashmatic</div>
+              <div className="text-base text-pos-text-secondary">Cashmatic</div>
+              <div className="text-base text-pos-text-secondary">Cashmatic</div>
+              <div className="text-base text-pos-text-secondary" dir="rtl">كاشماتيك</div>
             </div>
           </button>
 
-          {/* Bancontact Card */}
           <button
             onClick={() => handleMethodSelect('card')}
             className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border-2 ${
@@ -94,46 +118,73 @@ const PaymentMethodPage = () => {
             } hover:border-pos-interactive-hover`}
           >
             <div className="text-center space-y-1">
-              <div className="text-lg font-semibold text-pos-text-primary">
-                Bancontact
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Bancontact
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Bancontact
-              </div>
-              <div className="text-base text-pos-text-secondary" dir="rtl">
-                بانكونتاكت
-              </div>
+              <div className="text-lg font-semibold text-pos-text-primary">Bancontact</div>
+              <div className="text-base text-pos-text-secondary">Bancontact</div>
+              <div className="text-base text-pos-text-secondary">Bancontact</div>
+              <div className="text-base text-pos-text-secondary" dir="rtl">بانكونتاكت</div>
             </div>
           </button>
         </div>
 
-        {/* Member Info Display */}
         <div className="bg-pos-bg-secondary rounded-lg p-4 mb-6 border border-pos-border-primary">
           <div className="text-center space-y-1 text-sm text-pos-text-primary">
-            <div>
-              <span className="font-semibold">Member:</span>{' '}
-              {memberInfo ? `${memberInfo.firstName} ${memberInfo.name}` : 'None'}
-            </div>
-            <div>
-              <span className="font-semibold">Type:</span>{' '}
-              {paymentType ? paymentType.titleEn : '—'}
-            </div>
-            <div>
-              <span className="font-semibold">Goal:</span> —
-            </div>
-            <div>
-              <span className="font-semibold">Date/time:</span> —
-            </div>
+            {paymentType && paymentType.id === 'sadaka' ? (
+              <>
+                <div>
+                  <span className="font-semibold">Type:</span>{' '}
+                  {sadakaType === 'named' ? 'Sadaka by name' : 'Sadaka anonymous'}
+                </div>
+                {sadakaType === 'named' && memberInfo && (
+                  <div>
+                    <span className="font-semibold">Member:</span>{' '}
+                    {`${memberInfo.firstName} ${memberInfo.name}`}
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold">Goal:</span>{' '}
+                  {sadakaGoal ? sadakaGoal.titleEn : '—'}
+                </div>
+              </>
+            ) : paymentType && paymentType.id === 'rent' ? (
+              <>
+                <div>
+                  <span className="font-semibold">Type:</span> Rent Space / Kitchen
+                </div>
+                <div>
+                  <span className="font-semibold">Member:</span>{' '}
+                  {memberInfo ? `${memberInfo.firstName} ${memberInfo.name}` : 'None'}
+                </div>
+                {rentDateTime && (
+                  <>
+                    <div>
+                      <span className="font-semibold">From:</span>{' '}
+                      {rentDateTime.startDate} at {rentDateTime.startTime}
+                    </div>
+                    <div>
+                      <span className="font-semibold">To:</span>{' '}
+                      {rentDateTime.endDate} at {rentDateTime.endTime}
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <div>
+                  <span className="font-semibold">Type:</span>{' '}
+                  {paymentType ? paymentType.titleEn : '—'}
+                </div>
+                <div>
+                  <span className="font-semibold">Member:</span>{' '}
+                  {memberInfo ? `${memberInfo.firstName} ${memberInfo.name}` : 'None'}
+                </div>
+              </>
+            )}
             <div>
               <span className="font-semibold">Amount:</span> € {amount}
             </div>
           </div>
         </div>
 
-        {/* Bottom Buttons */}
         <div className="flex justify-center gap-3">
           <button
             onClick={handleGoBack}
@@ -144,16 +195,28 @@ const PaymentMethodPage = () => {
           
           <button
             onClick={handleConfirm}
-            disabled={!selectedMethod}
+            disabled={!selectedMethod || processing}
             className={`px-6 py-2 rounded-lg font-medium transition-colors border text-sm ${
-              selectedMethod
+              selectedMethod && !processing
                 ? 'bg-pos-bg-secondary text-pos-text-primary hover:bg-pos-interactive-hover border-pos-border-primary'
                 : 'bg-pos-interactive-primary text-pos-text-disabled cursor-not-allowed border-pos-border-primary opacity-50'
             }`}
           >
-            Confirm (demo)
+            {processing ? processingMessage || 'Processing...' : 'Confirm'}
           </button>
         </div>
+
+        {processing && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-pos-bg-secondary rounded-lg p-8 text-center border border-pos-border-primary">
+              <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pos-text-primary mx-auto mb-4"></div>
+              <p className="text-pos-text-primary text-lg font-semibold">
+                {processingMessage || 'Processing payment...'}
+              </p>
+              <p className="text-pos-text-secondary text-sm mt-2">Please wait...</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -8,6 +8,57 @@ import { useNavigate } from 'react-router-dom';
 const AmountEntryPage = () => {
   const navigate = useNavigate();
   const [amount, setAmount] = useState('0');
+  const [selectedInfo, setSelectedInfo] = useState(null);
+
+  useEffect(() => {
+    loadSelectedInfo();
+  }, []);
+
+  const loadSelectedInfo = () => {
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+    const sadakaType = localStorage.getItem('sadakaType');
+    const sadakaGoalStr = localStorage.getItem('sadakaGoal');
+    const selectedMemberStr = localStorage.getItem('selectedMember');
+    const rentDateTimeStr = localStorage.getItem('rentDateTime');
+
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+      const sadakaGoal = sadakaGoalStr ? JSON.parse(sadakaGoalStr) : null;
+      const selectedMember = selectedMemberStr ? JSON.parse(selectedMemberStr) : null;
+      const rentDateTime = rentDateTimeStr ? JSON.parse(rentDateTimeStr) : null;
+
+      if (paymentType && paymentType.id === 'sadaka') {
+        if (sadakaType === 'named' && selectedMember) {
+          setSelectedInfo({
+            type: 'sadaka-named',
+            member: `${selectedMember.firstName} ${selectedMember.name}`,
+            goal: sadakaGoal ? sadakaGoal.titleEn : 'Not selected'
+          });
+        } else if (sadakaType === 'anonymous' && sadakaGoal) {
+          setSelectedInfo({
+            type: 'sadaka-anonymous',
+            goal: sadakaGoal.titleEn
+          });
+        }
+      } else if (paymentType && paymentType.id === 'rent' && selectedMember && rentDateTime) {
+        setSelectedInfo({
+          type: 'rent',
+          member: `${selectedMember.firstName} ${selectedMember.name}`,
+          startDate: rentDateTime.startDate,
+          endDate: rentDateTime.endDate,
+          startTime: rentDateTime.startTime,
+          endTime: rentDateTime.endTime
+        });
+      } else if (selectedMember) {
+        setSelectedInfo({
+          type: 'membership',
+          member: `${selectedMember.firstName} ${selectedMember.name}`
+        });
+      }
+    } catch (error) {
+      console.error('Error loading selected info:', error);
+    }
+  };
 
   const handleNumberClick = (num) => {
     if (amount === '0') {
@@ -30,7 +81,22 @@ const AmountEntryPage = () => {
   };
 
   const handleGoBack = () => {
-    navigate('/member-selection');
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+
+      if (paymentType && paymentType.id === 'sadaka') {
+        navigate('/sadaka-goal');
+      } else if (paymentType && paymentType.id === 'rent') {
+        navigate('/rent-datetime');
+      } else {
+        navigate('/member-selection');
+      }
+    } catch (error) {
+      console.error('Error parsing payment type:', error);
+      navigate('/member-selection');
+    }
   };
 
   const handleNext = () => {
@@ -63,6 +129,8 @@ const AmountEntryPage = () => {
           </p>
         </div>
 
+      
+  
         {/* Amount Display */}
         <div className="mb-6 flex justify-center">
           <div className="bg-pos-bg-secondary border border-pos-border-primary rounded-lg px-12 py-4 min-w-[240px] text-center">
