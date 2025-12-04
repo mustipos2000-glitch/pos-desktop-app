@@ -4,6 +4,7 @@ import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import IconButton from './IconButton';
 import { useMessageModal } from '../hooks/useMessageModal';
+import PaymentTerminalManager from './PaymentTerminalManager';
 
 const SettingsModal = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState('general');
@@ -594,28 +595,7 @@ const SettingsModal = ({ onClose }) => {
           )}
 
           {activeTab === 'payment' && (
-            <div className="space-y-6">
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="cash-enabled" defaultChecked className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
-                <label htmlFor="cash-enabled" className="text-pos-text-primary text-sm">Enable Cash Payment</label>
-              </div>
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="card-enabled" defaultChecked className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
-                <label htmlFor="card-enabled" className="text-pos-text-primary text-sm">Enable Card Payment</label>
-              </div>
-              <div className="flex items-center gap-3">
-                <input type="checkbox" id="mobile-enabled" className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
-                <label htmlFor="mobile-enabled" className="text-pos-text-primary text-sm">Enable Mobile Payment</label>
-              </div>
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Card Terminal</label>
-                <select defaultValue="none" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
-                  <option value="none">No Terminal</option>
-                  <option value="stripe">Stripe Terminal</option>
-                  <option value="square">Square Terminal</option>
-                </select>
-              </div>
-            </div>
+            <PaymentTerminalManager />
           )}
 
           {activeTab === 'permissions' && isSuperAdmin && (

@@ -7,7 +7,7 @@ import NoteModal from "./NoteModal";
 import Toast from "./Toast";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
-import cashmaticService from "../services/cashmaticService";
+import { paymentService } from "../services/paymentService";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart }) => {
 
@@ -20,14 +20,6 @@ const formatAmount = (value) => {
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [cashmaticInfo, setCashmaticInfo] = useState({
-    requestedAmount: 0,
-    insertedAmount: 0,
-    dispensedAmount: 0,
-    notDispensedAmount: 0,
-    state: null,
-  });
-  const [showCashmaticModal, setShowCashmaticModal] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("error");
   const [printers, setPrinters] = useState([]);
@@ -164,6 +156,56 @@ const formatAmount = (value) => {
   const handleCashPayment = () => handlePayment("cash");
   const handleCardPayment = () => handlePayment("card");
 
+  const handleBancontactPayment = async () => {
+    if (cart.length === 0) {
+      setToastType("error");
+      setToastMessage("Cart is empty. Cannot start Bancontact payment.");
+      return;
+    }
+
+    const subTotal = calculateTotal();
+    const total = subTotal - discount;
+
+    if (total <= 0) {
+      setToastType("error");
+      setToastMessage("Order total must be greater than zero for Bancontact payment.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setToastType("info");
+    setToastMessage("Processing Bancontact payment. Please wait...");
+
+    try {
+      const result = await paymentService.processBancontactPayment({
+        amount: total,
+        reference: `ORDER-${currentOrderId || Date.now()}`
+      });
+
+      if (result.success) {
+        setToastType("success");
+        setToastMessage("Bancontact payment successful! Completing order...");
+
+        // Complete the order
+        await handlePaymentConfirm({
+          totalPaid: total,
+          cashAmount: 0,
+          cardAmount: total,
+          changeDue: 0,
+        });
+      } else {
+        setToastType("error");
+        setToastMessage(result.message || "Bancontact payment failed. Please try again.");
+      }
+    } catch (error) {
+      console.error('Bancontact payment error:', error);
+      setToastType("error");
+      setToastMessage("Unable to process payment. Please check the terminal connection.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleCashmaticPayment = async () => {
     if (cart.length === 0) {
       setToastType("error");
@@ -179,67 +221,40 @@ const formatAmount = (value) => {
       setToastMessage("Order total must be greater than zero for Cashmatic payment.");
       return;
     }
-
+console.log("Message should shown here " , total);
     setIsProcessing(true);
     setToastType("info");
-    setToastMessage("Cashmatic payment started. Please pay at the machine.");
-    setCashmaticInfo({ 
-      requestedAmount: total, 
-      insertedAmount: 0, 
-      dispensedAmount: 0, 
-      notDispensedAmount: 0, 
-      state: 'IN_PROGRESS' 
-    });
-    setShowCashmaticModal(true);
+    setToastMessage("Processing Cashmatic payment. Please wait...");
 
-    const result = await cashmaticService.startPayment(total, {
-      onStatusUpdate: (status) => {
-        // Update local state for modal display
-      console.log("Status " , status);
-        setCashmaticInfo({
-          requestedAmount: status.requestedAmount,
-          insertedAmount: status.insertedAmount,
-          dispensedAmount: status.dispensedAmount,
-          notDispensedAmount: status.notDispensedAmount,
-          state: status.state,
-        });
-      },
-      onSuccess: async (result) => {
+    try {
+      console.log("inside the cashmatic Calls ");
+      
+      const result = await paymentService.processCashmaticPayment({
+        amount: total,
+        reference: `ORDER-${currentOrderId || Date.now()}`
+      });
+
+      if (result.success) {
         setToastType("success");
-        setToastMessage("Cashmatic payment received. Completing order...");
+        setToastMessage("Cashmatic payment successful! Completing order...");
 
         // Complete the order
         await handlePaymentConfirm({
-          totalPaid: result.totalPaid,
-          cashAmount: result.totalPaid,
+          totalPaid: total,
+          cashAmount: total,
           cardAmount: 0,
-          changeDue: result.change,
+          changeDue: 0,
         });
-
-        setIsProcessing(false);
-        setShowCashmaticModal(false);
-      },
-      onCancelled: (info) => {
-        setIsProcessing(false);
+      } else {
         setToastType("error");
-        setToastMessage("Cashmatic payment cancelled.");
-        // Keep modal open so user can see status; they can close manually
-      },
-      onError: (error) => {
-        console.console.log('Cashmatic payment error:', error);
-        setIsProcessing(false);
-        setToastType("error");
-        setToastMessage(error.message || "Error during Cashmatic payment.");
-        // Keep modal open so user can see status; they can close manually
+        setToastMessage(result.message || "Cashmatic payment failed. Please try again.");
       }
-    });
-
-    if (!result.success) {
-      console.error("Failed to start Cashmatic payment:", result.error);
-      setIsProcessing(false);
+    } catch (error) {
+      console.error('Cashmatic payment error:', error);
       setToastType("error");
-      setToastMessage(result.error || "Failed to start Cashmatic payment.");
-      setShowCashmaticModal(false);
+      setToastMessage("Unable to process payment. Please check the terminal connection.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -1032,93 +1047,46 @@ const formatAmount = (value) => {
 
 
       {/* Bottom Buttons */}
-      <div className="grid grid-cols-3 gap-2 px-1 mb-3">
-        {/* Card */}
-        <button
-          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
-          onClick={handleCardPayment}
-          disabled={isProcessing || cart.length === 0}
-        >
-          Card
-        </button>
-
+      <div className="grid grid-cols-2 gap-2 px-1 mb-2">
         {/* Cash */}
         <button
           className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCashPayment}
           disabled={isProcessing || cart.length === 0}
         >
-          {isProcessing ? "Processing..." : "Cash"}
+          💵 Cash
         </button>
+
+        {/* Card */}
+        <button
+          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+          onClick={handleCardPayment}
+          disabled={isProcessing || cart.length === 0}
+        >
+          💳 Card
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 px-1 mb-3">
         {/* Cashmatic */}
         <button
           className="bg-pos-bg-primary border border-pos-border-primary text-pos-text-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCashmaticPayment}
           disabled={isProcessing || cart.length === 0}
         >
-          Cashmatic
+          💰 Cashmatic
         </button>
 
+        {/* Bancontact */}
+        <button
+          className="bg-pos-bg-primary border border-pos-border-primary text-pos-text-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+          onClick={handleBancontactPayment}
+          disabled={isProcessing || cart.length === 0}
+        >
+          🏦 Bancontact
+        </button>
       </div>
 
-
-      {showCashmaticModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
-          <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
-            <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
-              Cashmatic betaling
-            </h2>
-            <div className="space-y-2 text-pos-text-primary text-sm">
-              <div className="flex justify-between">
-                <span>Te ontvangen:</span>
-                <span>€ {formatAmount(cashmaticInfo?.requested)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Reeds betaald:</span>
-                <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Wisselgeld (theoretisch):</span>
-                <span>€ {formatAmount(Math.max((cashmaticInfo?.inserted ?? 0) - (cashmaticInfo?.requested ?? 0), 0))}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Status:</span>
-                <span>
-                  {cashmaticInfo.state === 'IDLE'
-                    ? 'Gereed voor volgende klant'
-                    : cashmaticInfo.state === 'RUNNING' || cashmaticInfo.state === 'IN_PROGRESS'
-                    ? 'Betaling bezig...'
-                    : cashmaticInfo.state === 'PAID'
-                    ? 'Bedrag ontvangen – wacht op wisselgeld'
-                    : cashmaticInfo.state === 'FINISHED'
-                    ? 'Betaling afgerond'
-                    : cashmaticInfo.state === 'CANCELLED'
-                    ? 'Geannuleerd'
-                    : cashmaticInfo.state === 'ERROR' || cashmaticInfo.state === 'FAILED'
-                    ? 'Fout – controleer Cashmatic'
-                    : 'Onbekende status'}
-                </span>
-              </div>
-            </div>
-
-            <div className="mt-6 flex justify-end gap-2">
-              {(cashmaticInfo.state === 'PAID' ||
-                cashmaticInfo.state === 'CANCELLED' ||
-                cashmaticInfo.state === 'ERROR') && (
-                <button
-                  className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                  onClick={() => {
-                    cashmaticService.stopPayment();
-                    setShowCashmaticModal(false);
-                  }}
-                >
-                  Sluiten
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Modals */}
       <ConfirmationModal

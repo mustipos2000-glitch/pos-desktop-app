@@ -1,5 +1,16 @@
 const API_URL = 'http://localhost:5000/api';
 
+// User-friendly error messages
+const ERROR_MESSAGES = {
+  NETWORK_ERROR: 'Unable to connect to payment machine. Please check your device connection.',
+  TIMEOUT: 'Payment request timed out. The terminal may be disconnected or not responding.',
+  TERMINAL_NOT_CONFIGURED: 'Payment terminal is not configured. Please check settings.',
+  TERMINAL_DISABLED: 'Payment terminal is currently disabled. Please enable it in settings.',
+  INVALID_AMOUNT: 'Invalid payment amount. Please check the order total.',
+  PAYMENT_FAILED: 'Payment was declined or failed. Please try again.',
+  UNKNOWN_ERROR: 'An unexpected error occurred. Please try again or contact support.'
+};
+
 // Helper function to handle fetch requests with better error handling
 const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
   try {
@@ -15,15 +26,33 @@ const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
     return response;
   } catch (error) {
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - payment terminal may be disconnected');
+      throw new Error(ERROR_MESSAGES.TIMEOUT);
+    }
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      throw new Error(ERROR_MESSAGES.NETWORK_ERROR);
     }
     throw error;
   }
 };
 
+// Helper to parse and format error messages
+const formatErrorMessage = (error, defaultMessage) => {
+  if (typeof error === 'string') {
+    // Check for specific error patterns and return user-friendly messages
+    if (error.includes('not configured')) return ERROR_MESSAGES.TERMINAL_NOT_CONFIGURED;
+    if (error.includes('disabled')) return ERROR_MESSAGES.TERMINAL_DISABLED;
+    if (error.includes('timeout') || error.includes('not responding')) return ERROR_MESSAGES.TIMEOUT;
+    if (error.includes('network') || error.includes('connection')) return ERROR_MESSAGES.NETWORK_ERROR;
+    return error;
+  }
+  return defaultMessage;
+};
+
 export const paymentService = {
   // Process Cashmatic payment
+  
   processCashmaticPayment: async (paymentData) => {
+    console.log("called the payemnt Service ", paymentData);
     try {
       const response = await fetchWithTimeout(`${API_URL}/payments/cashmatic`, {
         method: 'POST',
@@ -34,14 +63,18 @@ export const paymentService = {
       const data = await response.json();
       
       if (!response.ok) {
-        // Return the error from server response
-        return { success: false, message: data.error || data.message || 'Failed to process Cashmatic payment' };
+        const errorMessage = formatErrorMessage(
+          data.error || data.message,
+          ERROR_MESSAGES.PAYMENT_FAILED
+        );
+        return { success: false, message: errorMessage };
       }
       
       return data;
     } catch (error) {
       console.error('Payment service error - processCashmaticPayment:', error);
-      return { success: false, message: error.message };
+      const errorMessage = formatErrorMessage(error.message, ERROR_MESSAGES.UNKNOWN_ERROR);
+      return { success: false, message: errorMessage };
     }
   },
 
@@ -57,14 +90,18 @@ export const paymentService = {
       const data = await response.json();
       
       if (!response.ok) {
-        // Return the error from server response
-        return { success: false, message: data.error || data.message || 'Failed to process Bancontact payment' };
+        const errorMessage = formatErrorMessage(
+          data.error || data.message,
+          ERROR_MESSAGES.PAYMENT_FAILED
+        );
+        return { success: false, message: errorMessage };
       }
       
       return data;
     } catch (error) {
       console.error('Payment service error - processBancontactPayment:', error);
-      return { success: false, message: error.message };
+      const errorMessage = formatErrorMessage(error.message, ERROR_MESSAGES.UNKNOWN_ERROR);
+      return { success: false, message: errorMessage };
     }
   },
 
@@ -72,11 +109,22 @@ export const paymentService = {
   getPaymentStatus: async (transactionId) => {
     try {
       const response = await fetchWithTimeout(`${API_URL}/payments/status/${transactionId}`);
-      if (!response.ok) throw new Error('Failed to get payment status');
-      return response.json();
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return { 
+          success: false, 
+          message: formatErrorMessage(data.error || data.message, 'Failed to get payment status')
+        };
+      }
+      
+      return data;
     } catch (error) {
       console.error('Payment service error - getPaymentStatus:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        message: formatErrorMessage(error.message, 'Unable to check payment status')
+      };
     }
   },
 
@@ -86,11 +134,22 @@ export const paymentService = {
       const response = await fetchWithTimeout(`${API_URL}/payments/cancel/${transactionId}`, {
         method: 'POST'
       });
-      if (!response.ok) throw new Error('Failed to cancel payment');
-      return response.json();
+      const data = await response.json();
+      
+      if (!response.ok) {
+        return { 
+          success: false, 
+          message: formatErrorMessage(data.error || data.message, 'Failed to cancel payment')
+        };
+      }
+      
+      return data;
     } catch (error) {
       console.error('Payment service error - cancelPayment:', error);
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        message: formatErrorMessage(error.message, 'Unable to cancel payment')
+      };
     }
   }
 };
