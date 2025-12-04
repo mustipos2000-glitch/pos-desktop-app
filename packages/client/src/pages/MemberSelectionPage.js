@@ -12,8 +12,7 @@ const MemberSelectionPage = () => {
   const [members, setMembers] = useState([]);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   
-  const [newName, setNewName] = useState('');
-  const [newFirstName, setNewFirstName] = useState('');
+  const [newFullName, setNewFullName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   
   const [selectedMember, setSelectedMember] = useState(null);
@@ -69,16 +68,21 @@ const MemberSelectionPage = () => {
   };
 
   const handleConfirmNewMember = async () => {
-    if (!newName.trim() || !newFirstName.trim()) {
-      alert('Please fill in at least Name and First name');
+    if (!newFullName.trim()) {
+      alert('Please enter a full name');
       return;
     }
+    
+    // Split full name into first name and last name
+    const nameParts = newFullName.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || firstName; // If no last name, use first name
     
     try {
       setLoading(true);
       const response = await ApiService.createMember({
-        name: newName,
-        first_name: newFirstName,
+        name: lastName,
+        first_name: firstName,
         phone: newPhone
       });
       
@@ -96,8 +100,7 @@ const MemberSelectionPage = () => {
       await fetchMembers();
       
       // Clear form
-      setNewName('');
-      setNewFirstName('');
+      setNewFullName('');
       setNewPhone('');
     } catch (error) {
       console.error('Error creating member:', error);
@@ -142,8 +145,7 @@ const MemberSelectionPage = () => {
   const handleGoBack = () => {
     // Reset all fields
     setSelectedMemberId('');
-    setNewName('');
-    setNewFirstName('');
+    setNewFullName('');
     setNewPhone('');
     setSelectedMember(null);
     
@@ -195,11 +197,11 @@ const MemberSelectionPage = () => {
                   onChange={(e) => setSelectedMemberId(e.target.value)}
                   className="w-full px-3 py-2 bg-pos-bg-primary border border-pos-border-primary rounded text-pos-text-primary focus:outline-none focus:ring-2 focus:ring-pos-interactive-hover text-sm"
                   disabled={loading}
-                > className="w-full px-3 py-2 bg-pos-bg-primary border border-pos-border-primary rounded text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:ring-2 focus:ring-pos-interactive-hover text-sm"
+                >
                   <option value="">-- Select a member --</option>
                   {members.map((member) => (
                     <option key={member.id} value={member.id}>
-                      {member.first_name} {member.name} {member.phone ? `(${member.phone})` : ''}
+                      {member.first_name} {member.name}{member.phone ? ` - ${member.phone}` : ''}
                     </option>
                   ))}
                 </select>
@@ -227,32 +229,21 @@ const MemberSelectionPage = () => {
             
             <div className="space-y-3">
               <div>
-                <label className="block text-xs text-pos-text-muted mb-1">Name</label>
+                <label className="block text-xs text-pos-text-muted mb-1">Full Name</label>
                 <input
                   type="text"
-                  placeholder="Name"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Enter full name"
+                  value={newFullName}
+                  onChange={(e) => setNewFullName(e.target.value)}
                   className="w-full px-3 py-2 bg-pos-bg-primary border border-pos-border-primary rounded text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:ring-2 focus:ring-pos-interactive-hover text-sm"
                 />
               </div>
               
               <div>
-                <label className="block text-xs text-pos-text-muted mb-1">First name</label>
+                <label className="block text-xs text-pos-text-muted mb-1">Phone</label>
                 <input
                   type="text"
-                  placeholder="First name"
-                  value={newFirstName}
-                  onChange={(e) => setNewFirstName(e.target.value)}
-                  className="w-full px-3 py-2 bg-pos-bg-primary border border-pos-border-primary rounded text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:ring-2 focus:ring-pos-interactive-hover text-sm"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-xs text-pos-text-muted mb-1">Telephone</label>
-                <input
-                  type="text"
-                  placeholder="Telephone number"
+                  placeholder="Phone number"
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
                   className="w-full px-3 py-2 bg-pos-bg-primary border border-pos-border-primary rounded text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:ring-2 focus:ring-pos-interactive-hover text-sm"
@@ -272,7 +263,7 @@ const MemberSelectionPage = () => {
         {/* Selected Member Display */}
         <div className="text-center mb-5 max-w-4xl w-full">
           <p className="text-pos-text-primary text-sm">
-            Selected member: <span className="font-semibold">{selectedMember ? `${selectedMember.firstName} ${selectedMember.name}` : 'none'}</span>
+            Selected member: <span className="font-semibold">{selectedMember ? `${selectedMember.name} ${selectedMember.firstName}` : 'none'}</span>
           </p>
         </div>
 
