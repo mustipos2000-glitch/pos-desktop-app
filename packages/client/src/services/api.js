@@ -249,6 +249,18 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+  // Cashmatic methods
+  static async startCashmaticPayment(data) {
+    return this.request('/cashmatic/start', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getCashmaticStatus(sessionId) {
+    return this.request(`/cashmatic/status/${sessionId}`);
+  }
 }
 
 export default ApiService;

@@ -7,14 +7,27 @@ import NoteModal from "./NoteModal";
 import Toast from "./Toast";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
-import { useVersion } from '../context/VersionContext';
+import cashmaticService from "../services/cashmaticService";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart }) => {
-  const { hasFeature } = useVersion();
+
+const formatAmount = (value) => {
+  const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
+  return num.toFixed(2);
+};
+
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [cashmaticInfo, setCashmaticInfo] = useState({
+    requestedAmount: 0,
+    insertedAmount: 0,
+    dispensedAmount: 0,
+    notDispensedAmount: 0,
+    state: null,
+  });
+  const [showCashmaticModal, setShowCashmaticModal] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("error");
   const [printers, setPrinters] = useState([]);
@@ -63,6 +76,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     prevCartLengthRef.current = currLen;
   }, [cart]);
+
+  // Polling is now handled by cashmaticService internally via callbacks
 
   // Select item
   const handleSelect = (id) => {
@@ -149,6 +164,84 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const handleCashPayment = () => handlePayment("cash");
   const handleCardPayment = () => handlePayment("card");
 
+  const handleCashmaticPayment = async () => {
+    if (cart.length === 0) {
+      setToastType("error");
+      setToastMessage("Cart is empty. Cannot start Cashmatic payment.");
+      return;
+    }
+
+    const subTotal = calculateTotal();
+    const total = subTotal - discount;
+
+    if (total <= 0) {
+      setToastType("error");
+      setToastMessage("Order total must be greater than zero for Cashmatic payment.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setToastType("info");
+    setToastMessage("Cashmatic payment started. Please pay at the machine.");
+    setCashmaticInfo({ 
+      requestedAmount: total, 
+      insertedAmount: 0, 
+      dispensedAmount: 0, 
+      notDispensedAmount: 0, 
+      state: 'IN_PROGRESS' 
+    });
+    setShowCashmaticModal(true);
+
+    const result = await cashmaticService.startPayment(total, {
+      onStatusUpdate: (status) => {
+        // Update local state for modal display
+        setCashmaticInfo({
+          requestedAmount: status.requestedAmount,
+          insertedAmount: status.insertedAmount,
+          dispensedAmount: status.dispensedAmount,
+          notDispensedAmount: status.notDispensedAmount,
+          state: status.state,
+        });
+      },
+      onSuccess: async (result) => {
+        setToastType("success");
+        setToastMessage("Cashmatic payment received. Completing order...");
+
+        // Complete the order
+        await handlePaymentConfirm({
+          totalPaid: result.totalPaid,
+          cashAmount: result.totalPaid,
+          cardAmount: 0,
+          changeDue: result.change,
+        });
+
+        setIsProcessing(false);
+        setShowCashmaticModal(false);
+      },
+      onCancelled: (info) => {
+        setIsProcessing(false);
+        setToastType("error");
+        setToastMessage("Cashmatic payment cancelled.");
+        // Keep modal open so user can see status; they can close manually
+      },
+      onError: (error) => {
+        console.error('Cashmatic payment error:', error);
+        setIsProcessing(false);
+        setToastType("error");
+        setToastMessage(error.message || "Error during Cashmatic payment.");
+        // Keep modal open so user can see status; they can close manually
+      }
+    });
+
+    if (!result.success) {
+      console.error("Failed to start Cashmatic payment:", result.error);
+      setIsProcessing(false);
+      setToastType("error");
+      setToastMessage(result.error || "Failed to start Cashmatic payment.");
+      setShowCashmaticModal(false);
+    }
+  };
+
   const handlePaymentConfirm = async (paymentData) => {
     // Edge case: Validate cart has items
     if (cart.length === 0) {
@@ -176,7 +269,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       
       // Edge case: Validate payment covers the total
       if (paymentData.totalPaid < total) {
-        alert(`Insufficient payment. Total: €${total.toFixed(2)}, Paid: €${paymentData.totalPaid.toFixed(2)}`);
+        alert(`Insufficient payment. Total: €${formatAmount(total)}, Paid: €${formatAmount(paymentData.totalPaid)}`);
         setIsProcessing(false);
         return;
       }
@@ -676,7 +769,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               : isSelected
                 ? "bg-green-500"
                 : "bg-blue-500";
-            const textColor = "text-dark";
+            const textColor = "text-white";
 
 
             return (
@@ -732,7 +825,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                       {/* Actual Price (before discount) */}
                       <span className="text-xs line-through ">
                         {item.originalPrice
-                          ? (item.originalPrice * item.quantity).toFixed(2)
+                          ? formatAmount(item.originalPrice * item.quantity)
                           : ""}
                       </span>
 
@@ -745,7 +838,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
                       {/* Final Price after discount */}
                       <span className={`text-xs mt-1 ${textColor}`}>
-                        €{(item.price * item.quantity).toFixed(2)}
+                        €{formatAmount(item.price * item.quantity)}
                       </span>
                     </div>
                   </div>
@@ -809,7 +902,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                             {/* Sub-product Price - col-span-6 like parent */}
                             <div className="col-span-4 flex items-center gap-2 justify-center">
                               {!isFree && (
-                                <span>€{(subItem.price * subItem.quantity).toFixed(2)}</span>
+                                <span>€{formatAmount(subItem.price * subItem.quantity)}</span>
                               )}
                             </div>
                           </div>
@@ -852,7 +945,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         <div className="flex items-center justify-between gap-3">
           <div className="text-xs font-semibold text-pos-text-disabled uppercase">Total</div>
           <div className="text-lg font-bold text-pos-text-secondary">
-            {(calculateTotal() - discount ).toFixed(2)}
+            {formatAmount(calculateTotal() - discount)}
           </div>
 
 
@@ -903,21 +996,19 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           🏷️
         </button>
 
-        {hasFeature('splitTables') && (
-          <button
-            onClick={handleSplitCart}
-            disabled={!hasSelection || !selectedTable}
-            className={`relative text-pos-text-secondary py-2 ${(!hasSelection || !selectedTable) ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed" : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"}`}
-            title="Move selected items to another table"
-          >
-            <span className="text-lg">🔀</span>
-            {hasSelection && (
-              <span className="absolute -top-1 -right-1 bg-white text-green-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                {selectedIds.length}
-              </span>
-            )}
-          </button>
-        )}
+        <button
+          onClick={handleSplitCart}
+          disabled={!hasSelection || !selectedTable}
+          className={`relative text-pos-text-secondary py-2 ${(!hasSelection || !selectedTable) ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed" : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"}`}
+          title="Move selected items to another table"
+        >
+          <span className="text-lg">🔀</span>
+          {hasSelection && (
+            <span className="absolute -top-1 -right-1 bg-white text-green-600 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {selectedIds.length}
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Numpad */}
@@ -926,15 +1017,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           <button
             key={val}
             onClick={() => handleNumpadInput(val)}
-            className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 rounded-lg font-semibold text-lg
+            className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 
         ${val === "C"
                 ? "bg-red-500 hover:bg-red-600 text-white"
-                : "hover:bg-pos-interactive-hover active:scale-95"
+                : "bg-pos-bg-quaternary hover:bg-pos-bg-tertiary text-white active:scale-95"
               }`}
-            style={val !== "C" ? { 
-              backgroundColor: 'var(--interactive-dark)', 
-              color: 'var(--text-main)' 
-            } : {}}
           >
             {val}
           </button>
@@ -944,10 +1031,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
 
       {/* Bottom Buttons */}
-      <div className="grid grid-cols-2 gap-2 px-1 mb-3">
+      <div className="grid grid-cols-3 gap-2 px-1 mb-3">
         {/* Card */}
         <button
-          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50 text-pos-text-primary font-medium rounded-lg"
+          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCardPayment}
           disabled={isProcessing || cart.length === 0}
         >
@@ -956,14 +1043,81 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
         {/* Cash */}
         <button
-          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50 text-pos-text-primary font-medium rounded-lg"
+          className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
           onClick={handleCashPayment}
           disabled={isProcessing || cart.length === 0}
         >
           {isProcessing ? "Processing..." : "Cash"}
         </button>
+        {/* Cashmatic */}
+        <button
+          className="bg-pos-bg-primary border border-pos-border-primary text-pos-text-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+          onClick={handleCashmaticPayment}
+          disabled={isProcessing || cart.length === 0}
+        >
+          Cashmatic
+        </button>
+
       </div>
 
+
+      {showCashmaticModal && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
+            <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
+              Cashmatic betaling
+            </h2>
+            <div className="space-y-2 text-pos-text-primary text-sm">
+              <div className="flex justify-between">
+                <span>Te ontvangen:</span>
+                <span>€ {formatAmount(cashmaticInfo?.requested)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Reeds betaald:</span>
+                <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Wisselgeld (theoretisch):</span>
+                <span>€ {formatAmount(Math.max((cashmaticInfo?.inserted ?? 0) - (cashmaticInfo?.requested ?? 0), 0))}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Status:</span>
+                <span>
+                  {cashmaticInfo.state === 'IDLE'
+                    ? 'Gereed voor volgende klant'
+                    : cashmaticInfo.state === 'RUNNING' || cashmaticInfo.state === 'IN_PROGRESS'
+                    ? 'Betaling bezig...'
+                    : cashmaticInfo.state === 'PAID'
+                    ? 'Bedrag ontvangen – wacht op wisselgeld'
+                    : cashmaticInfo.state === 'FINISHED'
+                    ? 'Betaling afgerond'
+                    : cashmaticInfo.state === 'CANCELLED'
+                    ? 'Geannuleerd'
+                    : cashmaticInfo.state === 'ERROR' || cashmaticInfo.state === 'FAILED'
+                    ? 'Fout – controleer Cashmatic'
+                    : 'Onbekende status'}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              {(cashmaticInfo.state === 'PAID' ||
+                cashmaticInfo.state === 'CANCELLED' ||
+                cashmaticInfo.state === 'ERROR') && (
+                <button
+                  className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
+                  onClick={() => {
+                    cashmaticService.stopPayment();
+                    setShowCashmaticModal(false);
+                  }}
+                >
+                  Sluiten
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modals */}
       <ConfirmationModal
@@ -1111,7 +1265,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                     appliedDiscount:
                       mode === "percentage"
                         ? `${discountAmount}%`
-                        : `€${discountValue.toFixed(2)}`,
+                        : `€${formatAmount(discountValue)}`,
                     discount: discountValue,
                     discountType: 'whole', // Mark as whole order discount
                   };
@@ -1159,7 +1313,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                       appliedDiscount:
                         mode === "percentage"
                           ? `${discountAmount}%`
-                          : `€${discountValue.toFixed(2)}`,
+                          : `€${formatAmount(discountValue)}`,
                       discount: discountValue,
                       discountType: 'specific', // Mark as specific item discount
                     };
