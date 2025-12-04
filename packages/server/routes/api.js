@@ -107,6 +107,7 @@ router.post('/payments/cashmatic', PaymentController.processCashmaticPayment);
 router.post('/payments/bancontact', PaymentController.processBancontactPayment);
 router.get('/payments/status/:transactionId', PaymentController.getPaymentStatus);
 router.post('/payments/cancel/:transactionId', PaymentController.cancelPayment);
+router.post('/payments/send-receipt-email', PaymentController.sendReceiptEmail);
 
 // Cashmatic routes (for payment machine integration)
 router.post('/cashmatic/start', PaymentController.processCashmaticPayment);
