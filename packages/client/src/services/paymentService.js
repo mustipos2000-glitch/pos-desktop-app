@@ -30,11 +30,18 @@ export const paymentService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData)
       });
-      if (!response.ok) throw new Error('Failed to process Cashmatic payment');
-      return response.json();
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // Return the error from server response
+        return { success: false, message: data.error || data.message || 'Failed to process Cashmatic payment' };
+      }
+      
+      return data;
     } catch (error) {
       console.error('Payment service error - processCashmaticPayment:', error);
-      return { success: false, error: error.message };
+      return { success: false, message: error.message };
     }
   },
 
@@ -46,11 +53,18 @@ export const paymentService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData)
       });
-      if (!response.ok) throw new Error('Failed to process Bancontact payment');
-      return response.json();
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        // Return the error from server response
+        return { success: false, message: data.error || data.message || 'Failed to process Bancontact payment' };
+      }
+      
+      return data;
     } catch (error) {
       console.error('Payment service error - processBancontactPayment:', error);
-      return { success: false, error: error.message };
+      return { success: false, message: error.message };
     }
   },
 

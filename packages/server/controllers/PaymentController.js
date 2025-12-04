@@ -1,4 +1,5 @@
 const PaymentService = require('../services/PaymentService');
+const EmailService = require('../services/EmailService');
 
 const PaymentController = {
   // Process Cashmatic payment
@@ -102,6 +103,34 @@ const PaymentController = {
     } catch (error) {
       console.error('Cancel payment error:', error);
       res.status(500).json({ success: false, error: 'Failed to cancel payment' });
+    }
+  },
+
+  // Send receipt via email
+  sendReceiptEmail: async (req, res) => {
+    try {
+      const receiptData = req.body;
+      
+      if (!receiptData.email) {
+        return res.status(400).json({ success: false, error: 'Email address is required' });
+      }
+
+      console.log(`📧 Sending receipt to: ${receiptData.email}`);
+      
+      const result = await EmailService.sendReceiptEmail(receiptData);
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: 'Receipt sent successfully',
+          messageId: result.messageId
+        });
+      } else {
+        res.status(500).json({ success: false, error: result.message });
+      }
+    } catch (error) {
+      console.error('Send receipt email error:', error);
+      res.status(500).json({ success: false, error: 'Failed to send receipt email' });
     }
   }
 };

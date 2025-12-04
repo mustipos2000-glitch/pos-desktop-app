@@ -205,12 +205,22 @@ class PrinterService {
       // ============ ORDER INFO ============
       printer.alignLeft();
       printer.bold(true);
-      printer.println(`Order #: ${orderData.id}`);
+      printer.println(`Transaction #: ${orderData.id}`);
       printer.bold(false);
       
       const orderDate = new Date(orderData.created_at);
       printer.println(`Date: ${orderDate.toLocaleDateString()}`);
       printer.println(`Time: ${orderDate.toLocaleTimeString()}`);
+      
+      // Print member name if available (for mosque payments)
+      if (orderData.member_name) {
+        printer.println(`Member: ${orderData.member_name}`);
+      }
+      
+      // Print payment method if available (for mosque payments)
+      if (orderData.payment_method) {
+        printer.println(`Payment: ${orderData.payment_method}`);
+      }
       
       if (tableInfo) {
         printer.println(`Table: ${tableInfo.table_no}${tableInfo.room_name ? ` (${tableInfo.room_name})` : ''}`);
@@ -229,7 +239,7 @@ class PrinterService {
         subtotal += itemTotal;
         
         printer.println(`${item.qty} x ${item.name}`);
-        printer.println(`   ${itemTotal.toFixed(2)}`);
+        printer.println(`   EUR ${itemTotal.toFixed(2)}`);
         
         // Print item notes if any
         if (item.notes) {
@@ -244,11 +254,17 @@ class PrinterService {
       const tax = orderData.tax || 0;
       const total = subtotal - discount + tax;
       
-      printer.println(`Subtotal: ${subtotal.toFixed(2)}`);
-      printer.println(`Discount: ${discount.toFixed(2)}`);
-      printer.println(`Tax: ${tax.toFixed(2)}`);
+      printer.println(`Subtotal: EUR ${subtotal.toFixed(2)}`);
+      if (discount > 0) {
+        printer.println(`Discount: EUR ${discount.toFixed(2)}`);
+      }
+      if (tax > 0) {
+        printer.println(`Tax: EUR ${tax.toFixed(2)}`);
+      }
       printer.bold(true);
-      printer.println(`TOTAL: ${total.toFixed(2)}`);
+      printer.setTextSize(1, 1);
+      printer.println(`TOTAL: EUR ${total.toFixed(2)}`);
+      printer.setTextNormal();
       printer.bold(false);
       
       printer.newLine();

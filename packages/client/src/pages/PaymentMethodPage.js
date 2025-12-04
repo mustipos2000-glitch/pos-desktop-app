@@ -13,6 +13,7 @@ const PaymentMethodPage = () => {
   const [rentDateTime, setRentDateTime] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState('');
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     const member = JSON.parse(localStorage.getItem('selectedMember') || 'null');
@@ -30,21 +31,9 @@ const PaymentMethodPage = () => {
     setRentDateTime(rentDT);
   }, []);
 
-  const handleMethodSelect = (method) => {
-    setSelectedMethod(method);
-  };
-
-  const handleGoBack = () => {
-    navigate('/amount-entry');
-  };
-
-  const handleConfirm = async () => {
-    if (!selectedMethod) {
-      alert('Please select a payment method');
-      return;
-    }
-
-    setProcessing(true);
+  const handleMethodSelect = async (method) => {
+    setChecking(true);
+    setProcessingMessage('Checking terminal connection...');
     
     try {
       const paymentData = {
@@ -56,28 +45,66 @@ const PaymentMethodPage = () => {
 
       let result;
       
-      if (selectedMethod === 'cash') {
-        setProcessingMessage('Processing Cashmatic payment...');
+      if (method === 'cash') {
         result = await paymentService.processCashmaticPayment(paymentData);
-      } else if (selectedMethod === 'card') {
-        setProcessingMessage('Processing Bancontact payment...');
+      } else if (method === 'card') {
         result = await paymentService.processBancontactPayment(paymentData);
       }
 
-      if (result.success) {
-        localStorage.setItem('paymentMethod', selectedMethod);
+      console.log('Terminal check result:', result);
+
+      if (result && result.success) {
+        // Terminal is working, store the transaction ID and select the method
         localStorage.setItem('transactionId', result.transaction_id);
-        navigate('/ticket-selection');
+        setSelectedMethod(method);
       } else {
-        alert(`Payment failed: ${result.error || 'Unknown error'}`);
+        // Show error and still select the method so user can proceed
+        const errorMsg = result?.message || result?.error || 'Terminal connection failed';
+        alert(`Payment terminal error: ${errorMsg}`);
+        
+        // Still select the method and generate a transaction ID
+        const transactionId = `${method === 'cash' ? 'CASH' : 'BANC'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('transactionId', transactionId);
+        setSelectedMethod(method);
       }
     } catch (error) {
-      console.error('Payment error:', error);
-      alert('Payment processing failed. Please try again.');
+      console.error('Terminal check error:', error);
+      alert('Failed to connect to payment terminal. Please try again.');
+      
+      // Still select the method so user can proceed
+      const transactionId = `${method === 'cash' ? 'CASH' : 'BANC'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('transactionId', transactionId);
+      setSelectedMethod(method);
     } finally {
-      setProcessing(false);
+      setChecking(false);
       setProcessingMessage('');
     }
+  };
+
+  const handleGoBack = () => {
+    navigate('/amount-entry');
+  };
+
+  const handleConfirm = () => {
+    if (!selectedMethod) {
+      alert('Please select a payment method');
+      return;
+    }
+
+    // Payment already processed when method was selected
+    // Just store the payment method and navigate
+    localStorage.setItem('paymentMethod', selectedMethod);
+    
+    const paymentData = {
+      amount: parseFloat(amount),
+      member_id: memberInfo?.id,
+      payment_type: paymentType?.id,
+      reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.firstName} ${memberInfo?.name}`
+    };
+    localStorage.setItem('paymentData', JSON.stringify(paymentData));
+    
+    console.log('Navigating to ticket-selection...');
+    navigate('/ticket-selection');
   };
 
   return (
@@ -195,23 +222,23 @@ const PaymentMethodPage = () => {
           
           <button
             onClick={handleConfirm}
-            disabled={!selectedMethod || processing}
+            disabled={!selectedMethod || checking}
             className={`px-6 py-2 rounded-lg font-medium transition-colors border text-sm ${
-              selectedMethod && !processing
+              selectedMethod && !checking
                 ? 'bg-pos-bg-secondary text-pos-text-primary hover:bg-pos-interactive-hover border-pos-border-primary'
                 : 'bg-pos-interactive-primary text-pos-text-disabled cursor-not-allowed border-pos-border-primary opacity-50'
             }`}
           >
-            {processing ? processingMessage || 'Processing...' : 'Confirm'}
+            Confirm
           </button>
         </div>
 
-        {processing && (
+        {checking && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-pos-bg-secondary rounded-lg p-8 text-center border border-pos-border-primary">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pos-text-primary mx-auto mb-4"></div>
               <p className="text-pos-text-primary text-lg font-semibold">
-                {processingMessage || 'Processing payment...'}
+                {processingMessage || 'Checking terminal...'}
               </p>
               <p className="text-pos-text-secondary text-sm mt-2">Please wait...</p>
             </div>
