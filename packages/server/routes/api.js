@@ -11,6 +11,8 @@ const OrderController = require('../controllers/OrderController');
 const RoomController = require('../controllers/RoomController');
 const PrTableController = require('../controllers/PrTableController');
 const PrinterController = require('../controllers/printerController');
+const PaymentController = require('../controllers/PaymentController');
+const PaymentTerminalController = require('../controllers/PaymentTerminalController');
 
 
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
@@ -99,5 +101,19 @@ router.post('/printers/print-receipt', PrinterController.printReceipt);
 router.post('/printers/print-kitchen', PrinterController.printKitchenOrder);
 router.post('/printers/print-kitchen-batch', PrinterController.printKitchenOrderBatch);
 router.post('/printers/print-custom', PrinterController.printCustom);
+
+// Payment routes
+router.post('/payments/cashmatic', PaymentController.processCashmaticPayment);
+router.post('/payments/bancontact', PaymentController.processBancontactPayment);
+router.get('/payments/status/:transactionId', PaymentController.getPaymentStatus);
+router.post('/payments/cancel/:transactionId', PaymentController.cancelPayment);
+
+// Payment Terminal routes
+router.get('/payment-terminals', PaymentTerminalController.getAllTerminals);
+router.get('/payment-terminals/:id', PaymentTerminalController.getTerminalById);
+router.post('/payment-terminals', PaymentTerminalController.createTerminal);
+router.put('/payment-terminals/:id', PaymentTerminalController.updateTerminal);
+router.delete('/payment-terminals/:id', PaymentTerminalController.deleteTerminal);
+router.post('/payment-terminals/:id/test', PaymentTerminalController.testTerminal);
 
 module.exports = router;

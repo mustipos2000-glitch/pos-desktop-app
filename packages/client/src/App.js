@@ -6,6 +6,9 @@ import VersionSelectionScreen from './pages/VersionSelectionScreen';
 import UserLoginScreen from './pages/UserLoginScreen';
 import MosquePaymentScreen from './pages/MosquePaymentScreen';
 import MemberSelectionPage from './pages/MemberSelectionPage';
+import SadakaSelectionPage from './pages/SadakaSelectionPage';
+import SadakaGoalPage from './pages/SadakaGoalPage';
+import RentDateTimePage from './pages/RentDateTimePage';
 import AmountEntryPage from './pages/AmountEntryPage';
 import PaymentMethodPage from './pages/PaymentMethodPage';
 import TicketSelectionPage from './pages/TicketSelectionPage';
@@ -25,6 +28,9 @@ function App() {
             <Route path="/login" element={<UserLoginScreen />} />
             <Route path="/mosque-payment" element={<MosquePaymentScreen />} />
             <Route path="/member-selection" element={<MemberSelectionPage />} />
+            <Route path="/sadaka-selection" element={<SadakaSelectionPage />} />
+            <Route path="/sadaka-goal" element={<SadakaGoalPage />} />
+            <Route path="/rent-datetime" element={<RentDateTimePage />} />
             <Route path="/amount-entry" element={<AmountEntryPage />} />
             <Route path="/payment-method" element={<PaymentMethodPage />} />
             <Route path="/ticket-selection" element={<TicketSelectionPage />} />

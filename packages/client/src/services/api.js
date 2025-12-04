@@ -261,6 +261,40 @@ class ApiService {
   static async getCashmaticStatus(sessionId) {
     return this.request(`/cashmatic/status/${sessionId}`);
   }
+  // Payment Terminal methods
+  static async getPaymentTerminals() {
+    return this.request('/payment-terminals');
+  }
+
+  static async getPaymentTerminalById(id) {
+    return this.request(`/payment-terminals/${id}`);
+  }
+
+  static async createPaymentTerminal(terminalData) {
+    return this.request('/payment-terminals', {
+      method: 'POST',
+      body: JSON.stringify(terminalData),
+    });
+  }
+
+  static async updatePaymentTerminal(id, terminalData) {
+    return this.request(`/payment-terminals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(terminalData),
+    });
+  }
+
+  static async deletePaymentTerminal(id) {
+    return this.request(`/payment-terminals/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  static async testPaymentTerminal(id) {
+    return this.request(`/payment-terminals/${id}/test`, {
+      method: 'POST',
+    });
+  }
 }
 
 export default ApiService;
