@@ -69,7 +69,8 @@
     "wait-on": "^7.2.0"
   },
   "dependencies": {
-    "better-sqlite3": "^12.4.1",
+    "@mapbox/node-pre-gyp": "^2.0.3",
+    "better-sqlite3": "^12.5.0",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "multer": "^2.0.2",

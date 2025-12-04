@@ -12,6 +12,7 @@ class ApiService {
     };
 
     try {
+      console.log('API request:', url, config);
       const response = await fetch(url, config);
       
       if (!response.ok) {
@@ -252,6 +253,7 @@ class ApiService {
 
   // Cashmatic methods
   static async startCashmaticPayment(data) {
+    console.log('startCashmaticPayment data:', data);
     return this.request('/cashmatic/start', {
       method: 'POST',
       body: JSON.stringify(data),

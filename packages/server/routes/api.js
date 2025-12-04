@@ -108,6 +108,10 @@ router.post('/payments/bancontact', PaymentController.processBancontactPayment);
 router.get('/payments/status/:transactionId', PaymentController.getPaymentStatus);
 router.post('/payments/cancel/:transactionId', PaymentController.cancelPayment);
 
+// Cashmatic routes (for payment machine integration)
+router.post('/cashmatic/start', PaymentController.processCashmaticPayment);
+router.get('/cashmatic/status/:sessionId', PaymentController.getPaymentStatus);
+
 // Payment Terminal routes
 router.get('/payment-terminals', PaymentTerminalController.getAllTerminals);
 router.get('/payment-terminals/:id', PaymentTerminalController.getTerminalById);

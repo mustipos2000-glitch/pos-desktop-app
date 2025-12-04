@@ -195,6 +195,7 @@ const formatAmount = (value) => {
     const result = await cashmaticService.startPayment(total, {
       onStatusUpdate: (status) => {
         // Update local state for modal display
+      console.log("Status " , status);
         setCashmaticInfo({
           requestedAmount: status.requestedAmount,
           insertedAmount: status.insertedAmount,
@@ -225,7 +226,7 @@ const formatAmount = (value) => {
         // Keep modal open so user can see status; they can close manually
       },
       onError: (error) => {
-        console.error('Cashmatic payment error:', error);
+        console.console.log('Cashmatic payment error:', error);
         setIsProcessing(false);
         setToastType("error");
         setToastMessage(error.message || "Error during Cashmatic payment.");
