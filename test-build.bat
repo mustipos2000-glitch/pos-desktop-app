@@ -5,16 +5,16 @@ echo ========================================
 echo.
 
 echo 1. Checking if installer exists...
-if exist "dist\Point of Sale Application Setup 0.0.3.exe" (
+if exist "dist\Point of Sale Application Setup 0.0.4.exe" (
     echo [OK] Installer found
-    dir "dist\Point of Sale Application Setup 0.0.3.exe" | find "Point of Sale"
+    dir "dist\Point of Sale Application Setup 0.0.4.exe" | find "Point of Sale"
 ) else (
     echo [FAIL] Installer not found!
 )
 echo.
 
 echo 2. Checking if portable ZIP exists...
-if exist "dist\Point of Sale Application-0.0.3-win.zip" (
+if exist "dist\Point of Sale Application-0.0.4-win.zip" (
     echo [OK] Portable ZIP found
 ) else (
     echo [FAIL] Portable ZIP not found!
@@ -81,7 +81,7 @@ echo    cd dist\win-unpacked
 echo    "Point of Sale Application.exe"
 echo.
 echo 2. Or install using the installer:
-echo    "dist\Point of Sale Application Setup 0.0.3.exe"
+echo    "dist\Point of Sale Application Setup 0.0.4.exe"
 echo.
 echo 3. Watch for migration messages in the console
 echo.
