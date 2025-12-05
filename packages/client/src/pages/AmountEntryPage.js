@@ -31,7 +31,7 @@ const AmountEntryPage = () => {
         if (sadakaType === 'named' && selectedMember) {
           setSelectedInfo({
             type: 'sadaka-named',
-            member: `${selectedMember.firstName} ${selectedMember.name}`,
+            member: selectedMember.fullName,
             goal: sadakaGoal ? sadakaGoal.titleEn : 'Not selected'
           });
         } else if (sadakaType === 'anonymous' && sadakaGoal) {
@@ -43,7 +43,7 @@ const AmountEntryPage = () => {
       } else if (paymentType && paymentType.id === 'rent' && selectedMember && rentDateTime) {
         setSelectedInfo({
           type: 'rent',
-          member: `${selectedMember.firstName} ${selectedMember.name}`,
+          member: selectedMember.fullName,
           startDate: rentDateTime.startDate,
           endDate: rentDateTime.endDate,
           startTime: rentDateTime.startTime,
@@ -52,7 +52,7 @@ const AmountEntryPage = () => {
       } else if (selectedMember) {
         setSelectedInfo({
           type: 'membership',
-          member: `${selectedMember.firstName} ${selectedMember.name}`
+          member: selectedMember.fullName
         });
       }
     } catch (error) {
