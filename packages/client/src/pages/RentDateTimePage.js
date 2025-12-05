@@ -89,7 +89,7 @@ const RentDateTimePage = () => {
           <div className="text-center mb-6 bg-pos-bg-secondary border border-pos-border-primary rounded-lg px-4 py-3">
             <p className="text-xs text-pos-text-secondary">Member</p>
             <p className="text-sm text-pos-text-primary font-semibold">
-              {selectedMember.firstName} {selectedMember.name}
+              {selectedMember.fullName}
             </p>
           </div>
         )}

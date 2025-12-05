@@ -59,8 +59,7 @@ const MemberSelectionPage = () => {
     if (member) {
       setSelectedMember({
         id: member.id,
-        name: member.name,
-        firstName: member.first_name,
+        fullName: member.full_name,
         phone: member.phone,
         type: 'existing'
       });
@@ -73,23 +72,16 @@ const MemberSelectionPage = () => {
       return;
     }
     
-    // Split full name into first name and last name
-    const nameParts = newFullName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || firstName; // If no last name, use first name
-    
     try {
       setLoading(true);
       const response = await ApiService.createMember({
-        name: lastName,
-        first_name: firstName,
+        full_name: newFullName.trim(),
         phone: newPhone
       });
       
       const member = {
         id: response.id,
-        name: response.name,
-        firstName: response.first_name,
+        fullName: response.full_name,
         phone: response.phone,
         type: 'new'
       };
@@ -201,7 +193,7 @@ const MemberSelectionPage = () => {
                   <option value="">-- Select a member --</option>
                   {members.map((member) => (
                     <option key={member.id} value={member.id}>
-                      {member.first_name} {member.name}{member.phone ? ` - ${member.phone}` : ''}
+                      {member.full_name}{member.phone ? ` - ${member.phone}` : ''}
                     </option>
                   ))}
                 </select>
@@ -263,7 +255,7 @@ const MemberSelectionPage = () => {
         {/* Selected Member Display */}
         <div className="text-center mb-5 max-w-4xl w-full">
           <p className="text-pos-text-primary text-sm">
-            Selected member: <span className="font-semibold">{selectedMember ? `${selectedMember.name} ${selectedMember.firstName}` : 'none'}</span>
+            Selected member: <span className="font-semibold">{selectedMember ? selectedMember.fullName : 'none'}</span>
           </p>
         </div>
 
