@@ -5,7 +5,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS payment_terminals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
-    type TEXT NOT NULL,
+    type TEXT NOT NULL UNIQUE,
     connection_type TEXT NOT NULL,
     connection_string TEXT NOT NULL,
     enabled INTEGER DEFAULT 1,

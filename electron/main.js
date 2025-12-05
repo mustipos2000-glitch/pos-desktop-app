@@ -6,7 +6,47 @@ const { spawn } = require('child_process');
 const isDev = !app.isPackaged && process.env.NODE_ENV !== 'production';
 let serverProcess = null;
 
-function startServer() {
+function runSeeder(serverDir, nodePath) {
+  return new Promise((resolve, reject) => {
+    const seederPath = path.join(serverDir, 'seed-terminals.js');
+    
+    console.log('Running terminal seeder...');
+    const seederProcess = spawn(nodePath, [seederPath], {
+      cwd: serverDir,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { 
+        ...process.env, 
+        NODE_ENV: 'production', 
+        ELECTRON_RUN_AS_NODE: '1'
+      }
+    });
+
+    seederProcess.stdout.on('data', (data) => {
+      console.log('Seeder:', data.toString());
+    });
+
+    seederProcess.stderr.on('data', (data) => {
+      console.error('Seeder Error:', data.toString());
+    });
+
+    seederProcess.on('error', (err) => {
+      console.error('Failed to run seeder:', err);
+      reject(err);
+    });
+
+    seederProcess.on('exit', (code) => {
+      if (code === 0) {
+        console.log('Terminal seeder completed successfully');
+        resolve();
+      } else {
+        console.error(`Seeder exited with code ${code}`);
+        reject(new Error(`Seeder exited with code ${code}`));
+      }
+    });
+  });
+}
+
+async function startServer() {
   if (isDev) {
     // In dev mode, server is started separately
     return;
@@ -27,6 +67,13 @@ function startServer() {
   
   // Use Electron's node executable instead of system node
   const nodePath = process.execPath;
+
+  // Run seeder before starting server
+  try {
+    await runSeeder(serverDir, nodePath);
+  } catch (error) {
+    console.error('Seeder failed, but continuing with server startup:', error);
+  }
   
   serverProcess = spawn(nodePath, [serverPath], {
     cwd: serverDir,

@@ -1,96 +1,150 @@
-const API_URL = 'http://localhost:5000/api';
+import { cashmaticService } from "./cashmaticService";
+import { payworldService } from "./payworldService";
+import { vivaService } from "./vivaService";
 
-// Helper function to handle fetch requests with better error handling
-const fetchWithTimeout = async (url, options = {}, timeout = 30000) => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-    
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Request timeout - payment terminal may be disconnected');
-    }
-    throw error;
+/**
+ * Unified Payment Service
+ * Centralized manager for all payment methods (Cash, Card, Cashmatic, Payworld, Viva)
+ */
+class PaymentService {
+  constructor() {
+    this.activePaymentType = null;
   }
-};
 
-export const paymentService = {
-  // Process Cashmatic payment
-  processCashmaticPayment: async (paymentData) => {
-    try {
-      const response = await fetchWithTimeout(`${API_URL}/payments/cashmatic`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentData)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        // Return the error from server response
-        return { success: false, message: data.error || data.message || 'Failed to process Cashmatic payment' };
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Payment service error - processCashmaticPayment:', error);
-      return { success: false, message: error.message };
-    }
-  },
-
-  // Process Bancontact payment
-  processBancontactPayment: async (paymentData) => {
-    try {
-      const response = await fetchWithTimeout(`${API_URL}/payments/bancontact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(paymentData)
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        // Return the error from server response
-        return { success: false, message: data.error || data.message || 'Failed to process Bancontact payment' };
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Payment service error - processBancontactPayment:', error);
-      return { success: false, message: error.message };
-    }
-  },
-
-  // Get payment status
-  getPaymentStatus: async (transactionId) => {
-    try {
-      const response = await fetchWithTimeout(`${API_URL}/payments/status/${transactionId}`);
-      if (!response.ok) throw new Error('Failed to get payment status');
-      return response.json();
-    } catch (error) {
-      console.error('Payment service error - getPaymentStatus:', error);
-      return { success: false, error: error.message };
-    }
-  },
-
-  // Cancel payment
-  cancelPayment: async (transactionId) => {
-    try {
-      const response = await fetchWithTimeout(`${API_URL}/payments/cancel/${transactionId}`, {
-        method: 'POST'
-      });
-      if (!response.ok) throw new Error('Failed to cancel payment');
-      return response.json();
-    } catch (error) {
-      console.error('Payment service error - cancelPayment:', error);
-      return { success: false, error: error.message };
-    }
+  /**
+   * Get the configured card terminal type from localStorage
+   * @returns {string} Terminal type: 'none', 'viva', 'payworld'
+   */
+  getCardTerminalType() {
+    return localStorage.getItem("pos_card_terminal") || "none";
   }
-};
+
+  /**
+   * Start a cash payment (manual)
+   * @param {number} amount - Total amount
+   * @param {function} onSuccess - Success callback
+   * @returns {object} Payment modal trigger
+   */
+  startCashPayment(amount, onSuccess) {
+    return {
+      type: "cash",
+      amount,
+      showModal: true,
+      onSuccess,
+    };
+  }
+
+  /**
+   * Start a card payment based on configured terminal
+   * @param {number} amount - Total amount
+   * @param {object} callbacks - Callback functions
+   * @returns {Promise<object>} Payment result or modal trigger
+   */
+  async startCardPayment(amount, callbacks = {}) {
+    const terminalType = this.getCardTerminalType();
+
+    // Viva terminal
+    if (terminalType === "viva") {
+      this.activePaymentType = "viva";
+      return await vivaService.startPayment(amount, callbacks);
+    }
+
+    // Payworld terminal
+    if (terminalType === "payworld") {
+      this.activePaymentType = "payworld";
+      return await payworldService.startPayment(amount, callbacks);
+    }
+
+    // Default: manual card payment modal
+    return {
+      type: "card",
+      amount,
+      showModal: true,
+      onSuccess: callbacks.onSuccess,
+    };
+  }
+
+  /**
+   * Start a Cashmatic payment
+   * @param {number} amount - Total amount
+   * @param {object} callbacks - Callback functions
+   * @returns {Promise<object>} Payment result
+   */
+  async startCashmaticPayment(amount, callbacks = {}) {
+    this.activePaymentType = "cashmatic";
+    return await cashmaticService.startPayment(amount, callbacks);
+  }
+
+  /**
+   * Start a Payworld payment
+   * @param {number} amount - Total amount
+   * @param {object} callbacks - Callback functions
+   * @returns {Promise<object>} Payment result
+   */
+  async startPayworldPayment(amount, callbacks = {}) {
+    this.activePaymentType = "payworld";
+    return await payworldService.startPayment(amount, callbacks);
+  }
+
+  /**
+   * Cancel the active payment
+   * @returns {Promise<object>} Cancellation result
+   */
+  async cancelActivePayment() {
+    if (!this.activePaymentType) {
+      throw new Error("No active payment to cancel");
+    }
+
+    let result;
+    switch (this.activePaymentType) {
+      case "cashmatic":
+        result = await cashmaticService.cancelPayment();
+        break;
+      case "payworld":
+        result = await payworldService.cancelPayment();
+        break;
+      case "viva":
+        // Viva doesn't support cancellation after initiation
+        throw new Error("Viva payments cannot be cancelled after initiation");
+      default:
+        throw new Error(`Unknown payment type: ${this.activePaymentType}`);
+    }
+
+    this.activePaymentType = null;
+    return result;
+  }
+
+  /**
+   * Check if any payment is in progress
+   * @returns {boolean}
+   */
+  isPaymentInProgress() {
+    return (
+      cashmaticService.isPaymentInProgress() ||
+      payworldService.isPaymentInProgress() ||
+      vivaService.isPaymentInProgress()
+    );
+  }
+
+  /**
+   * Get active payment type
+   * @returns {string|null}
+   */
+  getActivePaymentType() {
+    return this.activePaymentType;
+  }
+
+  /**
+   * Cleanup all payment services
+   */
+  cleanup() {
+    cashmaticService.cleanup();
+    payworldService.cleanup();
+    vivaService.cleanup();
+    this.activePaymentType = null;
+  }
+}
+
+// Export singleton instance
+export const paymentService = new PaymentService();
+export default paymentService;

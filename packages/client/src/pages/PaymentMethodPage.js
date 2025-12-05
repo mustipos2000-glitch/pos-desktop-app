@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { paymentService } from '../services/paymentService';
+import cashmaticService from '../services/cashmaticService';
+import payworldService from '../services/payworldService';
 
 const PaymentMethodPage = () => {
   const navigate = useNavigate();
@@ -13,7 +14,8 @@ const PaymentMethodPage = () => {
   const [rentDateTime, setRentDateTime] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [processingMessage, setProcessingMessage] = useState('');
-  const [checking, setChecking] = useState(false);
+  const [paymentInfo, setPaymentInfo] = useState(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     const member = JSON.parse(localStorage.getItem('selectedMember') || 'null');
@@ -32,53 +34,126 @@ const PaymentMethodPage = () => {
   }, []);
 
   const handleMethodSelect = async (method) => {
-    setChecking(true);
-    setProcessingMessage('Checking terminal connection...');
-    
+    if (processing) return;
+
+    setProcessing(true);
+    setShowPaymentModal(true);
+    setSelectedMethod(method);
+    setProcessingMessage('Starting payment...');
+    setPaymentInfo(null);
+
+    const paymentAmount = parseFloat(amount);
+
     try {
-      const paymentData = {
-        amount: parseFloat(amount),
-        member_id: memberInfo?.id,
-        payment_type: paymentType?.id,
-        reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.fullName}`
-      };
-
-      let result;
-      
       if (method === 'cash') {
-        result = await paymentService.processCashmaticPayment(paymentData);
+        // Start Cashmatic payment
+        await cashmaticService.startPayment(paymentAmount, {
+          onStatusUpdate: (info) => {
+            setPaymentInfo(info);
+            setProcessingMessage(
+              `Inserted: €${info.inserted.toFixed(2)} / €${info.requested.toFixed(2)}`
+            );
+          },
+          onSuccess: (result) => {
+            setProcessingMessage('Payment successful!');
+            localStorage.setItem('paymentMethod', 'cash');
+            localStorage.setItem('paymentResult', JSON.stringify(result));
+            
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setProcessing(false);
+              handleConfirm();
+            }, 1500);
+          },
+          onError: (error) => {
+            setProcessingMessage(`Error: ${error.message}`);
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setProcessing(false);
+              setSelectedMethod(null);
+              alert(`Cashmatic payment failed: ${error.message}`);
+            }, 2000);
+          },
+          onCancel: (result) => {
+            setProcessingMessage('Payment cancelled');
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setProcessing(false);
+              setSelectedMethod(null);
+            }, 1500);
+          },
+        });
       } else if (method === 'card') {
-        result = await paymentService.processBancontactPayment(paymentData);
-      }
-
-      console.log('Terminal check result:', result);
-
-      if (result && result.success) {
-        // Terminal is working, store the transaction ID and select the method
-        localStorage.setItem('transactionId', result.transaction_id);
-        setSelectedMethod(method);
-      } else {
-        // Show error and still select the method so user can proceed
-        const errorMsg = result?.message || result?.error || 'Terminal connection failed';
-        alert(`Payment terminal error: ${errorMsg}`);
-        
-        // Still select the method and generate a transaction ID
-        const transactionId = `${method === 'cash' ? 'CASH' : 'BANC'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('transactionId', transactionId);
-        setSelectedMethod(method);
+        // Start Payworld payment
+        await payworldService.startPayment(paymentAmount, {
+          onStatusUpdate: (status) => {
+            setProcessingMessage(status.message || 'Processing...');
+          },
+          onSuccess: (result) => {
+            setProcessingMessage('Payment successful!');
+            localStorage.setItem('paymentMethod', 'card');
+            localStorage.setItem('paymentResult', JSON.stringify(result));
+            
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setProcessing(false);
+              handleConfirm();
+            }, 1500);
+          },
+          onError: (error) => {
+            setProcessingMessage(`Error: ${error.message}`);
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setProcessing(false);
+              setSelectedMethod(null);
+              alert(`Payworld payment failed: ${error.message}`);
+            }, 2000);
+          },
+          onCancel: (result) => {
+            setProcessingMessage('Payment cancelled');
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setProcessing(false);
+              setSelectedMethod(null);
+            }, 1500);
+          },
+          onDeclined: (result) => {
+            setProcessingMessage('Payment declined');
+            setTimeout(() => {
+              setShowPaymentModal(false);
+              setProcessing(false);
+              setSelectedMethod(null);
+              alert('Payment was declined by the terminal');
+            }, 2000);
+          },
+        });
       }
     } catch (error) {
-      console.error('Terminal check error:', error);
-      alert('Failed to connect to payment terminal. Please try again.');
-      
-      // Still select the method so user can proceed
-      const transactionId = `${method === 'cash' ? 'CASH' : 'BANC'}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      localStorage.setItem('transactionId', transactionId);
-      setSelectedMethod(method);
-    } finally {
-      setChecking(false);
-      setProcessingMessage('');
+      console.error('Payment start error:', error);
+      setProcessingMessage(`Error: ${error.message}`);
+      setTimeout(() => {
+        setShowPaymentModal(false);
+        setProcessing(false);
+        setSelectedMethod(null);
+        alert(`Failed to start payment: ${error.message}`);
+      }, 2000);
     }
+  };
+
+  const handleCancelPayment = async () => {
+    try {
+      if (selectedMethod === 'cash' && cashmaticService.isPaymentInProgress()) {
+        await cashmaticService.cancelPayment();
+      } else if (selectedMethod === 'card' && payworldService.isPaymentInProgress()) {
+        await payworldService.cancelPayment();
+      }
+    } catch (error) {
+      console.error('Cancel payment error:', error);
+    }
+    
+    setShowPaymentModal(false);
+    setProcessing(false);
+    setSelectedMethod(null);
   };
 
   const handleGoBack = () => {
@@ -86,15 +161,7 @@ const PaymentMethodPage = () => {
   };
 
   const handleConfirm = () => {
-    if (!selectedMethod) {
-      alert('Please select a payment method');
-      return;
-    }
-
-    // Payment already processed when method was selected
-    // Just store the payment method and navigate
-    localStorage.setItem('paymentMethod', selectedMethod);
-    
+    // Payment already processed, just navigate
     const paymentData = {
       amount: parseFloat(amount),
       member_id: memberInfo?.id,
@@ -122,11 +189,12 @@ const PaymentMethodPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <button
             onClick={() => handleMethodSelect('cash')}
+            disabled={processing}
             className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border-2 ${
               selectedMethod === 'cash'
                 ? 'border-pos-interactive-hover'
                 : 'border-pos-border-primary'
-            } hover:border-pos-interactive-hover`}
+            } hover:border-pos-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <div className="text-center space-y-1">
               <div className="text-lg font-semibold text-pos-text-primary">Cashmatic</div>
@@ -138,11 +206,12 @@ const PaymentMethodPage = () => {
 
           <button
             onClick={() => handleMethodSelect('card')}
+            disabled={processing}
             className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border-2 ${
               selectedMethod === 'card'
                 ? 'border-pos-interactive-hover'
                 : 'border-pos-border-primary'
-            } hover:border-pos-interactive-hover`}
+            } hover:border-pos-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <div className="text-center space-y-1">
               <div className="text-lg font-semibold text-pos-text-primary">Bancontact</div>
@@ -215,32 +284,37 @@ const PaymentMethodPage = () => {
         <div className="flex justify-center gap-3">
           <button
             onClick={handleGoBack}
-            className="px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm"
+            disabled={processing}
+            className="px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Go back
           </button>
-          
-          <button
-            onClick={handleConfirm}
-            disabled={!selectedMethod || checking}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors border text-sm ${
-              selectedMethod && !checking
-                ? 'bg-pos-bg-secondary text-pos-text-primary hover:bg-pos-interactive-hover border-pos-border-primary'
-                : 'bg-pos-interactive-primary text-pos-text-disabled cursor-not-allowed border-pos-border-primary opacity-50'
-            }`}
-          >
-            Confirm
-          </button>
         </div>
 
-        {checking && (
+        {showPaymentModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-pos-bg-secondary rounded-lg p-8 text-center border border-pos-border-primary">
+            <div className="bg-pos-bg-secondary rounded-lg p-8 text-center border border-pos-border-primary max-w-md">
               <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pos-text-primary mx-auto mb-4"></div>
-              <p className="text-pos-text-primary text-lg font-semibold">
-                {processingMessage || 'Checking terminal...'}
+              <p className="text-pos-text-primary text-lg font-semibold mb-2">
+                {processingMessage || 'Processing payment...'}
               </p>
-              <p className="text-pos-text-secondary text-sm mt-2">Please wait...</p>
+              {paymentInfo && (
+                <div className="text-pos-text-secondary text-sm mt-4 space-y-1">
+                  <p>State: {paymentInfo.state}</p>
+                  {paymentInfo.inserted !== undefined && (
+                    <>
+                      <p>Inserted: €{paymentInfo.inserted.toFixed(2)}</p>
+                      <p>Requested: €{paymentInfo.requested.toFixed(2)}</p>
+                    </>
+                  )}
+                </div>
+              )}
+              <button
+                onClick={handleCancelPayment}
+                className="mt-6 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium text-sm"
+              >
+                Cancel Payment
+              </button>
             </div>
           </div>
         )}

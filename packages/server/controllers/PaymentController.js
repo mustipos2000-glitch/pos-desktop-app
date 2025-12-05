@@ -24,6 +24,7 @@ const PaymentController = {
         res.json({ 
           success: true, 
           message: 'Cashmatic payment processed successfully',
+          sessionId: result.sessionId || result.transaction_id,
           transaction_id: result.transaction_id,
           data: result.data
         });
