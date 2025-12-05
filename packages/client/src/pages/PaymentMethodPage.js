@@ -166,7 +166,7 @@ const PaymentMethodPage = () => {
       amount: parseFloat(amount),
       member_id: memberInfo?.id,
       payment_type: paymentType?.id,
-      reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.firstName} ${memberInfo?.name}`
+      reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.fullName}`
     };
     localStorage.setItem('paymentData', JSON.stringify(paymentData));
     
@@ -233,7 +233,7 @@ const PaymentMethodPage = () => {
                 {sadakaType === 'named' && memberInfo && (
                   <div>
                     <span className="font-semibold">Member:</span>{' '}
-                    {`${memberInfo.firstName} ${memberInfo.name}`}
+                    {memberInfo.fullName}
                   </div>
                 )}
                 <div>
@@ -248,7 +248,7 @@ const PaymentMethodPage = () => {
                 </div>
                 <div>
                   <span className="font-semibold">Member:</span>{' '}
-                  {memberInfo ? `${memberInfo.firstName} ${memberInfo.name}` : 'None'}
+                  {memberInfo ? memberInfo.fullName : 'None'}
                 </div>
                 {rentDateTime && (
                   <>
@@ -271,7 +271,7 @@ const PaymentMethodPage = () => {
                 </div>
                 <div>
                   <span className="font-semibold">Member:</span>{' '}
-                  {memberInfo ? `${memberInfo.firstName} ${memberInfo.name}` : 'None'}
+                  {memberInfo ? memberInfo.fullName : 'None'}
                 </div>
               </>
             )}

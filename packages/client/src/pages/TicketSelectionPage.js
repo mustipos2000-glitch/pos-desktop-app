@@ -87,7 +87,7 @@ const TicketSelectionPage = () => {
         transaction_id: transactionId,
         created_at: new Date().toISOString(),
         payment_method: paymentMethod === 'cash' ? 'Cashmatic' : 'Bancontact',
-        member_name: member ? `${member.firstName} ${member.name}` : 'Anonymous',
+        member_name: member ? member.fullName : 'Anonymous',
         member_id: member?.id,
         discount: 0,
         tax: 0,
@@ -171,7 +171,7 @@ const TicketSelectionPage = () => {
         transaction_id: transactionId,
         payment_method: paymentMethod === 'cash' ? 'Cashmatic' : 'Bancontact',
         amount: parseFloat(amount),
-        member_name: member ? `${member.firstName} ${member.name}` : 'Anonymous',
+        member_name: member ? member.fullName : 'Anonymous',
         payment_type: itemDescription,
         details: itemNotes,
         timestamp: new Date().toISOString()

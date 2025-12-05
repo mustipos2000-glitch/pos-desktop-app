@@ -37,13 +37,13 @@ const MemberController = {
 
   createMember: (req, res) => {
     try {
-      const { name, first_name, phone, email, address } = req.body;
+      const { full_name, phone, email, address } = req.body;
       
-      if (!name || !first_name) {
-        return res.status(400).json({ error: 'Name and first name are required' });
+      if (!full_name) {
+        return res.status(400).json({ error: 'Full name is required' });
       }
 
-      const newMember = Member.create(name, first_name, phone, email, address);
+      const newMember = Member.create(full_name, phone, email, address);
       res.status(201).json(newMember);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -52,12 +52,11 @@ const MemberController = {
 
   updateMember: (req, res) => {
     try {
-      const { name, first_name, phone, email, address } = req.body;
+      const { full_name, phone, email, address } = req.body;
       
       const updatedMember = Member.update(
         req.params.id, 
-        name, 
-        first_name, 
+        full_name, 
         phone, 
         email, 
         address
