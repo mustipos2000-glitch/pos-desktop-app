@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import ApiService from '../services/api';
 
 const CustomerSelector = ({ selectedCustomer, onSelectCustomer, onCreateCustomer }) => {
@@ -7,13 +7,24 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer, onCreateCustomer
   const [customers, setCustomers] = useState([]);
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    if (searchTerm.length > 0) {
-      searchCustomers();
-    } else {
+  const searchCustomers = useCallback(async () => {
+    if (!searchTerm || searchTerm.length === 0) {
+      setCustomers([]);
+      return;
+    }
+
+    try {
+      const response = await ApiService.searchCustomers(searchTerm);
+      setCustomers(response.data || []);
+    } catch (error) {
+      console.error('Error searching customers:', error);
       setCustomers([]);
     }
   }, [searchTerm]);
+
+  useEffect(() => {
+    searchCustomers();
+  }, [searchCustomers]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -25,15 +36,6 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer, onCreateCustomer
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const searchCustomers = async () => {
-    try {
-      const response = await ApiService.searchCustomers(searchTerm);
-      setCustomers(response.data || []);
-    } catch (error) {
-      console.error('Error searching customers:', error);
-    }
-  };
 
   const handleSelectCustomer = (customer) => {
     onSelectCustomer(customer);
