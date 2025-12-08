@@ -28,6 +28,11 @@ const POSScreen = () => {
   const [activeParentRowIndex, setActiveParentRowIndex] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
+  // Debug logging for customer state changes
+  useEffect(() => {
+    console.log('🔍 Customer state changed:', selectedCustomer);
+  }, [selectedCustomer]);
+
   // Auto-save cart to table whenever cart changes and table is selected
   useEffect(() => {
     // Only auto-save if we have a table selected and items in cart
@@ -61,6 +66,7 @@ const POSScreen = () => {
           sub_total: subTotal,
           total: subTotal,
           discount: 0,
+          customer_id: selectedCustomer ? selectedCustomer.id : null,
           table_id: selectedTable.id,
           details: (() => {
             const allDetails = [];
@@ -98,9 +104,12 @@ const POSScreen = () => {
           })(),
         };
 
+        console.log('💾 Auto-saving order with customer_id:', orderData.customer_id);
+        
         if (currentOrderId) {
           // Update existing order
           await ApiService.updateOrder(currentOrderId, orderData);
+          console.log('✅ Order updated with customer_id:', orderData.customer_id);
         } else {
           // Create new order
           const response = await ApiService.createOrder(orderData);
@@ -108,6 +117,7 @@ const POSScreen = () => {
           // Store the new order ID
           if (response.data && response.data.id) {
             setCurrentOrderId(response.data.id);
+            console.log('✅ Order created with customer_id:', orderData.customer_id);
           }
         }
 
@@ -133,7 +143,7 @@ const POSScreen = () => {
     }, 800); // Wait 800ms after last cart change
 
     return () => clearTimeout(timeoutId);
-  }, [cart, selectedTable, currentOrderId]);
+  }, [cart, selectedTable, currentOrderId, selectedCustomer]);
 
   // Fetch categories and products from backend
   useEffect(() => {
@@ -350,6 +360,7 @@ const POSScreen = () => {
       }
       setSelectedTable(null);
       setCurrentOrderId(null);
+      setSelectedCustomer(null);
       return;
     }
     
@@ -366,16 +377,24 @@ const POSScreen = () => {
         setCurrentOrderId(existingOrder.id);
         
         // Load customer if exists
+        console.log('📋 Order customer_id:', existingOrder.customer_id);
         if (existingOrder.customer_id) {
           try {
             const customerResponse = await ApiService.getCustomerById(existingOrder.customer_id);
+            console.log('👤 Customer API response:', customerResponse);
             if (customerResponse.data) {
+              console.log('✅ Setting customer:', customerResponse.data);
               setSelectedCustomer(customerResponse.data);
+            } else {
+              console.log('⚠️ No customer data in response');
+              setSelectedCustomer(null);
             }
           } catch (error) {
-            console.error('Error loading customer:', error);
+            console.error('❌ Error loading customer:', error);
+            setSelectedCustomer(null);
           }
         } else {
+          console.log('ℹ️ No customer_id in order');
           setSelectedCustomer(null);
         }
         
@@ -497,6 +516,7 @@ const POSScreen = () => {
       } else {
         // No existing order for this table
         setCurrentOrderId(null);
+        setSelectedCustomer(null);
         
         // If we have items in cart (added without table), keep them and assign to this table
         if (hasCurrentCartItems) {
@@ -518,6 +538,7 @@ const POSScreen = () => {
       } else {
         // No cart items, clear everything
         setCurrentOrderId(null);
+        setSelectedCustomer(null);
         setSelectedTable(table);
         setCart([]);
       }
