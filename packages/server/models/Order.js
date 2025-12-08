@@ -3,8 +3,8 @@ const db = require('../config/database');
 class Order {
     static create(order, details) {
         const insertOrder = db.prepare(`
-      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
         const result = insertOrder.run(
@@ -14,7 +14,8 @@ class Order {
             order.sub_total || 0,
             order.total || 0,
             order.discount || 0,  // Now properly using the discount field
-            order.table_id || null
+            order.table_id || null,
+            order.customer_id || null
         );
 
         const orderId = result.lastInsertRowid;
@@ -53,7 +54,7 @@ class Order {
         // 🆙 Update the order record
         db.prepare(`
         UPDATE orders
-        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?
+        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?, customer_id = ?
         WHERE id = ?
         `).run(
             payload.tax || 0,
@@ -63,6 +64,7 @@ class Order {
             payload.sub_total || 0,
             payload.discount || 0,  // Now properly using the discount field
             payload.table_id || null,
+            payload.customer_id || null,
             id
         );
 

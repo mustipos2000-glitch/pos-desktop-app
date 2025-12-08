@@ -301,7 +301,7 @@ const UserFormModal = ({
             </button>
             <button 
               onClick={handleSubmit}
-              className="px-5 py-1.5 bg-pos-bg-primary text-white text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
+              className="px-5 py-1.5 bg-pos-bg-primary text-pos-text-primary text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
             >
               {user ? 'Update' : 'Add'}
             </button>

@@ -13,6 +13,7 @@ const PrTableController = require('../controllers/PrTableController');
 const PrinterController = require('../controllers/printerController');
 const PaymentController = require('../controllers/PaymentController');
 const PaymentTerminalController = require('../controllers/PaymentTerminalController');
+const CustomerController = require('../controllers/CustomerController');
 
 
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
@@ -120,5 +121,13 @@ router.post('/payment-terminals', PaymentTerminalController.createTerminal);
 router.put('/payment-terminals/:id', PaymentTerminalController.updateTerminal);
 router.delete('/payment-terminals/:id', PaymentTerminalController.deleteTerminal);
 router.post('/payment-terminals/:id/test', PaymentTerminalController.testTerminal);
+
+// Customer routes
+router.get('/customers', CustomerController.getAllCustomers);
+router.get('/customers/search', CustomerController.searchCustomers);
+router.get('/customers/:id', CustomerController.getCustomerById);
+router.post('/customers', CustomerController.createCustomer);
+router.put('/customers/:id', CustomerController.updateCustomer);
+router.delete('/customers/:id', CustomerController.deleteCustomer);
 
 module.exports = router;

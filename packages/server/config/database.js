@@ -245,6 +245,15 @@ try {
   }
 }
 
+// Add customer_id column to orders if it doesn't exist
+try {
+  db.exec(`ALTER TABLE orders ADD COLUMN customer_id INTEGER`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
 // Create order_details table
 db.exec(`
   CREATE TABLE IF NOT EXISTS order_details (
@@ -362,6 +371,20 @@ db.exec(`
     type TEXT NOT NULL,
     connection_string TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+// Create customers table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS customers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
 

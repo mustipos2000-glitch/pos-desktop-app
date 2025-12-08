@@ -326,6 +326,39 @@ class ApiService {
       method: 'POST',
     });
   }
+
+  // Customer methods
+  static async getCustomers() {
+    return this.request('/customers');
+  }
+
+  static async searchCustomers(searchTerm) {
+    return this.request(`/customers/search?q=${encodeURIComponent(searchTerm)}`);
+  }
+
+  static async getCustomerById(id) {
+    return this.request(`/customers/${id}`);
+  }
+
+  static async createCustomer(customerData) {
+    return this.request('/customers', {
+      method: 'POST',
+      body: JSON.stringify(customerData),
+    });
+  }
+
+  static async updateCustomer(id, customerData) {
+    return this.request(`/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(customerData),
+    });
+  }
+
+  static async deleteCustomer(id) {
+    return this.request(`/customers/${id}`, {
+      method: 'DELETE',
+    });
+  }
 }
 
 export default ApiService;

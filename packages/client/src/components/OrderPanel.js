@@ -5,18 +5,18 @@ import PaymentModal from "./PaymentModal";
 import DiscountModal from "./DiscountModal";
 import NoteModal from "./NoteModal";
 import Toast from "./Toast";
+import CustomerSelector from "./CustomerSelector";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
 import cashmaticService from "../services/cashmaticService";
 import payworldService from "../services/payworldService";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer }) => {
 
 const formatAmount = (value) => {
   const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
   return num.toFixed(2);
 };
-
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
@@ -135,7 +135,11 @@ const formatAmount = (value) => {
     setDiscount(0);
     setNote("");
     setCustomQuantity("");
-
+    if (onSelectCustomer) {
+      onSelectCustomer(null);
+    }
+    
+    // Notify parent to deselect table and clear order
     if (onDeleteAll) {
       onDeleteAll();
     }
@@ -487,6 +491,7 @@ const formatAmount = (value) => {
         sub_total: subTotal,
         total,
         discount,
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
         payment_method:
           paymentData.cashAmount > 0 && paymentData.cardAmount > 0
             ? "mixed"
@@ -808,129 +813,109 @@ const formatAmount = (value) => {
     setCart([]);
     setDiscount(0);
     setNote("");
+    if (onSelectCustomer) {
+      onSelectCustomer(null);
+    }
     if (onOrderComplete) {
       onOrderComplete();
     }
   };
 
   const handlePrintReceipt = async () => {
+    // Try to print to thermal printers assigned to products    
     if (printers.length > 0 && completedOrderId && cart.length > 0) {
       try {
-        const receiptPrinter = printers.find((p) =>
-          p.name.toLowerCase().includes("receipt")
-        );
-
+        // First, check if there's a printer whose name contains "receipt"
+        const receiptPrinter = printers.find(p => p.name.toLowerCase().includes('receipt'));
+        
         if (receiptPrinter) {
+          // If a "Receipt" printer is found, print only to that printer
           try {
-            const response = await printerService.printReceipt(
-              receiptPrinter.id,
-              completedOrderId
-            );
-            const data = response.data || response;
-            if (data && data.success === false) {
-              throw new Error(data.message || "Printer error");
-            }
+            const response = await printerService.printReceipt(receiptPrinter.id, completedOrderId);
             setToastType("success");
-            setToastMessage(
-              `Receipt printed successfully to '${receiptPrinter.name}' printer!`
-            );
+            setToastMessage(`Receipt printed successfully to '${receiptPrinter.name}' printer!`);
           } catch (err) {
-            console.error(
-              `❌ Failed to print to 'Receipt' printer:`,
-              err
-            );
+            console.error(`❌ Failed to print to 'Receipt' printer:`, err);
             setToastType("error");
-            setToastMessage(
-              `Failed to print to '${receiptPrinter.name}' printer: ${
-                err.message || "Connection failed"
-              }`
-            );
+            setToastMessage(`Failed to print to '${receiptPrinter.name}' printer: ${err.message || 'Connection failed'}`);
+            // Fallback to browser print
             window.print();
           }
         } else {
+          // If no "Receipt" printer, use the existing logic
+          // Collect all unique printer names from cart items
           const printerNames = new Set();
-          cart.forEach((item) => {
+          cart.forEach(item => {
             if (item.printer1) printerNames.add(item.printer1);
             if (item.printer2) printerNames.add(item.printer2);
             if (item.printer3) printerNames.add(item.printer3);
           });
 
+          // If no printers assigned to products, use browser print
           if (printerNames.size === 0) {
             window.print();
-          } else {
+          } else {            
+            // Print to each assigned printer
             const printPromises = [];
-            printerNames.forEach((printerName) => {
-              const printer = printers.find((p) => p.name === printerName);
+            printerNames.forEach(printerName => {
+              // Find printer by name
+              const printer = printers.find(p => p.name === printerName);
               if (printer) {
                 printPromises.push(
-                  printerService
-                    .printReceipt(printer.id, completedOrderId)
-                    .then((response) => {
-                      const data = response.data || response;
-                      if (data && data.success === false) {
-                        throw new Error(data.message || "Printer error");
-                      }
-                      return data;
+                  printerService.printReceipt(printer.id, completedOrderId)
+                    .then(response => {
+                      return response;
                     })
-                    .catch((err) => {
+                    .catch(err => {
                       console.error(`❌ Failed: ${printer.name}`, err);
+                      // Set toast message but don't block the operation
                       setToastType("error");
-                      setToastMessage(
-                        `Failed to print to ${printer.name}: ${
-                          err.message || "Connection failed"
-                        }`
-                      );
+                      setToastMessage(`Failed to print to ${printer.name}: ${err.message || 'Connection failed'}`);
+                      // Return a resolved promise to prevent Promise.allSettled from failing
                       return { success: false, error: err.message };
                     })
                 );
               } else {
-                console.warn(
-                  `⚠️ Printer "${printerName}" not found in printer list`
-                );
+                console.warn(`⚠️ Printer "${printerName}" not found in printer list`);
               }
             });
 
+            // Wait for all print jobs to complete (or fail)
             const results = await Promise.allSettled(printPromises);
-            const successCount = results.filter(
-              (r) =>
-                r.status === "fulfilled" &&
-                r.value &&
-                r.value.success !== false
-            ).length;
+            const successCount = results.filter(r => r.status === 'fulfilled' && r.value && r.value.success !== false).length;
             const failedCount = results.length - successCount;
-
+                        
             if (successCount > 0) {
               setToastType("success");
-              setToastMessage(
-                `Receipt sent to ${successCount} printer(s) successfully!`
-              );
+              setToastMessage(`Receipt sent to ${successCount} printer(s) successfully!`);
             } else {
               setToastType("error");
-              setToastMessage(
-                "Failed to print to thermal printers. Using browser print."
-              );
+              setToastMessage("Failed to print to thermal printers. Using browser print.");
               window.print();
             }
           }
         }
       } catch (error) {
-        console.error("Error printing to thermal printer:", error);
+        console.error('Error printing to thermal printer:', error);
         setToastType("error");
-        setToastMessage(
-          "Failed to print to thermal printer. Using browser print."
-        );
+        setToastMessage("Failed to print to thermal printer. Using browser print.");
         window.print();
       }
     } else {
+      // No printer configured or no order, use browser print
       window.print();
     }
-
+    
     setShowReceipt(false);
     setCart([]);
     setDiscount(0);
-    setNote("");
+    setNote(""); // Reset order-level note after order completion
+    if (onSelectCustomer) {
+      onSelectCustomer(null);
+    }
     setCompletedOrderId(null);
-
+    
+    // Call onOrderComplete to clear table and order selection in parent
     if (onOrderComplete) {
       onOrderComplete();
     }
@@ -960,6 +945,14 @@ const formatAmount = (value) => {
       )}
 
       <div className="mt-2 mb-2 w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen bg-pos-bg-secondary rounded-2xl">
+        {/* Customer Selector */}
+        <div className="px-4 py-2 mt-2 bg-pos-bg-secondary border-b border-pos-border-light">
+          <CustomerSelector
+            selectedCustomer={selectedCustomer}
+            onSelectCustomer={onSelectCustomer}
+          />
+        </div>
+
         {/* Header */}
         <div className="px-4 py-2 mt-2 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
           <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-muted font-semibold uppercase">
