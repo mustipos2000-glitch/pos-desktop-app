@@ -104,15 +104,20 @@ router.post('/printers/print-kitchen-batch', PrinterController.printKitchenOrder
 router.post('/printers/print-custom', PrinterController.printCustom);
 
 // Payment routes
-router.post('/payments/cashmatic', PaymentController.processCashmaticPayment);
-router.post('/payments/bancontact', PaymentController.processBancontactPayment);
-router.get('/payments/status/:transactionId', PaymentController.getPaymentStatus);
-router.post('/payments/cancel/:transactionId', PaymentController.cancelPayment);
+// router.post('/payments/cashmatic', PaymentController.processCashmaticPayment); // UNUSED - Use /cashmatic/start instead
+// router.post('/payments/bancontact', PaymentController.processBancontactPayment); // UNUSED - Not implemented in client
+// router.get('/payments/status/:transactionId', PaymentController.getPaymentStatus); // UNUSED - Use /cashmatic/status/:sessionId instead
+// router.post('/payments/cancel/:transactionId', PaymentController.cancelPayment); // UNUSED - Not implemented in client
 router.post('/payments/send-receipt-email', PaymentController.sendReceiptEmail);
 
 // Cashmatic routes (for payment machine integration)
 router.post('/cashmatic/start', PaymentController.processCashmaticPayment);
 router.get('/cashmatic/status/:sessionId', PaymentController.getPaymentStatus);
+
+// Payworld routes (for Bancontact payment terminal integration)
+router.post('/payworld/start', PaymentController.processPayworldPayment);
+router.get('/payworld/status/:sessionId', PaymentController.getPayworldStatus);
+router.post('/payworld/cancel/:sessionId', PaymentController.cancelPayworldPayment);
 
 // Payment Terminal routes
 router.get('/payment-terminals', PaymentTerminalController.getAllTerminals);

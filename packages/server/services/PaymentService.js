@@ -393,6 +393,136 @@ class PaymentService {
       };
     }
   }
+
+  /**
+   * Process Payworld payment
+   * @param {Object} paymentData - Payment information
+   * @returns {Promise<Object>} Payment result
+   */
+  static async processPayworldPayment(paymentData) {
+    try {
+      const { amount, member_id, payment_type, reference } = paymentData;
+      
+      console.log(`💳 Payworld Payment Request:`, {
+        amount: `€${amount}`,
+        member_id,
+        payment_type,
+        reference
+      });
+      
+      // Get Bancontact/Payworld terminal configuration
+      const terminal = PaymentTerminal.getByType('bancontact');
+      
+      if (!terminal) {
+        return {
+          success: false,
+          message: 'Payworld terminal not configured. Please add terminal in settings.'
+        };
+      }
+      
+      if (!terminal.enabled) {
+        return {
+          success: false,
+          message: 'Payworld terminal is disabled. Please enable it in settings.'
+        };
+      }
+      
+      // Process payment based on connection type
+      if (terminal.connection_type === 'tcp') {
+        return await this.processTcpPayment(terminal, paymentData, 'payworld');
+      } else if (terminal.connection_type === 'serial') {
+        return await this.processSerialPayment(terminal, paymentData, 'payworld');
+      } else if (terminal.connection_type === 'api') {
+        return await this.processApiPayment(terminal, paymentData, 'payworld');
+      }
+      
+      // Fallback to mock for testing
+      console.log('⚠️ Using mock Payworld payment (no real terminal connection)');
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      const transaction_id = `PAYWORLD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      
+      console.log(`✅ Payworld Payment Successful: ${transaction_id}`);
+      
+      return {
+        success: true,
+        transaction_id,
+        sessionId: transaction_id,
+        data: {
+          amount,
+          method: 'payworld',
+          status: 'completed',
+          state: 'APPROVED',
+          timestamp: new Date().toISOString(),
+          reference,
+          card_type: 'bancontact',
+          terminal: terminal.name
+        }
+      };
+    } catch (error) {
+      console.error('❌ Payworld payment failed:', error);
+      return {
+        success: false,
+        message: error.message || 'Payworld payment failed'
+      };
+    }
+  }
+
+  /**
+   * Get Payworld payment status
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Object>} Payment status
+   */
+  static async getPayworldStatus(sessionId) {
+    try {
+      // TODO: Implement actual status check with Payworld terminal
+      
+      // Mock Payworld status response
+      return {
+        success: true,
+        ok: true,
+        data: {
+          sessionId,
+          state: 'APPROVED',
+          message: 'Payworld betaling voltooid.',
+          details: {
+            amount: 0,
+            status: 'completed',
+            timestamp: new Date().toISOString()
+          }
+        }
+      };
+    } catch (error) {
+      return {
+        success: false,
+        ok: false,
+        message: error.message || 'Failed to get Payworld status'
+      };
+    }
+  }
+
+  /**
+   * Cancel Payworld payment
+   * @param {string} sessionId - Session ID
+   * @returns {Promise<Object>} Cancellation result
+   */
+  static async cancelPayworldPayment(sessionId) {
+    try {
+      console.log(`🚫 Cancelling Payworld payment: ${sessionId}`);
+      
+      // TODO: Implement actual payment cancellation with Payworld terminal
+      
+      return {
+        success: true,
+        message: 'Payworld payment cancelled successfully'
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.message || 'Failed to cancel Payworld payment'
+      };
+    }
+  }
 }
 
 module.exports = PaymentService;

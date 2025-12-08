@@ -107,6 +107,77 @@ const PaymentController = {
     }
   },
 
+  // Process Payworld payment
+  processPayworldPayment: async (req, res) => {
+    try {
+      const { amount, member_id, payment_type, reference } = req.body;
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ error: 'Valid amount is required' });
+      }
+      
+      console.log(`💳 Processing Payworld payment: €${amount}`);
+      
+      const result = await PaymentService.processPayworldPayment({
+        amount,
+        member_id,
+        payment_type,
+        reference
+      });
+      
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: 'Payworld payment processed successfully',
+          sessionId: result.sessionId || result.transaction_id,
+          transaction_id: result.transaction_id,
+          data: result.data
+        });
+      } else {
+        res.status(500).json({ success: false, error: result.message });
+      }
+    } catch (error) {
+      console.error('Payworld payment error:', error);
+      res.status(500).json({ success: false, error: 'Failed to process Payworld payment' });
+    }
+  },
+
+  // Get Payworld payment status
+  getPayworldStatus: async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const result = await PaymentService.getPayworldStatus(sessionId);
+      
+      if (result.success) {
+        res.json({ success: true, ok: true, ...result.data });
+      } else {
+        res.status(404).json({ success: false, ok: false, error: result.message });
+      }
+    } catch (error) {
+      console.error('Get Payworld status error:', error);
+      res.status(500).json({ success: false, ok: false, error: 'Failed to get Payworld status' });
+    }
+  },
+
+  // Cancel Payworld payment
+  cancelPayworldPayment: async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const result = await PaymentService.cancelPayworldPayment(sessionId);
+      
+      if (result.success) {
+        res.json({ success: true, message: 'Payworld payment cancelled successfully' });
+      } else {
+        res.status(500).json({ success: false, error: result.message });
+      }
+    } catch (error) {
+      console.error('Cancel Payworld payment error:', error);
+      res.status(500).json({ success: false, error: 'Failed to cancel Payworld payment' });
+    }
+  },
+
   // Send receipt via email
   sendReceiptEmail: async (req, res) => {
     try {
