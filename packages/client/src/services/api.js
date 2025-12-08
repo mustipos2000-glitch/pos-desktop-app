@@ -12,6 +12,7 @@ class ApiService {
     };
 
     try {
+      console.log('API request:', url, config);
       const response = await fetch(url, config);
       
       if (!response.ok) {
@@ -247,6 +248,47 @@ class ApiService {
   static async deleteMember(id) {
     return this.request(`/members/${id}`, {
       method: 'DELETE',
+    });
+  }
+
+  // Cashmatic methods
+  static async startCashmaticPayment(data) {
+    console.log('startCashmaticPayment data:', data);
+    return this.request('/cashmatic/start', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getCashmaticStatus(sessionId) {
+    return this.request(`/cashmatic/status/${sessionId}`);
+  }
+
+  // Payworld methods
+  static async startPayworldPayment(data) {
+    console.log('startPayworldPayment data:', data);
+    return this.request('/payworld/start', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async getPayworldStatus(sessionId) {
+    return this.request(`/payworld/status/${sessionId}`);
+  }
+
+  static async cancelPayworldPayment(sessionId) {
+    return this.request(`/payworld/cancel/${sessionId}`, {
+      method: 'POST',
+    });
+  }
+
+  // Viva methods
+  static async startVivaPayment(data) {
+    console.log('startVivaPayment data:', data);
+    return this.request('/viva/start', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   }
 
