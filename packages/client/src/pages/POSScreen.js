@@ -26,6 +26,7 @@ const POSScreen = () => {
   const [splitCartSelectedItems, setSplitCartSelectedItems] = useState([]);
   const [lastClickedProductId, setLastClickedProductId] = useState(null);
   const [activeParentRowIndex, setActiveParentRowIndex] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   // Auto-save cart to table whenever cart changes and table is selected
   useEffect(() => {
@@ -364,6 +365,20 @@ const POSScreen = () => {
         const existingOrder = response.data;
         setCurrentOrderId(existingOrder.id);
         
+        // Load customer if exists
+        if (existingOrder.customer_id) {
+          try {
+            const customerResponse = await ApiService.getCustomerById(existingOrder.customer_id);
+            if (customerResponse.data) {
+              setSelectedCustomer(customerResponse.data);
+            }
+          } catch (error) {
+            console.error('Error loading customer:', error);
+          }
+        } else {
+          setSelectedCustomer(null);
+        }
+        
         // Convert order details to cart format
         // Fetch sub-products data for proper reconstruction
         const existingCartItems = await Promise.all(existingOrder.details.map(async (detail, index) => {
@@ -556,6 +571,7 @@ const POSScreen = () => {
         sub_total: subTotal,
         total: total,
         discount: 0,
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
         table_id: selectedTable ? selectedTable.id : null,
         details: (() => {
           const allDetails = [];
@@ -622,10 +638,11 @@ const POSScreen = () => {
         }
       }
       
-      // Clear cart and deselect table (select "No-table") after sending to kitchen
+      // Clear cart, customer, and deselect table (select "No-table") after sending to kitchen
       setCart([]);
       setSelectedTable(null);
       setCurrentOrderId(null);
+      setSelectedCustomer(null);
       
       // Return the order ID for printing
       return finalOrderId;
@@ -691,6 +708,8 @@ const POSScreen = () => {
         setCustomQuantity={setCustomQuantity}
         currentOrderId={currentOrderId}
         selectedTable={selectedTable}
+        selectedCustomer={selectedCustomer}
+        onSelectCustomer={setSelectedCustomer}
         onSplitCart={(items, confirmCallback) => {
           setSplitCartSelectedItems(items);
           setShowSplitCartModal(true);

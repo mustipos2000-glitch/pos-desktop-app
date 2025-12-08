@@ -1,42 +1,51 @@
 import { useState, useEffect } from 'react';
 import KeypadNumpad from './KeypadNumpad';
 
-const RoomFormModal = ({ 
+const CustomerFormModal = ({ 
   isOpen, 
   onClose, 
   onSubmit, 
-  room = null 
+  customer = null 
 }) => {
-  const [roomForm, setRoomForm] = useState({
+  const [customerForm, setCustomerForm] = useState({
     name: '',
-    total_table: 0
+    phone: '',
+    email: '',
+    address: '',
+    notes: ''
   });
 
   const [activeField, setActiveField] = useState('name');
   const [showKeypad, setShowKeypad] = useState(true);
 
   useEffect(() => {
-    if (room) {
-      // Edit mode - populate form with room data
-      setRoomForm({
-        name: room.name || '',
-        total_table: Number(room.total_table) || 0
+    if (customer) {
+      // Edit mode - populate form with customer data
+      setCustomerForm({
+        name: customer.name || '',
+        phone: customer.phone || '',
+        email: customer.email || '',
+        address: customer.address || '',
+        notes: customer.notes || ''
       });
     } else {
       // Add mode - reset form
-      setRoomForm({
+      setCustomerForm({
         name: '',
-        total_table: 0
+        phone: '',
+        email: '',
+        address: '',
+        notes: ''
       });
     }
     setActiveField('name');
-  }, [room, isOpen]);
+  }, [customer, isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setRoomForm(prev => ({
+    setCustomerForm(prev => ({
       ...prev,
-      [name]: name === 'total_table' ? parseInt(value) || 0 : value
+      [name]: value
     }));
   };
 
@@ -46,7 +55,7 @@ const RoomFormModal = ({
 
   const handleKeypadInput = (input) => {
     if (activeField) {
-      setRoomForm(prev => ({
+      setCustomerForm(prev => ({
         ...prev,
         [activeField]: prev[activeField] + input
       }));
@@ -55,7 +64,7 @@ const RoomFormModal = ({
 
   const handleKeypadBackspace = () => {
     if (activeField) {
-      setRoomForm(prev => ({
+      setCustomerForm(prev => ({
         ...prev,
         [activeField]: prev[activeField].toString().slice(0, -1)
       }));
@@ -64,9 +73,9 @@ const RoomFormModal = ({
 
   const handleKeypadClear = () => {
     if (activeField) {
-      setRoomForm(prev => ({
+      setCustomerForm(prev => ({
         ...prev,
-        [activeField]: activeField === 'total_table' ? 0 : ""
+        [activeField]: ""
       }));
     }
   };
@@ -76,10 +85,10 @@ const RoomFormModal = ({
   };
 
   const handleSubmit = () => {
-    if (!roomForm.name) {
+    if (!customerForm.name) {
       return;
     }
-    onSubmit(roomForm);
+    onSubmit(customerForm);
   };
 
   if (!isOpen) return null;
@@ -90,7 +99,7 @@ const RoomFormModal = ({
         {/* Modal Header */}
         <div className="bg-pos-bg-tertiary border-b border-pos-border-secondary px-4 py-2 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-pos-text-primary">
-            {room ? 'Edit Room' : 'Add New Room'}
+            {customer ? 'Edit Customer' : 'Add New Customer'}
           </h3>
           <button 
             onClick={onClose}
@@ -105,33 +114,80 @@ const RoomFormModal = ({
           <div className="grid grid-cols-2 gap-3 mb-2">
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">
-                Room Name / Number <span className="text-pos-error">*</span>
+                Name <span className="text-pos-error">*</span>
               </label>
               <input
                 type="text"
                 name="name"
-                value={roomForm.name}
+                value={customerForm.name}
                 onChange={handleInputChange}
                 onFocus={() => handleFieldFocus('name')}
                 className={`w-full bg-pos-bg-primary border ${activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                placeholder="Enter room name or number"
+                placeholder="Enter customer name"
               />
             </div>
 
             <div>
               <label className="block text-xs font-medium text-pos-text-muted mb-1">
-                Total Tables
+                Phone
               </label>
               <input
-                type="number"
-                name="total_table"
-                value={roomForm.total_table}
+                type="text"
+                name="phone"
+                value={customerForm.phone}
                 onChange={handleInputChange}
-                onFocus={() => handleFieldFocus('total_table')}
-                className={`w-full bg-pos-bg-primary border ${activeField === 'total_table' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
-                placeholder="0"
+                onFocus={() => handleFieldFocus('phone')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'phone' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                placeholder="Phone number"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-2">
+            <div>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                Email
+              </label>
+              <input
+                type="text"
+                name="email"
+                value={customerForm.email}
+                onChange={handleInputChange}
+                onFocus={() => handleFieldFocus('email')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'email' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                placeholder="Email address"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                Address
+              </label>
+              <input
+                type="text"
+                name="address"
+                value={customerForm.address}
+                onChange={handleInputChange}
+                onFocus={() => handleFieldFocus('address')}
+                className={`w-full bg-pos-bg-primary border ${activeField === 'address' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                placeholder="Customer address"
+              />
+            </div>
+          </div>
+
+          <div className="mb-2">
+            <label className="block text-xs font-medium text-pos-text-muted mb-1">
+              Notes
+            </label>
+            <textarea
+              name="notes"
+              value={customerForm.notes}
+              onChange={handleInputChange}
+              onFocus={() => handleFieldFocus('notes')}
+              rows="2"
+              className={`w-full bg-pos-bg-primary border ${activeField === 'notes' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+              placeholder="Additional notes"
+            />
           </div>
         </div>
 
@@ -175,9 +231,9 @@ const RoomFormModal = ({
             </button>
             <button 
               onClick={handleSubmit}
-              className="px-5 py-1.5 bg-pos-bg-primary text-pos-text-primary text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
+              className="px-5 py-1.5 bg-pos-bg-primary  text-pos-text-primary text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
             >
-              {room ? 'Update' : 'Add'}
+              {customer ? 'Update' : 'Add'}
             </button>
           </div>
         </div>
@@ -186,4 +242,4 @@ const RoomFormModal = ({
   );
 };
 
-export default RoomFormModal;
+export default CustomerFormModal;

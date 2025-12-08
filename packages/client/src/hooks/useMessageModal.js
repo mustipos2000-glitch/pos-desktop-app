@@ -35,6 +35,15 @@ export const useMessageModal = () => {
         });
     }, []);
 
+    const showSuccess = useCallback((message, title = 'Success') => {
+        setMessageModal({
+            isOpen: true,
+            title,
+            message,
+            type: 'success'
+        });
+    }, []);
+
     const closeModal = useCallback(() => {
         setMessageModal(prev => ({ ...prev, isOpen: false }));
     }, []);
@@ -44,6 +53,7 @@ export const useMessageModal = () => {
         showError,
         showWarning,
         showInfo,
+        showSuccess,
         closeModal
     };
 };

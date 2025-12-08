@@ -5,11 +5,12 @@ import PaymentModal from "./PaymentModal";
 import DiscountModal from "./DiscountModal";
 import NoteModal from "./NoteModal";
 import Toast from "./Toast";
+import CustomerSelector from "./CustomerSelector";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
 import { useVersion } from '../context/VersionContext';
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer }) => {
   const { hasFeature } = useVersion();
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
@@ -107,6 +108,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setDiscount(0);
     setNote("");
     setCustomQuantity("");
+    if (onSelectCustomer) {
+      onSelectCustomer(null);
+    }
     
     // Notify parent to deselect table and clear order
     if (onDeleteAll) {
@@ -187,6 +191,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         sub_total: subTotal,
         total,
         discount,
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
         payment_method:
           paymentData.cashAmount > 0 && paymentData.cardAmount > 0
             ? "mixed"
@@ -520,6 +525,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       setCart([]);
       setDiscount(0);
       setNote("");
+      if (onSelectCustomer) {
+        onSelectCustomer(null);
+      }
       if (onOrderComplete) {
         onOrderComplete();
       }
@@ -615,6 +623,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setCart([]);
     setDiscount(0);
     setNote(""); // Reset order-level note after order completion
+    if (onSelectCustomer) {
+      onSelectCustomer(null);
+    }
     setCompletedOrderId(null);
     
     // Call onOrderComplete to clear table and order selection in parent
@@ -648,8 +659,16 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         />
       )}
       <div className="mt-2 mb-2 w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen bg-pos-bg-secondary rounded-2xl">
+        {/* Customer Selector */}
+        <div className="px-4 py-2 mt-2 bg-pos-bg-secondary border-b border-pos-border-light">
+          <CustomerSelector
+            selectedCustomer={selectedCustomer}
+            onSelectCustomer={onSelectCustomer}
+          />
+        </div>
+
         {/* Header */}
-      <div className="px-4 py-2 mt-2 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
+      <div className="px-4 py-2 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
         <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-muted font-semibold uppercase">
           <span className="col-span-4">Item</span>
           <span className="col-span-2  flex justify-center items-center ">Quantity</span>
