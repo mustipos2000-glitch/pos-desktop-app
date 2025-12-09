@@ -2,7 +2,31 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { runMigrations } = require('./migrate');
+
+// Handle better-sqlite3 loading with fallback for different environments
+let runMigrations;
+try {
+  runMigrations = require('./migrate').runMigrations;
+} catch (err) {
+  if (err.code === 'ERR_DLOPEN_FAILED' && err.message.includes('better-sqlite3')) {
+    console.error('Failed to load better-sqlite3 due to Node.js version mismatch');
+    console.log('Attempting to rebuild better-sqlite3 for Node.js...');
+    try {
+      // Try to rebuild and reload
+      require('child_process').execSync('npm rebuild better-sqlite3 --runtime=node', { 
+        stdio: 'inherit',
+        cwd: process.cwd()
+      });
+      runMigrations = require('./migrate').runMigrations;
+      console.log('Successfully reloaded better-sqlite3 after rebuild');
+    } catch (rebuildErr) {
+      console.error('Failed to rebuild better-sqlite3:', rebuildErr.message);
+      throw err;
+    }
+  } else {
+    throw err;
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,28 +64,45 @@ if (!isDev) {
   // Determine the correct path to the client build
   let clientBuildPath;
 
-  if (process.resourcesPath) {
-    // Running as packaged app - check unpacked location first
-    clientBuildPath = path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'client', 'build');
-    if (!require('fs').existsSync(clientBuildPath)) {
-      clientBuildPath = path.join(process.resourcesPath, 'app.asar', 'packages', 'client', 'build');
+  // Try multiple possible locations
+  const possiblePaths = [
+    // Packaged app locations
+    process.resourcesPath ? path.join(process.resourcesPath, 'app.asar.unpacked', 'packages', 'client', 'build') : null,
+    process.resourcesPath ? path.join(process.resourcesPath, 'app.asar', 'packages', 'client', 'build') : null,
+    process.resourcesPath ? path.join(process.resourcesPath, 'app', 'packages', 'client', 'build') : null,
+    // Unpacked app locations
+    path.join(__dirname, '../client/build'),
+    path.join(process.cwd(), 'packages', 'client', 'build'),
+    path.join(process.cwd(), 'client', 'build'),
+  ].filter(p => p !== null);
+
+  for (const possiblePath of possiblePaths) {
+    if (fs.existsSync(possiblePath) && fs.existsSync(path.join(possiblePath, 'index.html'))) {
+      clientBuildPath = possiblePath;
+      console.log('✅ Found client build at:', clientBuildPath);
+      break;
     }
-    if (!require('fs').existsSync(clientBuildPath)) {
-      clientBuildPath = path.join(process.resourcesPath, 'app', 'packages', 'client', 'build');
-    }
-  } else {
-    // Running from source
-    clientBuildPath = path.join(__dirname, '../client/build');
   }
 
-  app.use(express.static(clientBuildPath));
+  if (!clientBuildPath) {
+    console.error('❌ Could not find client build directory. Tried:');
+    possiblePaths.forEach(p => console.error('   -', p));
+    console.error('⚠️  Server will start but client may not load correctly');
+  } else {
+    app.use(express.static(clientBuildPath));
 
-  // Handle React routing - send all non-API requests to index.html
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
-      res.sendFile(path.join(clientBuildPath, 'index.html'));
-    }
-  });
+    // Handle React routing - send all non-API requests to index.html
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api')) {
+        const indexPath = path.join(clientBuildPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          res.sendFile(indexPath);
+        } else {
+          res.status(404).send('Client build not found');
+        }
+      }
+    });
+  }
 }
 
 // Test routes
@@ -99,4 +140,15 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
+  console.log(`📁 Working directory: ${process.cwd()}`);
+  console.log(`📁 __dirname: ${__dirname}`);
+  if (process.resourcesPath) {
+    console.log(`📁 Resources path: ${process.resourcesPath}`);
+  }
+}).on('error', (err) => {
+  console.error('❌ Failed to start server:', err);
+  if (err.code === 'EADDRINUSE') {
+    console.error(`   Port ${PORT} is already in use`);
+  }
+  process.exit(1);
 });

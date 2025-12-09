@@ -119,6 +119,9 @@ router.post('/payworld/start', PaymentController.processPayworldPayment);
 router.get('/payworld/status/:sessionId', PaymentController.getPayworldStatus);
 router.post('/payworld/cancel/:sessionId', PaymentController.cancelPayworldPayment);
 
+// Viva routes (for Viva Wallet payment integration)
+router.post('/viva/start', PaymentController.processVivaPayment);
+
 // Payment Terminal routes
 router.get('/payment-terminals', PaymentTerminalController.getAllTerminals);
 router.get('/payment-terminals/:id', PaymentTerminalController.getTerminalById);
