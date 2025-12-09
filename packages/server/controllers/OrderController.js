@@ -81,6 +81,15 @@ const OrderController = {
             res.status(500).json({ error: 'Internal server error' });
         }
     },
+
+    getHoldOrders: (req, res) => {
+        try {
+            const orders = Order.getHoldOrders();
+            res.json({ data: orders });
+        } catch (error) {
+            res.status(500).json({ error: 'Internal server error' });
+        }
+    },
 };
 
 module.exports = OrderController;

@@ -78,41 +78,38 @@ const CustomerSelector = ({ selectedCustomer, onSelectCustomer, onCreateCustomer
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative h-full" ref={dropdownRef}>
       {selectedCustomer ? (
-        <div className="flex items-center justify-between bg-pos-bg-tertiary border border-pos-border-secondary rounded-lg px-3 py-2">
-          <div className="flex-1">
-            <div className="text-sm font-semibold text-pos-text-primary">{selectedCustomer.name}</div>
-            {selectedCustomer.phone && (
-              <div className="text-xs text-pos-text-muted">{selectedCustomer.phone}</div>
-            )}
+        <div className="flex items-center justify-between bg-pos-bg-tertiary border border-pos-border-secondary rounded px-2 py-1 h-full">
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-semibold text-pos-text-primary truncate">{selectedCustomer.name}</div>
           </div>
           <button
             onClick={handleClearCustomer}
-            className="text-pos-danger hover:text-pos-danger-hover ml-2"
+            className="text-pos-danger hover:text-pos-danger-hover ml-1 text-xs flex-shrink-0"
           >
             ✕
           </button>
         </div>
       ) : (
-        <div className="relative">
-          <div className="relative flex items-center">
+        <div className="relative h-full">
+          <div className="relative flex items-center h-full">
             <input
               type="text"
-              placeholder="Search or add customer..."
+              placeholder="Search..."
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
                 setShowDropdown(true);
               }}
               onFocus={() => setShowDropdown(true)}
-              className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded-lg focus:outline-none focus:border-pos-info text-sm pr-20"
+              className="w-full h-full px-2 py-1 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info text-xs pr-12"
             />
             
             {searchTerm.length > 0 && customers.length === 0 && (
               <button
                 onClick={handleQuickAdd}
-                className="absolute right-2 px-3 py-1 bg-pos-success hover:bg-pos-success-hover text-white rounded text-xs font-medium transition-colors"
+                className="absolute right-1 px-2 py-0.5 bg-pos-success hover:bg-pos-success-hover text-white rounded text-[10px] font-medium transition-colors"
               >
                 + Add
               </button>

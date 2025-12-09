@@ -20,6 +20,7 @@ const POSScreen = () => {
   const [customQuantity, setCustomQuantity] = useState('');
   const [selectedTable, setSelectedTable] = useState(null);
   const [currentOrderId, setCurrentOrderId] = useState(null);
+  const [currentOrderNo, setCurrentOrderNo] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKitchenCount, setRefreshKitchenCount] = useState(null);
   const [showSplitCartModal, setShowSplitCartModal] = useState(false);
@@ -33,10 +34,10 @@ const POSScreen = () => {
     console.log('🔍 Customer state changed:', selectedCustomer);
   }, [selectedCustomer]);
 
-  // Auto-save cart to table whenever cart changes and table is selected
+  // Auto-save cart whenever cart changes (for both table orders and hold orders)
   useEffect(() => {
-    // Only auto-save if we have a table selected and items in cart
-    if (!selectedTable || cart.length === 0) {
+    // Only auto-save if we have items in cart
+    if (cart.length === 0) {
       return;
     }
 
@@ -59,15 +60,18 @@ const POSScreen = () => {
           return sum + itemTotal;
         }, 0);
 
+        // Determine order status based on whether table is selected
+        const orderStatus = selectedTable ? 'send_kitchen' : 'on_hold';
+
         const orderData = {
           tax: 0,  // Add tax field
-          status: 'send_kitchen',
+          status: orderStatus,
           note: '',
           sub_total: subTotal,
           total: subTotal,
           discount: 0,
           customer_id: selectedCustomer ? selectedCustomer.id : null,
-          table_id: selectedTable.id,
+          table_id: selectedTable ? selectedTable.id : null,
           details: (() => {
             const allDetails = [];
             let detailIndex = 0;
@@ -104,25 +108,26 @@ const POSScreen = () => {
           })(),
         };
 
-        console.log('💾 Auto-saving order with customer_id:', orderData.customer_id);
+        console.log('💾 Auto-saving order with status:', orderStatus, 'customer_id:', orderData.customer_id);
         
         if (currentOrderId) {
           // Update existing order
           await ApiService.updateOrder(currentOrderId, orderData);
-          console.log('✅ Order updated with customer_id:', orderData.customer_id);
+          console.log('✅ Order updated');
         } else {
           // Create new order
           const response = await ApiService.createOrder(orderData);
           
-          // Store the new order ID
+          // Store the new order ID and order_no
           if (response.data && response.data.id) {
             setCurrentOrderId(response.data.id);
-            console.log('✅ Order created with customer_id:', orderData.customer_id);
+            setCurrentOrderNo(response.data.order_no);
+            console.log('✅ Order created with ID:', response.data.id, 'Order No:', response.data.order_no);
           }
         }
 
-        // Update table status to reserved if it's available
-        if (selectedTable.status === 'available') {
+        // Update table status to reserved if table is selected and available
+        if (selectedTable && selectedTable.status === 'available') {
           try {
             await ApiService.updatePrTable(selectedTable.id, {
               ...selectedTable,
@@ -303,16 +308,18 @@ const POSScreen = () => {
       setCart(newCart);
       
       // If cart becomes empty and we have an order ID, delete the order
-      if (newCart.length === 0 && currentOrderId && selectedTable) {
+      if (newCart.length === 0 && currentOrderId) {
         try {
           await ApiService.deleteOrder(currentOrderId);
           setCurrentOrderId(null);
           
-          // Update table status back to available
-          await ApiService.updatePrTable(selectedTable.id, {
-            ...selectedTable,
-            status: 'available'
-          });
+          // Update table status back to available if table is selected
+          if (selectedTable) {
+            await ApiService.updatePrTable(selectedTable.id, {
+              ...selectedTable,
+              status: 'available'
+            });
+          }
         } catch (error) {
           console.error('Error deleting order:', error);
         }
@@ -375,6 +382,7 @@ const POSScreen = () => {
         // Table has an existing order - load it
         const existingOrder = response.data;
         setCurrentOrderId(existingOrder.id);
+        setCurrentOrderNo(existingOrder.order_no);
         
         // Load customer if exists
         console.log('📋 Order customer_id:', existingOrder.customer_id);
@@ -585,9 +593,12 @@ const POSScreen = () => {
       
       const total = subTotal;
 
+      // Send to kitchen always uses send_kitchen status
+      const orderStatus = 'send_kitchen';
+
       const orderData = {
         tax: 0,  // Add tax field
-        status: 'send_kitchen',
+        status: orderStatus,
         note: '',
         sub_total: subTotal,
         total: total,
@@ -639,10 +650,11 @@ const POSScreen = () => {
         // Create new order
         const response = await ApiService.createOrder(orderData);
         
-        // Edge case: Store the new order ID for future updates
+        // Edge case: Store the new order ID and order_no for future updates
         if (response.data && response.data.id) {
           finalOrderId = response.data.id;
           setCurrentOrderId(finalOrderId);
+          setCurrentOrderNo(response.data.order_no);
         }
       }
 
@@ -663,6 +675,7 @@ const POSScreen = () => {
       setCart([]);
       setSelectedTable(null);
       setCurrentOrderId(null);
+      setCurrentOrderNo(null);
       setSelectedCustomer(null);
       
       // Return the order ID for printing
@@ -672,6 +685,147 @@ const POSScreen = () => {
       console.error('Error sending order to kitchen:', error);
       // Silently fail - error is logged to console
       return null;
+    }
+  };
+
+  const handleLoadHoldOrder = async (order) => {
+    try {
+      // Clear current cart and table
+      setCart([]);
+      setSelectedTable(null);
+      setCurrentOrderId(null);
+      setSelectedCustomer(null);
+
+      // Load customer if exists
+      if (order.customer_id) {
+        try {
+          const customerResponse = await ApiService.getCustomerById(order.customer_id);
+          if (customerResponse.data) {
+            setSelectedCustomer(customerResponse.data);
+          }
+        } catch (error) {
+          console.error('Error loading customer:', error);
+        }
+      }
+
+      // Convert order details to cart format
+      const holdCartItems = await Promise.all(order.details.map(async (detail, index) => {
+        const notes = detail.notes || '';
+        const isMarkedAsSubProduct = notes.startsWith('__SUBPRODUCT_OF_');
+        
+        // For sub-products, fetch from sub_products table
+        let itemData;
+        if (isMarkedAsSubProduct) {
+          try {
+            const subProductResponse = await ApiService.getSubProductById(detail.product_id);
+            itemData = subProductResponse.data;
+          } catch (error) {
+            console.error('Error fetching sub-product:', error);
+            // Fallback to product if sub-product not found
+            itemData = products.find(p => p.id === detail.product_id);
+          }
+        } else {
+          // Regular product
+          itemData = products.find(p => p.id === detail.product_id);
+        }
+        
+        // Calculate current unit price from total with validation
+        const detailTotal = typeof detail.total === 'number' ? detail.total : 0;
+        const detailQty = typeof detail.qty === 'number' && detail.qty > 0 ? detail.qty : 1;
+        const currentUnitPrice = detailTotal / detailQty;
+        
+        // If there's a discount, we need to reconstruct the original price
+        let originalPrice = null;
+        let appliedDiscount = null;
+        
+        if (detail.discount && detail.discount > 0) {
+          const discountPerUnit = detail.discount / detail.qty;
+          originalPrice = currentUnitPrice + discountPerUnit;
+          
+          if (itemData && Math.abs(originalPrice - itemData.price) < 0.01) {
+            const discountPercent = (detail.discount / (originalPrice * detail.qty)) * 100;
+            
+            if (Math.abs(discountPercent - Math.round(discountPercent)) < 0.1) {
+              appliedDiscount = `${Math.round(discountPercent)}%`;
+            } else {
+              appliedDiscount = `€${discountPerUnit.toFixed(2)}`;
+            }
+          } else {
+            appliedDiscount = `€${discountPerUnit.toFixed(2)}`;
+          }
+        }
+        
+        const productName = itemData?.name || detail.product_name || detail.name || 'Unknown';
+        const actualNotes = isMarkedAsSubProduct ? notes.replace(/^__SUBPRODUCT_OF_\d+__/, '') : notes;
+        
+        return {
+          id: detail.product_id,
+          name: productName,
+          price: isNaN(currentUnitPrice) ? 0 : currentUnitPrice,
+          quantity: detailQty,
+          notes: actualNotes,
+          discount: typeof detail.discount === 'number' ? detail.discount : 0,
+          originalPrice: originalPrice,
+          appliedDiscount: appliedDiscount,
+          color: detail.color || itemData?.color || '#3b82f6',
+          image: detail.image || itemData?.image || '📦',
+          category: itemData?.category || 'Uncategorized',
+          cartItemId: `${detail.product_id}_${productName}_${index}`,
+          isSubProduct: false,
+          subProducts: [],
+          printer1: itemData?.printer1 || '',
+          printer2: itemData?.printer2 || '',
+          printer3: itemData?.printer3 || '',
+          _isMarkedAsSubProduct: isMarkedAsSubProduct,
+          _originalNotes: notes,
+          _detailIndex: index
+        };
+      }));
+      
+      // Group items with sub-product markers
+      const finalCart = [];
+      const subProductsByParent = new Map();
+      
+      holdCartItems.forEach((item) => {
+        if (item._isMarkedAsSubProduct) {
+          // Extract parent index from marker
+          const match = item._originalNotes.match(/^__SUBPRODUCT_OF_(\d+)__/);
+          if (match) {
+            const parentIndex = parseInt(match[1]);
+            if (!subProductsByParent.has(parentIndex)) {
+              subProductsByParent.set(parentIndex, []);
+            }
+            subProductsByParent.get(parentIndex).push({
+              ...item,
+              isSubProduct: true
+            });
+          }
+        } else {
+          // Regular parent item
+          finalCart.push(item);
+        }
+      });
+      
+      // Attach sub-products to their parents
+      finalCart.forEach((item) => {
+        const detailIndex = item._detailIndex;
+        if (subProductsByParent.has(detailIndex)) {
+          item.subProducts = subProductsByParent.get(detailIndex);
+        }
+        // Clean up temporary properties
+        delete item._isMarkedAsSubProduct;
+        delete item._originalNotes;
+        delete item._detailIndex;
+      });
+
+      // Set the cart with hold order items
+      setCart(finalCart);
+      
+      // Keep the order ID so we can update it (don't delete it yet)
+      setCurrentOrderId(order.id);
+      
+    } catch (error) {
+      console.error('Error loading hold order:', error);
     }
   };
 
@@ -699,6 +853,7 @@ const POSScreen = () => {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onRefreshKitchenCount={(fn) => setRefreshKitchenCount(() => fn)}
+          onLoadHoldOrder={handleLoadHoldOrder}
         />
         <div className="flex-1 flex overflow-hidden">
           <Sidebar
@@ -728,9 +883,11 @@ const POSScreen = () => {
         customQuantity={customQuantity}
         setCustomQuantity={setCustomQuantity}
         currentOrderId={currentOrderId}
+        currentOrderNo={currentOrderNo}
         selectedTable={selectedTable}
         selectedCustomer={selectedCustomer}
         onSelectCustomer={setSelectedCustomer}
+        onRefreshHoldCount={refreshKitchenCount}
         onSplitCart={(items, confirmCallback) => {
           setSplitCartSelectedItems(items);
           setShowSplitCartModal(true);
@@ -740,6 +897,7 @@ const POSScreen = () => {
           setCart([]);
           setSelectedTable(null);
           setCurrentOrderId(null);
+          setSelectedCustomer(null);
           // Refresh kitchen order count after payment completion
           if (refreshKitchenCount) {
             refreshKitchenCount();
@@ -747,23 +905,26 @@ const POSScreen = () => {
         }}
         onDeleteAll={async () => {
           // Delete the order if it exists
-          if (currentOrderId && selectedTable) {
+          if (currentOrderId) {
             try {
               await ApiService.deleteOrder(currentOrderId);
               
-              // Update table status back to available
-              await ApiService.updatePrTable(selectedTable.id, {
-                ...selectedTable,
-                status: 'available'
-              });
+              // Update table status back to available if table is selected
+              if (selectedTable) {
+                await ApiService.updatePrTable(selectedTable.id, {
+                  ...selectedTable,
+                  status: 'available'
+                });
+              }
             } catch (error) {
               console.error('Error deleting order:', error);
             }
           }
           
-          // Clear table selection and order ID
+          // Clear table selection, order ID, and customer
           setSelectedTable(null);
           setCurrentOrderId(null);
+          setSelectedCustomer(null);
         }}
       />
       {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
