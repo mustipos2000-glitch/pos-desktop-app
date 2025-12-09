@@ -105,10 +105,6 @@ router.post('/printers/print-kitchen-batch', PrinterController.printKitchenOrder
 router.post('/printers/print-custom', PrinterController.printCustom);
 
 // Payment routes
-// router.post('/payments/cashmatic', PaymentController.processCashmaticPayment); // UNUSED - Use /cashmatic/start instead
-// router.post('/payments/bancontact', PaymentController.processBancontactPayment); // UNUSED - Not implemented in client
-// router.get('/payments/status/:transactionId', PaymentController.getPaymentStatus); // UNUSED - Use /cashmatic/status/:sessionId instead
-// router.post('/payments/cancel/:transactionId', PaymentController.cancelPayment); // UNUSED - Not implemented in client
 router.post('/payments/send-receipt-email', PaymentController.sendReceiptEmail);
 
 // Cashmatic routes (for payment machine integration)

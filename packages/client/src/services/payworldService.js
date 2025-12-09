@@ -10,6 +10,10 @@ class PayworldService {
     this.pollingInterval = null;
     this.isPolling = false;
     this.finalized = false;
+    this.pollingStartTime = null;
+    this.pollCount = 0;
+    this.maxPollingDuration = 2 * 60 * 1000; // 2 minutes in milliseconds
+    this.maxPollCount = 60; // Maximum number of polls (2 min / 2 sec = 60)
     this.callbacks = {
       onStatusUpdate: null,
       onSuccess: null,
@@ -49,7 +53,7 @@ class PayworldService {
       // Initial status
       const initialStatus = {
         state: "IN_PROGRESS",
-        message: "Payworld betaling gestart. Verbinding maken met terminal...",
+        message: "Payworld payment started. Connecting to terminal...",
         details: null,
         amount,
       };
@@ -68,14 +72,14 @@ class PayworldService {
       this.sessionId = data.sessionId || (data.data && data.data.sessionId);
 
       if (!this.sessionId) {
-        throw new Error("Geen Payworld sessionId ontvangen van server.");
+        throw new Error("No Payworld session ID received from server.");
       }
 
       // Update status
       const connectedStatus = {
         state: "IN_PROGRESS",
         message:
-          "Verbinding tot stand gebracht. Volg de instructies op de terminal...",
+          "Connection established. Follow the instructions on the terminal...",
         details: null,
         amount,
       };
@@ -119,9 +123,11 @@ class PayworldService {
     if (this.isPolling) return;
 
     this.isPolling = true;
+    this.pollingStartTime = Date.now();
+    this.pollCount = 0;
     this.pollingInterval = setInterval(() => {
       this.pollStatus();
-    }, 1000);
+    }, 2000); // Increased to 2 seconds to reduce API load
   }
 
   /**
@@ -129,6 +135,28 @@ class PayworldService {
    */
   async pollStatus() {
     if (!this.sessionId || !this.isPolling) return;
+
+    // Check timeout
+    const elapsed = Date.now() - this.pollingStartTime;
+    this.pollCount++;
+
+    if (elapsed > this.maxPollingDuration || this.pollCount > this.maxPollCount) {
+      console.warn(`Payworld polling timeout after ${Math.round(elapsed / 1000)}s (${this.pollCount} polls)`);
+      this.stopPolling();
+
+      const timeoutStatus = {
+        state: "ERROR",
+        message: "Payment timeout: No response from terminal after 2 minutes.",
+        details: { timeout: true, elapsed: Math.round(elapsed / 1000) },
+      };
+
+      if (this.callbacks.onError) {
+        this.callbacks.onError(timeoutStatus);
+      }
+
+      this.cleanup();
+      return;
+    }
 
     try {
       const response = await ApiService.getPayworldStatus(this.sessionId);
@@ -159,7 +187,7 @@ class PayworldService {
         const result = {
           success: true,
           state,
-          message: "Payworld betaling voltooid.",
+          message: "Payworld payment completed.",
           details,
           totalPaid: details?.amount || 0,
           cashAmount: 0,
@@ -180,7 +208,7 @@ class PayworldService {
         const result = {
           success: false,
           state,
-          message: "Payworld betaling geweigerd.",
+          message: "Payworld payment declined.",
           details,
         };
 
@@ -197,7 +225,7 @@ class PayworldService {
         const result = {
           success: false,
           state,
-          message: "Payworld betaling geannuleerd.",
+          message: "Payworld payment cancelled.",
           details,
         };
 
@@ -214,7 +242,7 @@ class PayworldService {
         const result = {
           success: false,
           state,
-          message: "Fout tijdens Payworld betaling.",
+          message: "Error during Payworld payment.",
           details,
         };
 
@@ -230,7 +258,7 @@ class PayworldService {
 
       const errorStatus = {
         state: "ERROR",
-        message: "Fout bij ophalen Payworld-status.",
+        message: "Error retrieving Payworld status.",
         details: { error: error.message },
       };
 
@@ -258,7 +286,7 @@ class PayworldService {
    */
   async cancelPayment() {
     if (!this.sessionId) {
-      throw new Error("Geen actieve Payworld-sessie om te annuleren.");
+      throw new Error("No active Payworld session to cancel.");
     }
 
     try {
@@ -266,7 +294,7 @@ class PayworldService {
       if (this.callbacks.onStatusUpdate) {
         this.callbacks.onStatusUpdate({
           state: "IN_PROGRESS",
-          message: "Betaling wordt geannuleerd op de terminal...",
+          message: "Payment is being cancelled on the terminal...",
           details: null,
         });
       }
@@ -279,7 +307,7 @@ class PayworldService {
       const result = {
         success: true,
         state: "CANCELLED",
-        message: "Payworld betaling geannuleerd op de terminal.",
+        message: "Payworld payment cancelled on the terminal.",
         details: null,
       };
 
@@ -296,7 +324,7 @@ class PayworldService {
       const errorResult = {
         success: false,
         state: "ERROR",
-        message: "Annuleren op terminal mislukt.",
+        message: "Failed to cancel on terminal.",
         details: { error: error.message },
       };
 
@@ -333,6 +361,8 @@ class PayworldService {
     this.stopPolling();
     this.sessionId = null;
     this.finalized = false;
+    this.pollingStartTime = null;
+    this.pollCount = 0;
     this.callbacks = {
       onStatusUpdate: null,
       onSuccess: null,

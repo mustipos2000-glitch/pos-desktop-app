@@ -164,7 +164,7 @@ export const usePaymentHandlers = ({
     setShowPayworldModal(true);
     setPayworldStatus({
       state: "IN_PROGRESS",
-      message: "Payworld betaling gestart...",
+      message: "Payworld payment started...",
       details: null,
     });
 

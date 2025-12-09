@@ -8,8 +8,8 @@ import Toast from "./Toast";
 import CustomerSelector from "./CustomerSelector";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
-import cashmaticService from "../services/cashmaticService";
-import payworldService from "../services/payworldService";
+import { usePaymentHandlers } from "../hooks/usePaymentHandlers";
+import { payworldService } from "../services/payworldService";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount }) => {
 
@@ -88,66 +88,7 @@ const formatAmount = (value) => {
     prevCartLengthRef.current = currLen;
   }, [cart]);
 
-  // Cleanup services on unmount
-  useEffect(() => {
-    return () => {
-      if (cashmaticService.isPaymentInProgress()) {
-        cashmaticService.cleanup();
-      }
-      if (payworldService.isPaymentInProgress()) {
-        payworldService.cleanup();
-      }
-    };
-  }, []);
-
-  const handleSelect = (id) => {
-    setSelectedIds((prev) => {
-      const alreadySelected = prev.includes(id);
-      if (alreadySelected) {
-        setLastAddedId(null);
-        return prev.filter((x) => x !== id);
-      }
-      setLastAddedId(id);
-      return [...prev, id];
-    });
-  };
-
-  const handleClearSelected = () => {
-    if (selectedIds.length === 0) {
-      setToastType("error");
-      setToastMessage("Please select at least one item to delete.");
-      return;
-    }
-    setCart((prev) =>
-      prev.filter((item) => {
-        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
-        return !selectedIds.includes(itemCartId);
-      })
-    );
-    setSelectedIds([]);
-    setLastAddedId(null);
-  };
-
-  const handleDeleteAllConfirm = () => {
-    setCart([]);
-    setSelectedIds([]);
-    setLastAddedId(null);
-    setDiscount(0);
-    setNote("");
-    setCustomQuantity("");
-    if (onSelectCustomer) {
-      onSelectCustomer(null);
-    }
-    
-    // Notify parent to deselect table and clear order
-    if (onDeleteAll) {
-      onDeleteAll();
-    }
-  };
-
-  const totalProductCount = () => cart.length;
-  const hasSelection = selectedIds.length > 0;
-
+  // Define calculateTotal before usePaymentHandlers hook
   const calculateTotal = () =>
     cart.reduce((sum, item) => {
       const price =
@@ -175,387 +116,7 @@ const formatAmount = (value) => {
       return sum + itemTotal;
     }, 0);
 
-  const handlePayment = (paymentMethod = "cash") => {
-    if (cart.length === 0) return;
-    setSelectedPaymentMethod(paymentMethod);
-    setShowPaymentModal(true);
-  };
-
-  const handleCashPayment = () => handlePayment("cash");
-
-  // Payworld flow using centralized service
-  const startPayworldFlow = async () => {
-    if (cart.length === 0) {
-      setToastType("error");
-      setToastMessage("Cart is empty. Cannot start Payworld payment.");
-      return;
-    }
-
-    const subTotal = calculateTotal();
-    const total = subTotal - discount;
-
-    if (total <= 0) {
-      setToastType("error");
-      setToastMessage(
-        "Order total must be greater than zero"
-      );
-      return;
-    }
-
-    setShowPayworldModal(true);
-    setIsProcessing(true);
-
-    try {
-      await payworldService.startPayment(total, {
-        onStatusUpdate: (status) => {
-          setPayworldStatus(status);
-        },
-        onSuccess: async (result) => {
-          setToastType("success");
-          setToastMessage(result.message);
-
-          await handlePaymentConfirm({
-            totalPaid: result.totalPaid,
-            cashAmount: result.cashAmount,
-            cardAmount: result.cardAmount,
-            changeDue: result.changeDue,
-          });
-
-          setShowPayworldModal(false);
-          setIsProcessing(false);
-        },
-        onError: (error) => {
-          setPayworldStatus(error);
-          setToastType("error");
-          setToastMessage(error.message);
-          setIsProcessing(false);
-        },
-        onCancel: (result) => {
-          setPayworldStatus(result);
-          setToastType("info");
-          setToastMessage(result.message);
-          setIsProcessing(false);
-        },
-        onDeclined: (result) => {
-          setPayworldStatus(result);
-          setToastType("error");
-          setToastMessage(result.message);
-          setIsProcessing(false);
-        },
-      });
-    } catch (err) {
-      console.error("Payworld start error:", err);
-      setToastType("error");
-      setToastMessage("Payworld betaling kon niet gestart worden.");
-      setShowPayworldModal(false);
-      setIsProcessing(false);
-    }
-  };
-
-  // Cancel Payworld payment
-  const handleAbortPayworld = async () => {
-    try {
-      await payworldService.cancelPayment();
-    } catch (err) {
-      console.error("Error cancelling Payworld:", err);
-      setToastType("error");
-      setToastMessage("Annuleren op Payworld-terminal mislukt.");
-    }
-  };
-
-  const handleCardPayment = () => {
-    if (cart.length === 0) return;
-
-    const storedTerminal = localStorage.getItem("pos_card_terminal") || "none";
-
-    // Viva flow
-    if (storedTerminal === "viva") {
-      const subTotal = calculateTotal();
-      const total = subTotal - discount;
-
-      if (total <= 0) {
-        setToastType("error");
-        setToastMessage(
-          "Order total must be greater than zero for Viva payment."
-        );
-        return;
-      }
-
-      let vivaConfig = { merchantId: "", terminalId: "" };
-      try {
-        const storedConfig = localStorage.getItem("pos_viva_config");
-        if (storedConfig) {
-          vivaConfig = JSON.parse(storedConfig);
-        }
-      } catch (e) {
-        console.error("Failed to parse Viva config from localStorage", e);
-      }
-
-      if (!vivaConfig.merchantId || !vivaConfig.terminalId) {
-        setToastType("error");
-        setToastMessage(
-          "Viva settings are incomplete. Please configure Merchant ID and Terminal ID in Settings -> Payment."
-        );
-        return;
-      }
-
-      setIsProcessing(true);
-      setToastType("info");
-      setToastMessage(
-        "Viva betaling gestart. Volg de instructies op de terminal..."
-      );
-
-      ApiService.startVivaPayment({
-        amount: total,
-        merchantId: vivaConfig.merchantId,
-        terminalId: vivaConfig.terminalId,
-        orderReference: null,
-      })
-        .then(async (res) => {
-          const data = res?.data || res;
-          if (!data || data.ok !== true) {
-            console.error(
-              "Viva payment failed or returned non-ok response:",
-              data
-            );
-            setToastType("error");
-            setToastMessage(
-              "Viva betaling mislukt. Controleer de terminal of probeer opnieuw."
-            );
-            return;
-          }
-
-          try {
-            await handlePaymentConfirm({
-              totalPaid: total,
-              cashAmount: 0,
-              cardAmount: total,
-              changeDue: 0,
-            });
-            setToastType("success");
-            setToastMessage("Viva betaling voltooid.");
-          } catch (error) {
-            console.error("Error finalizing Viva payment:", error);
-            setToastType("error");
-            setToastMessage(
-              "Viva betaling mislukt bij het afronden van de bestelling."
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error while calling Viva payment endpoint:", error);
-          setToastType("error");
-          setToastMessage(
-            "Viva betaling mislukt. Controleer verbinding met server of Viva API."
-          );
-        })
-        .finally(() => {
-          setIsProcessing(false);
-        });
-
-      return;
-    }
-
-    // Payworld via gekozen terminal
-    if (storedTerminal === "payworld") {
-      startPayworldFlow();
-      return;
-    }
-
-    // Default: card modal
-    handlePayment("card");
-  };
-
-  const handleCashmaticPayment = async () => {
-    if (cart.length === 0) {
-      setToastType("error");
-      setToastMessage("Cart is empty. Cannot start Cashmatic payment.");
-      return;
-    }
-
-    const subTotal = calculateTotal();
-    const total = subTotal - discount;
-
-    if (total <= 0) {
-      setToastType("error");
-      setToastMessage(
-        "Order total must be greater than zero for Cashmatic payment."
-      );
-      return;
-    }
-
-    setIsProcessing(true);
-    setShowCashmaticModal(true);
-    setToastType("info");
-    setToastMessage("Cashmatic payment started. Please pay at the machine.");
-
-    try {
-      await cashmaticService.startPayment(total, {
-        onStatusUpdate: (info) => {
-          setCashmaticInfo(info);
-        },
-        onSuccess: async (result) => {
-          setToastType("success");
-          setToastMessage(result.message);
-
-          await handlePaymentConfirm({
-            totalPaid: result.totalPaid,
-            cashAmount: result.cashAmount,
-            cardAmount: result.cardAmount,
-            changeDue: result.changeDue,
-          });
-
-          setIsProcessing(false);
-
-          if (!result.manualChangeRequired) {
-            setShowCashmaticModal(false);
-          }
-        },
-        onError: (error) => {
-          setCashmaticInfo(error.info || {
-            requested: total,
-            inserted: 0,
-            dispensed: 0,
-            notDispensed: 0,
-            state: "ERROR",
-          });
-          setIsProcessing(false);
-          setToastType("error");
-          setToastMessage(error.message);
-        },
-        onCancel: (result) => {
-          setCashmaticInfo(result.info || {
-            requested: total,
-            inserted: 0,
-            dispensed: 0,
-            notDispensed: 0,
-            state: "CANCELLED",
-          });
-          setIsProcessing(false);
-          setToastType("error");
-          setToastMessage(result.message);
-        },
-      });
-    } catch (error) {
-      console.error("Error starting Cashmatic payment:", error);
-      setIsProcessing(false);
-      setToastType("error");
-      setToastMessage("Failed to start Cashmatic payment.");
-      setShowCashmaticModal(false);
-    }
-  };
-
-  const handlePayworldPayment = () => {
-    startPayworldFlow();
-  };
-
-  const handleOnHold = async () => {
-    if (cart.length === 0) {
-      setToastType("error");
-      setToastMessage("Cart is empty. Cannot put order on hold.");
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const subTotal = calculateTotal();
-      const total = subTotal - discount;
-
-      const orderData = {
-        status: "on_hold",
-        note,
-        sub_total: subTotal,
-        total,
-        discount,
-        customer_id: selectedCustomer ? selectedCustomer.id : null,
-        table_id: selectedTable ? selectedTable.id : null,
-        details: (() => {
-          const allDetails = [];
-          let detailIndex = 0;
-
-          cart.forEach((item) => {
-            const parentDetailIndex = detailIndex;
-
-            allDetails.push({
-              product_id: item.id,
-              qty: item.quantity,
-              total: item.price * item.quantity,
-              notes: item.notes || null,
-              discount: item.discount || 0,
-            });
-            detailIndex++;
-
-            if (item.subProducts && item.subProducts.length > 0) {
-              item.subProducts.forEach((subItem) => {
-                allDetails.push({
-                  product_id: subItem.id,
-                  qty: subItem.quantity,
-                  total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
-                  discount: 0,
-                });
-                detailIndex++;
-              });
-            }
-          });
-
-          return allDetails;
-        })(),
-      };
-
-      if (currentOrderId) {
-        // Update existing order
-        await ApiService.updateOrder(currentOrderId, orderData);
-      } else {
-        // Create new order
-        await ApiService.createOrder(orderData);
-      }
-
-      // Update table status if table is selected
-      if (selectedTable) {
-        try {
-          await ApiService.updatePrTable(selectedTable.id, {
-            ...selectedTable,
-            status: "reserved",
-          });
-        } catch (error) {
-          console.error("Error updating table status:", error);
-        }
-      }
-
-      // Clear cart and reset state
-      setCart([]);
-      setDiscount(0);
-      setNote("");
-      setSelectedIds([]);
-      setLastAddedId(null);
-      if (onSelectCustomer) {
-        onSelectCustomer(null);
-      }
-
-      // Notify parent to clear order and table selection
-      if (onOrderComplete) {
-        onOrderComplete();
-      }
-
-      // Refresh hold orders count in top bar
-      if (onRefreshHoldCount) {
-        onRefreshHoldCount();
-      }
-
-      setToastType("success");
-      setToastMessage("Order placed on hold successfully!");
-    } catch (error) {
-      console.error("Error putting order on hold:", error);
-      setToastType("error");
-      setToastMessage("Failed to put order on hold. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
+  // Define handlePaymentConfirm before usePaymentHandlers hook
   const handlePaymentConfirm = async (paymentData) => {
     if (cart.length === 0) {
       alert("Cart is empty. Cannot process payment.");
@@ -696,6 +257,207 @@ const formatAmount = (value) => {
     } catch (error) {
       console.error("Error processing order:", error);
       alert("Failed to process payment. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Use centralized payment handlers hook (must be after calculateTotal and handlePaymentConfirm)
+  const {
+    handleCashPayment: handleCashPaymentFromHook,
+    handleCardPayment: handleCardPaymentFromHook,
+    handleCashmaticPayment: handleCashmaticPaymentFromHook,
+    handlePayworldPayment: handlePayworldPaymentFromHook,
+    handleAbortPayworld: handleAbortPayworldFromHook,
+  } = usePaymentHandlers({
+    cart,
+    discount,
+    calculateTotal,
+    setIsProcessing,
+    setToastType,
+    setToastMessage,
+    setShowPaymentModal,
+    setSelectedPaymentMethod,
+    setShowCashmaticModal,
+    setCashmaticInfo,
+    setShowPayworldModal,
+    setPayworldStatus,
+    handlePaymentConfirm,
+  });
+
+  // Cleanup services on unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup payment services when component unmounts
+      if (payworldService.isPaymentInProgress()) {
+        payworldService.cleanup();
+      }
+    };
+  }, []);
+
+  const handleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const alreadySelected = prev.includes(id);
+      if (alreadySelected) {
+        setLastAddedId(null);
+        return prev.filter((x) => x !== id);
+      }
+      setLastAddedId(id);
+      return [...prev, id];
+    });
+  };
+
+  const handleClearSelected = () => {
+    if (selectedIds.length === 0) {
+      setToastType("error");
+      setToastMessage("Please select at least one item to delete.");
+      return;
+    }
+    setCart((prev) =>
+      prev.filter((item) => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return !selectedIds.includes(itemCartId);
+      })
+    );
+    setSelectedIds([]);
+    setLastAddedId(null);
+  };
+
+  const handleDeleteAllConfirm = () => {
+    setCart([]);
+    setSelectedIds([]);
+    setLastAddedId(null);
+    setDiscount(0);
+    setNote("");
+    setCustomQuantity("");
+    if (onSelectCustomer) {
+      onSelectCustomer(null);
+    }
+    
+    // Notify parent to deselect table and clear order
+    if (onDeleteAll) {
+      onDeleteAll();
+    }
+  };
+
+  const totalProductCount = () => cart.length;
+  const hasSelection = selectedIds.length > 0;
+
+  const handlePayment = (paymentMethod = "cash") => {
+    if (cart.length === 0) return;
+    setSelectedPaymentMethod(paymentMethod);
+    setShowPaymentModal(true);
+  };
+
+  // Use payment handlers from hook (replaces duplicate implementations)
+  const handleCashPayment = handleCashPaymentFromHook;
+  const handleCardPayment = handleCardPaymentFromHook;
+  const handleCashmaticPayment = handleCashmaticPaymentFromHook;
+  const handlePayworldPayment = handlePayworldPaymentFromHook;
+  const handleAbortPayworld = handleAbortPayworldFromHook;
+
+  const handleOnHold = async () => {
+    if (cart.length === 0) {
+      setToastType("error");
+      setToastMessage("Cart is empty. Cannot put order on hold.");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const subTotal = calculateTotal();
+      const total = subTotal - discount;
+
+      const orderData = {
+        status: "on_hold",
+        note,
+        sub_total: subTotal,
+        total,
+        discount,
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
+        table_id: selectedTable ? selectedTable.id : null,
+        details: (() => {
+          const allDetails = [];
+          let detailIndex = 0;
+
+          cart.forEach((item) => {
+            const parentDetailIndex = detailIndex;
+
+            allDetails.push({
+              product_id: item.id,
+              qty: item.quantity,
+              total: item.price * item.quantity,
+              notes: item.notes || null,
+              discount: item.discount || 0,
+            });
+            detailIndex++;
+
+            if (item.subProducts && item.subProducts.length > 0) {
+              item.subProducts.forEach((subItem) => {
+                allDetails.push({
+                  product_id: subItem.id,
+                  qty: subItem.quantity,
+                  total: subItem.price * subItem.quantity,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
+                    subItem.notes || ""
+                  }`,
+                  discount: 0,
+                });
+                detailIndex++;
+              });
+            }
+          });
+
+          return allDetails;
+        })(),
+      };
+
+      if (currentOrderId) {
+        // Update existing order
+        await ApiService.updateOrder(currentOrderId, orderData);
+      } else {
+        // Create new order
+        await ApiService.createOrder(orderData);
+      }
+
+      // Update table status if table is selected
+      if (selectedTable) {
+        try {
+          await ApiService.updatePrTable(selectedTable.id, {
+            ...selectedTable,
+            status: "reserved",
+          });
+        } catch (error) {
+          console.error("Error updating table status:", error);
+        }
+      }
+
+      // Clear cart and reset state
+      setCart([]);
+      setDiscount(0);
+      setNote("");
+      setSelectedIds([]);
+      setLastAddedId(null);
+      if (onSelectCustomer) {
+        onSelectCustomer(null);
+      }
+
+      // Notify parent to clear order and table selection
+      if (onOrderComplete) {
+        onOrderComplete();
+      }
+
+      // Refresh hold orders count in top bar
+      if (onRefreshHoldCount) {
+        onRefreshHoldCount();
+      }
+
+      setToastType("success");
+      setToastMessage("Order placed on hold successfully!");
+    } catch (error) {
+      console.error("Error putting order on hold:", error);
+      setToastType("error");
+      setToastMessage("Failed to put order on hold. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -1472,19 +1234,19 @@ const formatAmount = (value) => {
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
               <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
-                Cashmatic betaling
+                Cashmatic Payment
               </h2>
               <div className="space-y-2 text-pos-text-primary text-sm">
                 <div className="flex justify-between">
-                  <span>Te ontvangen:</span>
+                  <span>Amount to receive:</span>
                   <span>€ {formatAmount(cashmaticInfo?.requested)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Reeds betaald:</span>
+                  <span>Amount paid:</span>
                   <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Wisselgeld (theoretisch):</span>
+                  <span>Change (theoretical):</span>
                   <span>
                     €{" "}
                     {formatAmount(
@@ -1497,33 +1259,33 @@ const formatAmount = (value) => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Wisselgeld via Cashmatic:</span>
+                  <span>Change via Cashmatic:</span>
                   <span>€ {formatAmount(cashmaticInfo?.dispensed)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Wisselgeld manueel:</span>
+                  <span>Change (manual):</span>
                   <span>€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Status:</span>
                   <span>
                     {cashmaticInfo.state === "IDLE"
-                      ? "Gereed voor volgende klant"
+                      ? "Ready for next customer"
                       : cashmaticInfo.state === "RUNNING" ||
                         cashmaticInfo.state === "IN_PROGRESS"
-                      ? "Betaling bezig..."
+                      ? "Payment in progress..."
                       : cashmaticInfo.state === "PAID"
-                      ? "Bedrag ontvangen – wisselgeld wordt uitgegeven"
+                      ? "Amount received – change is being dispensed"
                       : cashmaticInfo.state === "FINISHED_MANUAL"
-                      ? "Betaling afgerond – geef manueel wisselgeld"
+                      ? "Payment completed – give manual change"
                       : cashmaticInfo.state === "FINISHED"
-                      ? "Betaling afgerond"
+                      ? "Payment completed"
                       : cashmaticInfo.state === "CANCELLED"
-                      ? "Geannuleerd"
+                      ? "Cancelled"
                       : cashmaticInfo.state === "ERROR" ||
                         cashmaticInfo.state === "FAILED"
-                      ? "Fout – controleer Cashmatic"
-                      : "Onbekende status"}
+                      ? "Error – check Cashmatic"
+                      : "Unknown status"}
                   </span>
                 </div>
               </div>
@@ -1537,7 +1299,7 @@ const formatAmount = (value) => {
                     className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
                     onClick={() => setShowCashmaticModal(false)}
                   >
-                    Sluiten
+                    Close
                   </button>
                 )}
               </div>
@@ -1550,12 +1312,12 @@ const formatAmount = (value) => {
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
               <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
-                Payworld / PAX A35 betaling
+                Payworld / PAX A35 Payment
               </h2>
 
               <div className="space-y-2 text-pos-text-primary text-sm">
                 <div className="flex justify-between">
-                  <span>Bedrag:</span>
+                  <span>Amount:</span>
                   <span>€ {formatAmount(calculateTotal() - discount)}</span>
                 </div>
 
@@ -1563,16 +1325,16 @@ const formatAmount = (value) => {
                   <span>Status:</span>
                   <span>
                     {payworldStatus.state === "IN_PROGRESS"
-                      ? "Betaling bezig op de terminal..."
+                      ? "Payment in progress on terminal..."
                       : payworldStatus.state === "APPROVED"
-                      ? "Betaling goedgekeurd."
+                      ? "Payment approved."
                       : payworldStatus.state === "DECLINED"
-                      ? "Betaling geweigerd."
+                      ? "Payment declined."
                       : payworldStatus.state === "CANCELLED"
-                      ? "Betaling geannuleerd."
+                      ? "Payment cancelled."
                       : payworldStatus.state === "ERROR"
-                      ? "Fout tijdens de betaling."
-                      : "Gereed."}
+                      ? "Error during payment."
+                      : "Ready."}
                   </span>
                 </div>
 
@@ -1589,7 +1351,7 @@ const formatAmount = (value) => {
                     className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
                     onClick={handleAbortPayworld}
                   >
-                    Actie beëindigen
+                    Cancel Payment
                   </button>
                 )}
 
@@ -1608,7 +1370,7 @@ const formatAmount = (value) => {
                       });
                     }}
                   >
-                    Sluiten
+                    Close
                   </button>
                 )}
               </div>

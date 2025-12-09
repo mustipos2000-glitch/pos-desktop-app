@@ -12,6 +12,125 @@ const net = require('net');
 // Store active sessions per instance
 const activeSessions = new Map();
 
+/**
+ * Translate error messages from other languages to simple English
+ * @param {string} message - Error message that may be in another language
+ * @returns {string} Translated error message in simple English
+ */
+function translateErrorMessage(message) {
+  if (!message || typeof message !== 'string') {
+    return message || 'Transaction error';
+  }
+
+  const msg = message.toLowerCase().trim();
+
+  // Dutch translations
+  const dutchTranslations = {
+    'geweigerd': 'Payment declined',
+    'geannuleerd': 'Payment cancelled',
+    'fout': 'Error',
+    'betaling': 'payment',
+    'transactie': 'transaction',
+    'verbinding': 'connection',
+    'mislukt': 'failed',
+    'niet beschikbaar': 'not available',
+    'time-out': 'timeout',
+    'ongeldig': 'invalid',
+    'afgebroken': 'cancelled',
+    'weigeren': 'declined',
+    'annuleren': 'cancel',
+    'opgehaald': 'retrieved',
+    'status': 'status',
+    'gestart': 'started',
+    'voltooid': 'completed',
+    'verbinding maken': 'connecting',
+    'instructies': 'instructions',
+    'terminal': 'terminal',
+    'wordt geannuleerd': 'being cancelled',
+    'geannuleerd op de terminal': 'cancelled on terminal',
+    'annuleren op terminal mislukt': 'failed to cancel on terminal',
+    'geen actieve sessie': 'no active session',
+    'om te annuleren': 'to cancel',
+    'geen sessionid ontvangen': 'no session id received',
+    'van server': 'from server',
+    'tot stand gebracht': 'established',
+    'volg de instructies': 'follow the instructions',
+  };
+
+  // French translations
+  const frenchTranslations = {
+    'refusé': 'Payment declined',
+    'annulé': 'Payment cancelled',
+    'erreur': 'Error',
+    'paiement': 'payment',
+    'transaction': 'transaction',
+    'connexion': 'connection',
+    'échoué': 'failed',
+    'indisponible': 'not available',
+    'délai d\'attente': 'timeout',
+    'invalide': 'invalid',
+    'interrompu': 'cancelled',
+  };
+
+  // German translations
+  const germanTranslations = {
+    'abgelehnt': 'Payment declined',
+    'storniert': 'Payment cancelled',
+    'fehler': 'Error',
+    'zahlung': 'payment',
+    'transaktion': 'transaction',
+    'verbindung': 'connection',
+    'fehlgeschlagen': 'failed',
+    'nicht verfügbar': 'not available',
+    'zeitüberschreitung': 'timeout',
+    'ungültig': 'invalid',
+    'abgebrochen': 'cancelled',
+  };
+
+  // Check for common error patterns and translate
+  for (const [dutch, english] of Object.entries(dutchTranslations)) {
+    if (msg.includes(dutch)) {
+      // Replace the Dutch word with English, preserving context
+      return message.replace(new RegExp(dutch, 'gi'), english);
+    }
+  }
+
+  for (const [french, english] of Object.entries(frenchTranslations)) {
+    if (msg.includes(french)) {
+      return message.replace(new RegExp(french, 'gi'), english);
+    }
+  }
+
+  for (const [german, english] of Object.entries(germanTranslations)) {
+    if (msg.includes(german)) {
+      return message.replace(new RegExp(german, 'gi'), english);
+    }
+  }
+
+  // Common error patterns
+  if (msg.includes('betaling geweigerd') || msg.includes('payment declined') || msg.includes('paiement refusé') || msg.includes('zahlung abgelehnt')) {
+    return 'Payment declined';
+  }
+  if (msg.includes('betaling geannuleerd') || msg.includes('payment cancelled') || msg.includes('paiement annulé') || msg.includes('zahlung storniert')) {
+    return 'Payment cancelled';
+  }
+  if (msg.includes('fout tijdens') || msg.includes('error during') || msg.includes('erreur pendant') || msg.includes('fehler während')) {
+    return 'Error during payment';
+  }
+  if (msg.includes('fout bij') || msg.includes('error retrieving') || msg.includes('erreur lors de') || msg.includes('fehler beim')) {
+    return 'Error retrieving status';
+  }
+  if (msg.includes('verbinding') && msg.includes('mislukt')) {
+    return 'Connection failed';
+  }
+  if (msg.includes('timeout') || msg.includes('délai') || msg.includes('zeitüberschreitung')) {
+    return 'Connection timeout';
+  }
+
+  // If no translation found, return original message
+  return message;
+}
+
 class PayworldService {
   constructor(config = null) {
     this.config = config;
@@ -220,7 +339,8 @@ class PayworldService {
         result.type = 'displayNotification';
         const textMatch = xml.match(/<text>([^<]*)<\/text>/);
         if (textMatch) {
-          result.message = textMatch[1];
+          // Translate display notification messages to simple English
+          result.message = translateErrorMessage(textMatch[1]);
         }
       }
 
@@ -236,7 +356,8 @@ class PayworldService {
         
         const errorTextMatch = xml.match(/<errorText>([^<]+)<\/errorText>/);
         if (errorTextMatch) {
-          result.message = errorTextMatch[1];
+          // Translate error message to simple English
+          result.message = translateErrorMessage(errorTextMatch[1]);
         }
       }
 
@@ -491,7 +612,7 @@ class PayworldService {
           session.message = 'Payment approved';
         } else if (finalResponse.type === 'errorNotification') {
           session.state = 'ERROR';
-          session.message = finalResponse.message || 'Transaction error';
+          session.message = translateErrorMessage(finalResponse.message) || 'Transaction error';
         } else {
           session.state = 'DECLINED';
           session.message = finalResponse.message || 'Transaction declined';
@@ -505,7 +626,7 @@ class PayworldService {
           session.message = 'Payment approved';
         } else if (response.type === 'errorNotification') {
           session.state = 'ERROR';
-          session.message = response.message || 'Transaction error';
+          session.message = translateErrorMessage(response.message) || 'Transaction error';
         } else {
           session.state = 'DECLINED';
           session.message = response.message || 'Transaction declined';
@@ -516,7 +637,7 @@ class PayworldService {
     } catch (error) {
       console.error(`❌ Payworld payment error:`, error.message);
       session.state = 'ERROR';
-      session.message = error.message;
+      session.message = translateErrorMessage(error.message);
       session.completed = true;
     }
 

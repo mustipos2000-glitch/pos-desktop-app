@@ -77,7 +77,7 @@ class VivaService {
       if (this.callbacks.onStatusUpdate) {
         this.callbacks.onStatusUpdate({
           state: "IN_PROGRESS",
-          message: "Viva betaling gestart. Volg de instructies op de terminal...",
+          message: "Viva payment started. Follow the instructions on the terminal...",
           amount,
         });
       }
@@ -95,7 +95,7 @@ class VivaService {
       if (!data || data.ok !== true) {
         console.error("Viva payment failed or returned non-ok response:", data);
         throw new Error(
-          "Viva betaling mislukt. Controleer de terminal of probeer opnieuw."
+          "Viva payment failed. Check the terminal or try again."
         );
       }
 
@@ -103,7 +103,7 @@ class VivaService {
       const result = {
         success: true,
         state: "APPROVED",
-        message: "Viva betaling voltooid.",
+        message: "Viva payment completed.",
         totalPaid: amount,
         cashAmount: 0,
         cardAmount: amount,
@@ -123,7 +123,7 @@ class VivaService {
         success: false,
         state: "ERROR",
         message:
-          "Viva betaling mislukt. Controleer verbinding met server of Viva API.",
+          "Viva payment failed. Check connection with server or Viva API.",
         details: { error: error.message },
       };
 
