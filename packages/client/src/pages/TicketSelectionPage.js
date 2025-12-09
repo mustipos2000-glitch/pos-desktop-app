@@ -223,8 +223,10 @@ const TicketSelectionPage = () => {
   };
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col items-center justify-center p-6">
-      <div className="max-w-3xl w-full">
+    <div className="h-screen bg-pos-bg-primary flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full flex flex-col items-center justify-center p-6">
+          <div className="max-w-3xl w-full">
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold text-pos-text-primary mb-1">
@@ -311,7 +313,7 @@ const TicketSelectionPage = () => {
         </div>
 
         {/* Bottom Button */}
-        <div className="flex justify-start">
+        <div className="flex justify-start mb-8">
           <button
             onClick={handleGoBack}
             disabled={printing}
@@ -321,6 +323,8 @@ const TicketSelectionPage = () => {
           >
             Go back
           </button>
+        </div>
+          </div>
         </div>
       </div>
 
