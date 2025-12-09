@@ -6,8 +6,8 @@ import IconButton from './IconButton';
 import { useMessageModal } from '../hooks/useMessageModal';
 import PaymentTerminalManager from './PaymentTerminalManager';
 
-const SettingsModal = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState('general');
+const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [rolePermissions, setRolePermissions] = useState({
     'Super Admin': { admin: true, settings: true },
     'Admin': { admin: false, settings: false },
@@ -290,57 +290,65 @@ const SettingsModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-pos-border-primary">
           <h2 className="text-pos-text-primary text-xl font-semibold">Settings</h2>
           <button className="text-pos-text-muted hover:text-pos-text-primary text-2xl" onClick={onClose}>×</button>
         </div>
 
-        <div className="flex border-b border-pos-border-primary">
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'general' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('general')}
-          >
-            General
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'display' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('display')}
-          >
-            Display
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'printer' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('printer')}
-          >
-            Printer
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'payment' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('payment')}
-          >
-            Payment
-          </button>
-          {isSuperAdmin && (
+        <div className="flex border-b pb-1 mt-1 border-pos-border-primary">
+          {(!limitedTabs || limitedTabs.includes('general')) && (
             <button
               className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'general' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('general')}
+            >
+              General
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('display')) && (
+            <button
+              className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'display' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('display')}
+            >
+              Display
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('printer')) && (
+            <button
+              className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'printer' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('printer')}
+            >
+              Printer
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('payment')) && (
+            <button
+              className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'payment' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('payment')}
+            >
+              Payment
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('permissions')) && isSuperAdmin && (
+            <button
+              className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
                 activeTab === 'permissions' 
                   ? 'bg-pos-bg-primary text-pos-text-primary' 
                   : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'

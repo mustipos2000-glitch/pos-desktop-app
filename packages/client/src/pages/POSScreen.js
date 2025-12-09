@@ -694,6 +694,7 @@ const POSScreen = () => {
       setCart([]);
       setSelectedTable(null);
       setCurrentOrderId(null);
+      setCurrentOrderNo(null);
       setSelectedCustomer(null);
 
       // Load customer if exists
@@ -821,8 +822,9 @@ const POSScreen = () => {
       // Set the cart with hold order items
       setCart(finalCart);
       
-      // Keep the order ID so we can update it (don't delete it yet)
+      // Keep the order ID and order_no so we can update it (don't delete it yet)
       setCurrentOrderId(order.id);
+      setCurrentOrderNo(order.order_no);
       
     } catch (error) {
       console.error('Error loading hold order:', error);
@@ -897,6 +899,7 @@ const POSScreen = () => {
           setCart([]);
           setSelectedTable(null);
           setCurrentOrderId(null);
+          setCurrentOrderNo(null);
           setSelectedCustomer(null);
           // Refresh kitchen order count after payment completion
           if (refreshKitchenCount) {
@@ -921,9 +924,10 @@ const POSScreen = () => {
             }
           }
           
-          // Clear table selection, order ID, and customer
+          // Clear table selection, order ID, order_no, and customer
           setSelectedTable(null);
           setCurrentOrderId(null);
+          setCurrentOrderNo(null);
           setSelectedCustomer(null);
         }}
       />
