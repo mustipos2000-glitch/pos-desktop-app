@@ -27,6 +27,7 @@
   "build": {
     "appId": "com.sohailkhan.po-desktop",
     "productName": "Point of Sale Application",
+    "npmRebuild": false,
     "files": [
       "electron/**/*",
       "packages/client/build/**/*",
@@ -64,16 +65,16 @@
   "author": "sohail & Rao",
   "license": "ISC",
   "devDependencies": {
+    "@electron/rebuild": "^3.7.1",
     "concurrently": "^8.2.2",
-    "electron": "^38.2.2",
+    "electron": "^39.2.6",
     "electron-builder": "^26.0.12",
-    "electron-rebuild": "^3.2.9",
     "rimraf": "^6.0.1",
     "wait-on": "^7.2.0"
   },
   "dependencies": {
     "@mapbox/node-pre-gyp": "^2.0.3",
-    "better-sqlite3": "^12.5.0",
+    "better-sqlite3": "^11.9.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "multer": "^2.0.2",
