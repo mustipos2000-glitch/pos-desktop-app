@@ -2,9 +2,12 @@ const db = require('../config/database');
 
 class Order {
     static create(order, details) {
+        // Generate order_no
+        const orderNo = `ORD-${String(Date.now()).slice(-6)}`;
+        
         const insertOrder = db.prepare(`
-      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
         const result = insertOrder.run(
@@ -15,7 +18,8 @@ class Order {
             order.total || 0,
             order.discount || 0,  // Now properly using the discount field
             order.table_id || null,
-            order.customer_id || null
+            order.customer_id || null,
+            orderNo
         );
 
         const orderId = result.lastInsertRowid;
@@ -40,7 +44,7 @@ class Order {
             insertMany(details);
         }
 
-        return { id: orderId, ...order, details };
+        return { id: orderId, order_no: orderNo, ...order, details };
     }
 
     // ✅ FIXED: made static
@@ -162,6 +166,27 @@ class Order {
             )
             .all(order.id);
         return order;
+    }
+
+    static getHoldOrders() {
+        const orders = db.prepare('SELECT * FROM orders WHERE status = ? ORDER BY id DESC').all('on_hold');
+        for (const order of orders) {
+            // Map database column names to expected property names
+            order.sub_total = order.gross_total;
+            order.total = order.net_total;
+            delete order.gross_total;
+            delete order.net_total;
+            
+            order.details = db
+                .prepare(
+                    `SELECT od.*, p.name as product_name, p.price, p.color, p.image
+           FROM order_details od
+           LEFT JOIN products p ON od.product_id = p.id
+           WHERE od.order_id = ?`
+                )
+                .all(order.id);
+        }
+        return orders;
     }
 }
 
