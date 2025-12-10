@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import UnifiedTableModal from './UnifiedTableModal';
 import MessageModal from './MessageModal';
 import ConfirmationModal from './ConfirmationModal';
+import HoldOrdersModal from './HoldOrdersModal';
 import ApiService from '../services/api';
 import { printerService } from '../services/printerService';
 import { useTheme } from '../context/ThemeContext';
 import { useVersion } from '../context/VersionContext';
 import { useMessageModal } from '../hooks/useMessageModal';
 
-const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount }) => {
+const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount, onLoadHoldOrder }) => {
   const { theme, toggleTheme } = useTheme();
   const { hasFeature } = useVersion();
   const [showTableModal, setShowTableModal] = useState(false);
+  const [showHoldOrdersModal, setShowHoldOrdersModal] = useState(false);
   const [kitchenOrderCount, setKitchenOrderCount] = useState(0);
+  const [holdOrderCount, setHoldOrderCount] = useState(0);
   const [printers, setPrinters] = useState([]);
   const { messageModal, showError, showWarning, closeModal } = useMessageModal();
   const [confirmModal, setConfirmModal] = useState({
@@ -86,8 +89,9 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
       console.log('ℹ️ No printers to send to or no order ID');
     }
 
-    // Refresh kitchen order count after sending to kitchen
+    // Refresh kitchen order count and hold order count after sending to kitchen
     fetchKitchenOrderCount();
+    fetchHoldOrderCount();
   };
 
   const handleSendToKitchen = async () => {    
@@ -170,9 +174,20 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     }
   };
 
+  // Fetch hold orders count
+  const fetchHoldOrderCount = async () => {
+    try {
+      const response = await ApiService.getHoldOrders();
+      setHoldOrderCount(response.data?.length || 0);
+    } catch (error) {
+      console.error('Failed to fetch hold orders:', error);
+    }
+  };
+
   useEffect(() => {
     // Fetch only once on component mount
     fetchKitchenOrderCount();
+    fetchHoldOrderCount();
 
     // Fetch printers
     const fetchPrinters = async () => {
@@ -221,6 +236,13 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
               Orders ({kitchenOrderCount})
             </button>
           )}
+          <button
+            onClick={() => setShowHoldOrdersModal(true)}
+            className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white"
+          >
+            <span className="text-lg">⏸️</span>
+            On Hold ({holdOrderCount})
+          </button>
         </div>
         <div className="flex gap-2.5 items-center">
           {/* Search Bar */}
@@ -283,6 +305,15 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
         confirmText="Continue"
         cancelText="Cancel"
         type="warning"
+      />
+
+      <HoldOrdersModal
+        isOpen={showHoldOrdersModal}
+        onClose={() => {
+          setShowHoldOrdersModal(false);
+          fetchHoldOrderCount();
+        }}
+        onSelectOrder={onLoadHoldOrder}
       />
     </>
   );

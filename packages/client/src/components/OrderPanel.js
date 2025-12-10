@@ -11,7 +11,8 @@ import { printerService } from "../services/printerService";
 import cashmaticService from "../services/cashmaticService";
 import payworldService from "../services/payworldService";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount }) => {
+  
 
 const formatAmount = (value) => {
   const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
@@ -447,6 +448,113 @@ const formatAmount = (value) => {
 
   const handlePayworldPayment = () => {
     startPayworldFlow();
+  };
+
+  const handleOnHold = async () => {
+    if (cart.length === 0) {
+      setToastType("error");
+      setToastMessage("Cart is empty. Cannot put order on hold.");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const subTotal = calculateTotal();
+      const total = subTotal - discount;
+
+      const orderData = {
+        status: "on_hold",
+        note,
+        sub_total: subTotal,
+        total,
+        discount,
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
+        table_id: selectedTable ? selectedTable.id : null,
+        details: (() => {
+          const allDetails = [];
+          let detailIndex = 0;
+
+          cart.forEach((item) => {
+            const parentDetailIndex = detailIndex;
+
+            allDetails.push({
+              product_id: item.id,
+              qty: item.quantity,
+              total: item.price * item.quantity,
+              notes: item.notes || null,
+              discount: item.discount || 0,
+            });
+            detailIndex++;
+
+            if (item.subProducts && item.subProducts.length > 0) {
+              item.subProducts.forEach((subItem) => {
+                allDetails.push({
+                  product_id: subItem.id,
+                  qty: subItem.quantity,
+                  total: subItem.price * subItem.quantity,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
+                    subItem.notes || ""
+                  }`,
+                  discount: 0,
+                });
+                detailIndex++;
+              });
+            }
+          });
+
+          return allDetails;
+        })(),
+      };
+
+      if (currentOrderId) {
+        // Update existing order
+        await ApiService.updateOrder(currentOrderId, orderData);
+      } else {
+        // Create new order
+        await ApiService.createOrder(orderData);
+      }
+
+      // Update table status if table is selected
+      if (selectedTable) {
+        try {
+          await ApiService.updatePrTable(selectedTable.id, {
+            ...selectedTable,
+            status: "reserved",
+          });
+        } catch (error) {
+          console.error("Error updating table status:", error);
+        }
+      }
+
+      // Clear cart and reset state
+      setCart([]);
+      setDiscount(0);
+      setNote("");
+      setSelectedIds([]);
+      setLastAddedId(null);
+      if (onSelectCustomer) {
+        onSelectCustomer(null);
+      }
+
+      // Notify parent to clear order and table selection
+      if (onOrderComplete) {
+        onOrderComplete();
+      }
+
+      // Refresh hold orders count in top bar
+      if (onRefreshHoldCount) {
+        onRefreshHoldCount();
+      }
+
+      setToastType("success");
+      setToastMessage("Order placed on hold successfully!");
+    } catch (error) {
+      console.error("Error putting order on hold:", error);
+      setToastType("error");
+      setToastMessage("Failed to put order on hold. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handlePaymentConfirm = async (paymentData) => {
@@ -944,17 +1052,45 @@ const formatAmount = (value) => {
         />
       )}
 
-      <div className="mt-2 mb-2 w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen bg-pos-bg-secondary rounded-2xl">
-        {/* Customer Selector */}
-        <div className="px-4 py-2 mt-2 bg-pos-bg-secondary border-b border-pos-border-light">
-          <CustomerSelector
-            selectedCustomer={selectedCustomer}
-            onSelectCustomer={onSelectCustomer}
-          />
+      <div className="mt-2 mb-2 w-1/6 min-w-[300px] flex flex-col border-l border-pos-border-light h-screen bg-pos-bg-secondary rounded-lg">
+        {/* Order Info Section - Compact Design */}
+        <div className="px-2 py-1 mt-1 bg-pos-bg-secondary border-b border-pos-border-light">
+          <div className="grid grid-cols-3 gap-1 text-xs">
+            {/* Table No */}
+            <div className="flex flex-col">
+              <div className="text-[9px] text-pos-text-muted uppercase mb-0.5 font-medium">Table</div>
+              <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded px-2 py-1 text-center">
+                <span className="text-xs text-pos-text-primary font-semibold">
+                  {selectedTable ? selectedTable.table_no : '--'}
+                </span>
+              </div>
+            </div>
+            
+            {/* Order No */}
+            <div className="flex flex-col">
+              <div className="text-[9px] text-pos-text-muted uppercase mb-0.5 font-medium">Order</div>
+              <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded px-2 py-1 text-center">
+                <span className="text-xs text-pos-text-primary font-semibold">
+                  {currentOrderNo ? currentOrderNo : '--'}
+                </span>
+              </div>
+            </div>
+
+            {/* Customer */}
+            <div className="flex flex-col">
+              <div className="text-[9px] text-pos-text-muted uppercase mb-0.5 font-medium">Customer</div>
+              <div className="h-[26px]">
+                <CustomerSelector
+                  selectedCustomer={selectedCustomer}
+                  onSelectCustomer={onSelectCustomer}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Header */}
-        <div className="px-4 py-2 mt-2 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
+        <div className="px-4 mt-2 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
           <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-muted font-semibold uppercase">
             <span className="col-span-4">Item</span>
             <span className="col-span-2 flex justify-center items-center">
@@ -982,7 +1118,7 @@ const formatAmount = (value) => {
                 : isSelected
                 ? "bg-green-500"
                 : "bg-blue-500";
-              const textColor = "text-white";
+              const textColor = "text-dark";
 
               return (
                 <div key={cartItemId} className="mb-1">
@@ -1281,29 +1417,41 @@ const formatAmount = (value) => {
           )}
         </div>
 
-        {/* Bottom Buttons */}
-        <div className="grid grid-cols-4 gap-2 px-1 mb-3">
-          {/* Card */}
-          <button
-            className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
-            onClick={handleCardPayment}
-            disabled={isProcessing || cart.length === 0}
-          >
-            Card
-          </button>
-
+        {/* Payment Buttons - Top Row: Cash, Card, On Hold */}
+        <div className="grid grid-cols-3 gap-1 px-1 mb-1">
           {/* Cash */}
           <button
-            className="bg-pos-bg-primary border border-pos-border-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+            className="bg-pos-bg-primary border border-pos-border-primary aspect-auto flex items-center py-1 justify-center hover:bg-pos-interactive-hover disabled:opacity-50"
             onClick={handleCashPayment}
             disabled={isProcessing || cart.length === 0}
           >
             {isProcessing ? "Processing..." : "Cash"}
           </button>
 
+          {/* Card */}
+          <button
+            className="bg-pos-bg-primary border border-pos-border-primary aspect-auto flex items-center py-1 justify-center hover:bg-pos-interactive-hover disabled:opacity-50"
+            onClick={handleCardPayment}
+            disabled={isProcessing || cart.length === 0}
+          >
+            Card
+          </button>
+
+          {/* On Hold */}
+          <button
+            className="bg-orange-500 border border-orange-600 text-white aspect-auto flex items-center py-1 justify-center hover:bg-orange-600 disabled:opacity-50"
+            onClick={handleOnHold}
+            disabled={isProcessing || cart.length === 0}
+          >
+            On Hold
+          </button>
+        </div>
+
+        {/* Payment Buttons - Bottom Row: Cashmatic, Payworld */}
+        <div className="grid grid-cols-2 gap-1 px-1 mb-2">
           {/* Cashmatic */}
           <button
-            className="bg-pos-bg-primary border border-pos-border-primary text-pos-text-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+            className="bg-pos-bg-primary border border-pos-border-primary text-pos-text-primary aspect-auto flex items-center py-1 justify-center hover:bg-pos-interactive-hover disabled:opacity-50"
             onClick={handleCashmaticPayment}
             disabled={isProcessing || cart.length === 0}
           >
@@ -1312,7 +1460,7 @@ const formatAmount = (value) => {
 
           {/* Payworld A35 */}
           <button
-            className="bg-pos-bg-primary border border-pos-border-primary text-pos-text-primary py-1 hover:bg-pos-interactive-hover disabled:opacity-50"
+            className="bg-pos-bg-primary border border-pos-border-primary text-pos-text-primary aspect-auto flex items-center py-1 justify-center hover:bg-pos-interactive-hover disabled:opacity-50"
             onClick={handlePayworldPayment}
             disabled={isProcessing || cart.length === 0}
           >

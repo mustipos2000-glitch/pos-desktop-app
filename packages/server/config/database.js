@@ -231,6 +231,7 @@ db.exec(`
     net_total REAL DEFAULT 0,
     discount REAL DEFAULT 0,
     table_id INTEGER,
+    order_no TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(table_id) REFERENCES pr_table(id) ON DELETE SET NULL
   )
@@ -248,6 +249,15 @@ try {
 // Add customer_id column to orders if it doesn't exist
 try {
   db.exec(`ALTER TABLE orders ADD COLUMN customer_id INTEGER`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+// Add order_no column to orders if it doesn't exist
+try {
+  db.exec(`ALTER TABLE orders ADD COLUMN order_no TEXT`);
 } catch (err) {
   if (!err.message.includes('duplicate column name')) {
     // Column already exists, ignore

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import ApiService from '../services/api';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import IconButton from './IconButton';
 import { useMessageModal } from '../hooks/useMessageModal';
 import PaymentTerminalManager from './PaymentTerminalManager';
+import KeypadNumpad from './KeypadNumpad';
 
-const SettingsModal = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState('general');
+const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [rolePermissions, setRolePermissions] = useState({
     'Super Admin': { admin: true, settings: true },
     'Admin': { admin: false, settings: false },
@@ -31,6 +31,14 @@ const SettingsModal = ({ onClose }) => {
   const [testingPrinter, setTestingPrinter] = useState(null);
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
   const isSuperAdmin = currentUser.role === 'Super Admin';
+  const [showKeypad, setShowKeypad] = useState(true);
+  const [activeField, setActiveField] = useState(null);
+  const [generalSettings, setGeneralSettings] = useState({
+    storeName: 'My POS Store',
+    taxRate: '8',
+    currency: 'USD',
+    language: 'en'
+  });
 
   useEffect(() => {
     if (isSuperAdmin && activeTab === 'permissions') {
@@ -65,6 +73,71 @@ const SettingsModal = ({ onClose }) => {
         [name]: ''
       });
     }
+  };
+
+  const handleKeypadInput = (input) => {
+    if (activeField) {
+      // Check if we're in printer form or general settings
+      if (activeField === 'name' || activeField === 'connection_string') {
+        setPrinterForm(prev => ({
+          ...prev,
+          [activeField]: prev[activeField] + input
+        }));
+      } else if (activeField === 'storeName' || activeField === 'taxRate') {
+        setGeneralSettings(prev => ({
+          ...prev,
+          [activeField]: prev[activeField] + input
+        }));
+      }
+    }
+  };
+
+  const handleKeypadBackspace = () => {
+    if (activeField) {
+      if (activeField === 'name' || activeField === 'connection_string') {
+        setPrinterForm(prev => ({
+          ...prev,
+          [activeField]: prev[activeField].toString().slice(0, -1)
+        }));
+      } else if (activeField === 'storeName' || activeField === 'taxRate') {
+        setGeneralSettings(prev => ({
+          ...prev,
+          [activeField]: prev[activeField].toString().slice(0, -1)
+        }));
+      }
+    }
+  };
+
+  const handleKeypadClear = () => {
+    if (activeField) {
+      if (activeField === 'name' || activeField === 'connection_string') {
+        setPrinterForm(prev => ({
+          ...prev,
+          [activeField]: ""
+        }));
+      } else if (activeField === 'storeName' || activeField === 'taxRate') {
+        setGeneralSettings(prev => ({
+          ...prev,
+          [activeField]: ""
+        }));
+      }
+    }
+  };
+
+  const handleKeypadEnter = () => {
+    setActiveField(null);
+  };
+
+  const handleFieldFocus = (fieldName) => {
+    setActiveField(fieldName);
+  };
+
+  const handleGeneralSettingsChange = (e) => {
+    const { name, value } = e.target;
+    setGeneralSettings(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleAddPrinter = async () => {
@@ -290,57 +363,65 @@ const SettingsModal = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-pos-border-primary">
           <h2 className="text-pos-text-primary text-xl font-semibold">Settings</h2>
           <button className="text-pos-text-muted hover:text-pos-text-primary text-2xl" onClick={onClose}>×</button>
         </div>
 
-        <div className="flex border-b border-pos-border-primary">
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'general' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('general')}
-          >
-            General
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'display' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('display')}
-          >
-            Display
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'printer' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('printer')}
-          >
-            Printer
-          </button>
-          <button
-            className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
-              activeTab === 'payment' 
-                ? 'bg-pos-bg-primary text-pos-text-primary' 
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-            }`}
-            onClick={() => setActiveTab('payment')}
-          >
-            Payment
-          </button>
-          {isSuperAdmin && (
+        <div className="flex border-b pb-1 mt-1 border-pos-border-primary">
+          {(!limitedTabs || limitedTabs.includes('general')) && (
             <button
               className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'general' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('general')}
+            >
+              General
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('display')) && (
+            <button
+              className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'display' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('display')}
+            >
+              Display
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('printer')) && (
+            <button
+              className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'printer' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('printer')}
+            >
+              Printer
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('payment')) && (
+            <button
+              className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'payment' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('payment')}
+            >
+              Payment
+            </button>
+          )}
+          {(!limitedTabs || limitedTabs.includes('permissions')) && isSuperAdmin && (
+            <button
+              className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
                 activeTab === 'permissions' 
                   ? 'bg-pos-bg-primary text-pos-text-primary' 
                   : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
@@ -352,58 +433,100 @@ const SettingsModal = ({ onClose }) => {
           )}
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[60vh] scrollbar-custom">
+        <div className="px-4 py-2 overflow-y-auto max-h-[60vh] scrollbar-custom">
           {activeTab === 'general' && (
-            <div className="space-y-6">
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Store Name</label>
-                <input type="text" defaultValue="My POS Store" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" />
+            <div>
+              <div className="grid grid-cols-3 gap-3 mb-2">
+                <div>
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">Store Name</label>
+                  <input 
+                    type="text" 
+                    name="storeName"
+                    value={generalSettings.storeName}
+                    onChange={handleGeneralSettingsChange}
+                    onFocus={() => handleFieldFocus('storeName')}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'storeName' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">Tax Rate (%)</label>
+                  <input 
+                    type="text" 
+                    name="taxRate"
+                    value={generalSettings.taxRate}
+                    onChange={handleGeneralSettingsChange}
+                    onFocus={() => handleFieldFocus('taxRate')}
+                    className={`w-full bg-pos-bg-primary border ${activeField === 'taxRate' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">Currency</label>
+                  <select 
+                    name="currency"
+                    value={generalSettings.currency}
+                    onChange={handleGeneralSettingsChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">Language</label>
+                  <select 
+                    name="language"
+                    value={generalSettings.language}
+                    onChange={handleGeneralSettingsChange}
+                    className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors"
+                  >
+                    <option value="en">English</option>
+                    <option value="nl">Nederlands</option>
+                    <option value="fr">Français</option>
+                  </select>
+                </div>
               </div>
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Tax Rate (%)</label>
-                <input type="number" defaultValue="8" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" />
-              </div>
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Currency</label>
-                <select defaultValue="USD" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
-                  <option value="USD">USD ($)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Language</label>
-                <select defaultValue="en" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
-                  <option value="en">English</option>
-                  <option value="nl">Nederlands</option>
-                  <option value="fr">Français</option>
-                </select>
-              </div>
+
+              {/* Keypad Section for General Tab */}
+              {showKeypad && (
+                <div style={{marginTop:"-1rem"}}>
+                  <div className="mb-1 text-sm text-pos-text-muted text-center">
+                    Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
+                  </div>
+                  <KeypadNumpad
+                    onInput={handleKeypadInput}
+                    onEnter={handleKeypadEnter}
+                    onBackspace={handleKeypadBackspace}
+                    onClear={handleKeypadClear}
+                    className="w-full"
+                  />
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'display' && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-3 gap-3">
               <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Theme</label>
-                <select defaultValue="dark" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
+                <label className="block text-xs font-medium text-pos-text-muted mb-1">Theme</label>
+                <select defaultValue="dark" className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors">
                   <option value="dark">Dark</option>
                   <option value="light">Light</option>
                 </select>
               </div>
               <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">Font Size</label>
-                <select defaultValue="medium" className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info">
+                <label className="block text-xs font-medium text-pos-text-muted mb-1">Font Size</label>
+                <select defaultValue="medium" className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors">
                   <option value="small">Small</option>
                   <option value="medium">Medium</option>
                   <option value="large">Large</option>
                 </select>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 pt-6">
                 <input type="checkbox" id="show-images" defaultChecked className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
                 <label htmlFor="show-images" className="text-pos-text-primary text-sm">Show Product Images</label>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <input type="checkbox" id="compact-mode" className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
                 <label htmlFor="compact-mode" className="text-pos-text-primary text-sm">Compact Mode</label>
               </div>
@@ -411,16 +534,16 @@ const SettingsModal = ({ onClose }) => {
           )}
 
           {activeTab === 'printer' && (
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="flex justify-between items-center">
-                <h3 className="text-pos-text-primary text-lg font-semibold">Manage Printers</h3>
+                <h3 className="text-pos-text-primary text-base font-semibold">Manage Printers</h3>
                 <button 
                   onClick={() => {
                     setShowAddPrinter(true);
                     setEditingPrinter(null);
                     setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
                   }}
-                  className="btn-primary py-2"
+                  className="btn-primary py-1.5"
                 >
                   + Add Printer
                 </button>
@@ -493,100 +616,138 @@ const SettingsModal = ({ onClose }) => {
               </div>
 
               {showAddPrinter && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => {
                   setShowAddPrinter(false);
                   setPrinterFormErrors({});
+                  setActiveField(null);
                 }}>
-                  <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-between items-center p-4 border-b border-pos-border-primary">
-                      <h3 className="text-pos-text-primary text-lg font-semibold">
+                  <div className="bg-pos-bg-tertiary rounded-lg" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-pos-bg-tertiary border-b border-pos-border-secondary px-4 py-2 flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-pos-text-primary">
                         {editingPrinter ? 'Edit Printer' : 'Add New Printer'}
                       </h3>
-                      <button className="text-pos-text-muted hover:text-pos-text-primary text-2xl" onClick={() => {
-                        setShowAddPrinter(false);
-                        setPrinterFormErrors({});
-                      }}>×</button>
-                    </div>
-                    
-                    <div className="p-4 space-y-4">
-                      <div>
-                        <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                          Printer Name <span className="text-pos-error">*</span>
-                        </label>
-                        <input 
-                          type="text" 
-                          name="name"
-                          value={printerForm.name}
-                          onChange={handlePrinterFormChange}
-                          className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${printerFormErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
-                          placeholder="e.g., Kitchen Printer"
-                        />
-                        {printerFormErrors.name && (
-                          <p className="text-pos-error text-xs mt-1">{printerFormErrors.name}</p>
-                        )}
-                      </div>
-                      
-                      <div>
-                        <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                          Printer Type <span className="text-pos-error">*</span>
-                        </label>
-                        <select 
-                          name="type"
-                          value={printerForm.type}
-                          onChange={handlePrinterFormChange}
-                          className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${printerFormErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
-                        >
-                          <option value="EPSON">EPSON </option>
-                          <option value="STAR">STAR Micronics</option>
-                          <option value="TANCA">TANCA</option>
-                          <option value="DARUMA">DARUMA</option>
-                          <option value="BROTHER">BROTHER</option>
-                        </select>
-                        {printerFormErrors.type && (
-                          <p className="text-pos-error text-xs mt-1">{printerFormErrors.type}</p>
-                        )}
-                        <p className="text-pos-text-muted text-xs mt-1">
-                          Select your thermal printer brand. If unsure, try EPSON first.
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                          Connection String <span className="text-pos-error">*</span>
-                        </label>
-                        <input 
-                          type="text" 
-                          name="connection_string"
-                          value={printerForm.connection_string}
-                          onChange={handlePrinterFormChange}
-                          className="w-full px-3 py-2 bg-pos-bg-tertiary border border-pos-border-secondary text-pos-text-primary rounded focus:outline-none focus:border-pos-info" 
-                          placeholder="tcp://192.168.1.100:9100"
-                        />
-                        <div className="text-pos-text-muted text-xs mt-1 space-y-1">
-                          <p className="font-medium">Connection Examples:</p>
-                          {getConnectionExamples().map((example, index) => (
-                            <p key={index}><strong>{example.type}:</strong> {example.example}</p>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-end gap-2 p-4 border-t border-pos-border-primary">
                       <button 
                         onClick={() => {
                           setShowAddPrinter(false);
                           setPrinterFormErrors({});
+                          setActiveField(null);
                         }}
-                        className="btn-secondary px-4 py-2"
+                        className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-xl leading-none"
                       >
-                        Cancel
+                        ×
                       </button>
-                      <button 
-                        onClick={editingPrinter ? handleUpdatePrinter : handleAddPrinter}
-                        className="btn-secondary px-6 py-2"
-                      >
-                        {editingPrinter ? 'Update' : 'Add'}
+                    </div>
+                    
+                    <div className="px-4 py-2" style={{maxWidth:"30rem"}}>
+                      <div className="grid grid-cols-3 gap-3 mb-2">
+                        <div>
+                          <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                            Printer Name <span className="text-pos-error">*</span>
+                          </label>
+                          <input 
+                            type="text" 
+                            name="name"
+                            value={printerForm.name}
+                            onChange={handlePrinterFormChange}
+                            onFocus={() => handleFieldFocus('name')}
+                            className={`w-full bg-pos-bg-primary border ${printerFormErrors.name ? 'border-pos-error' : activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                            placeholder="e.g., Kitchen Printer"
+                          />
+                          {printerFormErrors.name && (
+                            <p className="text-pos-error text-xs mt-1">{printerFormErrors.name}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                            Printer Type <span className="text-pos-error">*</span>
+                          </label>
+                          <select 
+                            name="type"
+                            value={printerForm.type}
+                            onChange={handlePrinterFormChange}
+                            className={`w-full bg-pos-bg-primary border ${printerFormErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                          >
+                            <option value="EPSON">EPSON </option>
+                            <option value="STAR">STAR Micronics</option>
+                            <option value="TANCA">TANCA</option>
+                            <option value="DARUMA">DARUMA</option>
+                            <option value="BROTHER">BROTHER</option>
+                          </select>
+                          {printerFormErrors.type && (
+                            <p className="text-pos-error text-xs mt-1">{printerFormErrors.type}</p>
+                          )}
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                            Connection String <span className="text-pos-error">*</span>
+                          </label>
+                          <input 
+                            type="text" 
+                            name="connection_string"
+                            value={printerForm.connection_string}
+                            onChange={handlePrinterFormChange}
+                            onFocus={() => handleFieldFocus('connection_string')}
+                            className={`w-full bg-pos-bg-primary border ${activeField === 'connection_string' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                            placeholder="tcp://192.168.1.100:9100"
+                          />
+                        </div>
+                      </div>
+                      <div className="text-pos-text-muted text-xs space-y-1">
+                        <p className="font-medium">Connection Examples:</p>
+                        {getConnectionExamples().map((example, index) => (
+                          <p key={index}><strong>{example.type}:</strong> {example.example}</p>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Keypad Section */}
+                    {showKeypad && (
+                      <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{marginTop:"-1rem"}}>
+                        <div className="mb-1 text-sm text-pos-text-muted text-center">
+                          Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
+                        </div>
+                        <div className="flex-1 flex items-center justify-center w-full max-w-2xl">
+                          <KeypadNumpad
+                            onInput={handleKeypadInput}
+                            onEnter={handleKeypadEnter}
+                            onBackspace={handleKeypadBackspace}
+                            onClear={handleKeypadClear}
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="bg-pos-bg-tertiary border-t border-pos-border-secondary px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setShowKeypad(!showKeypad)}
+                        className={`px-3 py-1.5 text-sm font-medium transition-colors ${showKeypad
+                          ? 'bg-pos-info text-white'
+                          : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
+                          }`}>
+                        {showKeypad ? 'Hide Keyboard' : 'Show Keyboard'} ⌨️
                       </button>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => {
+                            setShowAddPrinter(false);
+                            setPrinterFormErrors({});
+                            setActiveField(null);
+                          }}
+                          className="px-4 py-1.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button 
+                          onClick={editingPrinter ? handleUpdatePrinter : handleAddPrinter}
+                          className="px-5 py-1.5 bg-pos-bg-primary text-pos-text-primary text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
+                        >
+                          {editingPrinter ? 'Update' : 'Add'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -682,7 +843,7 @@ const SettingsModal = ({ onClose }) => {
                     {/* User Role */}
                     <tr className="hover:bg-pos-bg-tertiary transition-colors">
                       <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pos-info bg-opacity-20 text-pos-info">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pos-info bg-opacity-20 text-pos-light">
                           User
                         </span>
                       </td>
@@ -717,6 +878,21 @@ const SettingsModal = ({ onClose }) => {
             </div>
           )}
         </div>
+
+        {/* Keyboard Toggle Button - Only show for General tab */}
+        {activeTab === 'general' && (
+          <div className="px-4 py-2 border-t border-pos-border-primary flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowKeypad(!showKeypad)}
+              className={`px-3 py-1.5 text-sm font-medium transition-colors ${showKeypad
+                ? 'bg-pos-info text-white'
+                : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
+                }`}>
+              {showKeypad ? 'Hide Keyboard' : 'Show Keyboard'} ⌨️
+            </button>
+          </div>
+        )}
       </div>
 
       <ConfirmationModal

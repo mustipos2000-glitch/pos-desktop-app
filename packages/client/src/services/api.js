@@ -160,6 +160,10 @@ class ApiService {
     return this.request(`/orders/table/${tableId}`);
   }
 
+  static async getHoldOrders() {
+    return this.request('/orders/hold');
+  }
+
   // Room methods
   static async getRooms() {
     return this.request('/rooms');

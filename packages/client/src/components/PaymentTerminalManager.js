@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ApiService from '../services/api';
 import ConfirmationModal from './ConfirmationModal';
 import IconButton from './IconButton';
+import KeypadNumpad from './KeypadNumpad';
 
 const PaymentTerminalManager = () => {
   const [terminals, setTerminals] = useState([]);
@@ -22,6 +23,8 @@ const PaymentTerminalManager = () => {
   });
   const [testingTerminal, setTestingTerminal] = useState(null);
   const [testResult, setTestResult] = useState(null);
+  const [showKeypad, setShowKeypad] = useState(true);
+  const [activeField, setActiveField] = useState(null);
 
   useEffect(() => {
     fetchTerminals();
@@ -50,6 +53,41 @@ const PaymentTerminalManager = () => {
         [name]: ''
       });
     }
+  };
+
+  const handleKeypadInput = (input) => {
+    if (activeField) {
+      setTerminalForm(prev => ({
+        ...prev,
+        [activeField]: prev[activeField] + input
+      }));
+    }
+  };
+
+  const handleKeypadBackspace = () => {
+    if (activeField) {
+      setTerminalForm(prev => ({
+        ...prev,
+        [activeField]: prev[activeField].toString().slice(0, -1)
+      }));
+    }
+  };
+
+  const handleKeypadClear = () => {
+    if (activeField) {
+      setTerminalForm(prev => ({
+        ...prev,
+        [activeField]: ""
+      }));
+    }
+  };
+
+  const handleKeypadEnter = () => {
+    setActiveField(null);
+  };
+
+  const handleFieldFocus = (fieldName) => {
+    setActiveField(fieldName);
   };
 
   const validateForm = () => {
@@ -238,11 +276,11 @@ const PaymentTerminalManager = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       <div className="flex justify-between items-center">
         <div>
-          <h3 className="text-pos-text-primary text-lg font-semibold">Payment Terminals</h3>
-          <p className="text-pos-text-muted text-sm mt-1">
+          <h3 className="text-pos-text-primary text-base font-semibold">Payment Terminals</h3>
+          <p className="text-pos-text-muted text-xs mt-1">
             Configure Cashmatic and Bancontact payment machines
           </p>
         </div>
@@ -252,7 +290,7 @@ const PaymentTerminalManager = () => {
             setEditingTerminal(null);
             resetForm();
           }}
-          className="btn-primary py-2"
+          className="btn-primary py-1.5"
         >
           + Add Terminal
         </button>
@@ -357,149 +395,191 @@ const PaymentTerminalManager = () => {
 
       {/* Add/Edit Terminal Modal */}
       {showAddTerminal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => {
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={() => {
           setShowAddTerminal(false);
           setFormErrors({});
+          setActiveField(null);
         }}>
-          <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center p-4 border-b border-pos-border-primary sticky top-0 bg-pos-bg-secondary z-10">
-              <h3 className="text-pos-text-primary text-lg font-semibold">
+          <div className="bg-pos-bg-tertiary rounded-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-pos-bg-tertiary border-b border-pos-border-secondary px-4 py-2 flex items-center justify-between sticky top-0 z-10">
+              <h3 className="text-lg font-semibold text-pos-text-primary">
                 {editingTerminal ? 'Edit Payment Terminal' : 'Add Payment Terminal'}
               </h3>
-              <button className="text-pos-text-muted hover:text-pos-text-primary text-2xl" onClick={() => {
-                setShowAddTerminal(false);
-                setFormErrors({});
-              }}>×</button>
-            </div>
-            
-            <div className="p-4 space-y-4">
-              {formErrors.submit && (
-                <div className="p-3 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-400 text-sm">
-                  {formErrors.submit}
-                </div>
-              )}
-
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                  Terminal Name <span className="text-pos-error">*</span>
-                </label>
-                <input 
-                  type="text" 
-                  name="name"
-                  value={terminalForm.name}
-                  onChange={handleFormChange}
-                  className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${formErrors.name ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
-                  placeholder="e.g., Main Cashmatic Terminal"
-                />
-                {formErrors.name && (
-                  <p className="text-pos-error text-xs mt-1">{formErrors.name}</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                  Terminal Type <span className="text-pos-error">*</span>
-                </label>
-                <select 
-                  name="type"
-                  value={terminalForm.type}
-                  onChange={handleFormChange}
-                  className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${formErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
-                >
-                  <option value="cashmatic">💰 Cashmatic (Cash Payment Machine)</option>
-                  <option value="bancontact">🏦 Bancontact (Card Payment Terminal)</option>
-                </select>
-                {formErrors.type && (
-                  <p className="text-pos-error text-xs mt-1">{formErrors.type}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                  Connection Type <span className="text-pos-error">*</span>
-                </label>
-                <select 
-                  name="connection_type"
-                  value={terminalForm.connection_type}
-                  onChange={handleFormChange}
-                  className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${formErrors.connection_type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info`}
-                >
-                  <option value="tcp">TCP/IP (Network)</option>
-                  <option value="serial">Serial Port (USB/RS232)</option>
-                  <option value="api">HTTP/HTTPS API</option>
-                </select>
-                {formErrors.connection_type && (
-                  <p className="text-pos-error text-xs mt-1">{formErrors.connection_type}</p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-pos-text-primary text-sm font-medium mb-2">
-                  Connection String <span className="text-pos-error">*</span>
-                </label>
-                <input 
-                  type="text" 
-                  name="connection_string"
-                  value={terminalForm.connection_string}
-                  onChange={handleFormChange}
-                  className={`w-full px-3 py-2 bg-pos-bg-tertiary border ${formErrors.connection_string ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary rounded focus:outline-none focus:border-pos-info font-mono text-sm`}
-                  placeholder="tcp://192.168.1.100:9100"
-                />
-                {formErrors.connection_string && (
-                  <p className="text-pos-error text-xs mt-1">{formErrors.connection_string}</p>
-                )}
-                <div className="text-pos-text-muted text-xs mt-2 space-y-1">
-                  <p className="font-medium">Examples for {terminalForm.connection_type.toUpperCase()}:</p>
-                  {getConnectionExamples().map((example, index) => (
-                    <p key={index}>
-                      <strong>{example.label}:</strong> 
-                      <code className="ml-1 px-1 py-0.5 bg-pos-bg-tertiary rounded">{example.example}</code>
-                    </p>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <input 
-                  type="checkbox" 
-                  id="enabled"
-                  name="enabled"
-                  checked={terminalForm.enabled}
-                  onChange={handleFormChange}
-                  className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" 
-                />
-                <label htmlFor="enabled" className="text-pos-text-primary text-sm">
-                  Enable this terminal
-                </label>
-              </div>
-
-              <div className="bg-blue-500 bg-opacity-10 border border-blue-500 rounded p-3 text-sm text-blue-400">
-                <p className="font-medium mb-1">💡 Configuration Tips:</p>
-                <ul className="list-disc list-inside space-y-1 text-xs">
-                  <li>Ensure the terminal is powered on and connected to your network</li>
-                  <li>Check your terminal's IP address in its settings menu</li>
-                  <li>Default port for most terminals is 9100</li>
-                  <li>Use the Test button after saving to verify the connection</li>
-                </ul>
-              </div>
-            </div>
-            
-            <div className="flex justify-end gap-2 p-4 border-t border-pos-border-primary sticky bottom-0 bg-pos-bg-secondary">
               <button 
                 onClick={() => {
                   setShowAddTerminal(false);
                   setFormErrors({});
+                  setActiveField(null);
                 }}
-                className="btn-secondary px-4 py-2"
+                className="text-pos-text-muted hover:text-pos-text-primary transition-colors text-xl leading-none"
               >
-                Cancel
+                ×
               </button>
-              <button 
-                onClick={editingTerminal ? handleUpdateTerminal : handleAddTerminal}
-                className="btn-primary px-6 py-2"
-              >
-                {editingTerminal ? 'Update Terminal' : 'Add Terminal'}
+            </div>
+            
+            <div className="px-4 py-2" style={{maxWidth:"30rem"}}>
+              {formErrors.submit && (
+                <div className="p-2 bg-red-500 bg-opacity-20 border border-red-500 rounded text-red-400 text-xs mb-2">
+                  {formErrors.submit}
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-3 mb-2">
+                <div>
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                    Terminal Name <span className="text-pos-error">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="name"
+                    value={terminalForm.name}
+                    onChange={handleFormChange}
+                    onFocus={() => handleFieldFocus('name')}
+                    className={`w-full bg-pos-bg-primary border ${formErrors.name ? 'border-pos-error' : activeField === 'name' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                    placeholder="e.g., Main Cashmatic"
+                  />
+                  {formErrors.name && (
+                    <p className="text-pos-error text-xs mt-1">{formErrors.name}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                    Terminal Type <span className="text-pos-error">*</span>
+                  </label>
+                  <select 
+                    name="type"
+                    value={terminalForm.type}
+                    onChange={handleFormChange}
+                    className={`w-full bg-pos-bg-primary border ${formErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                  >
+                    <option value="cashmatic">💰 Cashmatic</option>
+                    <option value="bancontact">🏦 Bancontact</option>
+                  </select>
+                  {formErrors.type && (
+                    <p className="text-pos-error text-xs mt-1">{formErrors.type}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                    Connection Type <span className="text-pos-error">*</span>
+                  </label>
+                  <select 
+                    name="connection_type"
+                    value={terminalForm.connection_type}
+                    onChange={handleFormChange}
+                    className={`w-full bg-pos-bg-primary border ${formErrors.connection_type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                  >
+                    <option value="tcp">TCP/IP</option>
+                    <option value="serial">Serial Port</option>
+                    <option value="api">HTTP API</option>
+                  </select>
+                  {formErrors.connection_type && (
+                    <p className="text-pos-error text-xs mt-1">{formErrors.connection_type}</p>
+                  )}
+                </div>
+                
+                <div className="col-span-2">
+                  <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                    Connection String <span className="text-pos-error">*</span>
+                  </label>
+                  <input 
+                    type="text" 
+                    name="connection_string"
+                    value={terminalForm.connection_string}
+                    onChange={handleFormChange}
+                    onFocus={() => handleFieldFocus('connection_string')}
+                    className={`w-full bg-pos-bg-primary border ${formErrors.connection_string ? 'border-pos-error' : activeField === 'connection_string' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors font-mono`}
+                    placeholder="tcp://192.168.1.100:9100"
+                  />
+                  {formErrors.connection_string && (
+                    <p className="text-pos-error text-xs mt-1">{formErrors.connection_string}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center pt-6">
+                  <input 
+                    type="checkbox" 
+                    id="enabled"
+                    name="enabled"
+                    checked={terminalForm.enabled}
+                    onChange={handleFormChange}
+                    className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" 
+                  />
+                  <label htmlFor="enabled" className="ml-2 text-pos-text-primary text-xs">
+                    Enable terminal
+                  </label>
+                </div>
+              </div>
+
+              <div className="text-pos-text-muted text-xs space-y-1">
+                <p className="font-medium">Examples for {terminalForm.connection_type.toUpperCase()}:</p>
+                {getConnectionExamples().map((example, index) => (
+                  <p key={index}>
+                    <strong>{example.label}:</strong> 
+                    <code className="ml-1 px-1 py-0.5 bg-pos-bg-primary rounded">{example.example}</code>
+                  </p>
+                ))}
+              </div>
+
+              <div className="bg-blue-500 bg-opacity-10 border border-blue-500 rounded p-2 text-xs text-blue-400 mt-2">
+                <p className="font-medium mb-1">💡 Tips:</p>
+                <ul className="list-disc list-inside space-y-0.5 text-xs">
+                  <li>Ensure terminal is powered on and connected</li>
+                  <li>Check IP address in terminal settings</li>
+                  <li>Default port is usually 9100</li>
+                  <li>Use Test button to verify connection</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Keypad Section */}
+            {showKeypad && (
+              <div className="px-4 py-2 flex-1 flex flex-col items-center justify-center" style={{marginTop:"-1rem"}}>
+                <div className="mb-1 text-sm text-pos-text-muted text-center">
+                  Active Field: <span className="text-pos-text-primary font-medium">{activeField || 'None'}</span>
+                </div>
+                <div className="flex-1 flex items-center justify-center w-full max-w-2xl">
+                  <KeypadNumpad
+                    onInput={handleKeypadInput}
+                    onEnter={handleKeypadEnter}
+                    onBackspace={handleKeypadBackspace}
+                    onClear={handleKeypadClear}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            )}
+            
+            <div className="bg-pos-bg-tertiary border-t border-pos-border-secondary px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0 sticky bottom-0">
+              <button
+                type="button"
+                onClick={() => setShowKeypad(!showKeypad)}
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${showKeypad
+                  ? 'bg-pos-info text-white'
+                  : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
+                  }`}>
+                {showKeypad ? 'Hide Keyboard' : 'Show Keyboard'} ⌨️
               </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    setShowAddTerminal(false);
+                    setFormErrors({});
+                    setActiveField(null);
+                  }}
+                  className="px-4 py-1.5 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary text-sm font-medium hover:bg-pos-interactive-primary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={editingTerminal ? handleUpdateTerminal : handleAddTerminal}
+                  className="px-5 py-1.5 bg-pos-bg-primary text-pos-text-primary text-sm font-medium hover:bg-pos-interactive-primary transition-colors shadow-lg"
+                >
+                  {editingTerminal ? 'Update' : 'Add'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

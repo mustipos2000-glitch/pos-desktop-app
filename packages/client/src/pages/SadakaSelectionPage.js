@@ -27,7 +27,9 @@ const SadakaSelectionPage = () => {
   };
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col items-center justify-center p-6">
+    <div className="h-screen bg-pos-bg-primary flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        <div className="min-h-full flex flex-col items-center justify-center p-6">
       {/* Header */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
@@ -97,14 +99,16 @@ const SadakaSelectionPage = () => {
         </div>
       </div>
 
-      {/* Go Back Button */}
-      <div className="flex justify-center">
-        <button
-          onClick={handleGoBack}
-          className="px-8 py-3 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-base"
-        >
-          Go back
-        </button>
+          {/* Go Back Button */}
+          <div className="flex justify-center mb-8">
+            <button
+              onClick={handleGoBack}
+              className="px-8 py-3 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-base"
+            >
+              Go back
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

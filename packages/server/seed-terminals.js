@@ -19,63 +19,62 @@ db.exec(`
 function seedTerminals() {
   console.log('Starting terminal seeding...');
 
-  // Read config files
-  const cashmaticConfigPath = path.join(__dirname, 'config', 'cashmaticConfig.json');
-  const paywordConfigPath = path.join(__dirname, 'config', 'payworld.config.json');
-  const vivaConfigPath = path.join(__dirname, 'config', 'viva.config.json');
+  // Define terminal configurations to seed
+  // Each terminal type has its config file path and metadata
+  const terminalDefinitions = [
+    {
+      name: 'Cashmatic Terminal',
+      type: 'cashmatic',
+      connection_type: 'network',
+      configPath: path.join(__dirname, 'config', 'cashmaticConfig.json'),
+      requiredFields: ['ip', 'username', 'password']
+    },
+    {
+      name: 'Payworld Terminal',
+      type: 'payworld', // Also supports 'payword' and 'bancontact' aliases
+      connection_type: 'network',
+      configPath: path.join(__dirname, 'config', 'payworld.config.json'),
+      requiredFields: ['ip', 'port', 'posId']
+    },
+    {
+      name: 'Viva Wallet Terminal',
+      type: 'viva',
+      connection_type: 'api',
+      configPath: path.join(__dirname, 'config', 'viva.config.json'),
+      requiredFields: ['merchantId', 'terminalId'] // Client-side only for now
+    }
+  ];
 
   const terminals = [];
 
-  // Seed Cashmatic terminal
-  if (fs.existsSync(cashmaticConfigPath)) {
-    try {
-      const cashmaticConfig = JSON.parse(fs.readFileSync(cashmaticConfigPath, 'utf8'));
-      terminals.push({
-        name: 'Cashmatic Terminal',
-        type: 'cashmatic',
-        connection_type: 'network',
-        connection_string: JSON.stringify(cashmaticConfig),
-        enabled: 1
-      });
-      console.log('✓ Cashmatic config loaded');
-    } catch (error) {
-      console.error('✗ Error loading Cashmatic config:', error.message);
+  // Process each terminal definition
+  terminalDefinitions.forEach(def => {
+    if (fs.existsSync(def.configPath)) {
+      try {
+        const config = JSON.parse(fs.readFileSync(def.configPath, 'utf8'));
+        
+        // Validate required fields
+        const missingFields = def.requiredFields.filter(field => !config[field]);
+        if (missingFields.length > 0) {
+          console.warn(`⚠ ${def.name}: Missing required fields: ${missingFields.join(', ')}`);
+          return;
+        }
+        
+        terminals.push({
+          name: def.name,
+          type: def.type,
+          connection_type: def.connection_type,
+          connection_string: JSON.stringify(config),
+          enabled: 1
+        });
+        console.log(`✓ ${def.name} config loaded`);
+      } catch (error) {
+        console.error(`✗ Error loading ${def.name} config:`, error.message);
+      }
+    } else {
+      console.log(`ℹ ${def.name}: Config file not found at ${def.configPath} (skipping)`);
     }
-  }
-
-  // Seed Payword terminal
-  if (fs.existsSync(paywordConfigPath)) {
-    try {
-      const paywordConfig = JSON.parse(fs.readFileSync(paywordConfigPath, 'utf8'));
-      terminals.push({
-        name: 'Payword Terminal',
-        type: 'payword',
-        connection_type: 'network',
-        connection_string: JSON.stringify(paywordConfig),
-        enabled: 1
-      });
-      console.log('✓ Payword config loaded');
-    } catch (error) {
-      console.error('✗ Error loading Payword config:', error.message);
-    }
-  }
-
-  // Seed Viva terminal
-  if (fs.existsSync(vivaConfigPath)) {
-    try {
-      const vivaConfig = JSON.parse(fs.readFileSync(vivaConfigPath, 'utf8'));
-      terminals.push({
-        name: 'Viva Wallet Terminal',
-        type: 'viva',
-        connection_type: 'api',
-        connection_string: JSON.stringify(vivaConfig),
-        enabled: 1
-      });
-      console.log('✓ Viva config loaded');
-    } catch (error) {
-      console.error('✗ Error loading Viva config:', error.message);
-    }
-  }
+  });
 
   // Insert or update terminals
   const checkStmt = db.prepare('SELECT id FROM payment_terminals WHERE type = ?');
