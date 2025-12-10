@@ -6,11 +6,14 @@ import OrderPanel from '../components/OrderPanel';
 import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
 import UnifiedTableModal from '../components/UnifiedTableModal';
+import MessageModal from '../components/MessageModal';
 import ApiService from '../services/api';
 import { useVersion } from '../context/VersionContext';
+import { useMessageModal } from '../hooks/useMessageModal';
 
 const POSScreen = () => {
   const { hasFeature } = useVersion();
+  const { messageModal, showError, showWarning, closeModal } = useMessageModal();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [cart, setCart] = useState([]);
   const [showSettings, setShowSettings] = useState(false);
@@ -139,6 +142,18 @@ const POSScreen = () => {
         }
       } catch (error) {
         console.error('Error auto-saving order:', error);
+        
+        // Show inventory error to user if it's an inventory issue
+        if (error.message && error.message.includes('Insufficient inventory')) {
+          const errorDetails = error.details ? 
+            error.details.map(d => `${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
+            error.message;
+          
+          showError(errorDetails, '⚠️ Insufficient Inventory');
+          
+          // Optionally: Remove items that exceed inventory from cart
+          // This prevents the order from being stuck in an invalid state
+        }
       }
     };
 
@@ -195,8 +210,46 @@ const POSScreen = () => {
     };
     fetchData();
   }, []);
-  const addToCart = (product, quantity = 1, isSubProduct = false) => {
+  const addToCart = async (product, quantity = 1, isSubProduct = false) => {
   const finalQuantity = quantity > 0 ? quantity : 1;
+  
+  // Check inventory availability before adding (for both new and existing orders)
+  if (!isSubProduct) {
+    try {
+      // Fetch fresh availability from server
+      let availableQty = product.available_qty;
+      
+      if (currentOrderId) {
+        // For existing orders, fetch with excludeOrderId to get accurate availability
+        const url = `/products/${product.id}?excludeOrderId=${currentOrderId}`;
+        const response = await fetch(`http://localhost:5000/api${url}`);
+        const data = await response.json();
+        availableQty = data.data.available_qty || 0;
+      }
+      
+      // Calculate how much of this product is already in cart
+      const currentInCart = cart.reduce((total, item) => {
+        if (item.id === product.id && !item.isSubProduct) {
+          return total + item.quantity;
+        }
+        return total;
+      }, 0);
+      
+      const requestedTotal = currentInCart + finalQuantity;
+      
+      // Check if requested total exceeds available
+      if (requestedTotal > availableQty) {
+        showWarning(
+          `${product.name}\n\nRequested: ${requestedTotal}\nAvailable: ${availableQty}\nAlready in cart: ${currentInCart}`,
+          '⚠️ Insufficient Stock'
+        );
+        return; // Don't add to cart
+      }
+    } catch (error) {
+      console.error('Error checking inventory:', error);
+      // On error, allow the add and let server validate
+    }
+  }
   
   // If it's a sub-product, handle special logic
   if (isSubProduct && cart.length > 0 && lastClickedProductId && activeParentRowIndex !== null) {
@@ -345,10 +398,42 @@ const updateQuantity = async (cartItemId, quantity) => {
 
   console.log("Updating quantity for item:", item.name, "to", quantity);
 
-  if (quantity > item.available_qty) {
-    console.log(`❌ Quantity exceeds available stock (${item.available_qty}) for ${item.name}`);
-    alert(`Only ${item.available_qty} units available for ${item.name}`);
-    return; // Stop update
+  // Check inventory when INCREASING quantity (for both new and existing orders)
+  if (quantity > item.quantity && !item.isSubProduct) {
+    try {
+      // Fetch fresh availability from server
+      let availableQty = item.available_qty;
+      
+      if (currentOrderId) {
+        // For existing orders, fetch with excludeOrderId to get accurate availability
+        const url = `/products/${item.id}?excludeOrderId=${currentOrderId}`;
+        const response = await fetch(`http://localhost:5000/api${url}`);
+        const data = await response.json();
+        availableQty = data.data.available_qty || 0;
+      }
+      
+      // Calculate total of this product in cart (excluding current item)
+      const otherItemsTotal = cart.reduce((total, cartItem) => {
+        if (cartItem.id === item.id && cartItem.cartItemId !== cartItemId && !cartItem.isSubProduct) {
+          return total + cartItem.quantity;
+        }
+        return total;
+      }, 0);
+      
+      const requestedTotal = quantity + otherItemsTotal;
+      
+      // Check against available quantity
+      if (requestedTotal > availableQty) {
+        showWarning(
+          `${item.name}\n\nRequested: ${requestedTotal}\nAvailable: ${availableQty}\nOther items in cart: ${otherItemsTotal}`,
+          '⚠️ Insufficient Stock'
+        );
+        return; // Don't update
+      }
+    } catch (error) {
+      console.error('Error checking inventory:', error);
+      // On error, allow the update and let server validate
+    }
   }
 
   if (quantity <= 0) {
@@ -992,6 +1077,14 @@ const updateQuantity = async (cartItemId, quantity) => {
           currentTable={selectedTable}
         />
       )}
+
+      <MessageModal
+        isOpen={messageModal.isOpen}
+        onClose={closeModal}
+        title={messageModal.title}
+        message={messageModal.message}
+        type={messageModal.type}
+      />
     </div>
   );
 };

@@ -506,48 +506,67 @@ const formatAmount = (value) => {
         })(),
       };
 
-      if (currentOrderId) {
-        // Update existing order
-        await ApiService.updateOrder(currentOrderId, orderData);
-      } else {
-        // Create new order
-        await ApiService.createOrder(orderData);
-      }
-
-      // Update table status if table is selected
-      if (selectedTable) {
-        try {
-          await ApiService.updatePrTable(selectedTable.id, {
-            ...selectedTable,
-            status: "reserved",
-          });
-        } catch (error) {
-          console.error("Error updating table status:", error);
+      try {
+        if (currentOrderId) {
+          // Update existing order
+          await ApiService.updateOrder(currentOrderId, orderData);
+        } else {
+          // Create new order
+          await ApiService.createOrder(orderData);
         }
-      }
 
-      // Clear cart and reset state
-      setCart([]);
-      setDiscount(0);
-      setNote("");
-      setSelectedIds([]);
-      setLastAddedId(null);
-      if (onSelectCustomer) {
-        onSelectCustomer(null);
-      }
+        // Update table status if table is selected
+        if (selectedTable) {
+          try {
+            await ApiService.updatePrTable(selectedTable.id, {
+              ...selectedTable,
+              status: "reserved",
+            });
+          } catch (error) {
+            console.error("Error updating table status:", error);
+          }
+        }
 
-      // Notify parent to clear order and table selection
-      if (onOrderComplete) {
-        onOrderComplete();
-      }
+        // Clear cart and reset state
+        setCart([]);
+        setDiscount(0);
+        setNote("");
+        setSelectedIds([]);
+        setLastAddedId(null);
+        if (onSelectCustomer) {
+          onSelectCustomer(null);
+        }
 
-      // Refresh hold orders count in top bar
-      if (onRefreshHoldCount) {
-        onRefreshHoldCount();
-      }
+        // Notify parent to clear order and table selection
+        if (onOrderComplete) {
+          onOrderComplete();
+        }
 
-      setToastType("success");
-      setToastMessage("Order placed on hold successfully!");
+        // Refresh hold orders count in top bar
+        if (onRefreshHoldCount) {
+          onRefreshHoldCount();
+        }
+
+        setToastType("success");
+        setToastMessage("Order placed on hold successfully!");
+      } catch (error) {
+        console.error("Error placing order on hold:", error);
+        
+        // Show inventory error to user
+        if (error.message && error.message.includes('Insufficient inventory')) {
+          const errorDetails = error.details ? 
+            error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
+            error.message;
+          
+          setToastType("error");
+          setToastMessage(`⚠️ Insufficient Inventory\n\n${errorDetails}`);
+        } else {
+          setToastType("error");
+          setToastMessage("Failed to place order on hold");
+        }
+        setShowToast(true);
+        return; // Don't proceed if there's an error
+      }
     } catch (error) {
       console.error("Error putting order on hold:", error);
       setToastType("error");
@@ -696,7 +715,17 @@ const formatAmount = (value) => {
       setShowReceipt(true);
     } catch (error) {
       console.error("Error processing order:", error);
-      alert("Failed to process payment. Please try again.");
+      
+      // Show specific error for inventory issues
+      if (error.message && error.message.includes('Insufficient inventory')) {
+        const errorDetails = error.details ? 
+          error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
+          error.message;
+        
+        alert(`⚠️ Insufficient Inventory\n\n${errorDetails}\n\nPlease adjust quantities and try again.`);
+      } else {
+        alert("Failed to process payment. Please try again.");
+      }
     } finally {
       setIsProcessing(false);
     }

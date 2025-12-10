@@ -170,7 +170,9 @@ const ProductController = {
       }
 
       // attach available quantity
-      product.available_qty = InventoryHelper.getAvailableQty(product.id);
+      // If excludeOrderId query param is provided, exclude that order from calculation
+      const excludeOrderId = req.query.excludeOrderId ? parseInt(req.query.excludeOrderId) : null;
+      product.available_qty = InventoryHelper.getAvailableQty(product.id, excludeOrderId);
 
       res.json({ data: product });
     } catch (err) {
@@ -267,9 +269,9 @@ const ProductController = {
         WHERE od.order_id = ?
       `).all(orderId);
 
-      // Add available_qty and validate each product
+      // Add available_qty and validate each product (excluding current order from calculation)
       const validatedDetails = details.map((item) => {
-        const availableQty = InventoryHelper.getAvailableQty(item.product_id);
+        const availableQty = InventoryHelper.getAvailableQty(item.product_id, orderId);
         return {
           ...item,
           available_qty: availableQty,
