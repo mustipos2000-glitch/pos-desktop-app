@@ -267,12 +267,12 @@ class ApiService {
     });
   }
 
-  // Cashmatic methods
-  static async startCashmaticPayment(data) {
-    console.log('startCashmaticPayment data:', data);
-    return this.request('/cashmatic/start', {
-      method: 'POST',
-      body: JSON.stringify(data),
+  // ---------- CASHMATIC ----------
+  static async startCashmaticPayment(payload) {
+    console.log("startCashmaticPayment payload:", payload);
+    return this.request("/cashmatic/start", {
+      method: "POST",
+      body: JSON.stringify(payload),
     });
   }
 
@@ -280,22 +280,48 @@ class ApiService {
     return this.request(`/cashmatic/status/${sessionId}`);
   }
 
-  // Payworld methods
-  static async startPayworldPayment(data) {
-    console.log('startPayworldPayment data:', data);
-    return this.request('/payworld/start', {
-      method: 'POST',
-      body: JSON.stringify(data),
+  static async cancelCashmatic(sessionId) {
+    return this.request(`/cashmatic/cancel/${sessionId}`, {
+      method: "POST",
     });
   }
 
-  static async getPayworldStatus(sessionId) {
-    return this.request(`/payworld/status/${sessionId}`);
+  // ---------- PAYWORLD ----------
+  // start betaling → geeft sessionId
+  static async startPayworldPayment(payload) {
+    console.log("startPayworldPayment payload:", payload);
+    const res = await this.request("/payworld/start", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    console.log("startPayworldPayment res:", res);
+    return res;
   }
 
+  // live status
+  static async getPayworldStatus(sessionId) {
+    console.log("getPayworldStatus sessionId:", sessionId);
+    const res = await this.request(`/payworld/status/${sessionId}`);
+    console.log("getPayworldStatus res:", res);
+    return res;
+  }
+
+  // annuleren
   static async cancelPayworldPayment(sessionId) {
     return this.request(`/payworld/cancel/${sessionId}`, {
-      method: 'POST',
+      method: "POST",
+    });
+  }
+
+  // config (voor Settings: IP/poort/posId/currency)
+  static async getPayworldConfig() {
+    return this.request("/payworld/config");
+  }
+
+  static async savePayworldConfig(config) {
+    return this.request("/payworld/config", {
+      method: "POST",
+      body: JSON.stringify(config),
     });
   }
 

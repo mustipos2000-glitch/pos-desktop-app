@@ -8,8 +8,6 @@ import Toast from "./Toast";
 import CustomerSelector from "./CustomerSelector";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
-import cashmaticService from "../services/cashmaticService";
-import payworldService from "../services/payworldService";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount }) => {
   
@@ -23,15 +21,6 @@ const formatAmount = (value) => {
   const [note, setNote] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [cashmaticInfo, setCashmaticInfo] = useState({
-    requested: 0,
-    inserted: 0,
-    dispensed: 0,
-    notDispensed: 0,
-    state: null,
-  });
-  const [showCashmaticModal, setShowCashmaticModal] = useState(false);
-
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState("error");
   const [printers, setPrinters] = useState([]);
@@ -43,20 +32,37 @@ const formatAmount = (value) => {
   const [lastAddedId, setLastAddedId] = useState(null);
   const prevCartLengthRef = useRef(cart.length);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash");
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [noteModalTitle, setNoteModalTitle] = useState("");
   const [currentNoteValue, setCurrentNoteValue] = useState("");
 
+  // Cashmatic state
+  const [cashmaticSessionId, setCashmaticSessionId] = useState(null);
+  const [cashmaticPolling, setCashmaticPolling] = useState(false);
+  const [cashmaticInfo, setCashmaticInfo] = useState({
+    requested: 0,
+    inserted: 0,
+    dispensed: 0,
+    notDispensed: 0,
+    state: null,
+  });
+  const [showCashmaticModal, setShowCashmaticModal] = useState(false);
+
   // Payworld state
   const [showPayworldModal, setShowPayworldModal] = useState(false);
   const [payworldStatus, setPayworldStatus] = useState({
-    state: "IDLE",
+    state: "IDLE", // 'IN_PROGRESS' | 'APPROVED' | 'DECLINED' | 'CANCELLED' | 'ERROR'
     message: "",
     details: null,
   });
+  const [payworldSessionId, setPayworldSessionId] = useState(null);
+  const [payworldPolling, setPayworldPolling] = useState(false);
+  const payworldFinalizedRef = useRef(false);
+
+  // Payment Modal state (for Cash/Card payments)
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("cash");
 
   // Fetch printers on component mount
   useEffect(() => {
@@ -89,66 +95,6 @@ const formatAmount = (value) => {
     prevCartLengthRef.current = currLen;
   }, [cart]);
 
-  // Cleanup services on unmount
-  useEffect(() => {
-    return () => {
-      if (cashmaticService.isPaymentInProgress()) {
-        cashmaticService.cleanup();
-      }
-      if (payworldService.isPaymentInProgress()) {
-        payworldService.cleanup();
-      }
-    };
-  }, []);
-
-  const handleSelect = (id) => {
-    setSelectedIds((prev) => {
-      const alreadySelected = prev.includes(id);
-      if (alreadySelected) {
-        setLastAddedId(null);
-        return prev.filter((x) => x !== id);
-      }
-      setLastAddedId(id);
-      return [...prev, id];
-    });
-  };
-
-  const handleClearSelected = () => {
-    if (selectedIds.length === 0) {
-      setToastType("error");
-      setToastMessage("Please select at least one item to delete.");
-      return;
-    }
-    setCart((prev) =>
-      prev.filter((item) => {
-        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
-        return !selectedIds.includes(itemCartId);
-      })
-    );
-    setSelectedIds([]);
-    setLastAddedId(null);
-  };
-
-  const handleDeleteAllConfirm = () => {
-    setCart([]);
-    setSelectedIds([]);
-    setLastAddedId(null);
-    setDiscount(0);
-    setNote("");
-    setCustomQuantity("");
-    if (onSelectCustomer) {
-      onSelectCustomer(null);
-    }
-    
-    // Notify parent to deselect table and clear order
-    if (onDeleteAll) {
-      onDeleteAll();
-    }
-  };
-
-  const totalProductCount = () => cart.length;
-  const hasSelection = selectedIds.length > 0;
-
   const calculateTotal = () =>
     cart.reduce((sum, item) => {
       const price =
@@ -175,406 +121,6 @@ const formatAmount = (value) => {
 
       return sum + itemTotal;
     }, 0);
-
-  const handlePayment = (paymentMethod = "cash") => {
-    if (cart.length === 0) return;
-    setSelectedPaymentMethod(paymentMethod);
-    setShowPaymentModal(true);
-  };
-
-  const handleCashPayment = () => handlePayment("cash");
-
-  // Payworld flow using centralized service
-  const startPayworldFlow = async () => {
-    if (cart.length === 0) {
-      setToastType("error");
-      setToastMessage("Cart is empty. Cannot start Payworld payment.");
-      return;
-    }
-
-    const subTotal = calculateTotal();
-    const total = subTotal - discount;
-
-    if (total <= 0) {
-      setToastType("error");
-      setToastMessage(
-        "Order total must be greater than zero"
-      );
-      return;
-    }
-
-    setShowPayworldModal(true);
-    setIsProcessing(true);
-
-    try {
-      await payworldService.startPayment(total, {
-        onStatusUpdate: (status) => {
-          setPayworldStatus(status);
-        },
-        onSuccess: async (result) => {
-          setToastType("success");
-          setToastMessage(result.message);
-
-          await handlePaymentConfirm({
-            totalPaid: result.totalPaid,
-            cashAmount: result.cashAmount,
-            cardAmount: result.cardAmount,
-            changeDue: result.changeDue,
-          });
-
-          setShowPayworldModal(false);
-          setIsProcessing(false);
-        },
-        onError: (error) => {
-          setPayworldStatus(error);
-          setToastType("error");
-          setToastMessage(error.message);
-          setIsProcessing(false);
-        },
-        onCancel: (result) => {
-          setPayworldStatus(result);
-          setToastType("info");
-          setToastMessage(result.message);
-          setIsProcessing(false);
-        },
-        onDeclined: (result) => {
-          setPayworldStatus(result);
-          setToastType("error");
-          setToastMessage(result.message);
-          setIsProcessing(false);
-        },
-      });
-    } catch (err) {
-      console.error("Payworld start error:", err);
-      setToastType("error");
-      setToastMessage("Payworld betaling kon niet gestart worden.");
-      setShowPayworldModal(false);
-      setIsProcessing(false);
-    }
-  };
-
-  // Cancel Payworld payment
-  const handleAbortPayworld = async () => {
-    try {
-      await payworldService.cancelPayment();
-    } catch (err) {
-      console.error("Error cancelling Payworld:", err);
-      setToastType("error");
-      setToastMessage("Annuleren op Payworld-terminal mislukt.");
-    }
-  };
-
-  const handleCardPayment = () => {
-    if (cart.length === 0) return;
-
-    const storedTerminal = localStorage.getItem("pos_card_terminal") || "none";
-
-    // Viva flow
-    if (storedTerminal === "viva") {
-      const subTotal = calculateTotal();
-      const total = subTotal - discount;
-
-      if (total <= 0) {
-        setToastType("error");
-        setToastMessage(
-          "Order total must be greater than zero for Viva payment."
-        );
-        return;
-      }
-
-      let vivaConfig = { merchantId: "", terminalId: "" };
-      try {
-        const storedConfig = localStorage.getItem("pos_viva_config");
-        if (storedConfig) {
-          vivaConfig = JSON.parse(storedConfig);
-        }
-      } catch (e) {
-        console.error("Failed to parse Viva config from localStorage", e);
-      }
-
-      if (!vivaConfig.merchantId || !vivaConfig.terminalId) {
-        setToastType("error");
-        setToastMessage(
-          "Viva settings are incomplete. Please configure Merchant ID and Terminal ID in Settings -> Payment."
-        );
-        return;
-      }
-
-      setIsProcessing(true);
-      setToastType("info");
-      setToastMessage(
-        "Viva betaling gestart. Volg de instructies op de terminal..."
-      );
-
-      ApiService.startVivaPayment({
-        amount: total,
-        merchantId: vivaConfig.merchantId,
-        terminalId: vivaConfig.terminalId,
-        orderReference: null,
-      })
-        .then(async (res) => {
-          const data = res?.data || res;
-          if (!data || data.ok !== true) {
-            console.error(
-              "Viva payment failed or returned non-ok response:",
-              data
-            );
-            setToastType("error");
-            setToastMessage(
-              "Viva betaling mislukt. Controleer de terminal of probeer opnieuw."
-            );
-            return;
-          }
-
-          try {
-            await handlePaymentConfirm({
-              totalPaid: total,
-              cashAmount: 0,
-              cardAmount: total,
-              changeDue: 0,
-            });
-            setToastType("success");
-            setToastMessage("Viva betaling voltooid.");
-          } catch (error) {
-            console.error("Error finalizing Viva payment:", error);
-            setToastType("error");
-            setToastMessage(
-              "Viva betaling mislukt bij het afronden van de bestelling."
-            );
-          }
-        })
-        .catch((error) => {
-          console.error("Error while calling Viva payment endpoint:", error);
-          setToastType("error");
-          setToastMessage(
-            "Viva betaling mislukt. Controleer verbinding met server of Viva API."
-          );
-        })
-        .finally(() => {
-          setIsProcessing(false);
-        });
-
-      return;
-    }
-
-    // Payworld via gekozen terminal
-    if (storedTerminal === "payworld") {
-      startPayworldFlow();
-      return;
-    }
-
-    // Default: card modal
-    handlePayment("card");
-  };
-
-  const handleCashmaticPayment = async () => {
-    if (cart.length === 0) {
-      setToastType("error");
-      setToastMessage("Cart is empty. Cannot start Cashmatic payment.");
-      return;
-    }
-
-    const subTotal = calculateTotal();
-    const total = subTotal - discount;
-
-    if (total <= 0) {
-      setToastType("error");
-      setToastMessage(
-        "Order total must be greater than zero for Cashmatic payment."
-      );
-      return;
-    }
-
-    setIsProcessing(true);
-    setShowCashmaticModal(true);
-    setToastType("info");
-    setToastMessage("Cashmatic payment started. Please pay at the machine.");
-
-    try {
-      await cashmaticService.startPayment(total, {
-        onStatusUpdate: (info) => {
-          setCashmaticInfo(info);
-        },
-        onSuccess: async (result) => {
-          setToastType("success");
-          setToastMessage(result.message);
-
-          await handlePaymentConfirm({
-            totalPaid: result.totalPaid,
-            cashAmount: result.cashAmount,
-            cardAmount: result.cardAmount,
-            changeDue: result.changeDue,
-          });
-
-          setIsProcessing(false);
-
-          if (!result.manualChangeRequired) {
-            setShowCashmaticModal(false);
-          }
-        },
-        onError: (error) => {
-          setCashmaticInfo(error.info || {
-            requested: total,
-            inserted: 0,
-            dispensed: 0,
-            notDispensed: 0,
-            state: "ERROR",
-          });
-          setIsProcessing(false);
-          setToastType("error");
-          setToastMessage(error.message);
-        },
-        onCancel: (result) => {
-          setCashmaticInfo(result.info || {
-            requested: total,
-            inserted: 0,
-            dispensed: 0,
-            notDispensed: 0,
-            state: "CANCELLED",
-          });
-          setIsProcessing(false);
-          setToastType("error");
-          setToastMessage(result.message);
-        },
-      });
-    } catch (error) {
-      console.error("Error starting Cashmatic payment:", error);
-      setIsProcessing(false);
-      setToastType("error");
-      setToastMessage("Failed to start Cashmatic payment.");
-      setShowCashmaticModal(false);
-    }
-  };
-
-  const handlePayworldPayment = () => {
-    startPayworldFlow();
-  };
-
-  const handleOnHold = async () => {
-    if (cart.length === 0) {
-      setToastType("error");
-      setToastMessage("Cart is empty. Cannot put order on hold.");
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const subTotal = calculateTotal();
-      const total = subTotal - discount;
-
-      const orderData = {
-        status: "on_hold",
-        note,
-        sub_total: subTotal,
-        total,
-        discount,
-        customer_id: selectedCustomer ? selectedCustomer.id : null,
-        table_id: selectedTable ? selectedTable.id : null,
-        details: (() => {
-          const allDetails = [];
-          let detailIndex = 0;
-
-          cart.forEach((item) => {
-            const parentDetailIndex = detailIndex;
-
-            allDetails.push({
-              product_id: item.id,
-              qty: item.quantity,
-              total: item.price * item.quantity,
-              notes: item.notes || null,
-              discount: item.discount || 0,
-            });
-            detailIndex++;
-
-            if (item.subProducts && item.subProducts.length > 0) {
-              item.subProducts.forEach((subItem) => {
-                allDetails.push({
-                  product_id: subItem.id,
-                  qty: subItem.quantity,
-                  total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
-                  discount: 0,
-                });
-                detailIndex++;
-              });
-            }
-          });
-
-          return allDetails;
-        })(),
-      };
-
-      try {
-        if (currentOrderId) {
-          // Update existing order
-          await ApiService.updateOrder(currentOrderId, orderData);
-        } else {
-          // Create new order
-          await ApiService.createOrder(orderData);
-        }
-
-        // Update table status if table is selected
-        if (selectedTable) {
-          try {
-            await ApiService.updatePrTable(selectedTable.id, {
-              ...selectedTable,
-              status: "reserved",
-            });
-          } catch (error) {
-            console.error("Error updating table status:", error);
-          }
-        }
-
-        // Clear cart and reset state
-        setCart([]);
-        setDiscount(0);
-        setNote("");
-        setSelectedIds([]);
-        setLastAddedId(null);
-        if (onSelectCustomer) {
-          onSelectCustomer(null);
-        }
-
-        // Notify parent to clear order and table selection
-        if (onOrderComplete) {
-          onOrderComplete();
-        }
-
-        // Refresh hold orders count in top bar
-        if (onRefreshHoldCount) {
-          onRefreshHoldCount();
-        }
-
-        setToastType("success");
-        setToastMessage("Order placed on hold successfully!");
-      } catch (error) {
-        console.error("Error placing order on hold:", error);
-        
-        // Show inventory error to user
-        if (error.message && error.message.includes('Insufficient inventory')) {
-          const errorDetails = error.details ? 
-            error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
-            error.message;
-          
-          setToastType("error");
-          setToastMessage(`⚠️ Insufficient Inventory\n\n${errorDetails}`);
-        } else {
-          setToastType("error");
-          setToastMessage("Failed to place order on hold");
-        }
-        setShowToast(true);
-        return; // Don't proceed if there's an error
-      }
-    } catch (error) {
-      console.error("Error putting order on hold:", error);
-      setToastType("error");
-      setToastMessage("Failed to put order on hold. Please try again.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const handlePaymentConfirm = async (paymentData) => {
     if (cart.length === 0) {
@@ -715,17 +261,543 @@ const formatAmount = (value) => {
       setShowReceipt(true);
     } catch (error) {
       console.error("Error processing order:", error);
+      alert("Failed to process payment. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Poll Cashmatic payment status
+  useEffect(() => {
+    if (!cashmaticPolling || !cashmaticSessionId) return;
+    
+    const poll = async () => {
+      console.log("Start polling");
       
-      // Show specific error for inventory issues
-      if (error.message && error.message.includes('Insufficient inventory')) {
-        const errorDetails = error.details ? 
-          error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
-          error.message;
-        
-        alert(`⚠️ Insufficient Inventory\n\n${errorDetails}\n\nPlease adjust quantities and try again.`);
-      } else {
-        alert("Failed to process payment. Please try again.");
+      const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
+      const s = res.data || res;
+      console.log("Cashmatic status:", s);
+      
+      const requested = (s.requestedAmount || 0) / 100;
+      const inserted = (s.insertedAmount || 0) / 100;
+      const dispensed = (s.dispensedAmount || 0) / 100;
+      const notDispensed = (s.notDispensedAmount || 0) / 100;
+
+      setCashmaticInfo({
+        requested,
+        inserted,
+        dispensed,
+        notDispensed,
+        state: s.state,
+      });
+
+      if (s.state === "IN_PROGRESS" || s.state === "PAID") {
+        console.log("state is in Progress or Paid");
+        return;
       }
+
+      if (s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+        console.log("Finished the Cashmatic ");
+        
+        setCashmaticPolling(false);
+        setCashmaticSessionId(null);
+        setToastType("success");
+        setToastMessage(
+          s.state === "FINISHED"
+            ? "Cashmatic payment completed."
+            : "Cashmatic payment completed – give manual change."
+        );
+
+        const subTotal = calculateTotal();
+        const total = subTotal - discount;
+
+        await handlePaymentConfirm({
+          totalPaid: total,
+          cashAmount: total,
+          cardAmount: 0,
+          changeDue: 0,
+        });
+
+        setIsProcessing(false);
+
+        if (s.state === "FINISHED") {
+          setShowCashmaticModal(false);
+        }
+        return;
+      }
+
+      if (s.state === "CANCELLED" || s.state === "ERROR") {
+        console.log("Cancelled");        
+        setCashmaticPolling(false);
+        setCashmaticSessionId(null);
+        setIsProcessing(false);
+        setToastType("error");
+        setToastMessage(
+          s.state === "CANCELLED"
+            ? "Cashmatic payment cancelled."
+            : "Error during Cashmatic payment."
+        );
+        return;
+      }
+    };
+
+    const intervalId = setInterval(poll, 1000);
+    return () => clearInterval(intervalId);
+  }, [cashmaticPolling, cashmaticSessionId, cart, discount]);
+
+  // Poll Payworld status
+  useEffect(() => {
+    if (!payworldPolling || !payworldSessionId) return;
+    console.log("Payworld polling started");
+    
+    const startTime = Date.now();
+    const MAX_POLLING_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
+    
+    const poll = async () => {
+      // Check if timeout exceeded
+      const elapsed = Date.now() - startTime;
+      if (elapsed >= MAX_POLLING_DURATION) {
+        console.log("Payworld polling timeout reached (2 minutes)");
+        setPayworldPolling(false);
+        setPayworldSessionId(null);
+        setIsProcessing(false);
+        setShowPayworldModal(false);
+        setToastType("error");
+        setToastMessage("Payworld payment timeout. Please try again.");
+        setPayworldStatus({
+          state: "ERROR",
+          message: "Payment timeout - maximum polling duration exceeded.",
+          details: null,
+        });
+        return;
+      }
+
+      try {
+        const res = await ApiService.getPayworldStatus(payworldSessionId);
+        const data = res.data || res;
+        if (!data || data.ok === false) return;
+        console.log("Payworld status:", data);
+        const state = data.state || "IN_PROGRESS";
+        const message = data.message || payworldStatus.message;
+        const details = data.details || payworldStatus.details;
+
+        setPayworldStatus({
+          state,
+          message,
+          details,
+        });
+
+        // finale states
+        if (state === "APPROVED" && !payworldFinalizedRef.current) {
+          console.log("Payworld status is Approved");
+          payworldFinalizedRef.current = true;
+
+          const subTotal = calculateTotal();
+          const total = subTotal - discount;
+
+          await handlePaymentConfirm({
+            totalPaid: total,
+            cashAmount: 0,
+            cardAmount: total,
+            changeDue: 0,
+          });
+
+          setToastType("success");
+          console.log("Payworld status is Approved");
+          setToastMessage("Payworld payment completed.");
+
+          setShowPayworldModal(false);
+          setPayworldPolling(false);
+          setPayworldSessionId(null);
+          setIsProcessing(false);
+        } else if (["DECLINED", "CANCELLED", "ERROR"].includes(state)) {
+          console.log("Payworld status is Declined, Cancelled or Error");
+          setPayworldPolling(false);
+          setPayworldSessionId(null);
+          setIsProcessing(false);
+
+          if (state === "CANCELLED") {
+            setToastType("info");
+            setToastMessage("Payworld payment cancelled.");
+          } else if (state === "DECLINED") {
+            setToastType("error");
+            setToastMessage("Payworld payment declined.");
+          } else if (state === "ERROR") {
+            setToastType("error");
+            setToastMessage("Error during Payworld payment.");
+          }
+        }
+      } catch (err) {
+        console.error("Payworld polling error:", err);
+        setPayworldPolling(false);
+        setPayworldSessionId(null);
+        setIsProcessing(false);
+        setPayworldStatus({
+          state: "ERROR",
+          message: "Error retrieving Payworld status.",
+          details: { error: err.message },
+        });
+        setToastType("error");
+        setToastMessage("Error retrieving Payworld status.");
+      }
+    };
+
+    const id = setInterval(poll, 1000);
+    return () => clearInterval(id);
+  }, [payworldPolling, payworldSessionId]);
+
+  const handleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const alreadySelected = prev.includes(id);
+      if (alreadySelected) {
+        setLastAddedId(null);
+        return prev.filter((x) => x !== id);
+      }
+      setLastAddedId(id);
+      return [...prev, id];
+    });
+  };
+
+  const handleClearSelected = () => {
+    if (selectedIds.length === 0) {
+      setToastType("error");
+      setToastMessage("Please select at least one item to delete.");
+      return;
+    }
+    setCart((prev) =>
+      prev.filter((item) => {
+        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+        return !selectedIds.includes(itemCartId);
+      })
+    );
+    setSelectedIds([]);
+    setLastAddedId(null);
+  };
+
+  const handleDeleteAllConfirm = () => {
+    setCart([]);
+    setSelectedIds([]);
+    setLastAddedId(null);
+    setDiscount(0);
+    setNote("");
+    setCustomQuantity("");
+    if (onSelectCustomer) {
+      onSelectCustomer(null);
+    }
+    
+    // Notify parent to deselect table and clear order
+    if (onDeleteAll) {
+      onDeleteAll();
+    }
+  };
+
+  const totalProductCount = () => cart.length;
+  const hasSelection = selectedIds.length > 0;
+
+  // Cashmatic payment handler
+  const handleCashmaticPayment = async () => {
+    console.log("Click on handle cashmatic Payment ");
+    
+    if (cart.length === 0) {
+      setToastType("error");
+      setToastMessage("Cart is empty. Cannot start Cashmatic payment.");
+      return;
+    }
+
+    const subTotal = calculateTotal();
+    const total = subTotal - discount;
+
+    if (total <= 0) {
+      setToastType("error");
+      setToastMessage(
+        "Order total must be greater than zero for Cashmatic payment."
+      );
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      console.log("inside try on Button Cashmatic payment started. Please pay at the machine.");
+      
+      setToastType("info");
+      setToastMessage("Cashmatic payment started. Please pay at the machine.");
+      console.log("Setting the cashmatic Info", total,"State is In Progerss");
+      
+      setCashmaticInfo({
+        requested: total,
+        inserted: 0,
+        dispensed: 0,
+        notDispensed: 0,
+        state: "IN_PROGRESS",
+      });
+      setShowCashmaticModal(true);
+
+      const res = await ApiService.startCashmaticPayment({
+        amount: Math.round(total * 100),
+      });
+
+      const data = res.data || res;
+      const sessionId = data.sessionId;
+      setCashmaticSessionId(sessionId);
+      setCashmaticPolling(true);
+    } catch (error) {
+      console.error("Error starting Cashmatic payment:", error);
+      setIsProcessing(false);
+      setToastType("error");
+      setToastMessage("Failed to start Cashmatic payment.");
+      setShowCashmaticModal(false);
+    }
+  };
+
+  // Payworld flow
+  const startPayworldFlow = async () => {
+    console.log("Click on start Payworld Flow ");
+    if (cart.length === 0) {
+      setToastType("error");
+      setToastMessage("Cart is empty. Cannot start Payworld payment.");
+      return;
+    }
+
+    const subTotal = calculateTotal();
+    const total = subTotal - discount;
+
+    if (total <= 0) {
+      setToastType("error");
+      setToastMessage(
+        "Order total must be greater than zero for Payworld payment."
+      );
+      return;
+    }
+
+    setShowPayworldModal(true);
+    setPayworldStatus({
+      state: "IN_PROGRESS",
+      message: "Payworld payment started. Connecting to terminal...",
+      details: null,
+    });
+    console.log("Set the Payworld status to In Progress" , payworldFinalizedRef.current);
+    payworldFinalizedRef.current = false;
+
+    try {
+      setIsProcessing(true);
+      console.log("Start the Payworld payment");
+      const res = await ApiService.startPayworldPayment({
+        amount: total,
+      });
+      console.log("Payworld payment response:", res);
+      const data = res || {};
+      const sessionId = data.sessionId || (data.data && data.data.sessionId);
+      console.log("Payworld sessionId:", sessionId);
+      if (!sessionId) {
+        console.log("No Payworld sessionId received from server.");
+        throw new Error("No Payworld sessionId received from server.");
+      }
+      console.log("Set the Payworld sessionId:", sessionId);
+      setPayworldSessionId(sessionId);
+      setPayworldPolling(true);
+
+      setPayworldStatus((prev) => ({
+        ...prev,
+        message:
+          "Connection established. Follow the instructions on the terminal...",
+      }));
+    } catch (err) {
+      console.error("Payworld start error:", err);
+      setPayworldStatus({
+        state: "ERROR",
+        message:
+          "Payment could not be started. Check settings / connection.",
+        details: { error: err.message },
+      });
+      setToastType("error");
+      setToastMessage("Payworld payment could not be started.");
+      setShowPayworldModal(false);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handlePayworldPayment = () => {
+    console.log("Click on handle Payworld Payment ");
+    startPayworldFlow();
+  };
+
+  // Cancel Payworld on terminal
+  const handleAbortPayworld = async () => {
+    if (!payworldSessionId) {
+      setPayworldStatus({
+        state: "ERROR",
+        message: "No active Payworld session to cancel.",
+        details: null,
+      });
+      return;
+    }
+
+    setPayworldStatus({
+      state: "IN_PROGRESS",
+      message: "Payment is being cancelled on the terminal...",
+      details: null,
+    });
+
+    try {
+      await ApiService.cancelPayworldPayment(payworldSessionId);
+
+      setPayworldStatus({
+        state: "CANCELLED",
+        message: "Payworld payment cancelled on the terminal.",
+        details: null,
+      });
+
+      setPayworldPolling(false);
+      setPayworldSessionId(null);
+
+      setToastType("info");
+      setToastMessage("Payworld payment cancelled.");
+    } catch (err) {
+      console.error("Error cancelling Payworld:", err);
+      setPayworldStatus({
+        state: "ERROR",
+        message: "Failed to cancel on terminal.",
+        details: { error: err.message },
+      });
+      setToastType("error");
+      setToastMessage("Failed to cancel on Payworld terminal.");
+    }
+  };
+
+  // Cash and Card payment handlers
+  const handleCashPayment = () => {
+    if (cart.length === 0) return;
+    setSelectedPaymentMethod("cash");
+    setShowPaymentModal(true);
+  };
+
+  const handleCardPayment = () => {
+    if (cart.length === 0) return;
+    setSelectedPaymentMethod("card");
+    setShowPaymentModal(true);
+  };
+
+  const handleOnHold = async () => {
+    if (cart.length === 0) {
+      setToastType("error");
+      setToastMessage("Cart is empty. Cannot put order on hold.");
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const subTotal = calculateTotal();
+      const total = subTotal - discount;
+
+      const orderData = {
+        status: "on_hold",
+        note,
+        sub_total: subTotal,
+        total,
+        discount,
+        customer_id: selectedCustomer ? selectedCustomer.id : null,
+        table_id: selectedTable ? selectedTable.id : null,
+        details: (() => {
+          const allDetails = [];
+          let detailIndex = 0;
+
+          cart.forEach((item) => {
+            const parentDetailIndex = detailIndex;
+
+            allDetails.push({
+              product_id: item.id,
+              qty: item.quantity,
+              total: item.price * item.quantity,
+              notes: item.notes || null,
+              discount: item.discount || 0,
+            });
+            detailIndex++;
+
+            if (item.subProducts && item.subProducts.length > 0) {
+              item.subProducts.forEach((subItem) => {
+                allDetails.push({
+                  product_id: subItem.id,
+                  qty: subItem.quantity,
+                  total: subItem.price * subItem.quantity,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
+                    subItem.notes || ""
+                  }`,
+                  discount: 0,
+                });
+                detailIndex++;
+              });
+            }
+          });
+
+          return allDetails;
+        })(),
+      };
+
+      try {
+        if (currentOrderId) {
+          // Update existing order
+          await ApiService.updateOrder(currentOrderId, orderData);
+        } else {
+          // Create new order
+          await ApiService.createOrder(orderData);
+        }
+
+        // Update table status if table is selected
+        if (selectedTable) {
+          try {
+            await ApiService.updatePrTable(selectedTable.id, {
+              ...selectedTable,
+              status: "reserved",
+            });
+          } catch (error) {
+            console.error("Error updating table status:", error);
+          }
+        }
+
+        // Clear cart and reset state
+        setCart([]);
+        setDiscount(0);
+        setNote("");
+        setSelectedIds([]);
+        setLastAddedId(null);
+        if (onSelectCustomer) {
+          onSelectCustomer(null);
+        }
+
+        // Notify parent to clear order and table selection
+        if (onOrderComplete) {
+          onOrderComplete();
+        }
+
+        // Refresh hold orders count in top bar
+        if (onRefreshHoldCount) {
+          onRefreshHoldCount();
+        }
+
+        setToastType("success");
+        setToastMessage("Order placed on hold successfully!");
+      } catch (error) {
+        console.error("Error placing order on hold:", error);
+        
+        // Show inventory error to user
+        if (error.message && error.message.includes('Insufficient inventory')) {
+          const errorDetails = error.details ? 
+            error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
+            error.message;
+          
+          setToastType("error");
+          setToastMessage(`⚠️ Insufficient Inventory\n\n${errorDetails}`);
+        } else {
+          setToastType("error");
+          setToastMessage("Failed to place order on hold");
+        }
+        return; // Don't proceed if there's an error
+      }
+    } catch (error) {
+      console.error("Error putting order on hold:", error);
+      setToastType("error");
+      setToastMessage("Failed to put order on hold. Please try again.");
     } finally {
       setIsProcessing(false);
     }
@@ -835,7 +907,7 @@ const formatAmount = (value) => {
           destinationOrderId = data.id;
         }
       } catch (error) {
-        // geen bestaande order
+        // no existing order
       }
 
       const orderData = {
@@ -1502,19 +1574,19 @@ const formatAmount = (value) => {
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
               <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
-                Cashmatic betaling
+                Cashmatic Payment
               </h2>
               <div className="space-y-2 text-pos-text-primary text-sm">
                 <div className="flex justify-between">
-                  <span>Te ontvangen:</span>
+                  <span>Requested:</span>
                   <span>€ {formatAmount(cashmaticInfo?.requested)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Reeds betaald:</span>
+                  <span>Inserted:</span>
                   <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Wisselgeld (theoretisch):</span>
+                  <span>Change (theoretical):</span>
                   <span>
                     €{" "}
                     {formatAmount(
@@ -1527,33 +1599,33 @@ const formatAmount = (value) => {
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Wisselgeld via Cashmatic:</span>
+                  <span>Change via Cashmatic:</span>
                   <span>€ {formatAmount(cashmaticInfo?.dispensed)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Wisselgeld manueel:</span>
+                  <span>Manual change:</span>
                   <span>€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Status:</span>
                   <span>
                     {cashmaticInfo.state === "IDLE"
-                      ? "Gereed voor volgende klant"
+                      ? "Ready for next customer"
                       : cashmaticInfo.state === "RUNNING" ||
                         cashmaticInfo.state === "IN_PROGRESS"
-                      ? "Betaling bezig..."
+                      ? "Payment in progress..."
                       : cashmaticInfo.state === "PAID"
-                      ? "Bedrag ontvangen – wisselgeld wordt uitgegeven"
+                      ? "Amount received – change being dispensed"
                       : cashmaticInfo.state === "FINISHED_MANUAL"
-                      ? "Betaling afgerond – geef manueel wisselgeld"
+                      ? "Payment completed – give manual change"
                       : cashmaticInfo.state === "FINISHED"
-                      ? "Betaling afgerond"
+                      ? "Payment completed"
                       : cashmaticInfo.state === "CANCELLED"
-                      ? "Geannuleerd"
+                      ? "Cancelled"
                       : cashmaticInfo.state === "ERROR" ||
                         cashmaticInfo.state === "FAILED"
-                      ? "Fout – controleer Cashmatic"
-                      : "Onbekende status"}
+                      ? "Error – check Cashmatic"
+                      : "Unknown status"}
                   </span>
                 </div>
               </div>
@@ -1567,7 +1639,7 @@ const formatAmount = (value) => {
                     className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
                     onClick={() => setShowCashmaticModal(false)}
                   >
-                    Sluiten
+                    Close
                   </button>
                 )}
               </div>
@@ -1580,12 +1652,12 @@ const formatAmount = (value) => {
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
               <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
-                Payworld / PAX A35 betaling
+                Payworld / PAX A35 Payment
               </h2>
 
               <div className="space-y-2 text-pos-text-primary text-sm">
                 <div className="flex justify-between">
-                  <span>Bedrag:</span>
+                  <span>Amount:</span>
                   <span>€ {formatAmount(calculateTotal() - discount)}</span>
                 </div>
 
@@ -1593,16 +1665,16 @@ const formatAmount = (value) => {
                   <span>Status:</span>
                   <span>
                     {payworldStatus.state === "IN_PROGRESS"
-                      ? "Betaling bezig op de terminal..."
+                      ? "Payment in progress on terminal..."
                       : payworldStatus.state === "APPROVED"
-                      ? "Betaling goedgekeurd."
+                      ? "Payment approved."
                       : payworldStatus.state === "DECLINED"
-                      ? "Betaling geweigerd."
+                      ? "Payment declined."
                       : payworldStatus.state === "CANCELLED"
-                      ? "Betaling geannuleerd."
+                      ? "Payment cancelled."
                       : payworldStatus.state === "ERROR"
-                      ? "Fout tijdens de betaling."
-                      : "Gereed."}
+                      ? "Error during payment."
+                      : "Ready."}
                   </span>
                 </div>
 
@@ -1619,7 +1691,7 @@ const formatAmount = (value) => {
                     className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
                     onClick={handleAbortPayworld}
                   >
-                    Actie beëindigen
+                    Cancel Payment
                   </button>
                 )}
 
@@ -1638,7 +1710,7 @@ const formatAmount = (value) => {
                       });
                     }}
                   >
-                    Sluiten
+                    Close
                   </button>
                 )}
               </div>
@@ -1667,6 +1739,7 @@ const formatAmount = (value) => {
           onConfirm={handlePaymentConfirm}
           defaultPaymentMethod={selectedPaymentMethod}
         />
+
 
         {showReceipt && (
           <ReceiptModal

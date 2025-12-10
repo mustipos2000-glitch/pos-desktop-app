@@ -37,41 +37,7 @@ const PaymentController = {
     }
   },
 
-  // Process Bancontact payment
-  processBancontactPayment: async (req, res) => {
-    try {
-      const { amount, member_id, payment_type, reference } = req.body;
-      
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: 'Valid amount is required' });
-      }
-      
-      console.log(`💳 Processing Bancontact payment: €${amount}`);
-      
-      const result = await PaymentService.processBancontactPayment({
-        amount,
-        member_id,
-        payment_type,
-        reference
-      });
-      
-      if (result.success) {
-        res.json({ 
-          success: true, 
-          message: 'Bancontact payment processed successfully',
-          transaction_id: result.transaction_id,
-          data: result.data
-        });
-      } else {
-        res.status(500).json({ success: false, error: result.message });
-      }
-    } catch (error) {
-      console.error('Bancontact payment error:', error);
-      res.status(500).json({ success: false, error: 'Failed to process Bancontact payment' });
-    }
-  },
-
-  // Get payment status
+  // Get payment status (used by /cashmatic/status/:sessionId)
   getPaymentStatus: async (req, res) => {
     try {
       const { transactionId } = req.params;
@@ -89,23 +55,6 @@ const PaymentController = {
     }
   },
 
-  // Cancel payment
-  cancelPayment: async (req, res) => {
-    try {
-      const { transactionId } = req.params;
-      
-      const result = await PaymentService.cancelPayment(transactionId);
-      
-      if (result.success) {
-        res.json({ success: true, message: 'Payment cancelled successfully' });
-      } else {
-        res.status(500).json({ success: false, error: result.message });
-      }
-    } catch (error) {
-      console.error('Cancel payment error:', error);
-      res.status(500).json({ success: false, error: 'Failed to cancel payment' });
-    }
-  },
 
   // Process Payworld payment
   processPayworldPayment: async (req, res) => {
@@ -144,20 +93,21 @@ const PaymentController = {
 
   // Get Payworld payment status
   getPayworldStatus: async (req, res) => {
-    try {
+    console.log("getPayworldStatus req:", req);
+    // try {
       const { sessionId } = req.params;
-      
+      console.log("getPayworldStatus sessionId:", sessionId);
       const result = await PaymentService.getPayworldStatus(sessionId);
-      
+      console.log("getPayworldStatus result:", result);
       if (result.success) {
         res.json({ success: true, ok: true, ...result.data });
       } else {
         res.status(404).json({ success: false, ok: false, error: result.message });
       }
-    } catch (error) {
-      console.error('Get Payworld status error:', error);
-      res.status(500).json({ success: false, ok: false, error: 'Failed to get Payworld status' });
-    }
+    // } catch (error) {
+    //   console.error('Get Payworld status error:', error);
+    //   res.status(500).json({ success: false, ok: false, error: 'Failed to get Payworld status' });
+    // }
   },
 
   // Cancel Payworld payment
