@@ -135,6 +135,7 @@
 
 // module.exports = ProductController;
 
+
 const Product = require('../models/Product');
 const db = require('../config/database');
 const fs = require('fs');
