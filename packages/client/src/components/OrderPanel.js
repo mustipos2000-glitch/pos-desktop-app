@@ -360,6 +360,8 @@ const formatAmount = (value) => {
         console.log("Payworld polling timeout reached (2 minutes)");
         setPayworldPolling(false);
         setPayworldSessionId(null);
+        setIsProcessing(false);
+        setShowPayworldModal(false);
         setToastType("error");
         setToastMessage("Payworld payment timeout. Please try again.");
         setPayworldStatus({
@@ -370,7 +372,7 @@ const formatAmount = (value) => {
         return;
       }
 
-      // try {
+      try {
         const res = await ApiService.getPayworldStatus(payworldSessionId);
         const data = res.data || res;
         if (!data || data.ok === false) return;
@@ -407,10 +409,12 @@ const formatAmount = (value) => {
           setShowPayworldModal(false);
           setPayworldPolling(false);
           setPayworldSessionId(null);
+          setIsProcessing(false);
         } else if (["DECLINED", "CANCELLED", "ERROR"].includes(state)) {
           console.log("Payworld status is Declined, Cancelled or Error");
           setPayworldPolling(false);
           setPayworldSessionId(null);
+          setIsProcessing(false);
 
           if (state === "CANCELLED") {
             setToastType("info");
@@ -423,18 +427,19 @@ const formatAmount = (value) => {
             setToastMessage("Error during Payworld payment.");
           }
         }
-      // } catch (err) {
-      //   console.error("Payworld polling error:", err);
-      //   setPayworldPolling(false);
-      //   setPayworldSessionId(null);
-      //   setPayworldStatus({
-      //     state: "ERROR",
-      //     message: "Fout bij ophalen Payworld-status.",
-      //     details: { error: err.message },
-      //   });
-      //   setToastType("error");
-      //   setToastMessage("Fout bij ophalen Payworld-status.");
-      // }
+      } catch (err) {
+        console.error("Payworld polling error:", err);
+        setPayworldPolling(false);
+        setPayworldSessionId(null);
+        setIsProcessing(false);
+        setPayworldStatus({
+          state: "ERROR",
+          message: "Error retrieving Payworld status.",
+          details: { error: err.message },
+        });
+        setToastType("error");
+        setToastMessage("Error retrieving Payworld status.");
+      }
     };
 
     const id = setInterval(poll, 1000);
@@ -787,7 +792,6 @@ const formatAmount = (value) => {
           setToastType("error");
           setToastMessage("Failed to place order on hold");
         }
-        setShowToast(true);
         return; // Don't proceed if there's an error
       }
     } catch (error) {
