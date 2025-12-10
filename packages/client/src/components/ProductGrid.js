@@ -3,6 +3,7 @@ import ApiService from '../services/api';
 import SubproductModal from './SubproductModal';
 
 const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity, searchQuery }) => {
+  console.log("ProductGrid products:", products);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
   const [loadingSubProducts, setLoadingSubProducts] = useState(false);
@@ -57,7 +58,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
   const handleProductClick = async (product) => {
     // If same product clicked again → add to cart but keep sub-products visible
     if (selectedProductId === product.id) {
-      onAddToCart(product, Number(customQuantity) || 1);
+      await onAddToCart(product, Number(customQuantity) || 1);
       setCustomQuantity(''); // ✅ reset quantity input
       return;
     }
@@ -72,7 +73,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
 
       // No sub-products → directly add product
       if (!productSubProducts || productSubProducts.length === 0) {
-        onAddToCart(product, Number(customQuantity) || 1);
+        await onAddToCart(product, Number(customQuantity) || 1);
         setCustomQuantity(''); // ✅ reset quantity input
         setSelectedProductId(null);
         setSubProducts([]);
@@ -92,14 +93,14 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
       // Has sub-products → check sub_product_group setting
       if (product.sub_product_group) {
         // sub_product_group is checked → show button only
-        onAddToCart(product, Number(customQuantity) || 1);
+        await onAddToCart(product, Number(customQuantity) || 1);
         setCustomQuantity(''); // ✅ reset quantity input
         setSelectedProductId(null);
         setSubProducts([]);
         setProductWithSubproducts(product);
       } else {
         // sub_product_group is unchecked → show inline products
-        onAddToCart(product, Number(customQuantity) || 1);
+        await onAddToCart(product, Number(customQuantity) || 1);
         setCustomQuantity(''); // ✅ reset quantity input
         setProductWithSubproducts(null);
 
@@ -117,7 +118,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
       }
     } catch (error) {
       console.error("Error checking sub-products:", error);
-      onAddToCart(product, Number(customQuantity) || 1);
+      await onAddToCart(product, Number(customQuantity) || 1);
       setCustomQuantity(''); // ✅ reset quantity input
       setSelectedProductId(null);
       setSubProducts([]);
@@ -127,8 +128,8 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
     }
   };
 
-  const handleSubProductSelect = (subProduct) => {
-    onAddToCart(subProduct, Number(customQuantity) || 1, true); // Pass true to indicate it's a sub-product
+  const handleSubProductSelect = async (subProduct) => {
+    await onAddToCart(subProduct, Number(customQuantity) || 1, true); // Pass true to indicate it's a sub-product
     setCustomQuantity(''); // ✅ reset quantity input
     // Keep subproducts visible - don't clear them
   };
@@ -189,6 +190,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                   }}
                 >
                   {product.name}
+
                 </div>
               </div>
             </div>

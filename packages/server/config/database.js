@@ -398,6 +398,17 @@ db.exec(`
   )
 `);
 
+// Inventory table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS inventory (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id INTEGER NOT NULL,
+    qty REAL DEFAULT 0,
+    FOREIGN KEY(product_id) REFERENCES products(id)
+  )
+`);
+
+
 // Insert default admin user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
 if (userCount.count === 0) {
