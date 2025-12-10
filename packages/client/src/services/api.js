@@ -16,7 +16,19 @@ class ApiService {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to parse error details from response body
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          errorData = { error: `HTTP error! status: ${response.status}` };
+        }
+        
+        // Create error with detailed information
+        const error = new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        error.status = response.status;
+        error.details = errorData.details;
+        throw error;
       }
       
       return await response.json();
@@ -363,6 +375,26 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+// Inventory methods
+  static async getInventory() {
+    return this.request('/inventory');
+  }
+
+   static async AddInventory(ProductData) {
+    return this.request('/inventory', {
+      method: 'POST',
+      body: JSON.stringify(ProductData),
+    });
+  }
+
+static async adjustInventory(productId, data) {
+  return this.request(`/inventory/${productId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 }
 
 export default ApiService;

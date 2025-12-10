@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const InventoryHelper = require('../helpers/InventoryHelpers');
 
 const OrderController = {
     getAllOrders: (req, res) => {
@@ -27,8 +28,22 @@ const OrderController = {
         try {
             const { tax, status, note, sub_total, total, discount, details, table_id, customer_id } = req.body;
 
+            console.log('📝 Creating order with', details?.length, 'items');
+
             if (!details || !Array.isArray(details) || details.length === 0) {
                 return res.status(400).json({ error: 'Order must have at least one item' });
+            }
+
+            // Validate inventory availability for all items
+            const validation = InventoryHelper.validateOrderItems(details);
+            console.log('✅ Inventory validation result:', validation);
+            
+            if (!validation.valid) {
+                console.log('❌ Order creation blocked - insufficient inventory');
+                return res.status(400).json({ 
+                    error: 'Insufficient inventory',
+                    details: validation.errors
+                });
             }
 
             const order = { tax, status, note, sub_total, total, discount, table_id, customer_id };
@@ -36,6 +51,7 @@ const OrderController = {
 
             res.status(201).json({ message: 'Order created successfully', data: newOrder });
         } catch (error) {
+            console.error('❌ Error creating order:', error);
             res.status(500).json({ error: 'Internal server error', details: error.message });
         }
     },
@@ -43,13 +59,34 @@ const OrderController = {
     updateOrder: (req, res) => {
         try {
             const id = req.params.id;
-            const { tax, status, note, total, sub_total, discount, details, table_id, customer_id } = req.body; // ✅ changed items → details
+            const { tax, status, note, total, sub_total, discount, details, table_id, customer_id } = req.body;
 
-            const order = Order.update(id, { tax, status, note, total, sub_total, discount, table_id, customer_id }, details); // ✅ pass details
+            console.log('📝 Updating order', id, 'with', details?.length, 'items');
+
+            // Check if order exists
+            const existingOrder = Order.getById(id);
+            if (!existingOrder) {
+                return res.status(404).json({ error: 'Order not found' });
+            }
+
+            // Validate inventory availability (excluding current order from calculation)
+            const validation = InventoryHelper.validateOrderItems(details, id);
+            console.log('✅ Inventory validation result (excluding order', id, '):', validation);
+            
+            if (!validation.valid) {
+                console.log('❌ Order update blocked - insufficient inventory');
+                return res.status(400).json({ 
+                    error: 'Insufficient inventory',
+                    details: validation.errors
+                });
+            }
+
+            const order = Order.update(id, { tax, status, note, total, sub_total, discount, table_id, customer_id }, details);
             if (!order) return res.status(404).json({ error: 'Order not found' });
 
             res.json({ message: 'Order updated successfully', data: order });
         } catch (err) {
+            console.error('❌ Error updating order:', err);
             res.status(500).json({ error: 'Internal server error', details: err.message });
         }
     },
