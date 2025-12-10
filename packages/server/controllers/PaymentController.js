@@ -93,20 +93,21 @@ const PaymentController = {
 
   // Get Payworld payment status
   getPayworldStatus: async (req, res) => {
-    try {
+    console.log("getPayworldStatus req:", req);
+    // try {
       const { sessionId } = req.params;
-      
+      console.log("getPayworldStatus sessionId:", sessionId);
       const result = await PaymentService.getPayworldStatus(sessionId);
-      
+      console.log("getPayworldStatus result:", result);
       if (result.success) {
         res.json({ success: true, ok: true, ...result.data });
       } else {
         res.status(404).json({ success: false, ok: false, error: result.message });
       }
-    } catch (error) {
-      console.error('Get Payworld status error:', error);
-      res.status(500).json({ success: false, ok: false, error: 'Failed to get Payworld status' });
-    }
+    // } catch (error) {
+    //   console.error('Get Payworld status error:', error);
+    //   res.status(500).json({ success: false, ok: false, error: 'Failed to get Payworld status' });
+    // }
   },
 
   // Cancel Payworld payment

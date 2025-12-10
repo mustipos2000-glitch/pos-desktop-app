@@ -8,7 +8,7 @@
   ],
   "main": "electron/main.js",
   "scripts": {
-    "dev": "npm run rebuild:dev && concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:electron\"",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:electron\"",
     "dev:server": "npm run dev --workspace=server",
     "dev:client": "npm run dev --workspace=client",
     "dev:electron": "wait-on http://localhost:3000 http://localhost:5000 && electron .",
@@ -16,10 +16,7 @@
     "seed:terminals": "node packages/server/seed-terminals.js",
     "build": "npm run build --workspace=client && npm run build --workspace=server",
     "clean": "rimraf dist packages/client/build",
-    "rebuild:dev": "node scripts/rebuild-for-dev.js",
-    "rebuild:electron": "node scripts/rebuild-for-electron.js",
-    "rebuild:native": "npm run rebuild:electron",
-    "package:win": "npm run clean && npm run rebuild:native && npm run build && electron-builder",
+    "package:win": "npm run clean && npm run build && electron-builder",
     "build:electron": "npm run package:win",
     "start": "electron .",
     "test": "npm run test --workspaces"
@@ -65,16 +62,13 @@
   "author": "sohail & Rao",
   "license": "ISC",
   "devDependencies": {
-    "@electron/rebuild": "^3.7.1",
     "concurrently": "^8.2.2",
-    "electron": "28.3.3",
+    "electron": "38.2.2",
     "electron-builder": "^26.0.12",
     "rimraf": "^6.0.1",
     "wait-on": "^7.2.0"
   },
   "dependencies": {
-    "@mapbox/node-pre-gyp": "^2.0.3",
-    "better-sqlite3": "^11.9.1",
     "cors": "^2.8.5",
     "express": "^4.18.2",
     "multer": "^2.0.2",

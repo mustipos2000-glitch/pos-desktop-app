@@ -151,7 +151,7 @@ class CashmaticService {
           message:
             state === "FINISHED"
               ? "Cashmatic payment completed."
-              : "Cashmatic payment completed – geef manueel wisselgeld.",
+              : "Cashmatic payment completed – give manual change.",
         };
 
         if (this.callbacks.onSuccess) {
@@ -225,8 +225,8 @@ class CashmaticService {
     }
 
     try {
-      // Note: Add cancel endpoint if available in your backend
-      // await ApiService.cancelCashmaticPayment(this.sessionId);
+      // Cancel on backend
+      await ApiService.cancelCashmatic(this.sessionId);
       
       this.stopPolling();
       
@@ -240,6 +240,9 @@ class CashmaticService {
       this.cleanup();
     } catch (error) {
       console.error("Error cancelling Cashmatic payment:", error);
+      // Still cleanup even if backend call fails
+      this.stopPolling();
+      this.cleanup();
       throw error;
     }
   }
