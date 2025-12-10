@@ -164,10 +164,12 @@ const POSScreen = () => {
         // Fetch products
         const productResponse = await ApiService.getProducts();
         // Map products to match the expected format
+        console.log('📦 Product API response:', productResponse);
        
         const formattedProducts = productResponse.data.map(product => ({
           id: product.id,
           name: product.name,
+          available_qty: product.available_qty || 0,
           price: product.price,
           category: product.category_name || 'Uncategorized',
           image: product.image || '📦',
@@ -293,38 +295,78 @@ const POSScreen = () => {
 };
 
 
-  const updateQuantity = async (cartItemId, quantity) => {
-    if (quantity <= 0) {
-      // Remove item from cart (this will also remove its sub-products)
-      const newCart = cart.filter(item => {
-        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
-        return itemCartId !== cartItemId;
-      });
-      setCart(newCart);
+//   const updateQuantity = async (cartItemId, quantity) => {
+//     console.log(cart ,"cartttttttttttttt")
+//     console.log("Updating quantity for item:", cartItemId, "to", quantity);
+//  if (quantity >  cart.available_qty){
+//   console.log("Quantity exceeds available stock");
+//  }
+//     if (quantity <= 0) {
+//       // Remove item from cart (this will also remove its sub-products)
+//       const newCart = cart.filter(item => {
+//         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+//         return itemCartId !== cartItemId;
+//       });
+//       setCart(newCart);
       
-      // If cart becomes empty and we have an order ID, delete the order
-      if (newCart.length === 0 && currentOrderId && selectedTable) {
-        try {
-          await ApiService.deleteOrder(currentOrderId);
-          setCurrentOrderId(null);
+//       // If cart becomes empty and we have an order ID, delete the order
+//       if (newCart.length === 0 && currentOrderId && selectedTable) {
+//         try {
+//           await ApiService.deleteOrder(currentOrderId);
+//           setCurrentOrderId(null);
           
-          // Update table status back to available
-          await ApiService.updatePrTable(selectedTable.id, {
-            ...selectedTable,
-            status: 'available'
-          });
-        } catch (error) {
-          console.error('Error deleting order:', error);
-        }
+//           // Update table status back to available
+//           await ApiService.updatePrTable(selectedTable.id, {
+//             ...selectedTable,
+//             status: 'available'
+//           });
+//         } catch (error) {
+//           console.error('Error deleting order:', error);
+//         }
+//       }
+//     } else {
+//       // Simple quantity update - no splitting
+//       setCart(cart.map(item => {
+//         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
+//         return itemCartId === cartItemId ? { ...item, quantity } : item;
+//       }));
+//     }
+//   };
+
+const updateQuantity = async (cartItemId, quantity) => {
+  const item = cart.find(i => i.cartItemId === cartItemId);
+  
+  if (!item) return;
+
+  console.log("Updating quantity for item:", item.name, "to", quantity);
+
+  if (quantity > item.available_qty) {
+    console.log(`❌ Quantity exceeds available stock (${item.available_qty}) for ${item.name}`);
+    alert(`Only ${item.available_qty} units available for ${item.name}`);
+    return; // Stop update
+  }
+
+  if (quantity <= 0) {
+    // Remove item from cart
+    const newCart = cart.filter(i => i.cartItemId !== cartItemId);
+    setCart(newCart);
+
+    // Optional: delete order if cart empty
+    if (newCart.length === 0 && currentOrderId && selectedTable) {
+      try {
+        await ApiService.deleteOrder(currentOrderId);
+        setCurrentOrderId(null);
+        await ApiService.updatePrTable(selectedTable.id, { ...selectedTable, status: 'available' });
+      } catch (error) {
+        console.error('Error deleting order:', error);
       }
-    } else {
-      // Simple quantity update - no splitting
-      setCart(cart.map(item => {
-        const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
-        return itemCartId === cartItemId ? { ...item, quantity } : item;
-      }));
     }
-  };
+  } else {
+    // Update quantity
+    setCart(cart.map(i => i.cartItemId === cartItemId ? { ...i, quantity } : i));
+  }
+};
+
 
   const clearCart = () => {
     setCart([]);

@@ -3,6 +3,7 @@ import ApiService from '../services/api';
 import SubproductModal from './SubproductModal';
 
 const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity, searchQuery }) => {
+  console.log("ProductGrid products:", products);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [subProducts, setSubProducts] = useState([]);
   const [loadingSubProducts, setLoadingSubProducts] = useState(false);
@@ -189,6 +190,7 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
                   }}
                 >
                   {product.name}
+
                 </div>
               </div>
             </div>

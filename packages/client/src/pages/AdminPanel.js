@@ -9,6 +9,8 @@ import GroupManager from '../components/GroupManager';
 import UserManager from '../components/UserManager';
 import RoomManager from '../components/RoomManager';
 import CustomerManager from '../components/CustomerManager';
+import InventoryManager from '../components/InventoryManager';
+
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -83,6 +85,15 @@ const AdminPanel = () => {
             >
               Customers
             </button>
+            <button
+              className={`btn-secondary text-base font-medium ${activeTab === 'inventory'
+                ? 'bg-pos-interactive-primary text-pos-text-primary'
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                }`}
+              onClick={() => setActiveTab('inventory')}
+            >
+              Inventory
+            </button>
             </div>
           </div>
           <button
@@ -103,6 +114,7 @@ const AdminPanel = () => {
             {activeTab === 'users' && <UserManager />}
             {activeTab === 'rooms' && <RoomManager />}
             {activeTab === 'customers' && <CustomerManager />}
+            {activeTab === 'inventory' && <InventoryManager />}
 
             {activeTab === 'settings' && (
               <div className="p-6 overflow-y-auto scrollbar-custom">

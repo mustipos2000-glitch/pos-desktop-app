@@ -14,6 +14,7 @@ const PrinterController = require('../controllers/printerController');
 const PaymentController = require('../controllers/PaymentController');
 const PaymentTerminalController = require('../controllers/PaymentTerminalController');
 const CustomerController = require('../controllers/CustomerController');
+const InventoryController = require('../controllers/InventoryController');
 
 
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
@@ -129,5 +130,12 @@ router.get('/customers/:id', CustomerController.getCustomerById);
 router.post('/customers', CustomerController.createCustomer);
 router.put('/customers/:id', CustomerController.updateCustomer);
 router.delete('/customers/:id', CustomerController.deleteCustomer);
+
+// Inventory routes
+router.get('/inventory', InventoryController.getAllInventory);
+router.get('/inventory/:id', InventoryController.getInventoryById);
+router.post('/inventory', InventoryController.createInventory);
+router.put('/inventory/:id', InventoryController.updateInventory);
+router.delete('/inventory/:id', InventoryController.deleteInventory);
 
 module.exports = router;

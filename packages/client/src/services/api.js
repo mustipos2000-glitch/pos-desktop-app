@@ -359,6 +359,26 @@ class ApiService {
       method: 'DELETE',
     });
   }
+
+// Inventory methods
+  static async getInventory() {
+    return this.request('/inventory');
+  }
+
+   static async AddInventory(ProductData) {
+    return this.request('/inventory', {
+      method: 'POST',
+      body: JSON.stringify(ProductData),
+    });
+  }
+
+static async adjustInventory(productId, data) {
+  return this.request(`/inventory/${productId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 }
 
 export default ApiService;
