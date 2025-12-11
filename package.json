@@ -25,6 +25,7 @@
     "appId": "com.sohailkhan.po-desktop",
     "productName": "Point of Sale Application",
     "npmRebuild": false,
+    "buildDependenciesFromSource": false,
     "files": [
       "electron/**/*",
       "packages/client/build/**/*",
@@ -36,6 +37,7 @@
       "node_modules/**/*"
     ],
     "asarUnpack": [
+      "**/*.node",
       "packages/server/**/*",
       "packages/client/build/**/*",
       "node_modules/**/*"
@@ -62,9 +64,11 @@
   "author": "sohail & Rao",
   "license": "ISC",
   "devDependencies": {
+    "@electron/rebuild": "^4.0.2",
     "concurrently": "^8.2.2",
     "electron": "38.2.2",
     "electron-builder": "^26.0.12",
+    "electron-rebuild": "^3.2.9",
     "rimraf": "^6.0.1",
     "wait-on": "^7.2.0"
   },
