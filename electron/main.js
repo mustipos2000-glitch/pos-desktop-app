@@ -164,35 +164,41 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:3000');
     mainWindow.webContents.openDevTools();
   } else {
-    // Open DevTools in production for debugging (remove in final release)
-    mainWindow.webContents.openDevTools();
-    
     // Wait for server to start, then load the app
+    let isLoading = false;
     const checkServer = () => {
+      if (isLoading) return;
+      
       const http = require('http');
       const req = http.get('http://localhost:5000/health', (res) => {
-        if (res.statusCode === 200) {
+        if (res.statusCode === 200 && !isLoading) {
+          isLoading = true;
           console.log('✅ Server is ready, loading app...');
           mainWindow.loadURL('http://localhost:5000').catch(err => {
             console.error('Failed to load URL:', err);
+            isLoading = false;
             // Try to show error page
             mainWindow.loadURL('data:text/html,<h1>Failed to load application</h1><p>' + err.message + '</p>');
           });
-        } else {
+        } else if (!isLoading) {
           console.log('⏳ Waiting for server... (status: ' + res.statusCode + ')');
           setTimeout(checkServer, 1000);
         }
       });
       
       req.on('error', (err) => {
-        console.log('⏳ Waiting for server... (' + err.message + ')');
-        setTimeout(checkServer, 1000);
+        if (!isLoading) {
+          console.log('⏳ Waiting for server... (' + err.message + ')');
+          setTimeout(checkServer, 1000);
+        }
       });
       
-      req.setTimeout(1000, () => {
+      req.setTimeout(2000, () => {
         req.destroy();
-        console.log('⏳ Waiting for server... (timeout)');
-        setTimeout(checkServer, 1000);
+        if (!isLoading) {
+          console.log('⏳ Waiting for server... (timeout)');
+          setTimeout(checkServer, 1000);
+        }
       });
     };
     

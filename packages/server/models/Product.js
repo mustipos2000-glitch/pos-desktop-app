@@ -47,7 +47,6 @@ class Product {
             product.image || null,
             product.color || '#3b82f6',
             product.price_vat_inc || 0,
-            product.availableQty || 0,
             product.sub_product_group || 0
         ];
 

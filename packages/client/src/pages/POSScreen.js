@@ -66,15 +66,20 @@ const POSScreen = () => {
         // Determine order status based on whether table is selected
         const orderStatus = selectedTable ? 'send_kitchen' : 'on_hold';
 
+        // Calculate total discount from all cart items
+        const totalDiscount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
+        const orderType = localStorage.getItem('posVersion') || 'horeca';
+
         const orderData = {
           tax: 0,  // Add tax field
           status: orderStatus,
           note: '',
           sub_total: subTotal,
           total: subTotal,
-          discount: 0,
+          discount: totalDiscount,
           customer_id: selectedCustomer ? selectedCustomer.id : null,
           table_id: selectedTable ? selectedTable.id : null,
+          order_type: orderType,
           details: (() => {
             const allDetails = [];
             let detailIndex = 0;
@@ -724,15 +729,20 @@ const updateQuantity = async (cartItemId, quantity) => {
       // Send to kitchen always uses send_kitchen status
       const orderStatus = 'send_kitchen';
 
+      // Calculate total discount from all cart items
+      const totalDiscount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
+      const orderType = localStorage.getItem('posVersion') || 'horeca';
+
       const orderData = {
         tax: 0,  // Add tax field
         status: orderStatus,
         note: '',
         sub_total: subTotal,
         total: total,
-        discount: 0,
+        discount: totalDiscount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
         table_id: selectedTable ? selectedTable.id : null,
+        order_type: orderType,
         details: (() => {
           const allDetails = [];
           let detailIndex = 0;

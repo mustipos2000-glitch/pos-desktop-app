@@ -5,21 +5,29 @@ class Order {
         // Generate order_no
         const orderNo = `ORD-${String(Date.now()).slice(-6)}`;
         
+        // Set completed_at if order is created with completed/paid status
+        const status = order.status || 'pending';
+        const completedAt = (status === 'completed' || status === 'paid') 
+            ? new Date().toISOString() 
+            : null;
+        
         const insertOrder = db.prepare(`
-      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no, order_type, completed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
         const result = insertOrder.run(
             order.tax || 0,
-            order.status || 'pending',
+            status,
             order.note || '',
             order.sub_total || 0,
             order.total || 0,
             order.discount || 0,  // Now properly using the discount field
             order.table_id || null,
             order.customer_id || null,
-            orderNo
+            orderNo,
+            order.order_type || 'horeca',
+            completedAt
         );
 
         const orderId = result.lastInsertRowid;
@@ -55,20 +63,33 @@ class Order {
         // 🧹 Delete only old order details
         db.prepare('DELETE FROM order_details WHERE order_id = ?').run(id);
 
+        // Check if status is changing to completed/paid and set completed_at
+        const newStatus = payload.status || 'pending';
+        const oldStatus = existing.status;
+        let completedAt = existing.completed_at;
+        
+        // Set completed_at when order is marked as completed or paid for the first time
+        if ((newStatus === 'completed' || newStatus === 'paid') && 
+            (oldStatus !== 'completed' && oldStatus !== 'paid')) {
+            completedAt = new Date().toISOString();
+        }
+
         // 🆙 Update the order record
         db.prepare(`
         UPDATE orders
-        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?, customer_id = ?
+        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?, customer_id = ?, order_type = ?, completed_at = ?
         WHERE id = ?
         `).run(
             payload.tax || 0,
-            payload.status || 'pending',
+            newStatus,
             payload.note || '',
             payload.total || 0,
             payload.sub_total || 0,
             payload.discount || 0,  // Now properly using the discount field
             payload.table_id || null,
             payload.customer_id || null,
+            payload.order_type || existing.order_type || 'horeca',
+            completedAt,
             id
         );
 

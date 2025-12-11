@@ -14,6 +14,7 @@ import PaymentMethodPage from './pages/PaymentMethodPage';
 import TicketSelectionPage from './pages/TicketSelectionPage';
 import POSScreen from './pages/POSScreen';
 import AdminPanel from './pages/AdminPanel';
+import ReportsPage from './pages/ReportsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import MosqueProtectedRoute from './components/MosqueProtectedRoute';
 // import './App.css';
@@ -49,6 +50,14 @@ function App() {
               element={
                 <ProtectedRoute requiredPermission="admin">
                   <AdminPanel />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedRoute>
+                  <ReportsPage />
                 </ProtectedRoute>
               } 
             />
