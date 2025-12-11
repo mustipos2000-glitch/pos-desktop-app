@@ -323,7 +323,7 @@ const ProductFormModal = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-pos-text-muted mb-1">Price vat inc</label>
+              <label className="block text-xs font-medium text-pos-text-muted mb-1">Price (VAT Inc)</label>
               <input
                 type="number"
                 step="0.01"
