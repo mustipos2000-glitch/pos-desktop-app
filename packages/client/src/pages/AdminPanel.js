@@ -16,6 +16,8 @@ const AdminPanel = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { version, hasFeature } = useVersion();
+  const type = localStorage.getItem('posVersion');
+
   
   // Set default tab based on available features
   const getDefaultTab = () => {
@@ -85,15 +87,18 @@ const AdminPanel = () => {
             >
               Customers
             </button>
-            <button
-              className={`btn-secondary text-base font-medium ${activeTab === 'inventory'
-                ? 'bg-pos-interactive-primary text-pos-text-primary'
-                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
-                }`}
-              onClick={() => setActiveTab('inventory')}
-            >
-              Inventory
-            </button>
+          {type === 'retail' && (
+  <button
+    className={`btn-secondary text-base font-medium ${
+      activeTab === 'inventory'
+        ? 'bg-pos-interactive-primary text-pos-text-primary'
+        : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+    }`}
+    onClick={() => setActiveTab('inventory')}
+  >
+    Inventory
+  </button>
+)}
             </div>
           </div>
           <button

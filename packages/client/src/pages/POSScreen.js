@@ -210,11 +210,12 @@ const POSScreen = () => {
     };
     fetchData();
   }, []);
+  const type = localStorage.getItem('posVersion');
   const addToCart = async (product, quantity = 1, isSubProduct = false) => {
   const finalQuantity = quantity > 0 ? quantity : 1;
   
   // Check inventory availability before adding (for both new and existing orders)
-  if (!isSubProduct) {
+  if (type === "retail" && !isSubProduct) {
     try {
       // Fetch fresh availability from server
       let availableQty = product.available_qty;
@@ -391,6 +392,8 @@ const POSScreen = () => {
 //     }
 //   };
 
+
+
 const updateQuantity = async (cartItemId, quantity) => {
   const item = cart.find(i => i.cartItemId === cartItemId);
   
@@ -399,7 +402,7 @@ const updateQuantity = async (cartItemId, quantity) => {
   console.log("Updating quantity for item:", item.name, "to", quantity);
 
   // Check inventory when INCREASING quantity (for both new and existing orders)
-  if (quantity > item.quantity && !item.isSubProduct) {
+  if  (type === "retail" && quantity > item.quantity && !item.isSubProduct) {
     try {
       // Fetch fresh availability from server
       let availableQty = item.available_qty;
