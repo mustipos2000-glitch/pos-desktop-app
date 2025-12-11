@@ -68,6 +68,7 @@ const POSScreen = () => {
 
         // Calculate total discount from all cart items
         const totalDiscount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
+        const orderType = localStorage.getItem('posVersion') || 'horeca';
 
         const orderData = {
           tax: 0,  // Add tax field
@@ -78,6 +79,7 @@ const POSScreen = () => {
           discount: totalDiscount,
           customer_id: selectedCustomer ? selectedCustomer.id : null,
           table_id: selectedTable ? selectedTable.id : null,
+          order_type: orderType,
           details: (() => {
             const allDetails = [];
             let detailIndex = 0;
@@ -213,11 +215,12 @@ const POSScreen = () => {
     };
     fetchData();
   }, []);
+  const type = localStorage.getItem('posVersion');
   const addToCart = async (product, quantity = 1, isSubProduct = false) => {
   const finalQuantity = quantity > 0 ? quantity : 1;
   
   // Check inventory availability before adding (for both new and existing orders)
-  if (!isSubProduct) {
+  if (type === "retail" && !isSubProduct) {
     try {
       // Fetch fresh availability from server
       let availableQty = product.available_qty;
@@ -394,6 +397,8 @@ const POSScreen = () => {
 //     }
 //   };
 
+
+
 const updateQuantity = async (cartItemId, quantity) => {
   const item = cart.find(i => i.cartItemId === cartItemId);
   
@@ -402,7 +407,7 @@ const updateQuantity = async (cartItemId, quantity) => {
   console.log("Updating quantity for item:", item.name, "to", quantity);
 
   // Check inventory when INCREASING quantity (for both new and existing orders)
-  if (quantity > item.quantity && !item.isSubProduct) {
+  if  (type === "retail" && quantity > item.quantity && !item.isSubProduct) {
     try {
       // Fetch fresh availability from server
       let availableQty = item.available_qty;
@@ -726,6 +731,7 @@ const updateQuantity = async (cartItemId, quantity) => {
 
       // Calculate total discount from all cart items
       const totalDiscount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
+      const orderType = localStorage.getItem('posVersion') || 'horeca';
 
       const orderData = {
         tax: 0,  // Add tax field
@@ -736,6 +742,7 @@ const updateQuantity = async (cartItemId, quantity) => {
         discount: totalDiscount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
         table_id: selectedTable ? selectedTable.id : null,
+        order_type: orderType,
         details: (() => {
           const allDetails = [];
           let detailIndex = 0;

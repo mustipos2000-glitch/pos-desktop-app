@@ -40,12 +40,15 @@ const InventoryHelper = {
     const totalQty = inventory ? inventory.qty : 0;
 
     // Get used qty in ALL active orders (exclude cancelled and optionally a specific order)
-    let query = `
-      SELECT SUM(od.qty) as usedQty
-      FROM order_details od
-      JOIN orders o ON o.id = od.order_id
-      WHERE od.product_id = ? AND o.status != 'cancelled'
-    `;
+   let query = `
+  SELECT SUM(od.qty) as usedQty
+  FROM order_details od
+  JOIN orders o ON o.id = od.order_id
+  WHERE od.product_id = ?
+    AND o.status != 'cancelled'
+    AND o.order_type = 'retail'
+`;
+
     
     const params = [productId];
     

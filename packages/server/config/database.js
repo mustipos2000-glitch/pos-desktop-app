@@ -232,6 +232,7 @@ db.exec(`
     discount REAL DEFAULT 0,
     table_id INTEGER,
     order_no TEXT,
+    order_type TEXT DEFAULT 'horeca',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(table_id) REFERENCES pr_table(id) ON DELETE SET NULL
   )
@@ -267,6 +268,15 @@ try {
 // Add completed_at column to orders if it doesn't exist (kept for backward compatibility)
 try {
   db.exec(`ALTER TABLE orders ADD COLUMN completed_at DATETIME`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+// Add order_type column to orders if it doesn't exist
+try {
+  db.exec(`ALTER TABLE orders ADD COLUMN order_type TEXT DEFAULT 'horeca'`);
 } catch (err) {
   if (!err.message.includes('duplicate column name')) {
     // Column already exists, ignore

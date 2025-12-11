@@ -199,11 +199,12 @@ const ProductFormModal = ({
 
   const handleSubmit = () => {
     // Validate required fields
+   
     const errors = {};
     if (!productForm.name) {
       errors.name = 'Product name is required';
     }
-
+ 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -220,6 +221,7 @@ const ProductFormModal = ({
     };
     onSubmit(updatedForm, imageFile);
   };
+ 
 
   const handleKeypadInput = (input) => {
     if (activeField) {

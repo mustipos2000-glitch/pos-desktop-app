@@ -158,6 +158,8 @@ const formatAmount = (value) => {
         return;
       }
 
+      const orderType = localStorage.getItem('posVersion') || 'horeca';
+      
       const orderData = {
         status: "completed",
         note,
@@ -165,6 +167,7 @@ const formatAmount = (value) => {
         total,
         discount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
+        order_type: orderType,
         payment_method:
           paymentData.cashAmount > 0 && paymentData.cardAmount > 0
             ? "mixed"
@@ -689,6 +692,7 @@ const formatAmount = (value) => {
     try {
       const subTotal = calculateTotal();
       const total = subTotal - discount;
+      const orderType = localStorage.getItem('posVersion') || 'horeca';
 
       const orderData = {
         status: "on_hold",
@@ -698,6 +702,7 @@ const formatAmount = (value) => {
         discount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
         table_id: selectedTable ? selectedTable.id : null,
+        order_type: orderType,
         details: (() => {
           const allDetails = [];
           let detailIndex = 0;
@@ -910,6 +915,8 @@ const formatAmount = (value) => {
         // no existing order
       }
 
+      const orderType = localStorage.getItem('posVersion') || 'horeca';
+      
       const orderData = {
         status: "send_kitchen",
         note: "",
@@ -917,6 +924,7 @@ const formatAmount = (value) => {
         total: subTotal,
         discount: 0,
         table_id: destinationTable.id,
+        order_type: orderType,
         details: (() => {
           const allDetails = [];
           let detailIndex = 0;

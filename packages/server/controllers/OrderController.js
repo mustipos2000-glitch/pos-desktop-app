@@ -26,27 +26,31 @@ const OrderController = {
 
     createOrder: (req, res) => {
         try {
-            const { tax, status, note, sub_total, total, discount, details, table_id, customer_id } = req.body;
+            const { tax, status, note, sub_total, total, discount, details, table_id, customer_id, order_type } = req.body;
 
-            console.log('📝 Creating order with', details?.length, 'items');
+            console.log('📝 Creating order with', details?.length, 'items, type:', order_type);
 
             if (!details || !Array.isArray(details) || details.length === 0) {
                 return res.status(400).json({ error: 'Order must have at least one item' });
             }
 
-            // Validate inventory availability for all items
-            const validation = InventoryHelper.validateOrderItems(details);
-            console.log('✅ Inventory validation result:', validation);
-            
-            if (!validation.valid) {
-                console.log('❌ Order creation blocked - insufficient inventory');
-                return res.status(400).json({ 
-                    error: 'Insufficient inventory',
-                    details: validation.errors
-                });
+            // Only validate inventory for retail orders
+            if (order_type === 'retail') {
+                const validation = InventoryHelper.validateOrderItems(details);
+                console.log('✅ Inventory validation result (retail):', validation);
+                
+                if (!validation.valid) {
+                    console.log('❌ Order creation blocked - insufficient inventory');
+                    return res.status(400).json({ 
+                        error: 'Insufficient inventory',
+                        details: validation.errors
+                    });
+                }
+            } else {
+                console.log('⏭️ Skipping inventory validation for order type:', order_type);
             }
 
-            const order = { tax, status, note, sub_total, total, discount, table_id, customer_id };
+            const order = { tax, status, note, sub_total, total, discount, table_id, customer_id, order_type };
             const newOrder = Order.create(order, details);
 
             res.status(201).json({ message: 'Order created successfully', data: newOrder });
@@ -59,9 +63,9 @@ const OrderController = {
     updateOrder: (req, res) => {
         try {
             const id = req.params.id;
-            const { tax, status, note, total, sub_total, discount, details, table_id, customer_id } = req.body;
+            const { tax, status, note, total, sub_total, discount, details, table_id, customer_id, order_type } = req.body;
 
-            console.log('📝 Updating order', id, 'with', details?.length, 'items');
+            console.log('📝 Updating order', id, 'with', details?.length, 'items, type:', order_type);
 
             // Check if order exists
             const existingOrder = Order.getById(id);
@@ -69,19 +73,24 @@ const OrderController = {
                 return res.status(404).json({ error: 'Order not found' });
             }
 
-            // Validate inventory availability (excluding current order from calculation)
-            const validation = InventoryHelper.validateOrderItems(details, id);
-            console.log('✅ Inventory validation result (excluding order', id, '):', validation);
-            
-            if (!validation.valid) {
-                console.log('❌ Order update blocked - insufficient inventory');
-                return res.status(400).json({ 
-                    error: 'Insufficient inventory',
-                    details: validation.errors
-                });
+            // Only validate inventory for retail orders
+            const finalOrderType = order_type || existingOrder.order_type || 'horeca';
+            if (finalOrderType === 'retail') {
+                const validation = InventoryHelper.validateOrderItems(details, id);
+                console.log('✅ Inventory validation result (retail, excluding order', id, '):', validation);
+                
+                if (!validation.valid) {
+                    console.log('❌ Order update blocked - insufficient inventory');
+                    return res.status(400).json({ 
+                        error: 'Insufficient inventory',
+                        details: validation.errors
+                    });
+                }
+            } else {
+                console.log('⏭️ Skipping inventory validation for order type:', finalOrderType);
             }
 
-            const order = Order.update(id, { tax, status, note, total, sub_total, discount, table_id, customer_id }, details);
+            const order = Order.update(id, { tax, status, note, total, sub_total, discount, table_id, customer_id, order_type: finalOrderType }, details);
             if (!order) return res.status(404).json({ error: 'Order not found' });
 
             res.json({ message: 'Order updated successfully', data: order });

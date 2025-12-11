@@ -11,9 +11,15 @@ class Order {
             ? new Date().toISOString() 
             : null;
         
+        // Set completed_at if order is created with completed/paid status
+        const status = order.status || 'pending';
+        const completedAt = (status === 'completed' || status === 'paid') 
+            ? new Date().toISOString() 
+            : null;
+        
         const insertOrder = db.prepare(`
-      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no, completed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no, order_type, completed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
         const result = insertOrder.run(
@@ -26,6 +32,7 @@ class Order {
             order.table_id || null,
             order.customer_id || null,
             orderNo,
+            order.order_type || 'horeca',
             completedAt
         );
 
@@ -76,10 +83,11 @@ class Order {
         // 🆙 Update the order record
         db.prepare(`
         UPDATE orders
-        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?, customer_id = ?, completed_at = ?
+        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?, customer_id = ?, order_type = ?, completed_at = ?
         WHERE id = ?
         `).run(
             payload.tax || 0,
+            newStatus,
             newStatus,
             payload.note || '',
             payload.total || 0,
@@ -87,6 +95,7 @@ class Order {
             payload.discount || 0,  // Now properly using the discount field
             payload.table_id || null,
             payload.customer_id || null,
+            payload.order_type || existing.order_type || 'horeca',
             completedAt,
             id
         );
