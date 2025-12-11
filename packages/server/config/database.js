@@ -443,7 +443,9 @@ db.exec(`
 `);
 
 
-// Create z_reports table for storing end-of-day reports
+// NOTE: z_reports table is no longer used
+// Reports are now generated on-demand from orders table using updated_at timestamp
+// Keeping table creation for backward compatibility with existing installations
 db.exec(`
   CREATE TABLE IF NOT EXISTS z_reports (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

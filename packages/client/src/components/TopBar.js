@@ -243,13 +243,6 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
             <span className="text-lg">⏸️</span>
             On Hold ({holdOrderCount})
           </button>
-          <button
-            onClick={() => window.location.href = '/reports'}
-            className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white"
-          >
-            <span className="text-lg">📊</span>
-            Reports
-          </button>
         </div>
         <div className="flex gap-2.5 items-center">
           {/* Search Bar */}

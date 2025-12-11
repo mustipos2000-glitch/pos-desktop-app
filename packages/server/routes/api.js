@@ -146,7 +146,6 @@ router.delete('/inventory/:id', InventoryController.deleteInventory);
 // Report routes
 router.get('/reports/x-report', ReportController.getXReport);
 router.get('/reports/z-report', ReportController.getZReport);
-router.get('/reports/z-report/history', ReportController.getZReportHistory);
-router.get('/reports/z-report/:id', ReportController.getZReportById);
+router.get('/reports/history', ReportController.getReportHistory);
 
 module.exports = router;

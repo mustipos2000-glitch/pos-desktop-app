@@ -8,21 +8,21 @@ const ReportsPage = () => {
   const [reportData, setReportData] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
-  const [zReportHistory, setZReportHistory] = useState([]);
+  const [reportHistory, setReportHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
 
   useEffect(() => {
-    loadZReportHistory();
+    loadReportHistory();
   }, []);
 
-  const loadZReportHistory = async () => {
+  const loadReportHistory = async () => {
     try {
-      const response = await ApiService.getZReportHistory(null, null, 10);
+      const response = await ApiService.getReportHistory(10);
       if (response.success) {
-        setZReportHistory(response.data);
+        setReportHistory(response.data);
       }
     } catch (error) {
-      console.error('Failed to load Z report history:', error);
+      console.error('Failed to load report history:', error);
     }
   };
 
@@ -33,7 +33,7 @@ const ReportsPage = () => {
       if (reportType === 'X') {
         response = await ApiService.getXReport(selectedDate);
       } else {
-        response = await ApiService.getZReport(selectedDate, false, false);
+        response = await ApiService.getZReport(selectedDate);
       }
       
       if (response.success) {
@@ -42,27 +42,6 @@ const ReportsPage = () => {
     } catch (error) {
       console.error('Failed to generate report:', error);
       alert('Failed to generate report');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const closeZReport = async () => {
-    if (!window.confirm('Are you sure you want to close the Z Report? This action marks the end of the business day.')) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await ApiService.getZReport(selectedDate, true, false);
-      if (response.success) {
-        setReportData(response.data);
-        alert('Z Report closed successfully!');
-        loadZReportHistory();
-      }
-    } catch (error) {
-      console.error('Failed to close Z report:', error);
-      alert('Failed to close Z report');
     } finally {
       setLoading(false);
     }
@@ -79,177 +58,186 @@ const ReportsPage = () => {
   return (
     <div className="h-screen flex flex-col bg-pos-bg-primary overflow-hidden">
       {/* Header */}
-      <div className="bg-pos-bg-secondary border-b border-pos-border-primary p-4 print:hidden">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-4">
+      <div className="bg-pos-bg-secondary border-b border-pos-border-primary p-3 print:hidden">
+        {/* Top Bar - Title and Action Buttons */}
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/pos')}
-              className="px-4 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-sm bg-gradient-to-r from-gray-700 to-gray-800 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all font-semibold shadow-md hover:shadow-lg border border-gray-600"
             >
-              ← Back to POS
+              <span className="text-lg">←</span>
+              <span>Back to POS</span>
             </button>
-            <h1 className="text-2xl font-bold text-pos-text-primary">Sales Reports</h1>
+            <h1 className="text-lg font-bold text-pos-text-primary">Sales Reports</h1>
           </div>
-        </div>
-        
-        {/* Report Type Selection */}
-        <div className="flex gap-4 mb-4">
-          <button
-            onClick={() => setReportType('X')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              reportType === 'X'
-                ? 'bg-blue-600 text-white'
-                : 'bg-pos-bg-tertiary text-pos-text-muted hover:bg-pos-interactive-hover'
-            }`}
-          >
-            X Report (Current Sales)
-          </button>
-          <button
-            onClick={() => setReportType('Z')}
-            className={`px-6 py-3 rounded-lg font-semibold transition-colors ${
-              reportType === 'Z'
-                ? 'bg-purple-600 text-white'
-                : 'bg-pos-bg-tertiary text-pos-text-muted hover:bg-pos-interactive-hover'
-            }`}
-          >
-            Z Report (End of Day)
-          </button>
-        </div>
-
-        {/* Date Selection and Actions */}
-        <div className="flex gap-4 items-center mb-4 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="text-pos-text-muted text-lg">📅</span>
+          
+          {/* Action Buttons - Right Corner */}
+          <div className="flex gap-2 items-center">
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-2 bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg"
+              className="px-3 py-1.5 text-sm bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
             />
-          </div>
-          <button
-            onClick={generateReport}
-            disabled={loading}
-            className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors font-semibold text-lg shadow-lg"
-          >
-            {loading ? '⏳ Generating...' : '📊 Generate Report'}
-          </button>
-          {reportType === 'Z' && reportData && (
             <button
-              onClick={closeZReport}
+              onClick={generateReport}
               disabled={loading}
-              className="px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors font-semibold text-lg shadow-lg"
+              className="px-3 py-1.5 text-sm bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed transition-all font-medium shadow-md hover:shadow-lg"
             >
-              🔒 Close Z Report
+              {loading ? '⏳ Generating...' : '📊 Generate Report'}
             </button>
-          )}
-          {reportData && (
-            <button
-              onClick={printReport}
-              className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg shadow-lg"
-            >
-              🖨️ Print
-            </button>
-          )}
+            {reportData && (
+              <button
+                onClick={printReport}
+                className="px-3 py-1.5 text-sm bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all font-medium shadow-md hover:shadow-lg"
+              >
+                🖨️ Print
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* Report Type Selection */}
+        <div className="flex gap-2 mb-3">
+          <button
+            onClick={() => setReportType('X')}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-all shadow-sm ${
+              reportType === 'X'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md scale-105'
+                : 'bg-pos-bg-tertiary text-pos-text-muted hover:bg-pos-interactive-hover hover:shadow-md'
+            }`}
+          >
+            📊 X Report (Current Sales)
+          </button>
+          <button
+            onClick={() => setReportType('Z')}
+            className={`px-4 py-2 text-sm rounded-lg font-medium transition-all shadow-sm ${
+              reportType === 'Z'
+                ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-md scale-105'
+                : 'bg-pos-bg-tertiary text-pos-text-muted hover:bg-pos-interactive-hover hover:shadow-md'
+            }`}
+          >
+            🔒 Z Report (End of Day)
+          </button>
         </div>
 
-        {/* Info Box */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-800 bg-opacity-40 border border-blue-600 rounded-lg p-4 shadow-md">
-          <div className="flex items-start gap-3">
-            <span className="text-3xl">{reportType === 'X' ? '📊' : '🔒'}</span>
-            <div>
-              <p className="text-base text-white font-semibold mb-1">
+        {/* Info Card */}
+        <div className="bg-gradient-to-r from-blue-900/30 to-blue-800/20 border border-blue-600/50 rounded-lg p-2.5 shadow-sm">
+          <div className="flex items-start gap-2">
+            <span className="text-xl">{reportType === 'X' ? '📊' : '🔒'}</span>
+            <div className="flex-1">
+              <p className="text-xs text-white font-semibold mb-1">
                 {reportType === 'X' ? 'X Report - Current Sales' : 'Z Report - End of Day'}
               </p>
-              <p className="text-sm text-blue-100">
+              <p className="text-xs text-blue-100 mb-1.5">
                 {reportType === 'X' ? (
-                  <>Shows all completed orders for the selected date. Can be generated multiple times during the day.</>
+                  <>Shows all completed orders for the selected date. Can be generated multiple times.</>
                 ) : (
-                  <>Shows final sales totals for the day. Should be generated once at end of business day.</>
+                  <>Shows final sales totals for the day. Generate once at end of business day.</>
                 )}
               </p>
-              <p className="text-sm text-blue-200 mt-2">
-                ✅ Only shows orders with status = <strong>completed</strong> or <strong>paid</strong>
-              </p>
-              <p className="text-sm text-blue-200">
-                📅 Orders appear based on when they were <strong>completed</strong> (updated_at timestamp)
-              </p>
+              <div className="flex items-center gap-1.5 text-xs text-blue-200 bg-blue-900/30 rounded px-2 py-0.5 inline-block">
+                <span>✅</span>
+                <span>Shows orders with status = <strong>completed</strong> or <strong>paid</strong> based on completion time</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Report Content - Scrollable */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-3">
         {reportData ? (
-          <div className="bg-pos-bg-secondary rounded-lg border border-pos-border-primary p-6 print:bg-white print:border-black">
+          <div className="bg-pos-bg-secondary rounded-lg border border-pos-border-primary p-4 print:bg-white print:border-black">
             {/* Report Header */}
-            <div className="border-b border-pos-border-primary pb-4 mb-6 print:border-black">
-              <h2 className="text-2xl font-bold text-pos-text-primary">
-                {reportData.reportType} Report
-              </h2>
-              <p className="text-pos-text-muted">Date: {reportData.reportDate}</p>
-              <p className="text-pos-text-muted text-sm">
-                Generated: {new Date(reportData.generatedAt).toLocaleString()}
-              </p>
-              <p className="text-pos-text-muted text-sm mt-2">
-                📊 Showing completed orders from {reportData.reportDate}
-              </p>
+            <div className="border-b border-pos-border-primary pb-3 mb-4 print:border-black">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-2xl">{reportData.reportType === 'X' ? '📊' : '🔒'}</span>
+                <h2 className="text-xl font-bold text-pos-text-primary">
+                  {reportData.reportType} Report
+                </h2>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <div className="flex items-center gap-1.5 bg-pos-bg-tertiary px-2 py-1 rounded">
+                  <span>📅</span>
+                  <span className="text-pos-text-muted">Date:</span>
+                  <span className="text-pos-text-primary font-semibold">{reportData.reportDate}</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-pos-bg-tertiary px-2 py-1 rounded">
+                  <span>🕐</span>
+                  <span className="text-pos-text-muted">Generated:</span>
+                  <span className="text-pos-text-primary font-semibold">{new Date(reportData.generatedAt).toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-1.5 bg-blue-900/20 border border-blue-600/50 px-2 py-1 rounded">
+                  <span>✅</span>
+                  <span className="text-blue-200">Showing completed orders from {reportData.reportDate}</span>
+                </div>
+              </div>
             </div>
 
             {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-blue-100 text-sm">Total Orders</p>
-                    <p className="text-3xl font-bold">{reportData.summary.totalOrders}</p>
+                    <p className="text-blue-100 text-xs font-medium mb-0.5">Total Orders</p>
+                    <p className="text-2xl font-bold">{reportData.summary.totalOrders}</p>
                   </div>
-                  <span className="text-4xl">📈</span>
+                  <div className="bg-white/20 rounded-full p-2">
+                    <span className="text-3xl">📈</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-4">
+              <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-green-100 text-sm">Net Total</p>
-                    <p className="text-3xl font-bold">{formatCurrency(reportData.summary.netTotal)}</p>
+                    <p className="text-green-100 text-xs font-medium mb-0.5">Net Total</p>
+                    <p className="text-2xl font-bold">{formatCurrency(reportData.summary.netTotal)}</p>
                   </div>
-                  <span className="text-4xl">💰</span>
+                  <div className="bg-white/20 rounded-full p-2">
+                    <span className="text-3xl">💰</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-4">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-3 shadow-md hover:shadow-lg transition-shadow">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-purple-100 text-sm">Avg Order Value</p>
-                    <p className="text-3xl font-bold">{formatCurrency(reportData.summary.averageOrderValue)}</p>
+                    <p className="text-purple-100 text-xs font-medium mb-0.5">Avg Order Value</p>
+                    <p className="text-2xl font-bold">{formatCurrency(reportData.summary.averageOrderValue)}</p>
                   </div>
-                  <span className="text-4xl">💵</span>
+                  <div className="bg-white/20 rounded-full p-2">
+                    <span className="text-3xl">💵</span>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Financial Summary */}
-            <div className="mb-6">
-              <h3 className="text-xl font-bold text-pos-text-primary mb-3">Financial Summary</h3>
-              <div className="bg-pos-bg-primary rounded-lg p-4 border border-pos-border-secondary">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex justify-between">
-                    <span className="text-pos-text-muted">Gross Total:</span>
-                    <span className="font-semibold text-pos-text-primary">{formatCurrency(reportData.summary.grossTotal)}</span>
+            <div className="mb-4">
+              <h3 className="text-base font-bold text-pos-text-primary mb-2 flex items-center gap-1.5">
+                <span className="text-lg">💳</span>
+                <span>Financial Summary</span>
+              </h3>
+              <div className="bg-pos-bg-primary rounded-lg p-3 border border-pos-border-secondary shadow-sm">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex justify-between items-center p-2 bg-pos-bg-secondary rounded text-sm">
+                    <span className="text-pos-text-muted font-medium">Gross Total:</span>
+                    <span className="font-bold text-pos-text-primary">{formatCurrency(reportData.summary.grossTotal)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-pos-text-muted">Total Discount:</span>
-                    <span className="font-semibold text-red-500">-{formatCurrency(reportData.summary.totalDiscount)}</span>
+                  <div className="flex justify-between items-center p-2 bg-pos-bg-secondary rounded text-sm">
+                    <span className="text-pos-text-muted font-medium">Total Discount:</span>
+                    <span className="font-bold text-red-500">-{formatCurrency(reportData.summary.totalDiscount)}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-pos-text-muted">Total Tax:</span>
-                    <span className="font-semibold text-pos-text-primary">{formatCurrency(reportData.summary.totalTax)}</span>
+                  <div className="flex justify-between items-center p-2 bg-pos-bg-secondary rounded text-sm">
+                    <span className="text-pos-text-muted font-medium">Total Tax:</span>
+                    <span className="font-bold text-pos-text-primary">{formatCurrency(reportData.summary.totalTax)}</span>
                   </div>
-                  <div className="flex justify-between border-t border-pos-border-secondary pt-2">
+                  <div className="flex justify-between items-center p-2 bg-gradient-to-r from-green-600/20 to-green-700/20 border border-green-600 rounded text-sm">
                     <span className="text-pos-text-primary font-bold">Net Total:</span>
-                    <span className="font-bold text-green-500">{formatCurrency(reportData.summary.netTotal)}</span>
+                    <span className="font-bold text-green-500 text-base">{formatCurrency(reportData.summary.netTotal)}</span>
                   </div>
                 </div>
               </div>
@@ -257,25 +245,28 @@ const ReportsPage = () => {
 
             {/* Category Sales */}
             {reportData.categorySales && reportData.categorySales.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-pos-text-primary mb-3">Sales by Category</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border border-pos-border-secondary">
-                    <thead className="bg-pos-bg-tertiary">
+              <div className="mb-4">
+                <h3 className="text-base font-bold text-pos-text-primary mb-2 flex items-center gap-1.5">
+                  <span className="text-lg">📂</span>
+                  <span>Sales by Category</span>
+                </h3>
+                <div className="overflow-x-auto rounded-lg border border-pos-border-secondary shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gradient-to-r from-pos-bg-tertiary to-pos-bg-secondary">
                       <tr>
-                        <th className="px-4 py-2 text-left text-pos-text-primary border-b border-pos-border-secondary">Category</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Orders</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Quantity</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Total Sales</th>
+                        <th className="px-3 py-2 text-left text-pos-text-primary font-semibold border-b border-pos-border-secondary">Category</th>
+                        <th className="px-3 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Orders</th>
+                        <th className="px-3 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Quantity</th>
+                        <th className="px-3 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Total Sales</th>
                       </tr>
                     </thead>
                     <tbody>
                       {reportData.categorySales.map((cat, idx) => (
-                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary">
-                          <td className="px-4 py-2 text-pos-text-primary">{cat.category_name || 'Uncategorized'}</td>
-                          <td className="px-4 py-2 text-right text-pos-text-muted">{cat.order_count}</td>
-                          <td className="px-4 py-2 text-right text-pos-text-muted">{cat.total_quantity}</td>
-                          <td className="px-4 py-2 text-right font-semibold text-pos-text-primary">{formatCurrency(cat.total_sales)}</td>
+                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary transition-colors">
+                          <td className="px-3 py-2 text-pos-text-primary">{cat.category_name || 'Uncategorized'}</td>
+                          <td className="px-3 py-2 text-right text-pos-text-muted">{cat.order_count}</td>
+                          <td className="px-3 py-2 text-right text-pos-text-muted">{cat.total_quantity}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-green-500">{formatCurrency(cat.total_sales)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -286,23 +277,26 @@ const ReportsPage = () => {
 
             {/* Top Products */}
             {reportData.topProducts && reportData.topProducts.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-pos-text-primary mb-3">Top Selling Products</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border border-pos-border-secondary">
-                    <thead className="bg-pos-bg-tertiary">
+              <div className="mb-4">
+                <h3 className="text-base font-bold text-pos-text-primary mb-2 flex items-center gap-1.5">
+                  <span className="text-lg">🏆</span>
+                  <span>Top Selling Products</span>
+                </h3>
+                <div className="overflow-x-auto rounded-lg border border-pos-border-secondary shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gradient-to-r from-pos-bg-tertiary to-pos-bg-secondary">
                       <tr>
-                        <th className="px-4 py-2 text-left text-pos-text-primary border-b border-pos-border-secondary">Product</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Quantity Sold</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Revenue</th>
+                        <th className="px-3 py-2 text-left text-pos-text-primary font-semibold border-b border-pos-border-secondary">Product</th>
+                        <th className="px-3 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Quantity Sold</th>
+                        <th className="px-3 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Revenue</th>
                       </tr>
                     </thead>
                     <tbody>
                       {reportData.topProducts.map((product, idx) => (
-                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary">
-                          <td className="px-4 py-2 text-pos-text-primary">{product.product_name}</td>
-                          <td className="px-4 py-2 text-right text-pos-text-muted">{product.quantity_sold}</td>
-                          <td className="px-4 py-2 text-right font-semibold text-pos-text-primary">{formatCurrency(product.total_revenue)}</td>
+                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary transition-colors">
+                          <td className="px-3 py-2 text-pos-text-primary">{product.product_name}</td>
+                          <td className="px-3 py-2 text-right text-pos-text-muted">{product.quantity_sold}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-green-500">{formatCurrency(product.total_revenue)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -313,23 +307,26 @@ const ReportsPage = () => {
 
             {/* Hourly Sales */}
             {reportData.hourlySales && reportData.hourlySales.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-pos-text-primary mb-3">Hourly Sales Breakdown</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border border-pos-border-secondary">
-                    <thead className="bg-pos-bg-tertiary">
+              <div className="mb-4">
+                <h3 className="text-base font-bold text-pos-text-primary mb-2 flex items-center gap-1.5">
+                  <span className="text-lg">⏰</span>
+                  <span>Hourly Sales Breakdown</span>
+                </h3>
+                <div className="overflow-x-auto rounded-lg border border-pos-border-secondary shadow-sm">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gradient-to-r from-pos-bg-tertiary to-pos-bg-secondary">
                       <tr>
-                        <th className="px-4 py-2 text-left text-pos-text-primary border-b border-pos-border-secondary">Hour</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Orders</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Sales</th>
+                        <th className="px-3 py-2 text-left text-pos-text-primary font-semibold border-b border-pos-border-secondary">Hour</th>
+                        <th className="px-3 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Orders</th>
+                        <th className="px-3 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Sales</th>
                       </tr>
                     </thead>
                     <tbody>
                       {reportData.hourlySales.map((hour, idx) => (
-                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary">
-                          <td className="px-4 py-2 text-pos-text-primary">{hour.hour}</td>
-                          <td className="px-4 py-2 text-right text-pos-text-muted">{hour.order_count}</td>
-                          <td className="px-4 py-2 text-right font-semibold text-pos-text-primary">{formatCurrency(hour.total_sales)}</td>
+                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary transition-colors">
+                          <td className="px-3 py-2 text-pos-text-primary">{hour.hour}</td>
+                          <td className="px-3 py-2 text-right text-pos-text-muted">{hour.order_count}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-green-500">{formatCurrency(hour.total_sales)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -340,29 +337,32 @@ const ReportsPage = () => {
 
             {/* Order List */}
             {reportData.orders && reportData.orders.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-xl font-bold text-pos-text-primary mb-3">Order Details ({reportData.orders.length} orders)</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border border-pos-border-secondary text-sm">
-                    <thead className="bg-pos-bg-tertiary">
+              <div className="mb-4">
+                <h3 className="text-base font-bold text-pos-text-primary mb-2 flex items-center gap-1.5">
+                  <span className="text-lg">📋</span>
+                  <span>Order Details ({reportData.orders.length} orders)</span>
+                </h3>
+                <div className="overflow-x-auto rounded-lg border border-pos-border-secondary shadow-sm">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gradient-to-r from-pos-bg-tertiary to-pos-bg-secondary">
                       <tr>
-                        <th className="px-3 py-2 text-left text-pos-text-primary border-b border-pos-border-secondary">Order No</th>
-                        <th className="px-3 py-2 text-left text-pos-text-primary border-b border-pos-border-secondary">Time</th>
-                        <th className="px-3 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Gross</th>
-                        <th className="px-3 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Discount</th>
-                        <th className="px-3 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Tax</th>
-                        <th className="px-3 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Net</th>
+                        <th className="px-2 py-2 text-left text-pos-text-primary font-semibold border-b border-pos-border-secondary">Order No</th>
+                        <th className="px-2 py-2 text-left text-pos-text-primary font-semibold border-b border-pos-border-secondary">Time</th>
+                        <th className="px-2 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Gross</th>
+                        <th className="px-2 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Discount</th>
+                        <th className="px-2 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Tax</th>
+                        <th className="px-2 py-2 text-right text-pos-text-primary font-semibold border-b border-pos-border-secondary">Net</th>
                       </tr>
                     </thead>
                     <tbody>
                       {reportData.orders.map((order, idx) => (
-                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary">
-                          <td className="px-3 py-2 text-pos-text-primary">{order.order_no || `#${order.id}`}</td>
-                          <td className="px-3 py-2 text-pos-text-muted">{order.updated_at ? new Date(order.updated_at).toLocaleTimeString() : new Date(order.created_at).toLocaleTimeString()}</td>
-                          <td className="px-3 py-2 text-right text-pos-text-muted">{formatCurrency(order.gross_total)}</td>
-                          <td className="px-3 py-2 text-right text-red-500">{formatCurrency(order.discount)}</td>
-                          <td className="px-3 py-2 text-right text-pos-text-muted">{formatCurrency(order.tax)}</td>
-                          <td className="px-3 py-2 text-right font-semibold text-pos-text-primary">{formatCurrency(order.net_total)}</td>
+                        <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary transition-colors">
+                          <td className="px-2 py-2 text-pos-text-primary">{order.order_no || `#${order.id}`}</td>
+                          <td className="px-2 py-2 text-pos-text-muted">{order.updated_at ? new Date(order.updated_at).toLocaleTimeString() : new Date(order.created_at).toLocaleTimeString()}</td>
+                          <td className="px-2 py-2 text-right text-pos-text-muted">{formatCurrency(order.gross_total)}</td>
+                          <td className="px-2 py-2 text-right text-red-500">{formatCurrency(order.discount)}</td>
+                          <td className="px-2 py-2 text-right text-pos-text-muted">{formatCurrency(order.tax)}</td>
+                          <td className="px-2 py-2 text-right font-semibold text-green-500">{formatCurrency(order.net_total)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -371,70 +371,60 @@ const ReportsPage = () => {
               </div>
             )}
           </div>
-        ) : (
-          /* Z Report History or Empty State */
-          reportType === 'Z' && !loading ? (
-            <div className="bg-pos-bg-secondary rounded-lg border border-pos-border-primary p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold text-pos-text-primary">Recent Z Reports</h3>
-                <button
-                  onClick={() => setShowHistory(!showHistory)}
-                  className="text-blue-500 hover:text-blue-400 font-semibold"
-                >
-                  {showHistory ? 'Hide' : 'Show'} History
-                </button>
-              </div>
-              
-              {showHistory && zReportHistory.length > 0 && (
-                <div className="overflow-x-auto">
-                  <table className="w-full border border-pos-border-secondary">
-                    <thead className="bg-pos-bg-tertiary">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-pos-text-primary border-b border-pos-border-secondary">Date</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Orders</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Net Total</th>
-                        <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Generated At</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {zReportHistory.map((report) => (
-                        <tr key={report.id} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary">
-                          <td className="px-4 py-2 text-pos-text-primary">{report.reportDate}</td>
-                          <td className="px-4 py-2 text-right text-pos-text-muted">{report.summary.totalOrders}</td>
-                          <td className="px-4 py-2 text-right font-semibold text-pos-text-primary">
-                            {formatCurrency(report.summary.netTotal)}
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm text-pos-text-muted">
-                            {new Date(report.generatedAt).toLocaleString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              
-              {showHistory && zReportHistory.length === 0 && (
-                <p className="text-pos-text-muted text-center py-8">No Z Reports found in history</p>
-              )}
+        ) : !loading ? (
+          <div className="bg-pos-bg-secondary rounded-lg border border-pos-border-primary p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-pos-text-primary">Recent Daily Reports</h3>
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="px-4 py-2 text-blue-500 hover:text-blue-400 font-medium"
+              >
+                {showHistory ? 'Hide' : 'Show'} History
+              </button>
             </div>
-          ) : (
-            <div className="bg-pos-bg-secondary rounded-lg border border-pos-border-primary p-12 text-center">
-              <div className="text-6xl mb-4">{reportType === 'X' ? '📊' : '🔒'}</div>
-              <h3 className="text-2xl font-bold text-pos-text-primary mb-2">
-                {reportType} Report
-              </h3>
-              <p className="text-pos-text-muted text-lg mb-6">
-                Select a date and click "Generate Report" to view sales data
-              </p>
-              <div className="bg-blue-900 bg-opacity-20 border border-blue-700 rounded-lg p-4 max-w-md mx-auto">
-                <p className="text-sm text-pos-text-muted">
-                  💡 Reports show only <strong>completed</strong> orders based on completion date
+            
+            {showHistory && reportHistory.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full border border-pos-border-secondary">
+                  <thead className="bg-pos-bg-tertiary">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-pos-text-primary border-b border-pos-border-secondary">Date</th>
+                      <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Orders</th>
+                      <th className="px-4 py-2 text-right text-pos-text-primary border-b border-pos-border-secondary">Net Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportHistory.map((report, idx) => (
+                      <tr key={idx} className="border-b border-pos-border-secondary hover:bg-pos-bg-tertiary">
+                        <td className="px-4 py-2 text-pos-text-primary">{report.reportDate}</td>
+                        <td className="px-4 py-2 text-right text-pos-text-muted">{report.summary.totalOrders}</td>
+                        <td className="px-4 py-2 text-right font-semibold text-pos-text-primary">
+                          {formatCurrency(report.summary.netTotal)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            {showHistory && reportHistory.length === 0 && (
+              <p className="text-pos-text-muted text-center py-8">No reports found in history</p>
+            )}
+            
+            {!showHistory && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">{reportType === 'X' ? '📊' : '🔒'}</div>
+                <h3 className="text-2xl font-bold text-pos-text-primary mb-2">
+                  {reportType} Report
+                </h3>
+                <p className="text-pos-text-muted mb-4">
+                  Select a date and click "Generate Report" to view sales data
                 </p>
               </div>
-            </div>
-          )
-        )}
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );

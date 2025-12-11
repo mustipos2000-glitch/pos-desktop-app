@@ -7,22 +7,21 @@ const ReportController = {
    * Can be run multiple times during the day
    * 
    * FILTERING LOGIC:
-   * - Can use either created_at OR completed_at field
-   * - dateType parameter: 'created' or 'completed' (default)
-   * - Filters by DATE(field) = selected date
+   * - Uses order.updated_at field (automatically updated when order changes)
+   * - Filters by DATE(updated_at) = selected date
    * - Only includes orders with status = 'completed' OR 'paid'
    * 
-   * IMPORTANT: completed_at is set when order status changes to completed/paid
-   * - Order created yesterday but completed today will appear in TODAY's report (if using completed_at)
+   * IMPORTANT: updated_at is automatically set when order status changes
+   * - Order created yesterday but completed today will appear in TODAY's report
    * - This is better for daily cash reconciliation
    */
   getXReport: (req, res) => {
     try {
-      const { date, dateType = 'completed' } = req.query;
+      const { date } = req.query;
       const reportDate = date || new Date().toISOString().split('T')[0];
       
-      // Choose which date field to use
-      const dateField = dateType === 'created' ? 'created_at' : 'completed_at';
+      // Use updated_at field which is automatically maintained by database trigger
+      const dateField = 'updated_at';
       
       // Get all completed orders for the specified date
       const orders = db.prepare(`
@@ -102,7 +101,6 @@ const ReportController = {
       const report = {
         reportType: 'X',
         reportDate,
-        dateType,
         generatedAt: new Date().toISOString(),
         summary: {
           totalOrders,
@@ -120,7 +118,7 @@ const ReportController = {
           id: o.id,
           order_no: o.order_no,
           created_at: o.created_at,
-          completed_at: o.completed_at,
+          updated_at: o.updated_at,
           gross_total: o.gross_total,
           discount: o.discount,
           tax: o.tax,
@@ -136,39 +134,27 @@ const ReportController = {
   },
 
   /**
-   * Z Report - End-of-day report with reset capability
-   * Shows final sales totals and can mark the day as closed
+   * Z Report - End-of-day report
+   * Shows final sales totals for the day
    * Should only be run once at end of business day
    * 
    * FILTERING LOGIC:
-   * - Can use either created_at OR completed_at field
-   * - dateType parameter: 'created' or 'completed' (default)
-   * - Filters by DATE(field) = selected date
+   * - Uses order.updated_at field (automatically updated when order changes)
+   * - Filters by DATE(updated_at) = selected date
    * - Only includes orders with status = 'completed' OR 'paid'
-   * - Saves to z_reports table when markAsClosed=true
+   * 
+   * NOTE: Z reports are generated on-demand from orders table
+   * No separate storage needed - all data comes from orders
    */
   getZReport: (req, res) => {
     try {
-      const { date, markAsClosed, dateType = 'completed' } = req.query;
+      const { date } = req.query;
       const reportDate = date || new Date().toISOString().split('T')[0];
       
-      // Check if Z report already exists for this date
-      const existingReport = db.prepare(`
-        SELECT * FROM z_reports WHERE report_date = ?
-      `).get(reportDate);
+      // Use updated_at field which is automatically maintained by database trigger
+      const dateField = 'updated_at';
 
-      if (existingReport && !req.query.force) {
-        return res.json({ 
-          success: true, 
-          data: JSON.parse(existingReport.report_data),
-          message: 'Z Report already generated for this date. Use force=true to regenerate.'
-        });
-      }
-
-      // Choose which date field to use
-      const dateField = dateType === 'created' ? 'created_at' : 'completed_at';
-
-      // Get all completed orders for the specified date based on completed_at
+      // Get all completed orders for the specified date
       const orders = db.prepare(`
         SELECT * FROM orders 
         WHERE DATE(${dateField}) = ? 
@@ -246,9 +232,7 @@ const ReportController = {
       const report = {
         reportType: 'Z',
         reportDate,
-        dateType,
         generatedAt: new Date().toISOString(),
-        isClosed: markAsClosed === 'true',
         summary: {
           totalOrders,
           grossTotal: grossTotal.toFixed(2),
@@ -265,29 +249,13 @@ const ReportController = {
           id: o.id,
           order_no: o.order_no,
           created_at: o.created_at,
-          completed_at: o.completed_at,
+          updated_at: o.updated_at,
           gross_total: o.gross_total,
           discount: o.discount,
           tax: o.tax,
           net_total: o.net_total
         }))
       };
-
-      // Save Z report to database if marking as closed
-      if (markAsClosed === 'true') {
-        if (existingReport) {
-          db.prepare(`
-            UPDATE z_reports 
-            SET report_data = ?, generated_at = CURRENT_TIMESTAMP
-            WHERE report_date = ?
-          `).run(JSON.stringify(report), reportDate);
-        } else {
-          db.prepare(`
-            INSERT INTO z_reports (report_date, report_data)
-            VALUES (?, ?)
-          `).run(reportDate, JSON.stringify(report));
-        }
-      }
 
       res.json({ success: true, data: report });
     } catch (error) {
@@ -297,70 +265,47 @@ const ReportController = {
   },
 
   /**
-   * Get all historical Z reports
+   * Get summary of recent daily sales (for history view)
+   * Generates summary from orders grouped by date
    */
-  getZReportHistory: (req, res) => {
+  getReportHistory: (req, res) => {
     try {
-      const { startDate, endDate, limit = 30 } = req.query;
+      const { limit = 30 } = req.query;
       
-      let query = 'SELECT * FROM z_reports';
-      const params = [];
+      // Get daily summaries from orders
+      const dailySummaries = db.prepare(`
+        SELECT 
+          DATE(updated_at) as report_date,
+          COUNT(*) as total_orders,
+          SUM(gross_total) as gross_total,
+          SUM(discount) as total_discount,
+          SUM(tax) as total_tax,
+          SUM(net_total) as net_total,
+          MAX(updated_at) as last_order_time
+        FROM orders
+        WHERE status IN ('completed', 'paid')
+        GROUP BY DATE(updated_at)
+        ORDER BY report_date DESC
+        LIMIT ?
+      `).all(parseInt(limit));
       
-      if (startDate && endDate) {
-        query += ' WHERE report_date BETWEEN ? AND ?';
-        params.push(startDate, endDate);
-      } else if (startDate) {
-        query += ' WHERE report_date >= ?';
-        params.push(startDate);
-      } else if (endDate) {
-        query += ' WHERE report_date <= ?';
-        params.push(endDate);
-      }
-      
-      query += ' ORDER BY report_date DESC LIMIT ?';
-      params.push(parseInt(limit));
-      
-      const reports = db.prepare(query).all(...params);
-      
-      const formattedReports = reports.map(r => ({
-        id: r.id,
+      const formattedReports = dailySummaries.map(r => ({
         reportDate: r.report_date,
-        generatedAt: r.generated_at,
-        summary: JSON.parse(r.report_data).summary
+        generatedAt: r.last_order_time,
+        summary: {
+          totalOrders: r.total_orders,
+          grossTotal: r.gross_total.toFixed(2),
+          totalDiscount: r.total_discount.toFixed(2),
+          totalTax: r.total_tax.toFixed(2),
+          netTotal: r.net_total.toFixed(2),
+          averageOrderValue: (r.net_total / r.total_orders).toFixed(2)
+        }
       }));
 
       res.json({ success: true, data: formattedReports });
     } catch (error) {
-      console.error('Z Report history error:', error);
-      res.status(500).json({ success: false, error: 'Failed to get Z Report history' });
-    }
-  },
-
-  /**
-   * Get a specific historical Z report
-   */
-  getZReportById: (req, res) => {
-    try {
-      const { id } = req.params;
-      
-      const report = db.prepare('SELECT * FROM z_reports WHERE id = ?').get(id);
-      
-      if (!report) {
-        return res.status(404).json({ success: false, error: 'Z Report not found' });
-      }
-
-      res.json({ 
-        success: true, 
-        data: {
-          id: report.id,
-          reportDate: report.report_date,
-          generatedAt: report.generated_at,
-          ...JSON.parse(report.report_data)
-        }
-      });
-    } catch (error) {
-      console.error('Get Z Report error:', error);
-      res.status(500).json({ success: false, error: 'Failed to get Z Report' });
+      console.error('Report history error:', error);
+      res.status(500).json({ success: false, error: 'Failed to get report history' });
     }
   }
 };
