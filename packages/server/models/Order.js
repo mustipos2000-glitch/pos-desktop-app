@@ -11,6 +11,12 @@ class Order {
             ? new Date().toISOString() 
             : null;
         
+        // Set completed_at if order is created with completed/paid status
+        const status = order.status || 'pending';
+        const completedAt = (status === 'completed' || status === 'paid') 
+            ? new Date().toISOString() 
+            : null;
+        
         const insertOrder = db.prepare(`
       INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no, order_type, completed_at)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -81,6 +87,7 @@ class Order {
         WHERE id = ?
         `).run(
             payload.tax || 0,
+            newStatus,
             newStatus,
             payload.note || '',
             payload.total || 0,
