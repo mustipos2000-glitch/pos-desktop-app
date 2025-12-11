@@ -421,6 +421,23 @@ static async adjustInventory(productId, data) {
   });
 }
 
+  // Report methods
+  static async getXReport(date) {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    return this.request(`/reports/x-report?${params.toString()}`);
+  }
+
+  static async getZReport(date) {
+    const params = new URLSearchParams();
+    if (date) params.append('date', date);
+    return this.request(`/reports/z-report?${params.toString()}`);
+  }
+
+  static async getReportHistory(limit = 30) {
+    return this.request(`/reports/history?limit=${limit}`);
+  }
+
 }
 
 export default ApiService;

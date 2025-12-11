@@ -9,9 +9,9 @@ import KeypadNumpad from './KeypadNumpad';
 const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [rolePermissions, setRolePermissions] = useState({
-    'Super Admin': { admin: true, settings: true },
-    'Admin': { admin: false, settings: false },
-    'User': { admin: false, settings: false }
+    'Super Admin': { admin: true, settings: true, reports: true },
+    'Admin': { admin: false, settings: false, reports: false },
+    'User': { admin: false, settings: false, reports: false }
   });
   const [printers, setPrinters] = useState([]);
   const [showAddPrinter, setShowAddPrinter] = useState(false);
@@ -279,9 +279,9 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
       
       // Get default permissions for Admin and User roles from first user of each role
       const newRolePerms = {
-        'Super Admin': { admin: true, settings: true },
-        'Admin': { admin: false, settings: false },
-        'User': { admin: false, settings: false }
+        'Super Admin': { admin: true, settings: true, reports: true },
+        'Admin': { admin: false, settings: false, reports: false },
+        'User': { admin: false, settings: false, reports: false }
       };
       
       data.forEach(user => {
@@ -290,7 +290,8 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
             const perms = user.permissions ? JSON.parse(user.permissions) : [];
             newRolePerms[user.role] = {
               admin: perms.includes('admin'),
-              settings: perms.includes('settings')
+              settings: perms.includes('settings'),
+              reports: perms.includes('reports')
             };
           } catch (e) {
             // Keep defaults
@@ -762,7 +763,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
           {activeTab === 'permissions' && isSuperAdmin && (
             <div className="space-y-6">
               <div className="mb-4">
-                <p className="text-pos-text-muted text-sm">Manage user permissions for Admin Panel and Settings access</p>
+                <p className="text-pos-text-muted text-sm">Manage user permissions for Admin Panel, Settings, and Reports access</p>
               </div>
 
               {/* Role Permissions Table */}
@@ -783,6 +784,12 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                           <span>Settings</span>
                         </div>
                       </th>
+                      <th className="text-center py-3 px-4 text-pos-text-primary text-sm font-semibold">
+                        <div className="flex items-center justify-center gap-1">
+                          <span>📊</span>
+                          <span>Reports</span>
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -792,6 +799,12 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-500 bg-opacity-20 text-purple-400">
                           Super Admin
                         </span>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="text-green-500 text-lg">✓</span>
+                          <span className="text-pos-text-muted text-xs">Always</span>
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -838,6 +851,18 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                           {rolePermissions['Admin'].settings ? '✓ Assigned' : 'Assign'}
                         </button>
                       </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => toggleRolePermission('Admin', 'reports')}
+                          className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
+                            rolePermissions['Admin'].reports
+                              ? 'bg-green-500 bg-opacity-20 text-green-400 border border-green-500 hover:bg-opacity-30'
+                              : 'bg-pos-bg-tertiary text-pos-text-muted border border-pos-border-secondary hover:border-pos-info'
+                          }`}
+                        >
+                          {rolePermissions['Admin'].reports ? '✓ Assigned' : 'Assign'}
+                        </button>
+                      </td>
                     </tr>
 
                     {/* User Role */}
@@ -869,6 +894,18 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                           }`}
                         >
                           {rolePermissions['User'].settings ? '✓ Assigned' : 'Assign'}
+                        </button>
+                      </td>
+                      <td className="py-3 px-4 text-center">
+                        <button
+                          onClick={() => toggleRolePermission('User', 'reports')}
+                          className={`px-4 py-1.5 rounded text-xs font-medium transition-all ${
+                            rolePermissions['User'].reports
+                              ? 'bg-green-500 bg-opacity-20 text-green-400 border border-green-500 hover:bg-opacity-30'
+                              : 'bg-pos-bg-tertiary text-pos-text-muted border border-pos-border-secondary hover:border-pos-info'
+                          }`}
+                        >
+                          {rolePermissions['User'].reports ? '✓ Assigned' : 'Assign'}
                         </button>
                       </td>
                     </tr>

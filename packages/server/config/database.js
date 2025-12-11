@@ -264,6 +264,40 @@ try {
   }
 }
 
+// Add completed_at column to orders if it doesn't exist (kept for backward compatibility)
+try {
+  db.exec(`ALTER TABLE orders ADD COLUMN completed_at DATETIME`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+// Add updated_at column to orders if it doesn't exist
+try {
+  db.exec(`ALTER TABLE orders ADD COLUMN updated_at DATETIME`);
+  // Set initial values for existing orders
+  db.exec(`UPDATE orders SET updated_at = created_at WHERE updated_at IS NULL`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+// Create trigger to automatically update updated_at when order is modified
+try {
+  db.exec(`
+    CREATE TRIGGER IF NOT EXISTS update_orders_timestamp 
+    AFTER UPDATE ON orders
+    FOR EACH ROW
+    BEGIN
+      UPDATE orders SET updated_at = CURRENT_TIMESTAMP WHERE id = NEW.id;
+    END;
+  `);
+} catch (err) {
+  console.log('Trigger creation note:', err.message);
+}
+
 // Create order_details table
 db.exec(`
   CREATE TABLE IF NOT EXISTS order_details (
@@ -408,6 +442,18 @@ db.exec(`
   )
 `);
 
+
+// NOTE: z_reports table is no longer used
+// Reports are now generated on-demand from orders table using updated_at timestamp
+// Keeping table creation for backward compatibility with existing installations
+db.exec(`
+  CREATE TABLE IF NOT EXISTS z_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_date DATE NOT NULL UNIQUE,
+    report_data TEXT NOT NULL,
+    generated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
 
 // Insert default admin user if no users exist
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();

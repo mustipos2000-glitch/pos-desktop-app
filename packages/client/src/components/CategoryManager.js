@@ -363,7 +363,7 @@ const CategoryManager = () => {
       formData.append("color", productFormData.color || "#3b82f6");
       formData.append(
         "price_vat_inc",
-        parseFloat(productFormData.price_vat_inc) || 0
+        parseFloat(productFormData.price) || 0
       );
       formData.append(
         "sub_product_group",
