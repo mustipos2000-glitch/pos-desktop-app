@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -6,6 +6,8 @@ const { spawn } = require('child_process');
 // Check if running in development or production
 const isDev = !app.isPackaged && process.env.NODE_ENV !== 'production';
 let serverProcess = null;
+let mainWindow = null;
+let customerDisplayWindow = null;
 
 function runSeeder(serverDir, nodePath) {
   return new Promise((resolve, reject) => {
@@ -147,7 +149,7 @@ async function startServer() {
 
 function createWindow() {
   const preloadPath = path.join(__dirname, 'preload.js');  
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
@@ -215,7 +217,123 @@ function createWindow() {
   mainWindow.webContents.on('console-message', (event, level, message) => {
     console.log(`[Renderer ${level}]:`, message);
   });
+  
+  return mainWindow;
 }
+
+function createCustomerDisplayWindow() {
+  if (customerDisplayWindow) {
+    customerDisplayWindow.focus();
+    return;
+  }
+
+  const preloadPath = path.join(__dirname, 'preload.js');
+  
+  // Calculate position to place customer display window next to main window
+  let x = 0, y = 0;
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    const mainBounds = mainWindow.getBounds();
+    x = mainBounds.x + mainBounds.width + 10; // Position to the right with 10px gap
+    y = mainBounds.y;
+    
+    // Get screen dimensions to ensure window fits
+    const { screen } = require('electron');
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+    
+    // If windows don't fit side by side, adjust sizes
+    const customerDisplayWidth = 400;
+    const customerDisplayHeight = 800;
+    
+    if (x + customerDisplayWidth > screenWidth) {
+      // Position to the right edge of screen
+      x = screenWidth - customerDisplayWidth - 10;
+      // If still doesn't fit, make it smaller
+      if (x < mainBounds.x + mainBounds.width) {
+        x = mainBounds.x + mainBounds.width + 10;
+      }
+    }
+    
+    // Ensure window is within screen bounds
+    if (y + customerDisplayHeight > screenHeight) {
+      y = screenHeight - customerDisplayHeight - 10;
+    }
+    if (y < 0) y = 10;
+  }
+  
+  customerDisplayWindow = new BrowserWindow({
+    width: 400,
+    height: 800,
+    x: x,
+    y: y,
+    title: 'Customer Display',
+    webPreferences: {
+      preload: preloadPath,
+      nodeIntegration: false,
+      contextIsolation: true,
+      webSecurity: false
+    },
+    frame: true,
+    resizable: true,
+    alwaysOnTop: false
+  });
+
+  // Mark this window as customer display window
+  customerDisplayWindow.isCustomerDisplay = true;
+
+  // In development, load from the React dev server
+  // In production, load from the built files
+  if (isDev) {
+    customerDisplayWindow.loadURL('http://localhost:3000/#/customer-display');
+    // Optionally open dev tools for customer display in dev mode
+    // customerDisplayWindow.webContents.openDevTools();
+  } else {
+    customerDisplayWindow.loadURL('http://localhost:5000/#/customer-display');
+  }
+
+  customerDisplayWindow.on('closed', () => {
+    customerDisplayWindow = null;
+  });
+
+  customerDisplayWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+    console.error('Customer Display failed to load:', errorCode, errorDescription, validatedURL);
+  });
+}
+
+function closeCustomerDisplayWindow() {
+  if (customerDisplayWindow) {
+    customerDisplayWindow.close();
+    customerDisplayWindow = null;
+  }
+}
+
+// IPC handlers for customer display
+ipcMain.on('customer-display:toggle', (event, enabled) => {
+  if (enabled) {
+    createCustomerDisplayWindow();
+  } else {
+    closeCustomerDisplayWindow();
+  }
+});
+
+ipcMain.on('customer-display:update-cart', (event, data) => {
+  if (customerDisplayWindow && !customerDisplayWindow.isDestroyed()) {
+    customerDisplayWindow.webContents.send('customer-display:cart-updated', data);
+  }
+});
+
+ipcMain.handle('customer-display:is-display-window', (event) => {
+  // Check if the sender is the customer display window
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+  return senderWindow && senderWindow.isCustomerDisplay === true;
+});
+
+ipcMain.handle('customer-display:get-main-window-bounds', () => {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    return mainWindow.getBounds();
+  }
+  return null;
+});
 
 app.whenReady().then(() => {
   startServer();
@@ -226,6 +344,13 @@ app.whenReady().then(() => {
       createWindow();
     }
   });
+});
+
+// Clean up customer display window on app quit
+app.on('before-quit', () => {
+  if (customerDisplayWindow) {
+    customerDisplayWindow.close();
+  }
 });
 
 app.on('window-all-closed', () => {
