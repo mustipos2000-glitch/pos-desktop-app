@@ -72,7 +72,7 @@ const OrderController = {
             if (!existingOrder) {
                 return res.status(404).json({ error: 'Order not found' });
             }
-
+        console.log('🔍 Existing order found:', existingOrder);
             // Only validate inventory for retail orders
             const finalOrderType = order_type || existingOrder.order_type || 'horeca';
             if (finalOrderType === 'retail') {
