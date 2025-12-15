@@ -201,6 +201,10 @@ const ProductController = {
       const product = Product.create(payload);
       res.status(201).json({ message: 'Product created successfully', data: product });
     } catch (error) {
+      // Check if it's a barcode duplicate error
+      if (error.message && error.message.includes('already exists')) {
+        return res.status(400).json({ error: error.message });
+      }
       res.status(500).json({ error: 'Internal server error', details: error.message });
     }
   },
@@ -234,6 +238,10 @@ const ProductController = {
       const product = Product.update(id, payload);
       res.status(200).json({ message: 'Product updated successfully', data: product });
     } catch (err) {
+      // Check if it's a barcode duplicate error
+      if (err.message && err.message.includes('already exists')) {
+        return res.status(400).json({ error: err.message });
+      }
       res.status(500).json({ error: 'Internal server error' });
     }
   },
@@ -286,6 +294,30 @@ const ProductController = {
           details: validatedDetails
         }
       });
+    } catch (err) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
+  // Get product by barcode
+  getProductByBarcode: (req, res) => {
+    try {
+      const barcode = req.params.barcode;
+      
+      if (!barcode || barcode.trim() === '') {
+        return res.status(400).json({ error: 'Barcode is required' });
+      }
+
+      const product = Product.getByBarcode(barcode);
+
+      if (!product) {
+        return res.status(404).json({ error: 'Product not found' });
+      }
+
+      // Attach available quantity
+      product.available_qty = InventoryHelper.getAvailableQty(product.id);
+
+      res.json({ data: product });
     } catch (err) {
       res.status(500).json({ error: 'Internal server error' });
     }

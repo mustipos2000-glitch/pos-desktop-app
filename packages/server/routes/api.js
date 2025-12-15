@@ -55,6 +55,7 @@ router.delete('/groups/:id', GroupController.deleteGroup);
 
 // Product routes
 router.get('/products', ProductController.getAllProducts);
+router.get('/products/barcode/:barcode', ProductController.getProductByBarcode);
 router.get('/products/:id', ProductController.getProductById);
 // ✅ if you're uploading image + text form-data
 router.post('/products', upload.single('image'), ProductController.createProduct);

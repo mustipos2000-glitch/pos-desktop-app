@@ -23,6 +23,14 @@ class Product {
     }
 
     static create(product) {
+        // Check if barcode already exists (if provided)
+        if (product.barcode && product.barcode.trim() !== '') {
+            const existing = db.prepare('SELECT id FROM products WHERE barcode = ?').get(product.barcode);
+            if (existing) {
+                throw new Error(`Barcode "${product.barcode}" already exists for another product`);
+            }
+        }
+
         const sql = `INSERT INTO products (
       name, button_name, production_name, price, vat_takeout, vat_eat_in,
       barcode, category_id, addition_type, display_index, in_web_shop,
@@ -55,6 +63,14 @@ class Product {
     }
 
     static update(id, product) {
+        // Check if barcode already exists for another product (if provided)
+        if (product.barcode && product.barcode.trim() !== '') {
+            const existing = db.prepare('SELECT id FROM products WHERE barcode = ? AND id != ?').get(product.barcode, id);
+            if (existing) {
+                throw new Error(`Barcode "${product.barcode}" already exists for another product`);
+            }
+        }
+
         const sql = `UPDATE products SET
       name = ?, button_name = ?, production_name = ?, price = ?, vat_takeout = ?, vat_eat_in = ?,
       barcode = ?, category_id = ?, addition_type = ?, display_index = ?, in_web_shop = ?,
@@ -106,6 +122,16 @@ class Product {
 
         const sql = 'DELETE FROM products WHERE id = ?';
         return db.prepare(sql).run(id);
+    }
+
+    static getByBarcode(barcode) {
+        const sql = `
+      SELECT p.*, c.name as category_name
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.barcode = ?
+    `;
+        return db.prepare(sql).get(barcode);
     }
 }
 

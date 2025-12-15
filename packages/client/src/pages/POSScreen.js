@@ -7,6 +7,7 @@ import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
 import UnifiedTableModal from '../components/UnifiedTableModal';
 import MessageModal from '../components/MessageModal';
+import BarcodeSearchModal from '../components/BarcodeSearchModal';
 import ApiService from '../services/api';
 import { useVersion } from '../context/VersionContext';
 import { useMessageModal } from '../hooks/useMessageModal';
@@ -32,6 +33,7 @@ const POSScreen = () => {
   const [activeParentRowIndex, setActiveParentRowIndex] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showBarcodeSearch, setShowBarcodeSearch] = useState(false);
 
   // Load logged-in user from localStorage on mount
   useEffect(() => {
@@ -49,7 +51,6 @@ const POSScreen = () => {
 
   // Debug logging for customer state changes
   useEffect(() => {
-    console.log('🔍 Customer state changed:', selectedCustomer);
   }, [selectedCustomer]);
 
   // Auto-save cart whenever cart changes (for both table orders and hold orders)
@@ -205,8 +206,7 @@ const POSScreen = () => {
         // Fetch products
         const productResponse = await ApiService.getProducts();
         // Map products to match the expected format
-        console.log('📦 Product API response:', productResponse);
-       
+        
         const formattedProducts = productResponse.data.map(product => ({
           id: product.id,
           name: product.name,
@@ -1029,7 +1029,10 @@ const updateQuantity = async (cartItemId, quantity) => {
         <div className="flex-1 flex justify-center items-center rounded-lg">
           <div className="text-pos-text-primary">Loading data...</div>
         </div>
-        <BottomBar onOpenSettings={() => setShowSettings(true)} />
+        <BottomBar 
+          onOpenSettings={() => setShowSettings(true)} 
+          onBarcodeSearch={() => setShowBarcodeSearch(true)}
+        />
       </div>
     );
   }
@@ -1069,7 +1072,10 @@ const updateQuantity = async (cartItemId, quantity) => {
             searchQuery={searchQuery}
           />
         </div>
-        <BottomBar onOpenSettings={() => setShowSettings(true)} />
+        <BottomBar 
+          onOpenSettings={() => setShowSettings(true)} 
+          onBarcodeSearch={() => setShowBarcodeSearch(true)}
+        />
       </div>
       <OrderPanel
         cart={cart}
@@ -1154,6 +1160,15 @@ const updateQuantity = async (cartItemId, quantity) => {
         title={messageModal.title}
         message={messageModal.message}
         type={messageModal.type}
+      />
+
+      <BarcodeSearchModal
+        isOpen={showBarcodeSearch}
+        onClose={() => setShowBarcodeSearch(false)}
+        onProductFound={(product) => {
+          // Add product to cart when found
+          addToCart(product, 1, false);
+        }}
       />
     </div>
   );
