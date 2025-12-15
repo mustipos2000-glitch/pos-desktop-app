@@ -33,6 +33,20 @@ const POSScreen = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  // Load logged-in user from localStorage on mount
+  useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+      try {
+        const user = JSON.parse(currentUser);
+        setSelectedEmployee(user);
+        console.log('✅ Logged-in user loaded as selected employee:', user);
+      } catch (error) {
+        console.error('Error parsing currentUser from localStorage:', error);
+      }
+    }
+  }, []);
+
   // Debug logging for customer state changes
   useEffect(() => {
     console.log('🔍 Customer state changed:', selectedCustomer);
