@@ -483,8 +483,8 @@ const PaymentController = {
 
   parseFinancialTrxResponse(xmlString) {
     const isFinancial =
-      xmlString.includes("financialTrxResponse")
-    xmlString.includes("<vcs-pos:financialTrxResponse");
+      xmlString.includes("financialTrxResponse") ||
+      xmlString.includes("<vcs-pos:financialTrxResponse");
 
     if (!isFinancial) {
       return {
