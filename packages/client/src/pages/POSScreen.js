@@ -34,7 +34,6 @@ const POSScreen = () => {
 
   // Debug logging for customer state changes
   useEffect(() => {
-    console.log('🔍 Customer state changed:', selectedCustomer);
   }, [selectedCustomer]);
 
   // Auto-save cart whenever cart changes (for both table orders and hold orders)
@@ -189,8 +188,7 @@ const POSScreen = () => {
         // Fetch products
         const productResponse = await ApiService.getProducts();
         // Map products to match the expected format
-        console.log('📦 Product API response:', productResponse);
-       
+        
         const formattedProducts = productResponse.data.map(product => ({
           id: product.id,
           name: product.name,

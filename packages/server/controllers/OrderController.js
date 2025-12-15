@@ -64,7 +64,6 @@ const OrderController = {
         try {
             const id = req.params.id;
             const { tax, status, note, total, sub_total, discount, details, table_id, customer_id, order_type } = req.body;
-
             console.log('📝 Updating order', id, 'with', details?.length, 'items, type:', order_type);
 
             // Check if order exists
@@ -72,7 +71,7 @@ const OrderController = {
             if (!existingOrder) {
                 return res.status(404).json({ error: 'Order not found' });
             }
-        console.log('🔍 Existing order found:', existingOrder);
+       
             // Only validate inventory for retail orders
             const finalOrderType = order_type || existingOrder.order_type || 'horeca';
             if (finalOrderType === 'retail') {

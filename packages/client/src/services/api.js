@@ -12,7 +12,7 @@ class ApiService {
     };
 
     try {
-      console.log('API request:', url, config);
+      
       const response = await fetch(url, config);
       
       if (!response.ok) {
@@ -420,6 +420,14 @@ static async adjustInventory(productId, data) {
     body: JSON.stringify(data),
   });
 }
+
+// delete inventory api
+  static async deleteInventory(productId) {
+    return this.request(`/inventory/${productId}`, {
+      method: 'DELETE',
+    });
+  }
+
 
   // Report methods
   static async getXReport(date) {
