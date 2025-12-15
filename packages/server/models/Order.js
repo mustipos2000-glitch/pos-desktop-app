@@ -10,12 +10,7 @@ class Order {
         const completedAt = (status === 'completed' || status === 'paid') 
             ? new Date().toISOString() 
             : null;
-<<<<<<< HEAD
-        
-        
-=======
     
->>>>>>> f5ee617ec45c10cbe3debed2d86c2eccdea5a484
         const insertOrder = db.prepare(`
       INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no, order_type, completed_at,employee_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
