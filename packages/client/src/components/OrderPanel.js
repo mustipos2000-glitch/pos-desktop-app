@@ -9,7 +9,7 @@ import CustomerSelector from "./CustomerSelector";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount }) => {
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount, selectedEmployee }) => {
   
 
 const formatAmount = (value) => {
@@ -701,6 +701,7 @@ const formatAmount = (value) => {
         total,
         discount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
+        employee_id: selectedEmployee ? selectedEmployee.id : null,
         table_id: selectedTable ? selectedTable.id : null,
         order_type: orderType,
         details: (() => {

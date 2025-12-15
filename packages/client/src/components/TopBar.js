@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import UnifiedTableModal from './UnifiedTableModal';
 import MessageModal from './MessageModal';
 import ConfirmationModal from './ConfirmationModal';
@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useVersion } from '../context/VersionContext';
 import { useMessageModal } from '../hooks/useMessageModal';
 
-const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount, onLoadHoldOrder }) => {
+const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount, onLoadHoldOrder, selectedEmployeeId, selectedEmployee, onEmployeeChange }) => {
   const { theme, toggleTheme } = useTheme();
   const { hasFeature } = useVersion();
   const [showTableModal, setShowTableModal] = useState(false);
@@ -24,6 +24,10 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     message: '',
     onConfirm: null
   });
+  const [employees, setEmployees] = useState([]);
+  const [showEmployeeDropdown, setShowEmployeeDropdown] = useState(false);
+  const [employeeSearchQuery, setEmployeeSearchQuery] = useState('');
+  const employeeDropdownRef = useRef(null);
 
   const handleTableClick = () => {
     setShowTableModal(true);
@@ -177,7 +181,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
   // Fetch hold orders count
   const fetchHoldOrderCount = async () => {
     try {
-      const response = await ApiService.getHoldOrders();
+      const response = await ApiService.getHoldOrders(selectedEmployeeId);
       setHoldOrderCount(response.data?.length || 0);
     } catch (error) {
       console.error('Failed to fetch hold orders:', error);
@@ -185,9 +189,13 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
   };
 
   useEffect(() => {
-    // Fetch only once on component mount
+    // Fetch on component mount and when employee changes
     fetchKitchenOrderCount();
     fetchHoldOrderCount();
+  }, [selectedEmployeeId]);
+
+  useEffect(() => {
+    // Fetch printers only once on component mount
 
     // Fetch printers
     const fetchPrinters = async () => {
@@ -199,7 +207,42 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
       }
     };
     fetchPrinters();
+
+    // Fetch employees
+    const fetchEmployees = async () => {
+      try {
+        const response = await ApiService.request('/users');
+        const employeeData = Array.isArray(response) ? response : (response.data || []);
+        setEmployees(employeeData);
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+      }
+    };
+    fetchEmployees();
   }, []);
+
+  // Filter employees based on search query
+  const filteredEmployees = employees.filter(employee =>
+    employee.name.toLowerCase().includes(employeeSearchQuery.toLowerCase())
+  );
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (employeeDropdownRef.current && !employeeDropdownRef.current.contains(event.target)) {
+        setShowEmployeeDropdown(false);
+        setEmployeeSearchQuery('');
+      }
+    };
+
+    if (showEmployeeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showEmployeeDropdown]);
 
   // Expose fetchKitchenOrderCount to parent via callback
   useEffect(() => {
@@ -243,6 +286,84 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
             <span className="text-lg">⏸️</span>
             On Hold ({holdOrderCount})
           </button>
+
+          {/* Employee Selector Dropdown */}
+          {employees && employees.length > 0 && (
+            <div className="relative" ref={employeeDropdownRef}>
+              <button
+                onClick={() => setShowEmployeeDropdown(!showEmployeeDropdown)}
+                className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white"
+              >
+                {selectedEmployee ? (
+                  <>
+                    <span
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                      style={{ backgroundColor: selectedEmployee.avatar_color }}
+                    >
+                      {selectedEmployee.name.charAt(0).toUpperCase()}
+                    </span>
+                    {selectedEmployee.name}
+                  </>
+                ) : (
+                  <>
+                    <span className="text-lg">👤</span>
+                    Employee
+                  </>
+                )}
+                <span className="text-xs">{showEmployeeDropdown ? '▲' : '▼'}</span>
+              </button>
+
+              {showEmployeeDropdown && (
+                <div className="absolute top-full mt-2 left-0 bg-pos-bg-secondary border border-pos-border-primary rounded-lg shadow-lg min-w-[250px] max-h-[350px] z-50 flex flex-col">
+                  {/* Search Input */}
+                  <div className="p-2 border-b border-pos-border-primary">
+                    <input
+                      type="text"
+                      placeholder="Search employees..."
+                      value={employeeSearchQuery}
+                      onChange={(e) => setEmployeeSearchQuery(e.target.value)}
+                      className="w-full px-3 py-2 bg-pos-bg-primary border border-pos-border-secondary rounded text-pos-text-primary placeholder-pos-text-muted focus:outline-none focus:border-blue-500"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Employee List */}
+                  <div className="overflow-y-auto flex-1">
+                    {filteredEmployees.length > 0 ? (
+                      filteredEmployees.map((employee) => (
+                        <button
+                          key={employee.id}
+                          onClick={() => {
+                            onEmployeeChange && onEmployeeChange(employee);
+                            setShowEmployeeDropdown(false);
+                            setEmployeeSearchQuery('');
+                          }}
+                          className={`w-full px-3 py-2 flex items-center gap-2 hover:bg-pos-interactive-hover transition-colors text-left ${
+                            selectedEmployee?.id === employee.id ? 'bg-pos-bg-tertiary' : ''
+                          }`}
+                        >
+                          <span
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                            style={{ backgroundColor: employee.avatar_color }}
+                          >
+                            {employee.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span className="text-pos-text-primary">{employee.name}</span>
+                          {selectedEmployee?.id === employee.id && (
+                            <span className="ml-auto text-green-500">✓</span>
+                          )}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-3 py-4 text-center text-pos-text-muted text-sm">
+                        No employees found
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex gap-2.5 items-center">
           {/* Search Bar */}
@@ -314,6 +435,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
           fetchHoldOrderCount();
         }}
         onSelectOrder={onLoadHoldOrder}
+        selectedEmployeeId={selectedEmployeeId}
       />
     </>
   );

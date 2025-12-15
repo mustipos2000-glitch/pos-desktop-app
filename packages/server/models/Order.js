@@ -10,11 +10,15 @@ class Order {
         const completedAt = (status === 'completed' || status === 'paid') 
             ? new Date().toISOString() 
             : null;
+<<<<<<< HEAD
         
         
+=======
+    
+>>>>>>> f5ee617ec45c10cbe3debed2d86c2eccdea5a484
         const insertOrder = db.prepare(`
-      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no, order_type, completed_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO orders (tax, status, note, gross_total, net_total, discount, table_id, customer_id, order_no, order_type, completed_at,employee_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
     `);
 
         const result = insertOrder.run(
@@ -28,7 +32,8 @@ class Order {
             order.customer_id || null,
             orderNo,
             order.order_type || 'horeca',
-            completedAt
+            completedAt,
+            order.employee_id || null
         );
 
         const orderId = result.lastInsertRowid;
@@ -78,7 +83,7 @@ class Order {
         // 🆙 Update the order record
         db.prepare(`
         UPDATE orders
-        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?, customer_id = ?, order_type = ?, completed_at = ?
+        SET tax = ?, status = ?, note = ?, net_total = ?, gross_total = ?, discount = ?, table_id = ?, customer_id = ?, order_type = ?, completed_at = ?, employee_id = ?
         WHERE id = ?
         `).run(
             payload.tax || 0,
@@ -92,6 +97,7 @@ class Order {
             payload.customer_id || null,
             payload.order_type || existing.order_type || 'horeca',
             completedAt,
+            payload.employee_id || null,
             id
         );
 
@@ -191,8 +197,14 @@ class Order {
         return order;
     }
 
-    static getHoldOrders() {
-        const orders = db.prepare('SELECT * FROM orders WHERE status = ? ORDER BY id DESC').all('on_hold');
+    static getHoldOrders(employeeId = null) {
+        let orders;
+        if (employeeId) {
+            orders = db.prepare('SELECT * FROM orders WHERE status = ? AND employee_id = ? ORDER BY id DESC').all('on_hold', employeeId);
+        } else {
+            orders = db.prepare('SELECT * FROM orders WHERE status = ? ORDER BY id DESC').all('on_hold');
+        }
+        
         for (const order of orders) {
             // Map database column names to expected property names
             order.sub_total = order.gross_total;

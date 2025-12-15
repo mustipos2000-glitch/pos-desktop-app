@@ -172,8 +172,9 @@ class ApiService {
     return this.request(`/orders/table/${tableId}`);
   }
 
-  static async getHoldOrders() {
-    return this.request('/orders/hold');
+  static async getHoldOrders(employeeId = null) {
+    const endpoint = employeeId ? `/orders/hold?employee_id=${employeeId}` : '/orders/hold';
+    return this.request(endpoint);
   }
 
   // Room methods

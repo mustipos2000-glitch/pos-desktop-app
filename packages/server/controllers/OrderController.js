@@ -26,8 +26,7 @@ const OrderController = {
 
     createOrder: (req, res) => {
         try {
-            const { tax, status, note, sub_total, total, discount, details, table_id, customer_id, order_type } = req.body;
-
+            const { tax, status, note, sub_total, total, discount, details, table_id, customer_id,employee_id, order_type } = req.body;
             console.log('📝 Creating order with', details?.length, 'items, type:', order_type);
 
             if (!details || !Array.isArray(details) || details.length === 0) {
@@ -50,7 +49,7 @@ const OrderController = {
                 console.log('⏭️ Skipping inventory validation for order type:', order_type);
             }
 
-            const order = { tax, status, note, sub_total, total, discount, table_id, customer_id, order_type };
+            const order = { tax, status, note, sub_total, total, discount, table_id, customer_id,order_type, employee_id };
             const newOrder = Order.create(order, details);
 
             res.status(201).json({ message: 'Order created successfully', data: newOrder });
@@ -63,7 +62,8 @@ const OrderController = {
     updateOrder: (req, res) => {
         try {
             const id = req.params.id;
-            const { tax, status, note, total, sub_total, discount, details, table_id, customer_id, order_type } = req.body;
+            const { tax, status, note, total, sub_total, discount, details, table_id, customer_id,order_type, employee_id } = req.body;
+
             console.log('📝 Updating order', id, 'with', details?.length, 'items, type:', order_type);
 
             // Check if order exists
@@ -89,7 +89,7 @@ const OrderController = {
                 console.log('⏭️ Skipping inventory validation for order type:', finalOrderType);
             }
 
-            const order = Order.update(id, { tax, status, note, total, sub_total, discount, table_id, customer_id, order_type: finalOrderType }, details);
+            const order = Order.update(id, { tax, status, note, total, sub_total, discount, table_id, customer_id,employee_id, order_type: finalOrderType }, details);
             if (!order) return res.status(404).json({ error: 'Order not found' });
 
             res.json({ message: 'Order updated successfully', data: order });
@@ -129,7 +129,8 @@ const OrderController = {
 
     getHoldOrders: (req, res) => {
         try {
-            const orders = Order.getHoldOrders();
+            const employeeId = req.query.employee_id ? parseInt(req.query.employee_id) : null;
+            const orders = Order.getHoldOrders(employeeId);
             res.json({ data: orders });
         } catch (error) {
             res.status(500).json({ error: 'Internal server error' });

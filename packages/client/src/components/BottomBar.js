@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVersion } from '../context/VersionContext';
 
-const BottomBar = ({ onOpenSettings }) => {
+const BottomBar = ({ onOpenSettings, onBarcodeSearch }) => {
   const navigate = useNavigate();
   const { version } = useVersion();
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -32,6 +32,7 @@ const BottomBar = ({ onOpenSettings }) => {
 
   return (
     <div className="flex gap-2 ml-2 mb-1 mr-2 rounded-lg p-2 bg-pos-bg-primary border-t bg-pos-bg-tertiary">
+      {/* Original Action Buttons - Keep on Left */}
       {showAdminButton && (
         <button className="btn-primary py-1 flex items-center gap-2" onClick={() => navigate('/admin')}>
           🔌 admin
@@ -47,11 +48,12 @@ const BottomBar = ({ onOpenSettings }) => {
           📊 Reports
         </button>
       )}
-      {/* <button className="btn-primary">Eat In</button>
-      <button className="btn-primary">New Return</button>
-      <button className="btn-primary">Customer</button>
-      <button className="btn-primary">Drawer</button>
-      <button className="btn-primary flex items-center gap-2">💳 Card</button> */}
+      {/* Barcode Search Button */}
+      {onBarcodeSearch && (
+        <button className="btn-primary py-1 flex items-center gap-2" onClick={onBarcodeSearch}>
+          📷 Barcode
+        </button>
+      )}
     </div>
   );
 };
