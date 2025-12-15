@@ -1,20 +1,35 @@
 import { useState, useEffect } from 'react';
 import ApiService from '../services/api';
 
-const HoldOrdersModal = ({ isOpen, onClose, onSelectOrder }) => {
+const HoldOrdersModal = ({ isOpen, onClose, onSelectOrder, selectedEmployeeId }) => {
   const [holdOrders, setHoldOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [employees, setEmployees] = useState({});
 
   useEffect(() => {
     if (isOpen) {
+      fetchEmployees();
       fetchHoldOrders();
     }
-  }, [isOpen]);
+  }, [isOpen, selectedEmployeeId]);
+
+  const fetchEmployees = async () => {
+    try {
+      const response = await ApiService.request('/users');
+      const employeeMap = {};
+      (response.data || []).forEach(emp => {
+        employeeMap[emp.id] = emp;
+      });
+      setEmployees(employeeMap);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+    }
+  };
 
   const fetchHoldOrders = async () => {
     try {
       setLoading(true);
-      const response = await ApiService.getHoldOrders();
+      const response = await ApiService.getHoldOrders(selectedEmployeeId);
       setHoldOrders(response.data || []);
     } catch (error) {
       console.error('Error fetching hold orders:', error);
@@ -73,33 +88,46 @@ const HoldOrdersModal = ({ isOpen, onClose, onSelectOrder }) => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {holdOrders.map((order) => (
-                <div
-                  key={order.id}
-                  onClick={() => handleSelectOrder(order)}
-                  className="bg-pos-bg-secondary border border-pos-border-secondary rounded-lg p-4 cursor-pointer hover:bg-pos-bg-tertiary transition-colors"
-                >
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <div className="text-lg font-semibold text-pos-text-primary">
-                        {order.order_no || `Order #${order.id}`}
+              {holdOrders.map((order) => {
+                const employee = order.employee_id ? employees[order.employee_id] : null;
+                return (
+                  <div
+                    key={order.id}
+                    onClick={() => handleSelectOrder(order)}
+                    className="bg-pos-bg-secondary border border-pos-border-secondary rounded-lg p-4 cursor-pointer hover:bg-pos-bg-tertiary transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <div className="text-lg font-semibold text-pos-text-primary">
+                          {order.order_no || `Order #${order.id}`}
+                        </div>
+                        <div className="text-xs text-pos-text-muted">
+                          {formatDate(order.created_at)}
+                        </div>
+                        {employee && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <span
+                              className="w-4 h-4 rounded-full flex items-center justify-center text-white text-xs font-bold"
+                              style={{ backgroundColor: employee.avatar_color }}
+                            >
+                              {employee.name.charAt(0).toUpperCase()}
+                            </span>
+                            <span className="text-xs text-pos-text-muted">{employee.name}</span>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-xs text-pos-text-muted">
-                        {formatDate(order.created_at)}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-green-500">
-                        €{formatAmount(order.total)}
-                      </div>
-                      <div className="text-xs text-pos-text-muted">
-                        {order.details?.length || 0} items
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-500">
+                          €{formatAmount(order.total)}
+                        </div>
+                        <div className="text-xs text-pos-text-muted">
+                          {order.details?.length || 0} items
+                        </div>
                       </div>
                     </div>
                   </div>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
