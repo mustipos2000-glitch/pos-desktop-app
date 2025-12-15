@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useVersion } from '../context/VersionContext';
 
-const BottomBar = ({ onOpenSettings }) => {
+const BottomBar = ({ onOpenSettings, onBarcodeSearch }) => {
   const navigate = useNavigate();
   const { version } = useVersion();
   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
@@ -46,6 +46,12 @@ const BottomBar = ({ onOpenSettings }) => {
       {showReportsButton && (
         <button className="btn-primary py-1 flex items-center gap-2" onClick={() => navigate('/reports')}>
           📊 Reports
+        </button>
+      )}
+      {/* Barcode Search Button */}
+      {onBarcodeSearch && (
+        <button className="btn-primary py-1 flex items-center gap-2" onClick={onBarcodeSearch}>
+          📷 Barcode
         </button>
       )}
     </div>
