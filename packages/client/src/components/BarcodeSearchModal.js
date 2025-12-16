@@ -56,6 +56,10 @@ const BarcodeSearchModal = ({ isOpen, onClose, onProductFound }) => {
 
   if (!isOpen) return null;
 
+
+
+
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-pos-bg-secondary rounded-lg shadow-2xl w-full max-w-md mx-4 border border-pos-border-primary">

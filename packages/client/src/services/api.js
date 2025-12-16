@@ -427,7 +427,7 @@ static async adjustInventory(productId, data) {
   });
 }
 
-// delete inventory api
+// delete inventory api call if you need it
   static async deleteInventory(productId) {
     return this.request(`/inventory/${productId}`, {
       method: 'DELETE',

@@ -26,7 +26,14 @@ const ProductFormModal = ({
     printer3: '',
     image: '',
     color: '#3b82f6',
-    sub_product_group: false
+    sub_product_group: false,
+    // Weight-based fields
+    is_weight_based: false,
+    weight_unit: 'kg',
+    price_per_unit: '',
+    minimum_weight: '',
+    maximum_weight: '',
+    tare_weight: ''
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -82,7 +89,14 @@ const ProductFormModal = ({
         image: product.image || '',
         color: product.color || '#3b82f6',
         // price_vat_inc: product.price_vat_inc || '',
-        sub_product_group: product.sub_product_group === 1
+        sub_product_group: product.sub_product_group === 1,
+        // Weight-based fields
+        is_weight_based: product.is_weight_based === 1,
+        weight_unit: product.weight_unit || 'kg',
+        price_per_unit: product.price_per_unit || '',
+        minimum_weight: product.minimum_weight || '',
+        maximum_weight: product.maximum_weight || '',
+        tare_weight: product.tare_weight || ''
       });
       
       // Initialize selected printers from product data
@@ -113,7 +127,14 @@ const ProductFormModal = ({
         image: '',
         color: '#3b82f6',
         // price_vat_inc: '',
-        sub_product_group: false
+        sub_product_group: false,
+        // Weight-based fields
+        is_weight_based: false,
+        weight_unit: 'kg',
+        price_per_unit: '',
+        minimum_weight: '',
+        maximum_weight: '',
+        tare_weight: ''
       });
       setSelectedPrinters([]);
       setImageFile(null);
@@ -446,6 +467,113 @@ const ProductFormModal = ({
               </label>
             </div>
 
+            {/* Weight-Based Product Section */}
+            <div className="col-span-3 border-t border-pos-border-secondary pt-3 mt-2">
+              <div className="flex items-center mb-3">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="is_weight_based"
+                    checked={productForm.is_weight_based}
+                    onChange={handleInputChange}
+                    className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary focus:ring-pos-info focus:ring-1"
+                  />
+                  <span className="ml-2 text-sm font-medium text-pos-text-primary">⚖️ Weight-Based Product (Scale Required)</span>
+                </label>
+              </div>
+
+              {productForm.is_weight_based && (
+                <div className="grid grid-cols-3 gap-3 pl-6 border-l-2 border-orange-500">
+                  <div>
+                    <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                      Weight Unit <span className="text-pos-error">*</span>
+                    </label>
+                    <select
+                      name="weight_unit"
+                      value={productForm.weight_unit}
+                      onChange={handleInputChange}
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors"
+                    >
+                      <option value="kg">Kilogram (kg)</option>
+                      <option value="g">Gram (g)</option>
+                      <option value="lb">Pound (lb)</option>
+                      <option value="oz">Ounce (oz)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                      Price per {productForm.weight_unit} <span className="text-pos-error">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="price_per_unit"
+                      value={productForm.price_per_unit}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFieldFocus('price_per_unit')}
+                      className={`w-full bg-pos-bg-primary border ${activeField === 'price_per_unit' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      placeholder="e.g., 12.99"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                      Minimum Weight
+                    </label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      name="minimum_weight"
+                      value={productForm.minimum_weight}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFieldFocus('minimum_weight')}
+                      className={`w-full bg-pos-bg-primary border ${activeField === 'minimum_weight' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      placeholder="e.g., 0.5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                      Maximum Weight
+                    </label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      name="maximum_weight"
+                      value={productForm.maximum_weight}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFieldFocus('maximum_weight')}
+                      className={`w-full bg-pos-bg-primary border ${activeField === 'maximum_weight' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      placeholder="e.g., 5.0"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-pos-text-muted mb-1">
+                      Tare Weight (Container)
+                    </label>
+                    <input
+                      type="number"
+                      step="0.001"
+                      name="tare_weight"
+                      value={productForm.tare_weight}
+                      onChange={handleInputChange}
+                      onFocus={() => handleFieldFocus('tare_weight')}
+                      className={`w-full bg-pos-bg-primary border ${activeField === 'tare_weight' ? 'border-pos-info' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
+                      placeholder="e.g., 0.1"
+                    />
+                  </div>
+
+                  <div className="col-span-3">
+                    <div className="bg-orange-50 border border-orange-200 rounded p-2 text-xs text-gray-700">
+                      <strong>ℹ️ Note:</strong> Weight-based products require a Bizerba scale. Price will be calculated as: Weight × Price per {productForm.weight_unit}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Printer Selection - Integrated in Grid */}
             <div className="col-span-3">
               <div className="flex justify-between items-center mb-1">
@@ -505,7 +633,7 @@ const ProductFormModal = ({
                 onBackspace={handleKeypadBackspace}
                 onClear={handleKeypadClear}
                 defaultMode="keypad"
-                showDecimal={['price', 'vat_takeout', 'vat_eat_in'].includes(activeField)}
+                showDecimal={['price', 'vat_takeout', 'vat_eat_in', 'price_per_unit', 'minimum_weight', 'maximum_weight', 'tare_weight'].includes(activeField)}
                 className="w-full"
               />
             </div>

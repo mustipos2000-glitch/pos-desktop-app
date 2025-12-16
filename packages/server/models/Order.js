@@ -52,7 +52,6 @@ class Order {
             });
             insertMany(details);
         }
-
         return { id: orderId, order_no: orderNo, ...order, details };
     }
 
