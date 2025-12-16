@@ -117,11 +117,19 @@ export const printerService = {
         body: JSON.stringify({ printerId, orderId })
       });
       if (!response.ok) throw new Error('Failed to print receipt');
-      return response.json();
+      
+      const result = await response.json();
+      
+      // If backend returns success: false, throw error to trigger fallback
+      if (!result.success) {
+        throw new Error(result.error || result.message || 'Print failed');
+      }
+      
+      return result;
     } catch (error) {
       console.error('Printer service error - printReceipt:', error);
-      // Return structured error instead of throwing
-      return { success: false, error: error.message };
+      // Re-throw error so OrderPanel can catch it and trigger window.print()
+      throw error;
     }
   },
 
@@ -134,11 +142,19 @@ export const printerService = {
         body: JSON.stringify({ printerId, orderId })
       });
       if (!response.ok) throw new Error('Failed to print kitchen order');
-      return response.json();
+      
+      const result = await response.json();
+      
+      // If backend returns success: false, throw error
+      if (!result.success) {
+        throw new Error(result.error || result.message || 'Print failed');
+      }
+      
+      return result;
     } catch (error) {
       console.error('Printer service error - printKitchenOrder:', error);
-      // Return structured error instead of throwing
-      return { success: false, error: error.message };
+      // Re-throw error
+      throw error;
     }
   },
 

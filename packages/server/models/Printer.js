@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 class Printer {
   static getAll() {
-    const sql = 'SELECT * FROM printers ORDER BY id ASC';
+    const sql = 'SELECT * FROM printers ORDER BY is_main DESC, id ASC';
     return db.prepare(sql).all();
   }
 
@@ -11,15 +11,26 @@ class Printer {
     return db.prepare(sql).get(id);
   }
 
+  static getMainPrinter() {
+    const sql = 'SELECT * FROM printers WHERE is_main = 1 LIMIT 1';
+    return db.prepare(sql).get();
+  }
+
   static create(printer) {
     // Validate and normalize connection string
     const normalizedPrinter = this.normalizeConnectionString({...printer});
     
-    const sql = `INSERT INTO printers (name, type, connection_string) VALUES (?, ?, ?)`;
+    // If this printer is being set as main, unset all other main printers
+    if (normalizedPrinter.is_main) {
+      db.prepare('UPDATE printers SET is_main = 0').run();
+    }
+    
+    const sql = `INSERT INTO printers (name, type, connection_string, is_main) VALUES (?, ?, ?, ?)`;
     const params = [
       normalizedPrinter.name,
       normalizedPrinter.type,
-      normalizedPrinter.connection_string || null
+      normalizedPrinter.connection_string || null,
+      normalizedPrinter.is_main ? 1 : 0
     ];
     const result = db.prepare(sql).run(...params);
     return { id: result.lastInsertRowid, ...normalizedPrinter };
@@ -29,11 +40,17 @@ class Printer {
     // Validate and normalize connection string
     const normalizedPrinter = this.normalizeConnectionString({...printer});
     
-    const sql = `UPDATE printers SET name = ?, type = ?, connection_string = ? WHERE id = ?`;
+    // If this printer is being set as main, unset all other main printers
+    if (normalizedPrinter.is_main) {
+      db.prepare('UPDATE printers SET is_main = 0 WHERE id != ?').run(id);
+    }
+    
+    const sql = `UPDATE printers SET name = ?, type = ?, connection_string = ?, is_main = ? WHERE id = ?`;
     const params = [
       normalizedPrinter.name,
       normalizedPrinter.type,
       normalizedPrinter.connection_string || null,
+      normalizedPrinter.is_main ? 1 : 0,
       id
     ];
     db.prepare(sql).run(...params);
