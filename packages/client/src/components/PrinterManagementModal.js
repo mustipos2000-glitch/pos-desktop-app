@@ -8,7 +8,8 @@ const PrinterManagementModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     name: '',
     type: 'EPSON',
-    connection_string: 'tcp://localhost:9100'
+    connection_string: 'tcp://localhost:9100',
+    is_main: false
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -60,7 +61,8 @@ const PrinterManagementModal = ({ isOpen, onClose }) => {
     setFormData({
       name: printer.name,
       type: printer.type,
-      connection_string: printer.connection_string
+      connection_string: printer.connection_string,
+      is_main: printer.is_main === 1 || printer.is_main === true
     });
     setIsFormOpen(true);
   };
@@ -97,7 +99,8 @@ const PrinterManagementModal = ({ isOpen, onClose }) => {
     setFormData({
       name: '',
       type: 'EPSON',
-      connection_string: 'tcp://localhost:9100'
+      connection_string: 'tcp://localhost:9100',
+      is_main: false
     });
     setEditingPrinter(null);
     setIsFormOpen(false);
@@ -144,10 +147,15 @@ const PrinterManagementModal = ({ isOpen, onClose }) => {
                   <p className="text-gray-500 text-center py-8">No printers configured</p>
                 ) : (
                   printers.map(printer => (
-                    <div key={printer.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={printer.id} className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${printer.is_main ? 'border-blue-500 bg-blue-50' : ''}`}>
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <h3 className="text-lg font-semibold">{printer.name}</h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold">{printer.name}</h3>
+                            {printer.is_main === 1 && (
+                              <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">Main Printer</span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-600">Type: {printer.type}</p>
                           <p className="text-sm text-gray-600">Connection: {printer.connection_string}</p>
                         </div>
@@ -225,6 +233,22 @@ const PrinterManagementModal = ({ isOpen, onClose }) => {
                 <p className="text-xs text-gray-500 mt-1">
                   Examples: tcp://192.168.1.100:9100 or \\.\COM3 (Windows) or /dev/usb/lp0 (Linux)
                 </p>
+              </div>
+
+              <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded">
+                <input
+                  type="checkbox"
+                  id="is_main"
+                  checked={formData.is_main}
+                  onChange={(e) => setFormData({ ...formData, is_main: e.target.checked })}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label htmlFor="is_main" className="text-sm font-medium cursor-pointer">
+                  Set as Main Printer
+                  <span className="block text-xs text-gray-600 font-normal">
+                    Only one printer can be main. Setting this will unmark the current main printer.
+                  </span>
+                </label>
               </div>
 
               <div className="flex gap-2">

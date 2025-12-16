@@ -83,7 +83,6 @@ class Order {
         `).run(
             payload.tax || 0,
             newStatus,
-            newStatus,
             payload.note || '',
             payload.total || 0,
             payload.sub_total || 0,

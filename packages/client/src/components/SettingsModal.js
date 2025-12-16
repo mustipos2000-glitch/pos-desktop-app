@@ -6,6 +6,7 @@ import { useMessageModal } from '../hooks/useMessageModal';
 import PaymentTerminalManager from './PaymentTerminalManager';
 import KeypadNumpad from './KeypadNumpad';
 
+
 const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [rolePermissions, setRolePermissions] = useState({
@@ -19,7 +20,8 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
   const [printerForm, setPrinterForm] = useState({
     name: '',
     type: 'EPSON',
-    connection_string: 'tcp://192.168.1.100:9100'
+    connection_string: 'tcp://192.168.1.100:9100',
+    is_main: false
   });
   const { messageModal, showError, showInfo, closeModal } = useMessageModal();
   const [printerFormErrors, setPrinterFormErrors] = useState({});
@@ -165,7 +167,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
       if (response.ok) {
         await fetchPrinters();
         setShowAddPrinter(false);
-        setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
+        setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100', is_main: false });
         setPrinterFormErrors({});
       }
     } catch (error) {
@@ -178,7 +180,8 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
     setPrinterForm({
       name: printer.name,
       type: printer.type,
-      connection_string: printer.connection_string || ''
+      connection_string: printer.connection_string || '',
+      is_main: printer.is_main === 1 || printer.is_main === true
     });
     setPrinterFormErrors({});
     setShowAddPrinter(true);
@@ -210,7 +213,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
         await fetchPrinters();
         setShowAddPrinter(false);
         setEditingPrinter(null);
-        setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
+        setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100', is_main: false });
         setPrinterFormErrors({});
       }
     } catch (error) {
@@ -420,6 +423,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
               Payment
             </button>
           )}
+
           {(!limitedTabs || limitedTabs.includes('permissions')) && isSuperAdmin && (
             <button
               className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
@@ -542,7 +546,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                   onClick={() => {
                     setShowAddPrinter(true);
                     setEditingPrinter(null);
-                    setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100' });
+                    setPrinterForm({ name: '', type: 'EPSON', connection_string: 'tcp://192.168.1.100:9100', is_main: false });
                   }}
                   className="btn-primary py-1.5"
                 >
@@ -569,8 +573,15 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                       </tr>
                     ) : (
                       printers.map(printer => (
-                        <tr key={printer.id}>
-                          <td className="font-medium text-pos-text-primary">{printer.name}</td>
+                        <tr key={printer.id} className={printer.is_main ? 'bg-blue-900 bg-opacity-20' : ''}>
+                          <td className="font-medium text-pos-text-primary">
+                            <div className="flex items-center gap-2">
+                              {printer.name}
+                              {printer.is_main === 1 && (
+                                <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded">Main</span>
+                              )}
+                            </div>
+                          </td>
                           <td>
                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               printer.type === 'serial'
@@ -701,6 +712,24 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                           <p key={index}><strong>{example.type}:</strong> {example.example}</p>
                         ))}
                       </div>
+
+                      {/* Main Printer Checkbox */}
+                      <div className="px-4 py-3 bg-blue-900 bg-opacity-30 border border-blue-700 rounded">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={printerForm.is_main}
+                            onChange={(e) => setPrinterForm({ ...printerForm, is_main: e.target.checked })}
+                            className="w-5 h-5 mt-0.5 text-blue-600 bg-pos-bg-primary border-blue-500 rounded focus:ring-blue-500 focus:ring-2"
+                          />
+                          <div>
+                            <span className="text-pos-text-primary font-medium text-sm">Set as Main Printer</span>
+                            <p className="text-pos-text-muted text-xs mt-1">
+                              Only one printer can be main. Setting this will unmark the current main printer.
+                            </p>
+                          </div>
+                        </label>
+                      </div>
                     </div>
 
                     {/* Keypad Section */}
@@ -759,6 +788,8 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
           {activeTab === 'payment' && (
             <PaymentTerminalManager />
           )}
+
+
 
           {activeTab === 'permissions' && isSuperAdmin && (
             <div className="space-y-6">

@@ -18,6 +18,7 @@ const InventoryController = require('../controllers/InventoryController');
 const ReportController = require('../controllers/ReportController');
 
 
+
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
 
 // User routes
@@ -97,6 +98,7 @@ router.delete('/pr-tables/:id', PrTableController.deletePrTable);
 
 // Printer routes
 router.get('/printers', PrinterController.getAllPrinters);
+router.get('/printers/main', PrinterController.getMainPrinter);
 router.get('/printers/:id', PrinterController.getPrinterById);
 router.post('/printers', PrinterController.createPrinter);
 router.put('/printers/:id', PrinterController.updatePrinter);
@@ -106,6 +108,7 @@ router.post('/printers/print-receipt', PrinterController.printReceipt);
 router.post('/printers/print-kitchen', PrinterController.printKitchenOrder);
 router.post('/printers/print-kitchen-batch', PrinterController.printKitchenOrderBatch);
 router.post('/printers/print-custom', PrinterController.printCustom);
+router.post('/printers/open-drawer', PrinterController.openDrawer);
 
 // Payment routes
 router.post('/payments/send-receipt-email', PaymentController.sendReceiptEmail);
