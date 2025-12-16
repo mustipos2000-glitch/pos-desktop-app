@@ -13,6 +13,7 @@ const ScaleIntegration = ({
     stable: false
   });
   
+  
   const [connectionConfig, setConnectionConfig] = useState({
     type: 'serial',
     serial: {
