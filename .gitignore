@@ -48,11 +48,22 @@ database/
 coverage/
 *.log
 
+# Test files (not for production)
+test-*.js
+test-*.html
+scale-test-demo.html
+create-test-*.js
+
+# Documentation (keep only USER_MANUAL_FOR_CLIENT.md and SCALE_INTEGRATION_GUIDE.md)
+DEMO_MODE_GUIDE.md
+URDU_TESTING_GUIDE.md
+INTEGRATION_IN_YOUR_POS.md
+FINAL_TESTING_STEPS.md
+SCALE_INTEGRATION_STATUS.md
+SCALE_INTEGRATION_SUMMARY.md
+
 *.md
 *.ps1
-package-lock.json
 seeder.js
 seed-tables.js
-uploads/
-*.txt
-package-lock.json
+uploads

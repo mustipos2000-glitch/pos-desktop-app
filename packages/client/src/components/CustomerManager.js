@@ -107,6 +107,8 @@ const CustomerManager = () => {
     (customer.email && customer.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+ 
+
   return (
     <div className="overflow-y-auto scrollbar-custom mt-1">
       {/* Header with Action Buttons */}

@@ -34,8 +34,9 @@ class Product {
         const sql = `INSERT INTO products (
       name, button_name, production_name, price, vat_takeout, vat_eat_in,
       barcode, category_id, addition_type, display_index, in_web_shop,
-      printer1, printer2, printer3, image, color, price_vat_inc, sub_product_group
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      printer1, printer2, printer3, image, color, price_vat_inc, sub_product_group,
+      is_weight_based, weight_unit, price_per_unit, minimum_weight, maximum_weight, tare_weight
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
         const params = [
             product.name,
@@ -55,7 +56,13 @@ class Product {
             product.image || null,
             product.color || '#3b82f6',
             product.price_vat_inc || 0,
-            product.sub_product_group || 0
+            product.sub_product_group || 0,
+            product.is_weight_based || 0,
+            product.weight_unit || 'kg',
+            product.price_per_unit || 0,
+            product.minimum_weight || 0,
+            product.maximum_weight || 0,
+            product.tare_weight || 0
         ];
 
         const result = db.prepare(sql).run(...params);
@@ -74,7 +81,8 @@ class Product {
         const sql = `UPDATE products SET
       name = ?, button_name = ?, production_name = ?, price = ?, vat_takeout = ?, vat_eat_in = ?,
       barcode = ?, category_id = ?, addition_type = ?, display_index = ?, in_web_shop = ?,
-      printer1 = ?, printer2 = ?, printer3 = ?, image = ?, color = ?, price_vat_inc = ?, sub_product_group = ?
+      printer1 = ?, printer2 = ?, printer3 = ?, image = ?, color = ?, price_vat_inc = ?, sub_product_group = ?,
+      is_weight_based = ?, weight_unit = ?, price_per_unit = ?, minimum_weight = ?, maximum_weight = ?, tare_weight = ?
       WHERE id = ?`;
 
         const params = [
@@ -96,6 +104,12 @@ class Product {
             product.color || '#3b82f6',
             product.price_vat_inc || 0,
             product.sub_product_group || 0,
+            product.is_weight_based || 0,
+            product.weight_unit || 'kg',
+            product.price_per_unit || 0,
+            product.minimum_weight || 0,
+            product.maximum_weight || 0,
+            product.tare_weight || 0,
             id
         ];
 

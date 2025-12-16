@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import ApiService from '../services/api';
 import SubproductModal from './SubproductModal';
+import ScaleIntegration from './ScaleIntegration';
 
 const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity, searchQuery }) => {
   
@@ -10,6 +11,10 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
   const [showSubproductModal, setShowSubproductModal] = useState(false);
   const [productWithSubproducts, setProductWithSubproducts] = useState(null);
   const subProductsRef = useRef(null);
+  
+  // Scale integration states
+  const [showScaleModal, setShowScaleModal] = useState(false);
+  const [selectedWeightProduct, setSelectedWeightProduct] = useState(null);
 
   // Function to determine if the image is a URL or emoji
   const isImageUrl = (image) => {
@@ -56,6 +61,13 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
 
   // Handle product click - check for sub-products first
   const handleProductClick = async (product) => {
+    // ✅ CHECK: If product is weight-based, open scale modal
+    if (product.is_weight_based) {
+      setSelectedWeightProduct(product);
+      setShowScaleModal(true);
+      return;
+    }
+
     // If same product clicked again → add to cart but keep sub-products visible
     if (selectedProductId === product.id) {
       await onAddToCart(product, Number(customQuantity) || 1);
@@ -134,6 +146,28 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
     // Keep subproducts visible - don't clear them
   };
 
+  // Handle weight received from scale
+  const handleWeightReceived = async (weightData) => {
+    if (!selectedWeightProduct) return;
+
+    // Create product with weight information
+    const productWithWeight = {
+      ...selectedWeightProduct,
+      quantity: 1,
+      weight: weightData.weight,
+      weightUnit: weightData.unit,
+      price: weightData.price, // Calculated price from scale
+      isWeightBased: true,
+      displayName: `${selectedWeightProduct.name} (${weightData.weight} ${weightData.unit})`
+    };
+
+    await onAddToCart(productWithWeight, 1);
+    
+    // Close modal
+    setShowScaleModal(false);
+    setSelectedWeightProduct(null);
+  };
+
 
 
   return (
@@ -162,9 +196,20 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
               }}
             >
 
+              {/* Weight-based indicator badge */}
+              {product.is_weight_based && (
+                <div className="absolute top-1 right-1 bg-orange-500 text-white text-xs px-2 py-1 rounded-full font-bold z-10">
+                  ⚖️
+                </div>
+              )}
+
               {/* Price - Top Right */}
               <div className="absolute rounded-md text-xs font-semibold text-gray-200  bg-[rgba(0,0,0,0.6)] px-1.5 py-[1px] ">
-                €{product.price.toFixed(2)}
+                {product.is_weight_based ? (
+                  <>€{product.price_per_unit?.toFixed(2)}/{product.weight_unit || 'kg'}</>
+                ) : (
+                  <>€{product.price.toFixed(2)}</>
+                )}
               </div>
 
               {/* Image */}
@@ -269,6 +314,17 @@ const ProductGrid = ({ products, onAddToCart, customQuantity, setCustomQuantity,
           searchQuery={searchQuery}
         />
       )}
+
+      {/* Scale Integration Modal */}
+      <ScaleIntegration
+        isVisible={showScaleModal}
+        product={selectedWeightProduct}
+        onWeightReceived={handleWeightReceived}
+        onClose={() => {
+          setShowScaleModal(false);
+          setSelectedWeightProduct(null);
+        }}
+      />
     </div>
   );
 };

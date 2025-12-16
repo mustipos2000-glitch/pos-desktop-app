@@ -370,6 +370,14 @@ const CategoryManager = () => {
         productFormData.sub_product_group ? 1 : 0
       );
 
+      // Weight-based fields
+      formData.append("is_weight_based", productFormData.is_weight_based ? 1 : 0);
+      formData.append("weight_unit", productFormData.weight_unit || "kg");
+      formData.append("price_per_unit", parseFloat(productFormData.price_per_unit) || 0);
+      formData.append("minimum_weight", parseFloat(productFormData.minimum_weight) || 0);
+      formData.append("maximum_weight", parseFloat(productFormData.maximum_weight) || 0);
+      formData.append("tare_weight", parseFloat(productFormData.tare_weight) || 0);
+
       // Append image file if selected
       if (imageFile) {
         formData.append("image", imageFile);

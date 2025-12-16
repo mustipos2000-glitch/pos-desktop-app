@@ -59,7 +59,7 @@ const AddInventoryModal = ({ isOpen, onClose, onSubmit }) => {
           <select
             value={selectedProduct}
             onChange={(e) => setSelectedProduct(e.target.value)}
-            className="w-full px-3 py-2 rounded border border-pos-border-secondary text-gray-500 focus:outline-none focus:border-pos-info"
+                className="flex-1 px-4 py-2 w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary placeholder-pos-text-muted rounded-lg focus:outline-none focus:border-pos-info transition-colors"
           >
             <option value="">-- Select Product --</option>
             {products.map((p) => (
@@ -79,7 +79,7 @@ const AddInventoryModal = ({ isOpen, onClose, onSubmit }) => {
             type="number"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
-            className="w-full px-3 py-2 rounded border border-pos-border-secondary text-gray-500 focus:outline-none focus:border-pos-info"
+                className="flex-1 w-full px-4 py-2 bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary placeholder-pos-text-muted rounded-lg focus:outline-none focus:border-pos-info transition-colors"
             placeholder="Enter quantity"
           />
         </div>
