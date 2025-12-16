@@ -494,6 +494,7 @@ db.exec(`
     name TEXT NOT NULL,
     type TEXT NOT NULL,
     connection_string TEXT,
+    is_main INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);

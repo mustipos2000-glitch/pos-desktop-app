@@ -3,12 +3,7 @@ const db = require('../config/database');
 // Product model: basic CRUD operations
 class Product {
     static getAll() {
-        const sql = `
-      SELECT p.*, c.name as category_name
-      FROM products p
-      LEFT JOIN categories c ON p.category_id = c.id
-      ORDER BY p.display_index ASC, p.id ASC
-    `;
+        const sql = `SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id ORDER BY p.display_index ASC, p.id ASC`;
         return db.prepare(sql).all();
     }
 
