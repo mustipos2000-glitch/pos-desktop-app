@@ -335,9 +335,23 @@ ipcMain.handle('customer-display:get-main-window-bounds', () => {
   return null;
 });
 
-app.whenReady().then(() => {
-  startServer();
-  createWindow();
+app.whenReady().then(async () => {
+  console.log('=== Application Starting ===');
+  console.log('App Path:', app.getAppPath());
+  console.log('Resources Path:', process.resourcesPath);
+  console.log('Is Packaged:', app.isPackaged);
+  console.log('Node Version:', process.version);
+  console.log('Electron Version:', process.versions.electron);
+  
+  try {
+    await startServer();
+    createWindow();
+  } catch (error) {
+    console.error('Failed to start application:', error);
+    const { dialog } = require('electron');
+    dialog.showErrorBox('Startup Error', 
+      'Failed to start the application.\n\n' + error.message + '\n\nCheck console for details.');
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

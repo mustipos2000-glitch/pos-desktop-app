@@ -1,521 +1,286 @@
-/**
- * CashmaticService - Real implementation for Cashmatic payment machine
- * 
- * Based on Cashmatic API documentation:
- * - HTTPS REST API on port 50301
- * - Bearer token authentication
- * - Amount in cents
- */
+// CashmaticService.js - horeca POS integration (no kiosk)
+// Uses Cashmatic 460 HTTPS API
 
 const https = require('https');
+const axios = require('axios');
+const { readConfig } = require('../config/cashmaticConfig');
 
-// Store active sessions per instance
-const activeSessions = new Map();
+// In-memory sessions: sessionId -> { token, amount, state, createdAt, insertedAmount }
+const sessions = new Map();
+
+function generateSessionId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
 
 class CashmaticService {
-  constructor(config = null) {
-    this.token = null;
-    this.tokenExpiry = null;
-    this.config = config;
+  static getConfiguredIp() {
+    const cfg = readConfig();
+    return cfg.ip || '192.168.1.58';
   }
 
-  /**
-   * Set configuration from terminal database record
-   * @param {Object} terminal - Terminal record from database
-   */
-  setConfig(terminal) {
-    if (!terminal || !terminal.connection_string) {
-      throw new Error('Terminal configuration is required');
-    }
-    
-    try {
-      // Parse connection_string JSON stored in database
-      const config = typeof terminal.connection_string === 'string' 
-        ? JSON.parse(terminal.connection_string)
-        : terminal.connection_string;
-      
-      // Validate required fields
-      if (!config.ip || !config.username || !config.password) {
-        throw new Error('Invalid Cashmatic configuration: missing ip, username, or password');
-      }
-      
-      this.config = {
-        ip: config.ip,
-        username: config.username,
-        password: config.password,
-      };
-      
-      // Reset token when config changes
-      this.token = null;
-      this.tokenExpiry = null;
-      
-      return this.config;
-    } catch (error) {
-      throw new Error(`Failed to parse Cashmatic configuration: ${error.message}`);
-    }
+  static getBaseUrl() {
+    const ip = this.getConfiguredIp();
+    return `https://${ip}:50301`;
   }
 
-  /**
-   * Get configuration
-   */
-  getConfig() {
-    if (!this.config) {
-      throw new Error('Cashmatic configuration not set. Call setConfig() first or pass config to constructor.');
-    }
-    return this.config;
-  }
+  static getHttpClient() {
+    const httpsAgent = new https.Agent({
+      rejectUnauthorized: false, // self-signed certificate on Cashmatic
+    });
 
-  /**
-   * Make HTTPS request to Cashmatic device
-   * @param {string} endpoint - API endpoint
-   * @param {string} method - HTTP method
-   * @param {object} body - Request body
-   * @returns {Promise<object>} Response data
-   */
-  async request(endpoint, method = 'POST', body = null) {
-    const config = this.getConfig();
-    
-    return new Promise((resolve, reject) => {
-      const options = {
-        hostname: config.ip,
-        port: 50301,
-        path: `/api${endpoint}`,
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Cashmatic uses self-signed certificates
-        rejectUnauthorized: false,
-        timeout: 30000,
-      };
-
-      // Add Bearer token if we have one
-      if (this.token) {
-        options.headers['Authorization'] = `Bearer ${this.token}`;
-      }
-
-      console.log(`📡 Cashmatic Request: ${method} https://${config.ip}:50301/api${endpoint}`);
-
-      const req = https.request(options, (res) => {
-        let data = '';
-
-        res.on('data', (chunk) => {
-          data += chunk;
-        });
-
-        res.on('end', () => {
-          try {
-            const jsonData = JSON.parse(data);
-            console.log(`✅ Cashmatic Response:`, jsonData);
-            resolve(jsonData);
-          } catch (error) {
-            console.log(`📄 Cashmatic Raw Response:`, data);
-            resolve({ raw: data });
-          }
-        });
-      });
-
-      req.on('error', (error) => {
-        console.error(`❌ Cashmatic Error:`, error.message);
-        reject(error);
-      });
-
-      req.on('timeout', () => {
-        req.destroy();
-        reject(new Error('Request timeout - Cashmatic not responding'));
-      });
-
-      if (body) {
-        const bodyStr = JSON.stringify(body);
-        console.log(`📤 Request Body:`, bodyStr);
-        req.write(bodyStr);
-      }
-
-      req.end();
+    return axios.create({
+      httpsAgent,
+      timeout: 5000,
     });
   }
 
-  /**
-   * Login to Cashmatic and get Bearer token
-   * @returns {Promise<string>} Bearer token
-   */
-  async login() {
-    const config = this.getConfig();
+  static async login() {
+    const client = this.getHttpClient();
+    const baseUrl = this.getBaseUrl();
+    const cfg = readConfig();
+
+    const res = await client.post(`${baseUrl}/api/user/Login`, {
+      username: cfg.username || 'cp',
+      password: cfg.password || '1235',
+    });
+
+    const data = res.data || {};
+    console.log('Cashmatic login response raw:', data);
+
+    const token =
+      data.token ||
+      data.accessToken ||
+      data.jwt ||
+      data.bearer ||
+      data.Token ||
+      (data.data && (data.data.token || data.data.accessToken || data.data.jwt)) ||
+      (typeof data === 'string' ? data : null);
+
+    if (!token) {
+      const keys = Object.keys(data || {});
+      throw new Error(
+        `No token in Cashmatic login response. Got keys: [${keys.join(', ')}]`
+      );
+    }
+
+    return token;
+  }
+
+  static async startPayment(amountInCents) {
+    console.log("inside start Payment Amount in Cents is ", amountInCents);
     
-    // Check if we have a valid token (tokens expire in 15 minutes)
-    if (this.token && this.tokenExpiry && Date.now() < this.tokenExpiry) {
-      return this.token;
-    }
-
-    console.log(`🔐 Logging into Cashmatic at ${config.ip}...`);
-
-    try {
-      const response = await this.request('/user/Login', 'POST', {
-        username: config.username,
-        password: config.password,
-      });
-
-      if (response.error || response.errorCode) {
-        throw new Error(response.message || response.error || 'Login failed');
-      }
-
-      // Store token - API returns token directly or in a field
-      this.token = response.token || response.data?.token || response;
-      // Set expiry to 14 minutes from now (tokens expire in 15 min)
-      this.tokenExpiry = Date.now() + (14 * 60 * 1000);
-
-      console.log(`✅ Cashmatic login successful`);
-      return this.token;
-    } catch (error) {
-      console.error(`❌ Cashmatic login failed:`, error.message);
-      throw new Error(`Cashmatic login failed: ${error.message}`);
-    }
-  }
-
-  /**
-   * Renew the authentication token
-   * @returns {Promise<string>} New Bearer token
-   */
-  async renewToken() {
-    try {
-      const response = await this.request('/user/RenewToken', 'POST');
-      
-      if (response.error) {
-        throw new Error(response.message || 'Token renewal failed');
-      }
-
-      this.token = response.token || response.data?.token || response;
-      this.tokenExpiry = Date.now() + (14 * 60 * 1000);
-
-      return this.token;
-    } catch (error) {
-      // If renewal fails, try full login
-      return this.login();
-    }
-  }
-
-  /**
-   * Get device information
-   * @returns {Promise<object>} Device info
-   */
-  async getDeviceInfo() {
-    await this.login();
-    return this.request('/device/GetDeviceInfo', 'POST');
-  }
-
-  /**
-   * Get all denomination levels
-   * @returns {Promise<object>} Levels info
-   */
-  async getAllLevels() {
-    await this.login();
-    return this.request('/device/AllLevels', 'POST');
-  }
-
-  /**
-   * Start a payment transaction
-   * @param {number} amountInCents - Amount in cents
-   * @param {string} reference - Transaction reference
-   * @param {string} reason - Transaction reason
-   * @returns {Promise<object>} Transaction info
-   */
-  async startPayment(amountInCents, reference = '', reason = '') {
-    await this.login();
-
-    console.log(`💰 Starting Cashmatic payment: ${amountInCents} cents`);
-
-    const response = await this.request('/transaction/StartPayment', 'POST', {
+    const token = await this.login();
+    const client = this.getHttpClient();
+    const baseUrl = this.getBaseUrl();
+    console.log("Token", token, "client : " , client, " Base Url " , baseUrl);
+    
+    const body = {
+      reason: 'POS payment',
+      reference: `POS-${Date.now()}`,
       amount: amountInCents,
-      reason: reason || 'POS Payment',
-      reference: reference || `REF-${Date.now()}`,
-      queueAllowed: true,
+      queueAllowed: false,
+    };
+
+    await client.post(`${baseUrl}/api/transaction/StartPayment`, body, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-
-    if (response.error || response.errorCode) {
-      throw new Error(response.message || response.error || 'Failed to start payment');
-    }
-
-    return response;
+    console.log("api/transcation/startPayment", body, " Base URL : " , baseUrl, " Token : ", Token);
+    const sessionId = generateSessionId();
+    sessions.set(sessionId, {
+      token,
+      amount: amountInCents,
+      state: 'IN_PROGRESS',
+      createdAt: Date.now(),
+      insertedAmount: 0,
+    });
+    console.log("Session Id", sessionId);
+    return { sessionId };
   }
 
-  /**
-   * Get active transaction status
-   * @returns {Promise<object>} Transaction status
-   */
-  async getActiveTransaction() {
-    await this.login();
-    return this.request('/device/ActiveTransaction', 'POST');
-  }
+  static async getStatus(sessionId) {
+    const session = sessions.get(sessionId);
+    if (!session) return null;
 
-  /**
-   * Get last transaction
-   * @returns {Promise<object>} Last transaction info
-   */
-  async getLastTransaction() {
-    await this.login();
-    return this.request('/device/LastTransaction', 'POST');
-  }
+    const client = this.getHttpClient();
+    const baseUrl = this.getBaseUrl();
 
-  /**
-   * Cancel current payment
-   * @returns {Promise<object>} Cancellation result
-   */
-  async cancelPayment() {
-    await this.login();
-    
-    console.log(`🚫 Cancelling Cashmatic payment...`);
-    
-    const response = await this.request('/transaction/CancelPayment', 'POST');
-
-    if (response.error || response.errorCode) {
-      throw new Error(response.message || response.error || 'Failed to cancel payment');
-    }
-
-    return response;
-  }
-
-  /**
-   * Commit/confirm the payment
-   * @returns {Promise<object>} Commit result
-   */
-  async commitPayment() {
-    await this.login();
-    
-    console.log(`✅ Committing Cashmatic payment...`);
-    
-    const response = await this.request('/transaction/CommitPayment', 'POST');
-
-    if (response.error || response.errorCode) {
-      throw new Error(response.message || response.error || 'Failed to commit payment');
-    }
-
-    return response;
-  }
-
-  /**
-   * Test connection to Cashmatic device
-   * @returns {Promise<object>} Test result
-   */
-  async testConnection() {
-    try {
-      console.log(`🧪 Testing Cashmatic connection...`);
-      
-      // Try to login first
-      await this.login();
-      
-      // Then try to get device info
-      const deviceInfo = await this.getDeviceInfo();
-      
-      return {
-        success: true,
-        message: 'Cashmatic connection successful',
-        deviceInfo: {
-          name: deviceInfo.deviceName,
-          model: deviceInfo.model,
-          serialNumber: deviceInfo.serialNumber,
-          status: deviceInfo.statusMessage,
-        },
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: `Cashmatic connection failed: ${error.message}`,
-      };
-    }
-  }
-
-  // ==================== Session Management ====================
-
-  /**
-   * Create a new payment session
-   * @param {number} amountInCents - Amount in cents
-   * @returns {Promise<object>} Session info
-   */
-  async createSession(amountInCents) {
-    const sessionId = `CASH-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
-    try {
-      // Start the payment on the device
-      await this.startPayment(amountInCents);
-
-      // Store session info with instance reference
-      const sessionKey = `${this.config?.ip || 'default'}-${sessionId}`;
-      const session = {
-        id: sessionId,
-        amount: amountInCents,
-        state: 'IN_PROGRESS',
-        startTime: new Date().toISOString(),
-        insertedAmount: 0,
-        dispensedAmount: 0,
-        notDispensedAmount: 0,
-        instance: this,
-      };
-
-      activeSessions.set(sessionKey, session);
-
-      return {
-        success: true,
-        sessionId,
-        data: session,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
-    }
-  }
-
-  /**
-   * Get session status by polling the device
-   * @param {string} sessionId - Session ID
-   * @returns {Promise<object>} Session status
-   */
-  async getSessionStatus(sessionId) {
-    // Find session by ID (search through all sessions)
-    let session = null;
-    let sessionKey = null;
-    for (const [key, value] of activeSessions.entries()) {
-      if (value.id === sessionId) {
-        session = value;
-        sessionKey = key;
-        break;
-      }
-    }
-    
-    if (!session) {
-      return {
-        success: false,
-        message: 'Session not found',
-      };
-    }
-
-    try {
-      // Get active transaction from device
-      const txStatus = await this.getActiveTransaction();
-
-      // Map device status to our state
-      let state = 'IN_PROGRESS';
-      const operation = txStatus.operation || txStatus.data?.operation;
-      const status = txStatus.status || txStatus.data?.status;
-      
-      // Check if transaction is complete
-      if (!operation || operation === 'idle') {
-        // No active operation, check last transaction
-        const lastTx = await this.getLastTransaction();
-        const lastEnd = lastTx.end || lastTx.data?.end;
-        
-        if (lastEnd === 'success' || lastEnd === 'completed') {
-          state = 'FINISHED';
-        } else if (lastEnd === 'cancelled') {
-          state = 'CANCELLED';
-        } else if (lastEnd === 'error') {
-          state = 'ERROR';
+    // try {
+      const res = await client.post(
+        `${baseUrl}/api/device/ActiveTransaction`,
+        null,
+        {
+          headers: {
+            Authorization: `Bearer ${session.token}`,
+          },
         }
-      } else if (status === 'stopping' || status === 'cancelling') {
-        state = 'CANCELLING';
+      );
+
+      const body = res.data || {};
+      console.log('Cashmatic ActiveTransaction raw:', body);
+
+      const data = body.data || body;
+
+      // No data at all: treat as end of transaction, re-use session state
+      if (!data || (Object.keys(data).length === 0 && data.constructor === Object)) {
+        if (session.state === 'FINISHED' || session.state === 'FINISHED_MANUAL') {
+          return {
+            state: session.state,
+            requestedAmount: session.amount,
+            insertedAmount: session.insertedAmount || session.amount,
+            dispensedAmount: session.dispensedAmount || 0,
+            notDispensedAmount: session.notDispensedAmount || 0,
+            rawStatus: 'NO_DATA',
+          };
+        } else if (session.state === 'PAID') {
+          return {
+            state: 'PAID',
+            requestedAmount: session.amount,
+            insertedAmount: session.insertedAmount || session.amount,
+            dispensedAmount: session.dispensedAmount || 0,
+            notDispensedAmount: session.notDispensedAmount || 0,
+            rawStatus: 'NO_DATA',
+          };
+        } else if (session.state === 'CANCELLED') {
+          return {
+            state: 'CANCELLED',
+            requestedAmount: session.amount,
+            insertedAmount: session.insertedAmount || 0,
+            dispensedAmount: session.dispensedAmount || 0,
+            notDispensedAmount: session.notDispensedAmount || 0,
+            rawStatus: 'NO_DATA',
+          };
+        } else {
+          session.state = 'CANCELLED';
+          sessions.set(sessionId, session);
+          return {
+            state: 'CANCELLED',
+            requestedAmount: session.amount,
+            insertedAmount: session.insertedAmount || 0,
+            dispensedAmount: session.dispensedAmount || 0,
+            notDispensedAmount: session.notDispensedAmount || 0,
+            rawStatus: 'NO_DATA',
+          };
+        }
       }
 
-      // Get amounts
-      const inserted = txStatus.inserted || txStatus.data?.inserted || 0;
-      const dispensed = txStatus.dispensed || txStatus.data?.dispensed || 0;
-      const notDispensed = txStatus.notDispensed || txStatus.data?.notDispensed || 0;
+      const requestedRaw =
+        typeof data.requested !== 'undefined' ? data.requested : session.amount;
+      const insertedRaw =
+        typeof data.inserted !== 'undefined' ? data.inserted : 0;
 
-      // Update session
-      session.state = state;
+      let requested = Number(requestedRaw);
+      let inserted = Number(insertedRaw);
+
+      if (!Number.isFinite(requested) || requested <= 0) {
+        requested = session.amount;
+      }
+      if (!Number.isFinite(inserted) || inserted < 0) {
+        inserted = 0;
+      }
+
+      const dispensedRaw =
+        typeof data.dispensed !== 'undefined' ? data.dispensed : 0;
+      const notDispensedRaw =
+        typeof data.notDispensed !== 'undefined' ? data.notDispensed : 0;
+
+      const dispensed = Number(dispensedRaw) || 0;
+      const notDispensed = Number(notDispensedRaw) || 0;
+
+      const operation = (data.operation || body.operation || '').toString().toUpperCase();
+      const rawStatus = (data.status || body.status || '').toString().toUpperCase();
+
+      // Store latest monetary info in session (for the "no data" fallback)
+      session.amount = requested;
       session.insertedAmount = inserted;
       session.dispensedAmount = dispensed;
       session.notDispensedAmount = notDispensed;
 
-      // Clean up if terminal state
-      if (['FINISHED', 'CANCELLED', 'ERROR'].includes(state)) {
-        // Keep session for a bit for final status checks
-        setTimeout(() => {
-          if (sessionKey) {
-            activeSessions.delete(sessionKey);
+      let state = session.state || 'IN_PROGRESS';
+
+      if (operation && operation !== 'IDLE') {
+        // Transaction is still running
+        if (requested > 0 && inserted >= requested) {
+          // Money fully inserted, waiting for change
+          state = 'PAID';
+        } else {
+          state = 'IN_PROGRESS';
+        }
+      } else {
+        // Operation is IDLE => transaction finished on the device
+        if (requested > 0 && inserted >= requested) {
+          if (notDispensed > 0) {
+            // Device could not dispense all change – manual change required
+            state = 'FINISHED_MANUAL';
+          } else {
+            state = 'FINISHED';
           }
-        }, 60000);
+        } else if (
+          rawStatus.includes('CANCEL') ||
+          rawStatus.includes('ABORT') ||
+          rawStatus.includes('STOP')
+        ) {
+          state = 'CANCELLED';
+        } else if (
+          rawStatus.includes('ERROR') ||
+          rawStatus.includes('FAIL')
+        ) {
+          state = 'ERROR';
+        } else {
+          // Fallback: consider it cancelled
+          state = 'CANCELLED';
+        }
       }
 
+      session.state = state;
+      sessions.set(sessionId, session);
+
       return {
-        success: true,
-        ok: true,
-        sessionId,
         state,
-        requestedAmount: session.amount,
+        requestedAmount: requested,
         insertedAmount: inserted,
         dispensedAmount: dispensed,
         notDispensedAmount: notDispensed,
+        rawStatus,
       };
-    } catch (error) {
-      console.error(`❌ Error getting session status:`, error.message);
-      return {
-        success: false,
-        ok: false,
-        message: error.message,
-      };
-    }
+    // } 
+    // catch (err) {
+    //   console.error('Cashmatic getStatus error:', err.message || err);
+    //   return {
+    //     state: 'ERROR',
+    //     errorMessage: 'Error communicating with Cashmatic',
+    //   };
+    // }
   }
+  static async cancelPayment(sessionId) {
+    const session = sessions.get(sessionId);
+    if (!session) return null;
 
-  /**
-   * Cancel a payment session
-   * @param {string} sessionId - Session ID
-   * @returns {Promise<object>} Cancellation result
-   */
-  async cancelSession(sessionId) {
-    // Find session by ID
-    let session = null;
-    let sessionKey = null;
-    for (const [key, value] of activeSessions.entries()) {
-      if (value.id === sessionId) {
-        session = value;
-        sessionKey = key;
-        break;
-      }
-    }
-    
-    if (!session) {
-      return {
-        success: false,
-        message: 'Session not found',
-      };
-    }
+    const client = this.getHttpClient();
+    const baseUrl = this.getBaseUrl();
 
     try {
-      await this.cancelPayment();
-      
-      session.state = 'CANCELLED';
-      
-      return {
-        success: true,
-        message: 'Payment cancelled',
-      };
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message,
-      };
+      await client.post(
+        `${baseUrl}/api/transaction/CancelPayment`,
+        null,
+        {
+          headers: {
+            Authorization: `Bearer ${session.token}`,
+          },
+        }
+      );
+    } catch (err) {
+      console.error('Cashmatic cancelPayment error:', err.message || err);
     }
+
+    session.state = 'CANCELLED';
+    sessions.set(sessionId, session);
+
+    return {
+      state: 'CANCELLED',
+    };
   }
 }
 
-// Export class and factory function
-// Note: Services should be created per terminal configuration
-// Use createService(terminal) to get a configured instance
-function createCashmaticService(terminal) {
-  const service = new CashmaticService();
-  if (terminal) {
-    service.setConfig(terminal);
-  }
-  return service;
-}
-
-// Legacy singleton for backward compatibility (will need config set before use)
-const cashmaticService = new CashmaticService();
-
-module.exports = {
-  CashmaticService,
-  cashmaticService,
-  createCashmaticService,
-};
-
+module.exports = CashmaticService;

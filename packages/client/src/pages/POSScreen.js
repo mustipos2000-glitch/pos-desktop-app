@@ -7,6 +7,7 @@ import BottomBar from '../components/BottomBar';
 import SettingsModal from '../components/SettingsModal';
 import UnifiedTableModal from '../components/UnifiedTableModal';
 import MessageModal from '../components/MessageModal';
+import BarcodeSearchModal from '../components/BarcodeSearchModal';
 import ApiService from '../services/api';
 import { useVersion } from '../context/VersionContext';
 import { useMessageModal } from '../hooks/useMessageModal';
@@ -31,10 +32,25 @@ const POSScreen = () => {
   const [lastClickedProductId, setLastClickedProductId] = useState(null);
   const [activeParentRowIndex, setActiveParentRowIndex] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showBarcodeSearch, setShowBarcodeSearch] = useState(false);
+
+  // Load logged-in user from localStorage on mount
+  useEffect(() => {
+    const currentUser = localStorage.getItem('currentUser');
+    if (currentUser) {
+      try {
+        const user = JSON.parse(currentUser);
+        setSelectedEmployee(user);
+        console.log('✅ Logged-in user loaded as selected employee:', user);
+      } catch (error) {
+        console.error('Error parsing currentUser from localStorage:', error);
+      }
+    }
+  }, []);
 
   // Debug logging for customer state changes
   useEffect(() => {
-    console.log('🔍 Customer state changed:', selectedCustomer);
   }, [selectedCustomer]);
 
   // Auto-save cart whenever cart changes (for both table orders and hold orders)
@@ -78,6 +94,7 @@ const POSScreen = () => {
           total: subTotal,
           discount: totalDiscount,
           customer_id: selectedCustomer ? selectedCustomer.id : null,
+          employee_id: selectedEmployee ? selectedEmployee.id : null,
           table_id: selectedTable ? selectedTable.id : null,
           order_type: orderType,
           details: (() => {
@@ -116,7 +133,7 @@ const POSScreen = () => {
           })(),
         };
 
-        console.log('💾 Auto-saving order with status:', orderStatus, 'customer_id:', orderData.customer_id);
+        console.log('💾 Auto-saving order with status:', orderStatus, 'employee_id:', orderData.employee_id);
         
         if (currentOrderId) {
           // Update existing order
@@ -168,7 +185,7 @@ const POSScreen = () => {
     }, 800); // Wait 800ms after last cart change
 
     return () => clearTimeout(timeoutId);
-  }, [cart, selectedTable, currentOrderId, selectedCustomer]);
+  }, [cart, selectedTable, currentOrderId, selectedCustomer, selectedEmployee]);
 
   // Initialize customer display window on mount if enabled
   useEffect(() => {
@@ -225,8 +242,7 @@ const POSScreen = () => {
         // Fetch products
         const productResponse = await ApiService.getProducts();
         // Map products to match the expected format
-        console.log('📦 Product API response:', productResponse);
-       
+        
         const formattedProducts = productResponse.data.map(product => ({
           id: product.id,
           name: product.name,
@@ -777,6 +793,7 @@ const updateQuantity = async (cartItemId, quantity) => {
         total: total,
         discount: totalDiscount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
+        employee_id: selectedEmployee ? selectedEmployee.id : null,
         table_id: selectedTable ? selectedTable.id : null,
         order_type: orderType,
         details: (() => {
@@ -862,6 +879,30 @@ const updateQuantity = async (cartItemId, quantity) => {
     }
   };
 
+  const handleEmployeeChange = async (employee) => {
+    // If there's a current order with items, save it before switching
+    if (cart.length > 0 && currentOrderId) {
+      console.log('💾 Saving current order before switching employee');
+      // The auto-save effect will handle saving with current employee_id
+    }
+
+    // If there are items in cart but no order ID yet, clear the cart
+    // (this shouldn't happen often due to auto-save, but just in case)
+    if (cart.length > 0 && !currentOrderId) {
+      setCart([]);
+    }
+
+    // Switch to new employee
+    setSelectedEmployee(employee);
+    
+    // Clear current order state
+    setCart([]);
+    setSelectedTable(null);
+    setCurrentOrderId(null);
+    setCurrentOrderNo(null);
+    setSelectedCustomer(null);
+  };
+
   const handleLoadHoldOrder = async (order) => {
     try {
       // Clear current cart and table
@@ -870,6 +911,18 @@ const updateQuantity = async (cartItemId, quantity) => {
       setCurrentOrderId(null);
       setCurrentOrderNo(null);
       setSelectedCustomer(null);
+
+      // Load employee if exists
+      if (order.employee_id) {
+        try {
+          const employeeResponse = await ApiService.request(`/users/${order.employee_id}`);
+          if (employeeResponse) {
+            setSelectedEmployee(employeeResponse);
+          }
+        } catch (error) {
+          console.error('Error loading employee:', error);
+        }
+      }
 
       // Load customer if exists
       if (order.customer_id) {
@@ -1012,7 +1065,10 @@ const updateQuantity = async (cartItemId, quantity) => {
         <div className="flex-1 flex justify-center items-center rounded-lg">
           <div className="text-pos-text-primary">Loading data...</div>
         </div>
-        <BottomBar onOpenSettings={() => setShowSettings(true)} />
+        <BottomBar 
+          onOpenSettings={() => setShowSettings(true)} 
+          onBarcodeSearch={() => setShowBarcodeSearch(true)}
+        />
       </div>
     );
   }
@@ -1030,6 +1086,9 @@ const updateQuantity = async (cartItemId, quantity) => {
           onSearchChange={handleSearchChange}
           onRefreshKitchenCount={(fn) => setRefreshKitchenCount(() => fn)}
           onLoadHoldOrder={handleLoadHoldOrder}
+          selectedEmployeeId={selectedEmployee?.id}
+          selectedEmployee={selectedEmployee}
+          onEmployeeChange={handleEmployeeChange}
         />
         <div className="flex-1 flex overflow-hidden">
           <Sidebar
@@ -1049,7 +1108,10 @@ const updateQuantity = async (cartItemId, quantity) => {
             searchQuery={searchQuery}
           />
         </div>
-        <BottomBar onOpenSettings={() => setShowSettings(true)} />
+        <BottomBar 
+          onOpenSettings={() => setShowSettings(true)} 
+          onBarcodeSearch={() => setShowBarcodeSearch(true)}
+        />
       </div>
       <OrderPanel
         cart={cart}
@@ -1063,6 +1125,7 @@ const updateQuantity = async (cartItemId, quantity) => {
         selectedTable={selectedTable}
         selectedCustomer={selectedCustomer}
         onSelectCustomer={setSelectedCustomer}
+        selectedEmployee={selectedEmployee}
         onRefreshHoldCount={refreshKitchenCount}
         onSplitCart={(items, confirmCallback) => {
           setSplitCartSelectedItems(items);
@@ -1133,6 +1196,15 @@ const updateQuantity = async (cartItemId, quantity) => {
         title={messageModal.title}
         message={messageModal.message}
         type={messageModal.type}
+      />
+
+      <BarcodeSearchModal
+        isOpen={showBarcodeSearch}
+        onClose={() => setShowBarcodeSearch(false)}
+        onProductFound={(product) => {
+          // Add product to cart when found
+          addToCart(product, 1, false);
+        }}
       />
     </div>
   );

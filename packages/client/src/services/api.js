@@ -12,7 +12,7 @@ class ApiService {
     };
 
     try {
-      console.log('API request:', url, config);
+      
       const response = await fetch(url, config);
       
       if (!response.ok) {
@@ -172,8 +172,9 @@ class ApiService {
     return this.request(`/orders/table/${tableId}`);
   }
 
-  static async getHoldOrders() {
-    return this.request('/orders/hold');
+  static async getHoldOrders(employeeId = null) {
+    const endpoint = employeeId ? `/orders/hold?employee_id=${employeeId}` : '/orders/hold';
+    return this.request(endpoint);
   }
 
   // Room methods
@@ -420,6 +421,14 @@ static async adjustInventory(productId, data) {
     body: JSON.stringify(data),
   });
 }
+
+// delete inventory api
+  static async deleteInventory(productId) {
+    return this.request(`/inventory/${productId}`, {
+      method: 'DELETE',
+    });
+  }
+
 
   // Report methods
   static async getXReport(date) {

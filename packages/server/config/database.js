@@ -294,6 +294,15 @@ try {
   }
 }
 
+// Add employee_id column to orders if it doesn't exist
+try {
+  db.exec(`ALTER TABLE orders ADD COLUMN employee_id INTEGER`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
 // Create trigger to automatically update updated_at when order is modified
 try {
   db.exec(`

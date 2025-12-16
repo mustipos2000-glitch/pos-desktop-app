@@ -376,156 +376,156 @@ class PaymentService {
    * @param {Object} paymentData - Payment information
    * @returns {Promise<Object>} Payment result
    */
-  static async processBancontactPayment(paymentData) {
-    return this.processPayworldPayment(paymentData);
-  }
+  // static async processBancontactPayment(paymentData) {
+  //   return this.processPayworldPayment(paymentData);
+  // }
 
   /**
    * Process Payworld payment
    * @param {Object} paymentData - Payment information
    * @returns {Promise<Object>} Payment result
    */
-  static async processPayworldPayment(paymentData) {
-    try {
-      const { amount, member_id, payment_type, reference } = paymentData;
+  // static async processPayworldPayment(paymentData) {
+  //   try {
+  //     const { amount, member_id, payment_type, reference } = paymentData;
       
-      // Amount comes in euros from frontend, convert to cents
-      const amountInCents = Math.round(amount * 100);
+  //     // Amount comes in euros from frontend, convert to cents
+  //     const amountInCents = Math.round(amount * 100);
       
-      console.log(`💳 Payworld Payment Request:`, {
-        amount: `€${amount}`,
-        amountInCents,
-        member_id,
-        payment_type,
-        reference
-      });
+  //     console.log(`💳 Payworld Payment Request:`, {
+  //       amount: `€${amount}`,
+  //       amountInCents,
+  //       member_id,
+  //       payment_type,
+  //       reference
+  //     });
       
-      // Get Bancontact/Payworld terminal configuration
-      const terminal = PaymentTerminal.getByType('bancontact') || 
-                       PaymentTerminal.getByType('payworld') || 
-                       PaymentTerminal.getByType('payword');
+  //     // Get Bancontact/Payworld terminal configuration
+  //     const terminal = PaymentTerminal.getByType('bancontact') || 
+  //                      PaymentTerminal.getByType('payworld') || 
+  //                      PaymentTerminal.getByType('payword');
       
-      if (terminal && terminal.enabled) {
-        console.log(`✅ Using REAL Payworld terminal: ${terminal.name}`);
+  //     if (terminal && terminal.enabled) {
+  //       console.log(`✅ Using REAL Payworld terminal: ${terminal.name}`);
         
-        try {
-          // Create service instance with terminal config
-          const service = createPayworldService(terminal);
-          const result = await service.createSession(amountInCents);
+  //       try {
+  //         // Create service instance with terminal config
+  //         const service = createPayworldService(terminal);
+  //         const result = await service.createSession(amountInCents);
           
-          if (result.success) {
-            return {
-              success: true,
-              transaction_id: result.sessionId,
-              sessionId: result.sessionId,
-              data: {
-                amount,
-                method: 'payworld',
-                status: 'in_progress',
-                state: 'IN_PROGRESS',
-                timestamp: new Date().toISOString(),
-                reference,
-                card_type: 'bancontact',
-                terminal: terminal.name
-              }
-            };
-          } else {
-            return {
-              success: false,
-              message: result.message || 'Failed to start Payworld payment'
-            };
-          }
-        } catch (error) {
-          console.error('❌ Real Payworld failed:', error.message);
-          return {
-            success: false,
-            message: `Payworld terminal error: ${error.message}`
-          };
-        }
-      }
+  //         if (result.success) {
+  //           return {
+  //             success: true,
+  //             transaction_id: result.sessionId,
+  //             sessionId: result.sessionId,
+  //             data: {
+  //               amount,
+  //               method: 'payworld',
+  //               status: 'in_progress',
+  //               state: 'IN_PROGRESS',
+  //               timestamp: new Date().toISOString(),
+  //               reference,
+  //               card_type: 'bancontact',
+  //               terminal: terminal.name
+  //             }
+  //           };
+  //         } else {
+  //           return {
+  //             success: false,
+  //             message: result.message || 'Failed to start Payworld payment'
+  //           };
+  //         }
+  //       } catch (error) {
+  //         console.error('❌ Real Payworld failed:', error.message);
+  //         return {
+  //           success: false,
+  //           message: `Payworld terminal error: ${error.message}`
+  //         };
+  //       }
+  //     }
       
-      // No terminal configured
-      return {
-        success: false,
-        message: 'Payworld terminal not configured. Please add terminal in settings.'
-      };
-    } catch (error) {
-      console.error('❌ Payworld payment failed:', error);
-      return {
-        success: false,
-        message: error.message || 'Payworld payment failed'
-      };
-    }
-  }
+  //     // No terminal configured
+  //     return {
+  //       success: false,
+  //       message: 'Payworld terminal not configured. Please add terminal in settings.'
+  //     };
+  //   } catch (error) {
+  //     console.error('❌ Payworld payment failed:', error);
+  //     return {
+  //       success: false,
+  //       message: error.message || 'Payworld payment failed'
+  //     };
+  //   }
+  // }
 
   /**
    * Get Payworld payment status
    * @param {string} sessionId - Session ID
    * @returns {Promise<Object>} Payment status
    */
-  static async getPayworldStatus(sessionId) {
-    try {
-      // Get terminal to create service instance
-      const terminal = PaymentTerminal.getByType('bancontact') || 
-                       PaymentTerminal.getByType('payworld') || 
-                       PaymentTerminal.getByType('payword');
+  // static async getPayworldStatus(sessionId) {
+  //   try {
+  //     // Get terminal to create service instance
+  //     const terminal = PaymentTerminal.getByType('bancontact') || 
+  //                      PaymentTerminal.getByType('payworld') || 
+  //                      PaymentTerminal.getByType('payword');
       
-      if (terminal && terminal.enabled) {
-        const service = createPayworldService(terminal);
-        const status = service.getSessionStatus(sessionId);
+  //     if (terminal && terminal.enabled) {
+  //       const service = createPayworldService(terminal);
+  //       const status = service.getSessionStatus(sessionId);
         
-        return {
-          success: true,
-          ok: true,
-          ...status
-        };
-      } else {
-        return {
-          success: false,
-          ok: false,
-          message: 'Payworld terminal not configured'
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        ok: false,
-        message: error.message || 'Failed to get Payworld status'
-      };
-    }
-  }
+  //       return {
+  //         success: true,
+  //         ok: true,
+  //         ...status
+  //       };
+  //     } else {
+  //       return {
+  //         success: false,
+  //         ok: false,
+  //         message: 'Payworld terminal not configured'
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       ok: false,
+  //       message: error.message || 'Failed to get Payworld status'
+  //     };
+  //   }
+  // }
 
   /**
    * Cancel Payworld payment
    * @param {string} sessionId - Session ID
    * @returns {Promise<Object>} Cancellation result
    */
-  static async cancelPayworldPayment(sessionId) {
-    try {
-      console.log(`🚫 Cancelling Payworld payment: ${sessionId}`);
+  // static async cancelPayworldPayment(sessionId) {
+  //   try {
+  //     console.log(`🚫 Cancelling Payworld payment: ${sessionId}`);
       
-      // Get terminal to create service instance
-      const terminal = PaymentTerminal.getByType('bancontact') || 
-                       PaymentTerminal.getByType('payworld') || 
-                       PaymentTerminal.getByType('payword');
+  //     // Get terminal to create service instance
+  //     const terminal = PaymentTerminal.getByType('bancontact') || 
+  //                      PaymentTerminal.getByType('payworld') || 
+  //                      PaymentTerminal.getByType('payword');
       
-      if (terminal && terminal.enabled) {
-        const service = createPayworldService(terminal);
-        const result = await service.cancelSession(sessionId);
-        return result;
-      } else {
-        return {
-          success: false,
-          message: 'Payworld terminal not configured'
-        };
-      }
-    } catch (error) {
-      return {
-        success: false,
-        message: error.message || 'Failed to cancel Payworld payment'
-      };
-    }
-  }
+  //     if (terminal && terminal.enabled) {
+  //       const service = createPayworldService(terminal);
+  //       const result = await service.cancelSession(sessionId);
+  //       return result;
+  //     } else {
+  //       return {
+  //         success: false,
+  //         message: 'Payworld terminal not configured'
+  //       };
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       message: error.message || 'Failed to cancel Payworld payment'
+  //     };
+  //   }
+  // }
 
   /**
    * Process TCP payment (generic)
