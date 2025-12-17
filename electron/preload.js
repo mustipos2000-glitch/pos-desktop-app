@@ -24,5 +24,13 @@ contextBridge.exposeInMainWorld('electron', {
     isCustomerDisplay: () => ipcRenderer.sendSync('customer-display:is-display-window'),
     // Get main window bounds for positioning
     getMainWindowBounds: () => ipcRenderer.invoke('customer-display:get-main-window-bounds')
+  },
+
+  // Display/Monitor information
+  display: {
+    // Get information about all connected displays
+    getAllDisplays: () => ipcRenderer.invoke('display:get-all-displays'),
+    // Get primary display info and display count
+    getDisplayInfo: () => ipcRenderer.invoke('display:get-display-info')
   }
 });

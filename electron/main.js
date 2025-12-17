@@ -228,42 +228,57 @@ function createCustomerDisplayWindow() {
   }
 
   const preloadPath = path.join(__dirname, 'preload.js');
+  const { screen } = require('electron');
   
-  // Calculate position to place customer display window next to main window
-  let x = 0, y = 0;
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    const mainBounds = mainWindow.getBounds();
-    x = mainBounds.x + mainBounds.width + 10; // Position to the right with 10px gap
-    y = mainBounds.y;
-    
-    // Get screen dimensions to ensure window fits
-    const { screen } = require('electron');
-    const primaryDisplay = screen.getPrimaryDisplay();
-    const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
-    
-    // If windows don't fit side by side, adjust sizes
-    const customerDisplayWidth = 400;
-    const customerDisplayHeight = 800;
-    
-    if (x + customerDisplayWidth > screenWidth) {
-      // Position to the right edge of screen
-      x = screenWidth - customerDisplayWidth - 10;
-      // If still doesn't fit, make it smaller
-      if (x < mainBounds.x + mainBounds.width) {
-        x = mainBounds.x + mainBounds.width + 10;
+  // Get all available displays
+  const allDisplays = screen.getAllDisplays();
+  console.log(`📺 Found ${allDisplays.length} display(s)`);
+  allDisplays.forEach((display, index) => {
+    console.log(`   Display ${index + 1}: ${display.bounds.width}x${display.bounds.height} @ (${display.bounds.x}, ${display.bounds.y}) - ${display.id}`);
+  });
+  
+  let x = 0, y = 0, width = 800, height = 600;
+  
+  // Try to use a secondary display if available
+  if (allDisplays.length > 1) {
+    // Use the second display (index 1)
+    const secondDisplay = allDisplays[1];
+    const bounds = secondDisplay.bounds;
+    x = bounds.x;
+    y = bounds.y;
+    width = bounds.width;
+    height = bounds.height;
+    console.log(`✅ Customer Display will open on secondary display (${width}x${height})`);
+  } else {
+    // Fallback to positioning next to main window on same display
+    console.log('⚠️  Only one display detected. Positioning customer display next to main window.');
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      const mainBounds = mainWindow.getBounds();
+      const primaryDisplay = screen.getPrimaryDisplay();
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+      
+      x = mainBounds.x + mainBounds.width + 10;
+      y = mainBounds.y;
+      width = 400;
+      height = 800;
+      
+      if (x + width > screenWidth) {
+        x = screenWidth - width - 10;
+        if (x < mainBounds.x + mainBounds.width) {
+          x = mainBounds.x + mainBounds.width + 10;
+        }
       }
+      
+      if (y + height > screenHeight) {
+        y = screenHeight - height - 10;
+      }
+      if (y < 0) y = 10;
     }
-    
-    // Ensure window is within screen bounds
-    if (y + customerDisplayHeight > screenHeight) {
-      y = screenHeight - customerDisplayHeight - 10;
-    }
-    if (y < 0) y = 10;
   }
   
   customerDisplayWindow = new BrowserWindow({
-    width: 400,
-    height: 800,
+    width: width,
+    height: height,
     x: x,
     y: y,
     title: 'Customer Display',
@@ -333,6 +348,33 @@ ipcMain.handle('customer-display:get-main-window-bounds', () => {
     return mainWindow.getBounds();
   }
   return null;
+});
+
+ipcMain.handle('display:get-all-displays', () => {
+  const { screen } = require('electron');
+  const allDisplays = screen.getAllDisplays();
+  return allDisplays.map((display, index) => ({
+    id: display.id,
+    index: index,
+    bounds: display.bounds,
+    workArea: display.workArea,
+    scaleFactor: display.scaleFactor,
+    rotation: display.rotation,
+    isPrimary: display.id === screen.getPrimaryDisplay().id
+  }));
+});
+
+ipcMain.handle('display:get-display-info', () => {
+  const { screen } = require('electron');
+  const primary = screen.getPrimaryDisplay();
+  return {
+    primary: {
+      id: primary.id,
+      bounds: primary.bounds,
+      workArea: primary.workArea
+    },
+    all: screen.getAllDisplays().length
+  };
 });
 
 app.whenReady().then(async () => {
