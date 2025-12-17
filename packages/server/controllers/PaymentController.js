@@ -10,9 +10,9 @@ const PaymentController = {
 
   // Process Cashmatic payment
   processCashmaticPayment: async (req, res) => {
-    // try {
       console.log("enter.....");
-      
+
+    try {      
       const { amount } = req.body;
       if (!amount || amount <= 0) {
         return res.status(400).json({ error: 'amount should be greater then ' });
@@ -23,10 +23,10 @@ const PaymentController = {
       console.log("Session is : ", session);
 
       return res.json({ data: session });
-    // } catch (error) {
-    //   console.error('Cashmatic startPayment error:', error);
-    //   return res.status(500).json({ error: 'Internal server error' });
-    // }
+    } catch (error) {
+      console.error('Cashmatic startPayment error:', error);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
   },
 
   // Get payment status (used by /cashmatic/status/:sessionId)

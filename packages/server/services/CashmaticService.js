@@ -38,7 +38,7 @@ class CashmaticService {
     const client = this.getHttpClient();
     const baseUrl = this.getBaseUrl();
     const cfg = readConfig();
-
+    console.log("inside the Login ");
     const res = await client.post(`${baseUrl}/api/user/Login`, {
       username: cfg.username || 'cp',
       password: cfg.password || '1235',
