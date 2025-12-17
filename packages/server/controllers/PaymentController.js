@@ -10,7 +10,9 @@ const PaymentController = {
 
   // Process Cashmatic payment
   processCashmaticPayment: async (req, res) => {
-    try {
+      console.log("enter.....");
+
+    try {      
       const { amount } = req.body;
       if (!amount || amount <= 0) {
         return res.status(400).json({ error: 'amount should be greater then ' });
@@ -31,8 +33,12 @@ const PaymentController = {
   getPaymentStatus: async (req, res) => {
     try {
       const { transactionId } = req.params;
+      console.log("helll enter.....");
+      
 
-      const result = await PaymentService.getPaymentStatus(transactionId);
+      const result = await CashmaticService.getStatus(transactionId);
+      console.log("result",result);
+      
 
       if (result.success) {
         res.json({ success: true, data: result.data });
@@ -196,13 +202,16 @@ const PaymentController = {
   },
 
   async processPayment({ sessionId, ip, port, amountCents, posId, currencyCode }) {
+    console.log("Start Payment : " + sessionId, ip, amountCents, posId,currencyCode);
+    
     try {
       PaymentController.updateSession(sessionId, {
         state: "IN_PROGRESS",
         message: "Verbinding met terminal wordt opgebouwd...",
         lastEvent: "CONNECTING",
       });
-
+      console.log("Sending Financial Transcation with status ");
+      
       const response = await PaymentController.sendFinancialTrxWithStatus({
         sessionId,
         ip,
@@ -296,20 +305,20 @@ const PaymentController = {
       const syncNumber = PaymentController.trxSyncNumber;
 
       const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<vcs-pos:financialTrxRequest xmlns:vcs-pos="http://www.vibbek.com/pos">
-  <posId>${posId}</posId>
-  <trxSyncNumber>${syncNumber}</trxSyncNumber>
-  <trxData>
-    <amount>${amountCents}</amount>
-    <currency>${currencyCode}</currency>
-    <transactionType>0</transactionType>
-    <partialApprovalCap>1</partialApprovalCap>
-    <noDCC>true</noDCC>
-  </trxData>
-  <trxInfo>AAAf</trxInfo>
-  <receiptFormat>1</receiptFormat>
-  <selectedLang>en</selectedLang>
-</vcs-pos:financialTrxRequest>`;
+      <vcs-pos:financialTrxRequest xmlns:vcs-pos="http://www.vibbek.com/pos">
+        <posId>${posId}</posId>
+        <trxSyncNumber>${syncNumber}</trxSyncNumber>
+        <trxData>
+          <amount>${amountCents}</amount>
+          <currency>${currencyCode}</currency>
+          <transactionType>0</transactionType>
+          <partialApprovalCap>1</partialApprovalCap>
+          <noDCC>true</noDCC>
+        </trxData>
+        <trxInfo>AAAf</trxInfo>
+        <receiptFormat>1</receiptFormat>
+        <selectedLang>en</selectedLang>
+      </vcs-pos:financialTrxRequest>`;
 
       const xmlBytes = Buffer.from(xml, "utf8");
       const lenHeader = Buffer.alloc(4);

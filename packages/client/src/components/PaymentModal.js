@@ -136,133 +136,126 @@ const PaymentModal = ({
 
     // Ensure total is a valid number
     const validTotal = typeof total === 'number' && !isNaN(total) ? total : 0;
-    // const remaining = Math.max(0, validTotal - assigned);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-pos-bg-secondary rounded-lg p-4 w-[520px] max-w-[90vw] max-h-[80vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+            <div className="bg-pos-bg-secondary rounded-2xl p-6 w-full max-w-4xl border-2 border-pos-border-primary shadow-2xl" style={{margin: "16px" }}>
                 {/* Header */}
-                <div className="text-center mb-3">
-                    <h2 className="text-lg font-semibold text-pos-text-primary mb-2">Checkout (Pay)</h2>
+                <div className="text-center mb-4">
+                    <h2 className="text-2xl font-bold text-pos-text-primary mb-4">Checkout Payment</h2>
 
                     {/* Totals Display */}
-                    <div className="grid grid-cols-3 gap-2 text-center mb-2">
-                        <div>
-                            <div className="text-pos-text-muted text-xs font-medium">Total</div>
-                            <div className="text-base font-bold text-pos-text-primary">€ {validTotal.toFixed(2)}</div>
+                    <div className="grid grid-cols-3 gap-4 mb-4">
+                        <div className="bg-pos-bg-primary rounded-xl p-3 border border-pos-border-primary">
+                            <div className="text-pos-text-muted text-sm font-medium mb-1">Total</div>
+                            <div className="text-2xl font-bold text-pos-text-primary">€ {validTotal.toFixed(2)}</div>
                         </div>
-                        <div>
-                            <div className="text-pos-text-muted text-xs font-medium">Assigned</div>
-                            <div className="text-base font-bold text-pos-text-primary">€ {assigned.toFixed(2)}</div>
+                        <div className="bg-pos-bg-primary rounded-xl p-3 border border-pos-border-primary">
+                            <div className="text-pos-text-muted text-sm font-medium mb-1">Assigned</div>
+                            <div className="text-2xl font-bold text-pos-text-primary">€ {assigned.toFixed(2)}</div>
                         </div>
-                        <div>
-                            <div className="text-pos-text-muted text-xs font-medium">Change due</div>
-                            <div className="text-base font-bold text-pos-text-primary">€ {Math.max(0, changeDue).toFixed(2)}</div>
+                        <div className="bg-pos-bg-primary rounded-xl p-3 border border-pos-border-primary">
+                            <div className="text-pos-text-muted text-sm font-medium mb-1">Change Due</div>
+                            <div className="text-2xl font-bold text-green-500">€ {Math.max(0, changeDue).toFixed(2)}</div>
                         </div>
                     </div>
 
                     {/* Amount Input Display */}
-                    <div className="mb-2">
+                    <div className="mb-4">
                         <input
                             type="text"
                             value={enteredAmount}
                             readOnly
-                            className="w-full max-w-[160px] bg-pos-bg-primary border border-pos-border-light text-center text-lg py-1 text-pos-text-primary"
+                            className="w-full max-w-xs mx-auto bg-pos-bg-primary border-2 border-pos-border-primary text-center text-3xl py-3 rounded-xl text-pos-text-primary font-bold"
                             placeholder="0.00"
                         />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Left Side - Controls */}
-                    <div>
+                    <div className="space-y-4">
+                        {/* Payment Method Selection */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setPaymentMethod('cash')}
+                                className={`flex flex-col items-center justify-center p-4 rounded-xl text-lg font-bold transition-all border-2 min-h-[80px] ${
+                                    paymentMethod === 'cash'
+                                        ? 'bg-green-600 text-white border-green-700 shadow-lg'
+                                        : 'bg-pos-bg-primary text-pos-text-primary border-pos-border-primary hover:bg-pos-interactive-hover'
+                                }`}
+                            >
+                                <div className="text-3xl mb-1">💵</div>
+                                <div>Cash</div>
+                                <div className="text-sm mt-1">€{cashAmount.toFixed(2)}</div>
+                            </button>
+
+                            <button
+                                onClick={() => setPaymentMethod('card')}
+                                className={`flex flex-col items-center justify-center p-4 rounded-xl text-lg font-bold transition-all border-2 min-h-[80px] ${
+                                    paymentMethod === 'card'
+                                        ? 'bg-blue-600 text-white border-blue-700 shadow-lg'
+                                        : 'bg-pos-bg-primary text-pos-text-primary border-pos-border-primary hover:bg-pos-interactive-hover'
+                                }`}
+                            >
+                                <div className="text-3xl mb-1">💳</div>
+                                <div>Card</div>
+                                <div className="text-sm mt-1">€{cardAmount.toFixed(2)}</div>
+                            </button>
+                        </div>
+
                         {/* Quick Amount Buttons */}
-                        <div className="grid grid-cols-3 gap-1 mb-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <button
                                 onClick={() => handleQuickAmount('exact')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded font-semibold"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 text-base rounded-xl font-semibold border border-pos-border-primary"
                             >
                                 Exact
                             </button>
                             <button
                                 onClick={() => handleQuickAmount('ceiling')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded font-semibold"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 text-base rounded-xl font-semibold border border-pos-border-primary"
                             >
                                 {Math.ceil(validTotal)}€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(50)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded font-semibold"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 text-base rounded-xl font-semibold border border-pos-border-primary"
                             >
                                 50€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(100)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded font-semibold"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 text-base rounded-xl font-semibold border border-pos-border-primary"
                             >
                                 100€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(200)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded font-semibold"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 text-base rounded-xl font-semibold border border-pos-border-primary"
                             >
                                 200€
                             </button>
                             <button
                                 onClick={() => handleQuickAmount(500)}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-2 px-2 text-sm rounded font-semibold"
+                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 text-base rounded-xl font-semibold border border-pos-border-primary"
                             >
                                 500€
                             </button>
-                            {/* <button
-                                onClick={() => handleQuickAmount(remaining)}
-                                disabled={remaining <= 0}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover disabled:bg-gray-500 disabled:cursor-not-allowed text-pos-text-primary py-1 px-2 text-xs rounded"
-                            >
-                                €{remaining.toFixed(2)}
-                            </button> */}
-                        </div>
-
-                        {/* Payment Method Selection */}
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                            <button
-                                onClick={() => setPaymentMethod('cash')}
-                                className={`flex items-center justify-between px-2 py-2 rounded text-sm font-semibold ${paymentMethod === 'cash'
-                                    ? 'bg-pos-success text-white'
-                                    : 'bg-pos-bg-primary text-pos-text-primary hover:bg-pos-interactive-hover'
-                                    }`}
-                            >
-                                <div className="text-lg">💵</div>
-                                <div className="font-semibold">Cash</div>
-                                <div className="text-xs font-bold">€{cashAmount.toFixed(2)}</div>
-                            </button>
-
-                            <button
-                                onClick={() => setPaymentMethod('card')}
-                                className={`flex items-center justify-between px-2 py-2 rounded text-sm font-semibold ${paymentMethod === 'card'
-                                    ? 'bg-pos-info text-white'
-                                    : 'bg-pos-bg-primary text-pos-text-primary hover:bg-pos-interactive-hover'
-                                    }`}
-                            >
-                                <div className="text-lg">💳</div>
-                                <div className="font-semibold">Card</div>
-                                <div className="text-xs font-bold">€{cardAmount.toFixed(2)}</div>
-                            </button>
-
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="grid grid-cols-1 gap-2 mb-1">
+                        <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={handleAddAmount}
                                 disabled={!enteredAmount || parseFloat(enteredAmount) <= 0}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover disabled:bg-gray-500 disabled:cursor-not-allowed text-pos-text-primary font-semibold py-2 px-2 rounded text-sm"
+                                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 px-4 rounded-xl text-base border-2 border-green-700"
                             >
                                 Add to {paymentMethod === 'cash' ? 'Cash' : 'Card'}
                             </button>
                             <button
                                 onClick={handleReset}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary font-semibold py-2 px-2 rounded text-sm"
+                                className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 px-4 rounded-xl text-base border-2 border-orange-700"
                             >
                                 Reset All
                             </button>
@@ -270,102 +263,41 @@ const PaymentModal = ({
                     </div>
 
                     {/* Right Side - Numeric Keypad */}
-                    <div>
-                        <div className="grid grid-cols-4 gap-1">
-                            <button
-                                onClick={() => handleNumpadInput('6')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                6
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('7')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                7
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('8')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                8
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('9')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                9
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('5')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                5
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('4')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                4
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('3')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                3
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('2')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                2
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('C')}
-                                className="bg-pos-error hover:bg-red-600 text-white py-3 px-3 rounded text-xl font-bold"
-                            >
-                                C
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('.')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                .
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('0')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                0
-                            </button>
-                            <button
-                                onClick={() => handleNumpadInput('1')}
-                                className="bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary py-3 px-3 rounded text-xl font-bold"
-                            >
-                                1
-                            </button>
-
+                    <div className="space-y-3">
+                        <div className="grid grid-cols-3 gap-2">
+                            {['7', '8', '9', '4', '5', '6', '1', '2', '3', 'C', '0', '.'].map((btn) => (
+                                <button
+                                    key={btn}
+                                    onClick={() => handleNumpadInput(btn)}
+                                    className={`py-5 px-4 rounded-xl text-2xl font-bold transition-all border-2 ${
+                                        btn === 'C'
+                                            ? 'bg-red-600 hover:bg-red-700 text-white border-red-700'
+                                            : 'bg-pos-bg-primary hover:bg-pos-interactive-hover text-pos-text-primary border-pos-border-primary'
+                                    }`}
+                                >
+                                    {btn}
+                                </button>
+                            ))}
                         </div>
+
                         {/* Bottom Action Buttons */}
-                        <div className="grid grid-cols-2 gap-3 mt-1">
+                        <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={onClose}
-                                className="bg-pos-error hover:bg-red-600 text-white font-semibold py-2 rounded text-sm"
+                                className="bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl text-lg border-2 border-red-700"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleConfirm}
                                 disabled={assigned < validTotal}
-                                className="bg-pos-success hover:bg-green-600 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 rounded text-sm"
+                                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl text-lg border-2 border-green-700"
                             >
-                                Confirm Payment
+                                Confirm
                             </button>
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </div>
     );
