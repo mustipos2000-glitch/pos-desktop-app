@@ -10,6 +10,8 @@ const PaymentController = {
 
   // Process Cashmatic payment
   processCashmaticPayment: async (req, res) => {
+    console.log("Cashmatic payment requested");
+    
     try {
       const { amount } = req.body;
       if (!amount || amount <= 0) {
