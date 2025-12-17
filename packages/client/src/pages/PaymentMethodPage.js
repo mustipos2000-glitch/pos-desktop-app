@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../services/api';
+import KioskButton from '../components/kiosk/KioskButton';
 
 const PaymentMethodPage = () => {
   const navigate = useNavigate();
@@ -427,276 +428,425 @@ const PaymentMethodPage = () => {
   };
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col items-center justify-center p-6">
-      <div className="max-w-3xl w-full">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-pos-text-primary mb-1">
-            Choose payment method
+    <div className="h-screen bg-pos-bg-primary flex flex-col">
+      {/* Header Section */}
+      <div className="flex-shrink-0 px-8 pt-8 pb-6">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
+            Select Payment Method
           </h1>
-          <p className="text-xs text-pos-text-secondary">
-            Choose how you want to pay
+          <p className="text-xl text-pos-text-secondary">
+            Choose how you would like to pay
           </p>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <button
-            onClick={() => handleMethodSelect('cash')}
-            disabled={processing}
-            className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border-2 ${
-              selectedMethod === 'cash'
-                ? 'border-pos-interactive-hover'
-                : 'border-pos-border-primary'
-            } hover:border-pos-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            <div className="text-center space-y-1">
-              <div className="text-lg font-semibold text-pos-text-primary">Cashmatic</div>
-              <div className="text-base text-pos-text-secondary">Cashmatic</div>
-              <div className="text-base text-pos-text-secondary">Cashmatic</div>
-              <div className="text-base text-pos-text-secondary" dir="rtl">كاشماتيك</div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => handleMethodSelect('card')}
-            disabled={processing}
-            className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border-2 ${
-              selectedMethod === 'card'
-                ? 'border-pos-interactive-hover'
-                : 'border-pos-border-primary'
-            } hover:border-pos-interactive-hover disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            <div className="text-center space-y-1">
-              <div className="text-lg font-semibold text-pos-text-primary">Bancontact</div>
-              <div className="text-base text-pos-text-secondary">Bancontact</div>
-              <div className="text-base text-pos-text-secondary">Bancontact</div>
-              <div className="text-base text-pos-text-secondary" dir="rtl">بانكونتاكت</div>
-            </div>
-          </button>
-        </div>
-
-        <div className="bg-pos-bg-secondary rounded-lg p-4 mb-6 border border-pos-border-primary">
-          <div className="text-center space-y-1 text-sm text-pos-text-primary">
-            {paymentType && paymentType.id === 'sadaka' ? (
-              <>
-                <div>
-                  <span className="font-semibold">Type:</span>{' '}
-                  {sadakaType === 'named' ? 'Sadaka by name' : 'Sadaka anonymous'}
-                </div>
-                {sadakaType === 'named' && memberInfo && (
-                  <div>
-                    <span className="font-semibold">Member:</span>{' '}
-                    {memberInfo.fullName}
-                  </div>
-                )}
-                <div>
-                  <span className="font-semibold">Goal:</span>{' '}
-                  {sadakaGoal ? sadakaGoal.titleEn : '—'}
-                </div>
-              </>
-            ) : paymentType && paymentType.id === 'rent' ? (
-              <>
-                <div>
-                  <span className="font-semibold">Type:</span> Rent Space / Kitchen
-                </div>
-                <div>
-                  <span className="font-semibold">Member:</span>{' '}
-                  {memberInfo ? memberInfo.fullName : 'None'}
-                </div>
-                {rentDateTime && (
+      {/* Main Content Area */}
+      <div className="px-8 pb-4">
+        <div className="flex-1 flex flex-col justify-center max-w-5xl w-full mx-auto">
+          
+          {/* Payment Summary Card */}
+          <div className="bg-pos-bg-secondary rounded-xl p-3 mb-4 border border-pos-border-primary">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="text-lg text-pos-text-secondary mb-1">Payment Amount</div>
+                <div className="text-5xl font-bold text-pos-text-primary">€ {amount}</div>
+              </div>
+              <div className="flex-1 text-right space-y-2">
+                {paymentType && paymentType.id === 'sadaka' ? (
                   <>
-                    <div>
-                      <span className="font-semibold">From:</span>{' '}
-                      {rentDateTime.startDate} at {rentDateTime.startTime}
+                    <div className="text-lg text-pos-text-primary">
+                      {sadakaType === 'named' ? 'Sadaka by Name' : 'Sadaka Anonymous'}
                     </div>
-                    <div>
-                      <span className="font-semibold">To:</span>{' '}
-                      {rentDateTime.endDate} at {rentDateTime.endTime}
+                    {sadakaType === 'named' && memberInfo && (
+                      <div className="text-base text-pos-text-secondary">
+                        {memberInfo.fullName}
+                      </div>
+                    )}
+                    {sadakaGoal && (
+                      <div className="text-base text-pos-text-secondary">
+                        Goal: {sadakaGoal.titleEn}
+                      </div>
+                    )}
+                  </>
+                ) : paymentType && paymentType.id === 'rent' ? (
+                  <>
+                    <div className="text-lg text-pos-text-primary">Rent Space / Kitchen</div>
+                    {memberInfo && (
+                      <div className="text-base text-pos-text-secondary">
+                        {memberInfo.fullName}
+                      </div>
+                    )}
+                    {rentDateTime && (
+                      <div className="text-sm text-pos-text-secondary">
+                        {rentDateTime.startDate} {rentDateTime.startTime} - {rentDateTime.endDate} {rentDateTime.endTime}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-lg text-pos-text-primary">
+                      {paymentType ? paymentType.titleEn : 'Payment'}
                     </div>
+                    {memberInfo && (
+                      <div className="text-base text-pos-text-secondary">
+                        {memberInfo.fullName}
+                      </div>
+                    )}
                   </>
                 )}
-              </>
-            ) : (
-              <>
-                <div>
-                  <span className="font-semibold">Type:</span>{' '}
-                  {paymentType ? paymentType.titleEn : '—'}
-                </div>
-                <div>
-                  <span className="font-semibold">Member:</span>{' '}
-                  {memberInfo ? memberInfo.fullName : 'None'}
-                </div>
-              </>
-            )}
-            <div>
-              <span className="font-semibold">Amount:</span> € {amount}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-center gap-3">
-          <button
+          {/* Payment Method Buttons */}
+          <div className="grid grid-cols-2 gap-6">
+            {/* Cash Payment Button */}
+            <button
+              onClick={() => handleMethodSelect('cash')}
+              disabled={processing}
+              className={`
+                relative bg-pos-bg-secondary rounded-xl p-6 
+                transition-all duration-200 border
+                ${selectedMethod === 'cash'
+                  ? 'border-pos-interactive-hover shadow-lg scale-[1.02]'
+                  : 'border-pos-border-primary'
+                }
+                hover:border-pos-interactive-hover hover:shadow-lg
+                disabled:opacity-40 disabled:cursor-not-allowed
+                active:scale-[0.98]
+              `}
+            >
+              {/* Icon/Visual */}
+              <div className="mb-6">
+                <svg className="w-24 h-24 mx-auto text-pos-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              
+              {/* Text Content */}
+              <div className="space-y-3">
+                <div className="text-3xl font-bold text-pos-text-primary">Cash</div>
+                <div className="text-xl text-pos-text-secondary">Cashmatic</div>
+                <div className="text-lg text-pos-text-secondary" dir="rtl">كاشماتيك</div>
+              </div>
+
+              {/* Selected Indicator */}
+              {selectedMethod === 'cash' && (
+                <div className="absolute top-4 right-4">
+                  <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </button>
+
+            {/* Card Payment Button */}
+            <button
+              onClick={() => handleMethodSelect('card')}
+              disabled={processing}
+              className={`
+                relative bg-pos-bg-secondary rounded-xl p-6 
+                transition-all duration-200 border
+                ${selectedMethod === 'card'
+                  ? 'border-pos-interactive-hover shadow-lg scale-[1.02]'
+                  : 'border-pos-border-primary'
+                }
+                hover:border-pos-interactive-hover hover:shadow-lg
+                disabled:opacity-40 disabled:cursor-not-allowed
+                active:scale-[0.98]
+              `}
+            >
+              {/* Icon/Visual */}
+              <div className="mb-6">
+                <svg className="w-24 h-24 mx-auto text-pos-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              
+              {/* Text Content */}
+              <div className="space-y-3">
+                <div className="text-3xl font-bold text-pos-text-primary">Card</div>
+                <div className="text-xl text-pos-text-secondary">Bancontact</div>
+                <div className="text-lg text-pos-text-secondary" dir="rtl">بانكونتاكت</div>
+              </div>
+
+              {/* Selected Indicator */}
+              {selectedMethod === 'card' && (
+                <div className="absolute top-4 right-4">
+                  <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Footer Navigation */}
+      <div className="flex-shrink-0 px-8 pb-8">
+        <div className="max-w-5xl w-full mx-auto">
+          <KioskButton
+            variant="secondary"
             onClick={handleGoBack}
             disabled={processing}
-            className="px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            fullWidth
           >
-            Go back
-          </button>
+            Go Back
+          </KioskButton>
         </div>
+      </div>
 
         {/* Cashmatic Modal */}
         {showCashmaticModal && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
-            <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
-              <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
-                Cashmatic Payment
-              </h2>
-              <div className="space-y-2 text-pos-text-primary text-sm">
-                <div className="flex justify-between">
-                  <span>Requested:</span>
-                  <span>€ {formatAmount(cashmaticInfo?.requested)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Inserted:</span>
-                  <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Change (theoretical):</span>
-                  <span>
-                    € {formatAmount(Math.max(
-                      (cashmaticInfo?.inserted ?? 0) - (cashmaticInfo?.requested ?? 0),
-                      0
-                    ))}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Change via Cashmatic:</span>
-                  <span>€ {formatAmount(cashmaticInfo?.dispensed)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Manual change:</span>
-                  <span>€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Status:</span>
-                  <span>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+            <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
+              
+              {/* Modal Header */}
+              <div className="px-8 py-2 border-b-2 border-pos-border-primary">
+                <h2 className="text-3xl font-bold text-pos-text-primary text-center">
+                  Cash Payment in Progress
+                </h2>
+              </div>
+
+              {/* Modal Content */}
+              <div className="px-8 py-2">
+                {/* Status Indicator */}
+                <div className="mb-4 text-center">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-4">
+                    {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
+                      <svg className="w-12 h-12 text-pos-text-primary animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    )}
+                    {cashmaticInfo.state === "FINISHED" && (
+                      <svg className="w-12 h-12 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {cashmaticInfo.state === "FINISHED_MANUAL" && (
+                      <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {(cashmaticInfo.state === "CANCELLED" || cashmaticInfo.state === "ERROR") && (
+                      <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="text-2xl font-semibold text-pos-text-primary">
                     {cashmaticInfo.state === "IDLE"
                       ? "Ready for next customer"
-                      : cashmaticInfo.state === "RUNNING" ||
-                        cashmaticInfo.state === "IN_PROGRESS"
-                      ? "Payment in progress..."
+                      : cashmaticInfo.state === "RUNNING" || cashmaticInfo.state === "IN_PROGRESS"
+                      ? "Insert cash into the machine"
                       : cashmaticInfo.state === "PAID"
-                      ? "Amount received – change being dispensed"
+                      ? "Processing change..."
                       : cashmaticInfo.state === "FINISHED_MANUAL"
-                      ? "Payment completed – give manual change"
+                      ? "Please provide manual change"
                       : cashmaticInfo.state === "FINISHED"
-                      ? "Payment completed"
+                      ? "Payment completed successfully"
                       : cashmaticInfo.state === "CANCELLED"
-                      ? "Cancelled"
-                      : cashmaticInfo.state === "ERROR" ||
-                        cashmaticInfo.state === "FAILED"
-                      ? "Error – check Cashmatic"
-                      : "Unknown status"}
-                  </span>
+                      ? "Payment cancelled"
+                      : cashmaticInfo.state === "ERROR" || cashmaticInfo.state === "FAILED"
+                      ? "Error - Please check machine"
+                      : "Processing..."}
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="space-y-2 bg-pos-bg-secondary rounded-2xl p-4 border-2 border-pos-border-primary">
+                  <div className="flex justify-between items-center py-3 border-b border-pos-border-primary">
+                    <span className="text-xl text-pos-text-secondary">Amount Due</span>
+                    <span className="text-3xl font-bold text-pos-text-primary">€ {formatAmount(cashmaticInfo?.requested)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
+                    <span className="text-xl text-pos-text-secondary">Cash Inserted</span>
+                    <span className="text-3xl font-bold text-green-600">€ {formatAmount(cashmaticInfo?.inserted)}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
+                    <span className="text-xl text-pos-text-secondary">Change Due</span>
+                    <span className="text-3xl font-bold text-pos-text-primary">
+                      € {formatAmount(Math.max((cashmaticInfo?.inserted ?? 0) - (cashmaticInfo?.requested ?? 0), 0))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
+                    <span className="text-xl text-pos-text-secondary">Change Dispensed</span>
+                    <span className="text-2xl font-semibold text-pos-text-primary">€ {formatAmount(cashmaticInfo?.dispensed)}</span>
+                  </div>
+                  {cashmaticInfo?.notDispensed > 0 && (
+                    <div className="flex justify-between items-center py-2gdnf bg-yellow-500 bg-opacity-10 rounded-xl px-4">
+                      <span className="text-xl text-yellow-600 font-semibold">Manual Change Required</span>
+                      <span className="text-3xl font-bold text-yellow-600">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end gap-2">
-                {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
-                  <button
-                    className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
-                    onClick={handleCancelCashmatic}
-                  >
-                    Cancel Payment
-                  </button>
-                )}
-                {(cashmaticInfo.state === "FINISHED" ||
-                  cashmaticInfo.state === "FINISHED_MANUAL" ||
-                  cashmaticInfo.state === "CANCELLED" ||
-                  cashmaticInfo.state === "ERROR") && (
-                  <button
-                    className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                    onClick={() => setShowCashmaticModal(false)}
-                  >
-                    Close
-                  </button>
-                )}
+              {/* Modal Actions */}
+              <div className="px-8 pb-8">
+                <div className="flex gap-4">
+                  {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
+                    <KioskButton
+                      variant="destructive"
+                      onClick={handleCancelCashmatic}
+                      fullWidth
+                    >
+                      Cancel Payment
+                    </KioskButton>
+                  )}
+                  {(cashmaticInfo.state === "FINISHED" ||
+                    cashmaticInfo.state === "FINISHED_MANUAL" ||
+                    cashmaticInfo.state === "CANCELLED" ||
+                    cashmaticInfo.state === "ERROR") && (
+                    <KioskButton
+                      variant="secondary"
+                      onClick={() => setShowCashmaticModal(false)}
+                      fullWidth
+                    >
+                      Close
+                    </KioskButton>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* Payworld Modal */}
-        {showPayworldModal && (
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
-            <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
-              <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
-                Payworld / PAX A35 Payment
-              </h2>
+        { showPayworldModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+            <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
+              
+              {/* Modal Header */}
+              <div className="px-8 py-3 border-b-2 border-pos-border-primary">
+                <h2 className="text-2xl font-bold text-pos-text-primary text-center">
+                  Card Payment
+                </h2>
+              </div>
 
-              <div className="space-y-2 text-pos-text-primary text-sm">
-                <div className="flex justify-between">
-                  <span>Amount:</span>
-                  <span>€ {formatAmount(parseFloat(amount))}</span>
-                </div>
-
-                <div className="flex justify-between">
-                  <span>Status:</span>
-                  <span>
+              {/* Modal Content */}
+              <div className="px-8 py-4">
+                {/* Status Indicator */}
+                <div className="mb-4 text-center">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-2">
+                    {payworldStatus.state === "IN_PROGRESS" && (
+                      <svg className="w-12 h-12 text-pos-text-primary animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    )}
+                    {payworldStatus.state === "APPROVED" && (
+                      <svg className="w-12 h-12 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {payworldStatus.state === "DECLINED" && (
+                      <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {payworldStatus.state === "CANCELLED" && (
+                      <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {payworldStatus.state === "ERROR" && (
+                      <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="text-2xl font-semibold text-pos-text-primary mb-2">
                     {payworldStatus.state === "IN_PROGRESS"
-                      ? "Payment in progress on terminal..."
+                      ? "Follow instructions on terminal"
                       : payworldStatus.state === "APPROVED"
-                      ? "Payment approved."
+                      ? "Payment approved"
                       : payworldStatus.state === "DECLINED"
-                      ? "Payment declined."
+                      ? "Payment declined"
                       : payworldStatus.state === "CANCELLED"
-                      ? "Payment cancelled."
+                      ? "Payment cancelled"
                       : payworldStatus.state === "ERROR"
-                      ? "Error during payment."
-                      : "Ready."}
-                  </span>
+                      ? "Payment error"
+                      : "Ready"}
+                  </div>
+                  {payworldStatus.message && (
+                    <div className="text-lg text-pos-text-secondary max-w-md mx-auto">
+                      {payworldStatus.message}
+                    </div>
+                  )}
                 </div>
 
-                {payworldStatus.message && (
-                  <div className="mt-2 text-xs text-pos-text-secondary whitespace-pre-line">
-                    {payworldStatus.message}
+                {/* Payment Amount */}
+                <div className="bg-pos-bg-secondary rounded-2xl px-6 py-2 border-2 border-pos-border-primary">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xl text-pos-text-secondary">Payment Amount</span>
+                    <span className="text-4xl font-bold text-pos-text-primary">€ {formatAmount(parseFloat(amount))}</span>
+                  </div>
+                </div>
+
+                {/* Instructions for IN_PROGRESS state */}
+                {payworldStatus.state === "IN_PROGRESS" && (
+                  <div className="mt-3 bg-blue-500 bg-opacity-10 rounded-2xl px-6 py-3 border-2 border-blue-500">
+                    <div className="flex items-start gap-4">
+                      <svg className="w-8 h-8 text-blue-500 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <div className="flex-1">
+                        <div className="text-lg font-semibold text-blue-600 mb-2">Please use the card terminal</div>
+                        <div className="text-base text-pos-text-secondary">
+                          Insert, tap, or swipe your card on the payment terminal and follow the on-screen instructions.
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
 
-              <div className="mt-6 flex justify-end gap-2">
-                {payworldStatus.state === "IN_PROGRESS" && (
-                  <button
-                    className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                    onClick={handleAbortPayworld}
-                  >
-                    Cancel Payment
-                  </button>
-                )}
+              {/* Modal Actions */}
+              <div className="px-8 pb-8">
+                <div className="flex gap-4">
+                  {payworldStatus.state === "IN_PROGRESS" && (
+                    <KioskButton
+                      variant="destructive"
+                      onClick={handleAbortPayworld}
+                      fullWidth
+                    >
+                      Cancel Payment
+                    </KioskButton>
+                  )}
 
-                {(payworldStatus.state === "APPROVED" ||
-                  payworldStatus.state === "DECLINED" ||
-                  payworldStatus.state === "CANCELLED" ||
-                  payworldStatus.state === "ERROR") && (
-                  <button
-                    className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                    onClick={() => {
-                      setShowPayworldModal(false);
-                      setPayworldStatus({
-                        state: "IDLE",
-                        message: "",
-                        details: null,
-                      });
-                    }}
-                  >
-                    Close
-                  </button>
-                )}
+                  {(payworldStatus.state === "APPROVED" ||
+                    payworldStatus.state === "DECLINED" ||
+                    payworldStatus.state === "CANCELLED" ||
+                    payworldStatus.state === "ERROR") && (
+                    <KioskButton
+                      variant="secondary"
+                      onClick={() => {
+                        setShowPayworldModal(false);
+                        setPayworldStatus({
+                          state: "IDLE",
+                          message: "",
+                          details: null,
+                        });
+                      }}
+                      fullWidth
+                    >
+                      Close
+                    </KioskButton>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
+    // </div>
   );
 };
 

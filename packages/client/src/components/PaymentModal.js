@@ -139,7 +139,7 @@ const PaymentModal = ({
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <div className="bg-pos-bg-secondary rounded-2xl p-6 w-full max-w-4xl border-2 border-pos-border-primary shadow-2xl">
+            <div className="bg-pos-bg-secondary rounded-2xl p-6 w-full max-w-4xl border-2 border-pos-border-primary shadow-2xl" style={{margin: "16px" }}>
                 {/* Header */}
                 <div className="text-center mb-4">
                     <h2 className="text-2xl font-bold text-pos-text-primary mb-4">Checkout Payment</h2>
