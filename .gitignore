@@ -68,3 +68,4 @@ seeder.js
 seed-tables.js
 uploads
 package-lock.json
+*.bat
