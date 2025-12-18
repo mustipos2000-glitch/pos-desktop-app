@@ -259,12 +259,12 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
           {hasFeature('tables') && (
             <button
               onClick={handleTableClick}
-              className={`btn-primary px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${selectedTable
+              className={`btn-primary p-1 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 ${selectedTable
                 ? 'bg-green-600 hover:bg-green-700'
                 : 'bg-pos-interactive-primary hover:bg-pos-interactive-hover'
                 }`}
             >
-              <span className="text-lg">🪑</span>
+              {/* <span className="text-lg">🪑</span> */}
               {selectedTable ? (
                 <span>
                   Table: {selectedTable.table_no}
@@ -274,16 +274,16 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
             </button>
           )}
           {hasFeature('kitchenPrinter') && (
-            <button className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white">
-              <span className="text-lg">📋</span>
+            <button className="bg-pos-interactive-primary text-pos-text-muted border-none p-1 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white">
+              {/* <span className="text-lg">📋</span> */}
               Orders ({kitchenOrderCount})
             </button>
           )}
           <button
             onClick={() => setShowHoldOrdersModal(true)}
-            className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white"
+            className="bg-pos-interactive-primary text-pos-text-muted border-none p-1 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white"
           >
-            <span className="text-lg">⏸️</span>
+            {/* <span className="text-lg">⏸️</span> */}
             On Hold ({holdOrderCount})
           </button>
 
@@ -292,7 +292,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
             <div className="relative" ref={employeeDropdownRef}>
               <button
                 onClick={() => setShowEmployeeDropdown(!showEmployeeDropdown)}
-                className="bg-pos-interactive-primary text-pos-text-muted border-none px-3 py-1.5 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white"
+                className="bg-pos-interactive-primary text-pos-text-muted border-none p-1 cursor-pointer text-sm flex items-center gap-2 transition-all duration-200 hover:bg-pos-bg-tertiary hover:text-white"
               >
                 {selectedEmployee ? (
                   <>
@@ -306,7 +306,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
                   </>
                 ) : (
                   <>
-                    <span className="text-lg">👤</span>
+                    {/* <span className="text-lg">👤</span> */}
                     Employee
                   </>
                 )}
@@ -314,7 +314,7 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
               </button>
 
               {showEmployeeDropdown && (
-                <div className="absolute top-full mt-2 left-0 bg-pos-bg-secondary border border-pos-border-primary rounded-lg shadow-lg min-w-[250px] max-h-[350px] z-50 flex flex-col">
+                <div className="absolute top-full mt-2 left-0 bg-pos-bg-secondary border border-pos-border-primary rounded-lg shadow-lg min-w-[200px] max-h-[350px] z-50 flex flex-col">
                   {/* Search Input */}
                   <div className="p-2 border-b border-pos-border-primary">
                     <input

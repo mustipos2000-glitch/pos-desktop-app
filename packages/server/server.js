@@ -5,30 +5,8 @@ const fs = require('fs');
 const http = require('http');
 const { Server } = require('socket.io');
 
-// Handle better-sqlite3 loading with fallback for different environments
-let runMigrations;
-try {
-  runMigrations = require('./migrate').runMigrations;
-} catch (err) {
-  if (err.code === 'ERR_DLOPEN_FAILED' && err.message.includes('better-sqlite3')) {
-    console.error('Failed to load better-sqlite3 due to Node.js version mismatch');
-    console.log('Attempting to rebuild better-sqlite3 for Node.js...');
-    try {
-      // Try to rebuild and reload
-      require('child_process').execSync('npm rebuild better-sqlite3 --runtime=node', { 
-        stdio: 'inherit',
-        cwd: process.cwd()
-      });
-      runMigrations = require('./migrate').runMigrations;
-      console.log('Successfully reloaded better-sqlite3 after rebuild');
-    } catch (rebuildErr) {
-      console.error('Failed to rebuild better-sqlite3:', rebuildErr.message);
-      throw err;
-    }
-  } else {
-    throw err;
-  }
-}
+// Load migrations
+const { runMigrations } = require('./migrate');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
