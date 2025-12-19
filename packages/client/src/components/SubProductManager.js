@@ -612,7 +612,7 @@ const SubProductManager = () => {
                 <div
                   key={group.id}
                   onClick={() => setSelectedGroup(group)}
-                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary px-2 py-2 ${selectedGroup?.id === group.id
+                  className={`flex text-lg mt-1 mb-2 shadow-md cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary px-2 py-2 ${selectedGroup?.id === group.id
                     ? 'bg-pos-bg-primary shadow-lg'
                     : 'hover:bg-black/10 hover:shadow-md hover:scale-[1.02]'
                     }`}
@@ -644,7 +644,7 @@ const SubProductManager = () => {
               {filteredSubProducts.map((subProduct) => (
                 <div
                   key={subProduct.id}
-                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg px-3 py-2 ${
+                  className={`flex justify-between shadow-md border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg px-3 py-2 ${
                     'hover:bg-black/10 hover:shadow-md hover:scale-[1.02]'
                   }`}
                 >
