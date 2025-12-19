@@ -10,6 +10,7 @@ import UserManager from '../components/UserManager';
 import RoomManager from '../components/RoomManager';
 import CustomerManager from '../components/CustomerManager';
 import InventoryManager from '../components/InventoryManager';
+import PromotionManager from '../components/PromotionManager';
 
 
 const AdminPanel = () => {
@@ -87,6 +88,15 @@ const AdminPanel = () => {
             >
               Customers
             </button>
+            <button
+              className={`btn-secondary text-base font-medium ${activeTab === 'promotions'
+                ? 'bg-pos-interactive-primary text-pos-text-primary'
+                : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+                }`}
+              onClick={() => setActiveTab('promotions')}
+            >
+              Promotions
+            </button>
           {type === 'retail' && (
   <button
     className={`btn-secondary text-base font-medium ${
@@ -119,6 +129,7 @@ const AdminPanel = () => {
             {activeTab === 'users' && <UserManager />}
             {activeTab === 'rooms' && <RoomManager />}
             {activeTab === 'customers' && <CustomerManager />}
+            {activeTab === 'promotions' && <PromotionManager />}
             {activeTab === 'inventory' && <InventoryManager />}
 
             {activeTab === 'settings' && (
