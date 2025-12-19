@@ -523,6 +523,42 @@ db.exec(`
   )
 `);
 
+// Promotions table
+db.exec(`
+  CREATE TABLE IF NOT EXISTS promotions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    product_id INTEGER NOT NULL,
+    discount_type TEXT NOT NULL DEFAULT 'percentage',
+    discount_value REAL NOT NULL DEFAULT 0,
+    start_date TEXT,
+    end_date TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+  )
+`);
+
+// Add product_id column to promotions if it doesn't exist
+try {
+  db.exec(`ALTER TABLE promotions ADD COLUMN product_id INTEGER`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+// Add description column to promotions if it doesn't exist
+try {
+  db.exec(`ALTER TABLE promotions ADD COLUMN description TEXT`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
 
 // NOTE: z_reports table is no longer used
 // Reports are now generated on-demand from orders table using updated_at timestamp

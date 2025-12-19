@@ -69,15 +69,10 @@ const handleAddProductConfirm = async ({ product_id, qty }) => {
   }
 };
 
-
-
   if (loading) return <div>Loading inventory...</div>;
-
   return (
     <div className="overflow-y-auto scrollbar-custom mt-1 ">
-     
       <div className="flex gap-2 bg-pos-bg-secondary rounded-lg py-2 px-1 mb-2 ">
-        
          <button
            onClick={openAddProductModal}
           className="btn-primary"
