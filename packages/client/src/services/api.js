@@ -537,6 +537,14 @@ static async adjustInventory(productId, data) {
     });
   }
 
+  // Email Receipt methods
+  static async sendReceiptEmail(receiptData) {
+    return this.request('/payments/send-receipt-email', {
+      method: 'POST',
+      body: JSON.stringify(receiptData),
+    });
+  }
+
 }
 
 export default ApiService;

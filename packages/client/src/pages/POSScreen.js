@@ -27,6 +27,7 @@ const POSScreen = () => {
   const [currentOrderNo, setCurrentOrderNo] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKitchenCount, setRefreshKitchenCount] = useState(null);
+  const [refreshHoldCount, setRefreshHoldCount] = useState(null);
   const [showSplitCartModal, setShowSplitCartModal] = useState(false);
   const [splitCartSelectedItems, setSplitCartSelectedItems] = useState([]);
   const [lastClickedProductId, setLastClickedProductId] = useState(null);
@@ -1008,6 +1009,7 @@ const updateQuantity = async (cartItemId, quantity) => {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onRefreshKitchenCount={(fn) => setRefreshKitchenCount(() => fn)}
+          onRefreshHoldCount={(fn) => setRefreshHoldCount(() => fn)}
           onLoadHoldOrder={handleLoadHoldOrder}
           selectedEmployeeId={selectedEmployee?.id}
           selectedEmployee={selectedEmployee}
@@ -1049,7 +1051,7 @@ const updateQuantity = async (cartItemId, quantity) => {
         selectedCustomer={selectedCustomer}
         onSelectCustomer={setSelectedCustomer}
         selectedEmployee={selectedEmployee}
-        onRefreshHoldCount={refreshKitchenCount}
+        onRefreshHoldCount={refreshHoldCount}
         onSplitCart={(items, confirmCallback) => {
           setSplitCartSelectedItems(items);
           setShowSplitCartModal(true);
