@@ -95,7 +95,7 @@ const CustomerFormModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-pos-bg-tertiary rounded-lg" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-pos-bg-tertiary rounded-lg shadow-2xl overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {/* Modal Header */}
         <div className="bg-pos-bg-tertiary border-b border-pos-border-secondary px-4 py-2 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-pos-text-primary">
