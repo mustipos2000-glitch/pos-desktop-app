@@ -41,43 +41,6 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
     currency: 'USD',
     language: 'en'
   });
-  const [customerDisplayEnabled, setCustomerDisplayEnabled] = useState(() => {
-    return localStorage.getItem('customerDisplayEnabled') === 'true';
-  });
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewCart, setPreviewCart] = useState([
-    {
-      id: 1,
-      name: 'Sample Product 1',
-      price: 12.50,
-      quantity: 2,
-      notes: 'Extra sauce'
-    },
-    {
-      id: 2,
-      name: 'Sample Product 2',
-      price: 8.75,
-      quantity: 1,
-      subProducts: [
-        {
-          cartItemId: 'sub1',
-          name: 'Extra Cheese',
-          price: 2.00,
-          quantity: 1
-        },
-        {
-          cartItemId: 'sub2',
-          name: 'Free Side',
-          price: 0,
-          quantity: 1
-        }
-      ]
-    }
-  ]);
-  const [previewTable] = useState({ table_no: '5' });
-  const [previewOrderNo] = useState('ORD-001');
-  const [previewCustomer] = useState({ name: 'John Doe' });
-  const [previewDiscount] = useState(2.50);
 
   useEffect(() => {
     if (isSuperAdmin && activeTab === 'permissions') {
@@ -87,21 +50,6 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
       fetchPrinters();
     }
   }, [activeTab, isSuperAdmin]);
-
-  // Initialize customer display window on mount if enabled
-  useEffect(() => {
-    const initCustomerDisplay = () => {
-      if (customerDisplayEnabled && window.electron && window.electron.customerDisplay) {
-        window.electron.customerDisplay.toggle(true);
-      }
-    };
-    
-    // Try immediately, and also set up a small delay in case Electron APIs aren't ready yet
-    initCustomerDisplay();
-    const timeoutId = setTimeout(initCustomerDisplay, 500);
-    
-    return () => clearTimeout(timeoutId);
-  }, []); // Only run on mount
 
   const fetchPrinters = async () => {
     try {
@@ -563,200 +511,29 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
           )}
 
           {activeTab === 'display' && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-pos-text-muted mb-1">Theme</label>
-                  <select defaultValue="dark" className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors">
-                    <option value="dark">Dark</option>
-                    <option value="light">Light</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-pos-text-muted mb-1">Font Size</label>
-                  <select defaultValue="medium" className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors">
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                  </select>
-                </div>
-                <div className="flex items-center gap-2 pt-6">
-                  <input type="checkbox" id="show-images" defaultChecked className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
-                  <label htmlFor="show-images" className="text-pos-text-primary text-sm">Show Product Images</label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="compact-mode" className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
-                  <label htmlFor="compact-mode" className="text-pos-text-primary text-sm">Compact Mode</label>
-                </div>
-                <div className="flex items-center gap-2 col-span-3">
-                  <input 
-                    type="checkbox" 
-                    id="customer-display" 
-                    checked={customerDisplayEnabled}
-                    onChange={(e) => {
-                      const enabled = e.target.checked;
-                      setCustomerDisplayEnabled(enabled);
-                      localStorage.setItem('customerDisplayEnabled', enabled.toString());
-                      // Toggle customer display window via Electron IPC
-                      if (window.electron && window.electron.customerDisplay) {
-                        window.electron.customerDisplay.toggle(enabled);
-                      }
-                    }}
-                    className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" 
-                  />
-                  <label htmlFor="customer-display" className="text-pos-text-primary text-sm">Enable Customer Display</label>
-                </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-pos-text-muted mb-1">Theme</label>
+                <select defaultValue="dark" className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors">
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                </select>
               </div>
-
-              {/* Preview Section */}
-              <div className="border-t border-pos-border-primary pt-4 mt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-pos-text-primary text-sm font-semibold">Customer Display Preview</h3>
-                  <button
-                    onClick={() => setShowPreview(!showPreview)}
-                    className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                      showPreview
-                        ? 'bg-pos-info text-white'
-                        : 'bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary hover:bg-pos-interactive-primary'
-                    }`}
-                  >
-                    {showPreview ? 'Hide Preview' : 'Show Preview'}
-                  </button>
-                </div>
-                
-                {showPreview && (
-                  <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded-lg overflow-hidden" style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                    {/* Preview Customer Display */}
-                    <div className="bg-pos-bg-secondary">
-                      {/* Order Info Section */}
-                      <div className="px-4 py-3 bg-pos-bg-secondary border-b border-pos-border-light">
-                        <div className="grid grid-cols-3 gap-2 text-xs">
-                          <div className="flex flex-col">
-                            <div className="text-[10px] text-pos-text-muted uppercase mb-1 font-medium">Table</div>
-                            <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded px-3 py-2 text-center">
-                              <span className="text-sm text-pos-text-primary font-semibold">
-                                {previewTable ? previewTable.table_no : '--'}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div className="flex flex-col">
-                            <div className="text-[10px] text-pos-text-muted uppercase mb-1 font-medium">Order</div>
-                            <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded px-3 py-2 text-center">
-                              <span className="text-sm text-pos-text-primary font-semibold">
-                                {previewOrderNo ? previewOrderNo : '--'}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-col">
-                            <div className="text-[10px] text-pos-text-muted uppercase mb-1 font-medium">Customer</div>
-                            <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded px-3 py-2 text-center">
-                              <span className="text-sm text-pos-text-primary font-semibold">
-                                {previewCustomer ? previewCustomer.name : '--'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Header */}
-                      <div className="px-4 py-2 bg-pos-bg-secondary border-b border-pos-border-light">
-                        <div className="grid grid-cols-12 gap-2 text-xs text-pos-text-muted font-semibold uppercase">
-                          <span className="col-span-5">Item</span>
-                          <span className="col-span-2 flex justify-center items-center">Qty</span>
-                          <span className="col-span-5 flex justify-end">Total</span>
-                        </div>
-                      </div>
-
-                      {/* Cart Items */}
-                      <div className="px-4 py-2">
-                        {previewCart.map((item) => {
-                          const cartItemId = item.cartItemId || `${item.id}_${item.name}`;
-                          return (
-                            <div key={cartItemId} className="mb-2 py-2 border-b border-pos-border-light">
-                              <div className="grid grid-cols-12 gap-2 items-center text-sm">
-                                <div className="col-span-5 font-medium text-pos-text-primary">
-                                  <div className="flex items-center gap-1">
-                                    <span>{item.name || ''}</span>
-                                    {item.notes && (
-                                      <span className="text-xs" title={item.notes}>📝</span>
-                                    )}
-                                  </div>
-                                </div>
-
-                                <div className="col-span-2 flex items-center justify-center text-pos-text-primary">
-                                  <span className="font-semibold">{item.quantity}</span>
-                                </div>
-
-                                <div className="col-span-5 flex items-center justify-end">
-                                  <span className="text-sm font-semibold text-pos-text-primary">
-                                    €{(item.price * item.quantity).toFixed(2)}
-                                  </span>
-                                </div>
-                              </div>
-
-                              {item.subProducts && item.subProducts.length > 0 && (
-                                <div className="mt-2 pl-4 border-l-2 border-pos-border-secondary">
-                                  {item.subProducts.map((subItem) => {
-                                    const isFree = !subItem.price || subItem.price === 0;
-                                    return (
-                                      <div
-                                        key={subItem.cartItemId}
-                                        className="grid grid-cols-12 gap-2 items-center text-xs py-1 text-pos-text-muted"
-                                      >
-                                        <div className="col-span-5 flex items-center">
-                                          <span className="font-light">+ {subItem.name}</span>
-                                        </div>
-
-                                        <div className="col-span-2 flex items-center justify-center">
-                                          <span>{subItem.quantity}</span>
-                                        </div>
-
-                                        <div className="col-span-5 flex items-center justify-end">
-                                          {!isFree && (
-                                            <span>€{(subItem.price * subItem.quantity).toFixed(2)}</span>
-                                          )}
-                                          {isFree && (
-                                            <span className="text-green-500">Free</span>
-                                          )}
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Total Section */}
-                      <div className="bg-pos-bg-secondary px-4 py-4 border-t-2 border-pos-border-primary">
-                        <div className="flex items-center justify-between">
-                          <div className="text-lg font-semibold text-pos-text-primary uppercase">Total</div>
-                          <div className="text-2xl font-bold text-pos-text-secondary">
-                            €{(previewCart.reduce((sum, item) => {
-                              let itemTotal = item.price * item.quantity;
-                              if (item.subProducts && item.subProducts.length > 0) {
-                                itemTotal += item.subProducts.reduce((subSum, subItem) => 
-                                  subSum + (subItem.price * subItem.quantity), 0
-                                );
-                              }
-                              return sum + itemTotal;
-                            }, 0) - previewDiscount).toFixed(2)}
-                          </div>
-                        </div>
-                        {previewDiscount > 0 && (
-                          <div className="flex items-center justify-between mt-2 text-sm">
-                            <span className="text-pos-text-muted">Discount:</span>
-                            <span className="text-red-500 font-semibold">-€{previewDiscount.toFixed(2)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+              <div>
+                <label className="block text-xs font-medium text-pos-text-muted mb-1">Font Size</label>
+                <select defaultValue="medium" className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors">
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                </select>
+              </div>
+              <div className="flex items-center gap-2 pt-6">
+                <input type="checkbox" id="show-images" defaultChecked className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
+                <label htmlFor="show-images" className="text-pos-text-primary text-sm">Show Product Images</label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="compact-mode" className="w-4 h-4 text-pos-info bg-pos-bg-tertiary border-pos-border-secondary rounded focus:ring-pos-info" />
+                <label htmlFor="compact-mode" className="text-pos-text-primary text-sm">Compact Mode</label>
               </div>
             </div>
           )}

@@ -15,7 +15,6 @@ import TicketSelectionPage from './pages/TicketSelectionPage';
 import POSScreen from './pages/POSScreen';
 import AdminPanel from './pages/AdminPanel';
 import ReportsPage from './pages/ReportsPage';
-import CustomerDisplay from './pages/CustomerDisplay';
 import ProtectedRoute from './components/ProtectedRoute';
 import MosqueProtectedRoute from './components/MosqueProtectedRoute';
 // import './App.css';
@@ -62,7 +61,6 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            <Route path="/customer-display" element={<CustomerDisplay />} />
             {/* Catch-all route: redirect any invalid URL to version selection */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

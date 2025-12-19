@@ -188,42 +188,6 @@ const POSScreen = () => {
     return () => clearTimeout(timeoutId);
   }, [cart, selectedTable, currentOrderId, selectedCustomer, selectedEmployee]);
 
-  // Initialize customer display window on mount if enabled
-  useEffect(() => {
-    const initCustomerDisplay = () => {
-      const isCustomerDisplayEnabled = localStorage.getItem('customerDisplayEnabled') === 'true';
-      if (isCustomerDisplayEnabled && window.electron && window.electron.customerDisplay) {
-        window.electron.customerDisplay.toggle(true);
-      }
-    };
-    
-    // Try immediately, and also set up a small delay in case Electron APIs aren't ready yet
-    initCustomerDisplay();
-    const timeoutId = setTimeout(initCustomerDisplay, 500);
-    
-    return () => clearTimeout(timeoutId);
-  }, []);
-
-  // Sync cart data to customer display window
-  useEffect(() => {
-    // Check if customer display is enabled
-    const isCustomerDisplayEnabled = localStorage.getItem('customerDisplayEnabled') === 'true';
-    
-    if (isCustomerDisplayEnabled && window.electron && window.electron.customerDisplay) {
-      // Calculate total discount from cart items
-      const totalDiscount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
-      
-      // Send cart data to customer display window
-      window.electron.customerDisplay.sendCartData({
-        cart,
-        selectedTable,
-        currentOrderNo,
-        selectedCustomer,
-        discount: totalDiscount
-      });
-    }
-  }, [cart, selectedTable, currentOrderNo, selectedCustomer]);
-
   // Fetch categories and products from backend
   useEffect(() => {
     const fetchData = async () => {
