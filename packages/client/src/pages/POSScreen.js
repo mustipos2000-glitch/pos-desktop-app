@@ -27,6 +27,7 @@ const POSScreen = () => {
   const [currentOrderNo, setCurrentOrderNo] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshKitchenCount, setRefreshKitchenCount] = useState(null);
+  const [refreshHoldCount, setRefreshHoldCount] = useState(null);
   const [showSplitCartModal, setShowSplitCartModal] = useState(false);
   const [splitCartSelectedItems, setSplitCartSelectedItems] = useState([]);
   const [lastClickedProductId, setLastClickedProductId] = useState(null);
@@ -409,47 +410,6 @@ const POSScreen = () => {
     setActiveParentRowIndex(newCart.length - 1); // Set the newly added item as active
   }
 };
-
-
-//   const updateQuantity = async (cartItemId, quantity) => {
-//     console.log(cart ,"cartttttttttttttt")
-//     console.log("Updating quantity for item:", cartItemId, "to", quantity);
-//  if (quantity >  cart.available_qty){
-//   console.log("Quantity exceeds available stock");
-//  }
-//     if (quantity <= 0) {
-//       // Remove item from cart (this will also remove its sub-products)
-//       const newCart = cart.filter(item => {
-//         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
-//         return itemCartId !== cartItemId;
-//       });
-//       setCart(newCart);
-      
-//       // If cart becomes empty and we have an order ID, delete the order
-//       if (newCart.length === 0 && currentOrderId && selectedTable) {
-//         try {
-//           await ApiService.deleteOrder(currentOrderId);
-//           setCurrentOrderId(null);
-          
-//           // Update table status back to available
-//           await ApiService.updatePrTable(selectedTable.id, {
-//             ...selectedTable,
-//             status: 'available'
-//           });
-//         } catch (error) {
-//           console.error('Error deleting order:', error);
-//         }
-//       }
-//     } else {
-//       // Simple quantity update - no splitting
-//       setCart(cart.map(item => {
-//         const itemCartId = item.cartItemId || `${item.id}_${item.name}`;
-//         return itemCartId === cartItemId ? { ...item, quantity } : item;
-//       }));
-//     }
-//   };
-
-
 
 const updateQuantity = async (cartItemId, quantity) => {
   const item = cart.find(i => i.cartItemId === cartItemId);
@@ -1085,6 +1045,7 @@ const updateQuantity = async (cartItemId, quantity) => {
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onRefreshKitchenCount={(fn) => setRefreshKitchenCount(() => fn)}
+          onRefreshHoldCount={(fn) => setRefreshHoldCount(() => fn)}
           onLoadHoldOrder={handleLoadHoldOrder}
           selectedEmployeeId={selectedEmployee?.id}
           selectedEmployee={selectedEmployee}
@@ -1126,7 +1087,7 @@ const updateQuantity = async (cartItemId, quantity) => {
         selectedCustomer={selectedCustomer}
         onSelectCustomer={setSelectedCustomer}
         selectedEmployee={selectedEmployee}
-        onRefreshHoldCount={refreshKitchenCount}
+        onRefreshHoldCount={refreshHoldCount}
         onSplitCart={(items, confirmCallback) => {
           setSplitCartSelectedItems(items);
           setShowSplitCartModal(true);

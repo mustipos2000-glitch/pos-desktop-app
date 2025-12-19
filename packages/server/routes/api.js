@@ -16,6 +16,8 @@ const PaymentTerminalController = require('../controllers/PaymentTerminalControl
 const CustomerController = require('../controllers/CustomerController');
 const InventoryController = require('../controllers/InventoryController');
 const ReportController = require('../controllers/ReportController');
+const ScaleController = require('../controllers/ScaleController');
+
 
 
 const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
@@ -97,6 +99,7 @@ router.delete('/pr-tables/:id', PrTableController.deletePrTable);
 
 // Printer routes
 router.get('/printers', PrinterController.getAllPrinters);
+router.get('/printers/main', PrinterController.getMainPrinter);
 router.get('/printers/:id', PrinterController.getPrinterById);
 router.post('/printers', PrinterController.createPrinter);
 router.put('/printers/:id', PrinterController.updatePrinter);
@@ -106,6 +109,7 @@ router.post('/printers/print-receipt', PrinterController.printReceipt);
 router.post('/printers/print-kitchen', PrinterController.printKitchenOrder);
 router.post('/printers/print-kitchen-batch', PrinterController.printKitchenOrderBatch);
 router.post('/printers/print-custom', PrinterController.printCustom);
+router.post('/printers/open-drawer', PrinterController.openDrawer);
 
 // Payment routes
 router.post('/payments/send-receipt-email', PaymentController.sendReceiptEmail);
@@ -148,5 +152,15 @@ router.delete('/inventory/:id', InventoryController.deleteInventory);
 router.get('/reports/x-report', ReportController.getXReport);
 router.get('/reports/z-report', ReportController.getZReport);
 router.get('/reports/history', ReportController.getReportHistory);
+
+// Scale routes
+router.post('/scale/connect', ScaleController.connect);
+router.post('/scale/disconnect', ScaleController.disconnect);
+router.get('/scale/weight', ScaleController.getWeight);
+router.post('/scale/tare', ScaleController.tare);
+router.get('/scale/test', ScaleController.testConnection);
+router.get('/scale/status', ScaleController.getStatus);
+router.get('/scale/ports', ScaleController.getAvailablePorts);
+router.post('/scale/calculate-price', ScaleController.calculatePrice);
 
 module.exports = router;

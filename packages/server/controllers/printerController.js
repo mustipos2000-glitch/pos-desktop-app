@@ -25,6 +25,18 @@ const PrinterController = {
     }
   },
 
+  getMainPrinter: (req, res) => {
+    try {
+      const printer = Printer.getMainPrinter();
+      if (!printer) {
+        return res.status(404).json({ error: 'No main printer configured' });
+      }
+      res.json({ data: printer });
+    } catch (err) {
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  },
+
   createPrinter: (req, res) => {
     try {
       const payload = req.body;
@@ -240,6 +252,25 @@ const PrinterController = {
     } catch (error) {
       console.error('Print custom text error:', error);
       res.status(500).json({ success: false, error: 'Failed to print custom text' });
+    }
+  },
+
+  // Open cash drawer
+  openDrawer: async (req, res) => {
+    try {
+      const { printer_id } = req.body;
+      
+      // printer_id is optional - will use main printer if not provided
+      const result = await PrinterService.openDrawer(printer_id);
+      
+      if (result.success) {
+        res.json({ success: true, message: result.message });
+      } else {
+        res.status(500).json({ success: false, error: result.message });
+      }
+    } catch (error) {
+      console.error('Open drawer error:', error);
+      res.status(500).json({ success: false, error: 'Failed to open cash drawer' });
     }
   }
 };

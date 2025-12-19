@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import KioskLayout from '../components/kiosk/KioskLayout';
+import KioskHeader from '../components/kiosk/KioskHeader';
+import KioskCard from '../components/kiosk/KioskCard';
+import KioskButton from '../components/kiosk/KioskButton';
+import KioskInfoPanel from '../components/kiosk/KioskInfoPanel';
 
 const SadakaGoalPage = () => {
   const navigate = useNavigate();
@@ -24,36 +29,43 @@ const SadakaGoalPage = () => {
   const goals = [
     {
       id: 'mosque',
-      titleEn: 'Sadaka Mosque',
-      titleFr: 'Sadaka mosquée',
-      titleNl: 'Sadaka mosque',
-      titleAr: 'صدقة للمسجد'
+      titleEn: 'Mosque',
+      titleFr: 'Mosquée',
+      titleNl: 'Mosque',
+      titleAr: 'المسجد',
+      icon: '🕌'
     },
     {
       id: 'mortuary',
-      titleEn: 'Sadaka mortuary',
-      titleFr: 'Sadaka funeral home',
-      titleNl: 'Sadaka mortuary',
-      titleAr: 'صدقة للمقبلة'
+      titleEn: 'Mortuary',
+      titleFr: 'Funeral home',
+      titleNl: 'Mortuary',
+      titleAr: 'المقبلة',
+      icon: '🏛️'
     },
     {
       id: 'renovation',
-      titleEn: 'Sadaka renovation',
-      titleFr: 'Sadaka rénovation',
-      titleNl: 'Sadaka renovation',
-      titleAr: 'صدقة للتجديد'
+      titleEn: 'Renovation',
+      titleFr: 'Rénovation',
+      titleNl: 'Renovation',
+      titleAr: 'التجديد',
+      icon: '🔨'
     }
   ];
 
   const handleGoalSelect = (goal) => {
     setSelectedGoal(goal);
     localStorage.setItem('sadakaGoal', JSON.stringify(goal));
-    navigate('/amount-entry');
+  };
+
+  const handleNext = () => {
+    if (selectedGoal) {
+      navigate('/amount-entry');
+    }
   };
 
   const handleGoBack = () => {
     const sadakaType = localStorage.getItem('sadakaType');
-    
     if (sadakaType === 'named') {
       navigate('/member-selection');
     } else {
@@ -62,70 +74,61 @@ const SadakaGoalPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-pos-bg-primary flex items-center justify-center p-6 overflow-y-auto">
-      <div className="max-w-4xl w-full">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-pos-text-primary mb-2">
-            Choose the Goal
-          </h1>
-          <p className="text-base text-pos-text-secondary">
-            Choose what the sadaka is for
-          </p>
-        </div>
+    <KioskLayout maxWidth="5xl">
+      <KioskHeader 
+        title="Choose the Goal"
+        subtitle="Select what the sadaka is for"
+        step={1}
+        totalSteps={3}
+      />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-          {goals.map((goal) => (
-            <div
-              key={goal.id}
-              onClick={() => handleGoalSelect(goal)}
-              className="card card-hover bg-pos-bg-secondary cursor-pointer rounded-xl p-8 transition-all duration-300 border-2 border-pos-border-primary"
-            >
-              <div className="text-center space-y-2">
-                <div className="text-lg font-semibold text-pos-text-primary">
-                  {goal.titleEn}
-                </div>
-                <div className="text-base text-pos-text-secondary">
-                  {goal.titleFr}
-                </div>
-                <div className="text-base text-pos-text-secondary">
-                  {goal.titleNl}
-                </div>
-                <div className="text-lg text-pos-text-secondary" dir="rtl">
-                  {goal.titleAr}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center mb-5">
-          <p className="text-pos-text-primary text-sm">
-            Chosen Goal: <span className="font-semibold">{selectedGoal ? selectedGoal.titleEn : 'None'}</span>
-          </p>
-        </div>
-
-        <div className="flex justify-center gap-3 mb-6">
-          <button
-            onClick={handleGoBack}
-            className="px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm"
-          >
-            Go back
-          </button>
-          
-          <button
-            onClick={() => selectedGoal && navigate('/amount-entry')}
-            disabled={!selectedGoal}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors border text-sm ${
-              selectedGoal
-                ? 'bg-pos-bg-secondary text-pos-text-primary hover:bg-pos-interactive-hover border-pos-border-primary'
-                : 'bg-pos-interactive-primary text-pos-text-disabled cursor-not-allowed border-pos-border-primary opacity-50'
-            }`}
-          >
-            Next
-          </button>
-        </div>
+      {/* Goals Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {goals.map((goal) => (
+          <KioskCard
+            key={goal.id}
+            title={goal.titleEn}
+            subtitle={goal.titleFr}
+            subtitleNl={goal.titleNl}
+            subtitleAr={goal.titleAr}
+            icon={goal.icon}
+            onClick={() => handleGoalSelect(goal)}
+            selected={selectedGoal?.id === goal.id}
+          />
+        ))}
       </div>
-    </div>
+
+      {/* Selected Goal Display */}
+      {selectedGoal && (
+        <div className="mb-8">
+          <KioskInfoPanel
+            items={[
+              { label: 'Selected Goal', value: selectedGoal.titleEn }
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-center gap-4">
+        <KioskButton
+          variant="secondary"
+          size="medium"
+          onClick={handleGoBack}
+        >
+          ← Go Back
+        </KioskButton>
+        
+        <KioskButton
+          variant="primary"
+          size="medium"
+          onClick={handleNext}
+          disabled={!selectedGoal}
+        >
+          Next →
+        </KioskButton>
+      </div>
+    </KioskLayout>
   );
 };
 

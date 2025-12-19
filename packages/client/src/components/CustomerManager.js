@@ -107,6 +107,8 @@ const CustomerManager = () => {
     (customer.email && customer.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+ 
+
   return (
     <div className="overflow-y-auto scrollbar-custom mt-1">
       {/* Header with Action Buttons */}
@@ -138,11 +140,11 @@ const CustomerManager = () => {
             No customers found.
           </div>
         ) : (
-          <div className="h-[500px] border border-pos-border-secondary p-2 text-base overflow-y-auto scrollbar-custom rounded-lg bg-pos-bg-secondary">
+          <div className="h-[500px] border border-pos-border-secondary  p-2 text-base overflow-y-auto scrollbar-custom rounded-lg bg-pos-bg-secondary">
             {filteredCustomers.map((customer) => (
               <div
                 key={customer.id}
-                className="flex justify-between items-center border border-pos-border-primary mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-2 py-2 hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]"
+                className="flex justify-between items-center border border-pos-border-primary mt-1 mb-2 cursor-pointer rounded-lg px-2 py-2 hover:bg-black/5 hover:shadow-sm "
               >
                 <div className="flex-1">
                   <div className="font-medium text-pos-text-primary">{customer.name}</div>

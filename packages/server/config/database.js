@@ -133,6 +133,49 @@ try {
   }
 }
 
+// Add weight-related columns if they don't exist
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN is_weight_based INTEGER DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN weight_unit TEXT DEFAULT 'kg'`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN price_per_unit REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN minimum_weight REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN maximum_weight REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
+try {
+  db.exec(`ALTER TABLE products ADD COLUMN tare_weight REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+  }
+}
+
 // Create separate sub_products table
 db.exec(`
   CREATE TABLE IF NOT EXISTS sub_products (
@@ -349,6 +392,24 @@ try {
   }
 }
 
+// Add weight column to order_details if it doesn't exist
+try {
+  db.exec(`ALTER TABLE order_details ADD COLUMN weight REAL DEFAULT 0`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
+// Add weight_unit column to order_details if it doesn't exist
+try {
+  db.exec(`ALTER TABLE order_details ADD COLUMN weight_unit TEXT DEFAULT 'kg'`);
+} catch (err) {
+  if (!err.message.includes('duplicate column name')) {
+    // Column already exists, ignore
+  }
+}
+
 // Create groups table
 db.exec(`
   CREATE TABLE IF NOT EXISTS groups (
@@ -433,6 +494,7 @@ db.exec(`
     name TEXT NOT NULL,
     type TEXT NOT NULL,
     connection_string TEXT,
+    is_main INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);

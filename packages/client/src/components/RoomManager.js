@@ -335,7 +335,7 @@ const RoomManager = () => {
                 <div
                   key={room.id}
                   onClick={() => setSelectedRoom(room)}
-                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary px-1 py-1 ${selectedRoom?.id === room.id
+                  className={`flex text-lg mt-1 mb-2 shadow-md cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary px-1 py-1 ${selectedRoom?.id === room.id
                     ? 'bg-pos-bg-primary shadow-md'
                     : 'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
                     }`}
@@ -367,8 +367,8 @@ const RoomManager = () => {
               {filteredTables.map((table) => (
                 <div
                   key={table.id}
-                  className={`flex justify-between items-center border border-pos-border-primary mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-2 py-1 ${
-                    'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                  className={`flex justify-between shadow-md items-center border border-pos-border-primary mt-1 mb-2 cursor-pointer transition-all duration-200 rounded-lg px-2 py-1 ${
+                    'hover:bg-black/5 hover:shadow-sm'
                   }`}
                 >
                   <div className="flex items-center gap-4 flex-1">

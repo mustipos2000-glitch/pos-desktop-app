@@ -370,6 +370,14 @@ const CategoryManager = () => {
         productFormData.sub_product_group ? 1 : 0
       );
 
+      // Weight-based fields
+      formData.append("is_weight_based", productFormData.is_weight_based ? 1 : 0);
+      formData.append("weight_unit", productFormData.weight_unit || "kg");
+      formData.append("price_per_unit", parseFloat(productFormData.price_per_unit) || 0);
+      formData.append("minimum_weight", parseFloat(productFormData.minimum_weight) || 0);
+      formData.append("maximum_weight", parseFloat(productFormData.maximum_weight) || 0);
+      formData.append("tare_weight", parseFloat(productFormData.tare_weight) || 0);
+
       // Append image file if selected
       if (imageFile) {
         formData.append("image", imageFile);
@@ -601,7 +609,7 @@ const CategoryManager = () => {
               ).map((category, index) => (
                 <div
                   key={category.id}
-                  className={`flex text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
+                  className={`flex text-lg mt-1 mb-2 shadow-md cursor-pointer transition-all duration-300 rounded-lg border border-pos-border-primary ${selectedCategory?.id === category.id
                     ? "bg-pos-bg-primary shadow-lg"
                     : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                     }`}
@@ -664,7 +672,7 @@ const CategoryManager = () => {
               ).map((product) => (
                 <div
                   key={product.id}
-                  className={`flex justify-between border border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg px-2 py-2 ${selectedProduct?.id === product.id
+                  className={`flex justify-between border shadow-md border-pos-border-primary items-center text-lg mt-1 mb-2 cursor-pointer transition-all duration-300 rounded-lg px-2 py-2 ${selectedProduct?.id === product.id
                     ? "bg-pos-bg-primary shadow-lg"
                     : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                     }`}
@@ -723,7 +731,7 @@ const CategoryManager = () => {
                 ).map((subProduct) => (
                   <div
                     key={subProduct.id}
-                    className={`cursor-pointer px-3 py-2 mt-1 mb-2 border border-pos-border-primary rounded-xl transition-all duration-300 ${selectedAttachedSubProducts.includes(subProduct.id)
+                    className={`cursor-pointer px-3 py-2 mt-1 shadow-md mb-2 border border-pos-border-primary rounded-xl transition-all duration-300 ${selectedAttachedSubProducts.includes(subProduct.id)
                       ? "bg-pos-bg-primary  font-medium shadow-lg"
                       : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                       }`}
@@ -863,7 +871,7 @@ const CategoryManager = () => {
                   }).map((subProduct) => (
                     <div
                       key={subProduct.id}
-                      className={`text-base mt-1 min-w-[100px] cursor-pointer border border-pos-border-primary rounded-xl mt-1 mb-2 px-2 py-2 transition-all duration-300 ${selectedGroupSubProducts.includes(subProduct.id)
+                      className={`text-base mt-1 min-w-[100px] cursor-pointer shadow-md border border-pos-border-primary rounded-xl mt-1 mb-2 px-2 py-2 transition-all duration-300 ${selectedGroupSubProducts.includes(subProduct.id)
                         ? "bg-pos-bg-primary font-medium shadow-lg"
                         : "hover:bg-black/10 hover:shadow-md hover:scale-[1.02]"
                         }`}

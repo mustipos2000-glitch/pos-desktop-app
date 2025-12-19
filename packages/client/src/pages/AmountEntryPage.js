@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import KioskLayout from '../components/kiosk/KioskLayout';
+import KioskHeader from '../components/kiosk/KioskHeader';
+import KioskButton from '../components/kiosk/KioskButton';
+import KioskNumpad from '../components/kiosk/KioskNumpad';
+import KioskInfoPanel from '../components/kiosk/KioskInfoPanel';
 
 /**
  * AmountEntryPage - A page for entering payment amount using a numpad
- * Used after member selection for membership fee payments
  */
 const AmountEntryPage = () => {
   const navigate = useNavigate();
@@ -60,14 +64,6 @@ const AmountEntryPage = () => {
     }
   };
 
-  const handleNumberClick = (num) => {
-    if (amount === '0') {
-      setAmount(num);
-    } else {
-      setAmount(amount + num);
-    }
-  };
-
   const handleClear = () => {
     setAmount('0');
   };
@@ -105,10 +101,7 @@ const AmountEntryPage = () => {
       return;
     }
 
-    // Store the amount
     localStorage.setItem('paymentAmount', amount);
-
-    // Navigate to payment method page
     navigate('/payment-method');
   };
 
@@ -116,138 +109,90 @@ const AmountEntryPage = () => {
     return `€ ${value}`;
   };
 
-  return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col items-center justify-center p-6">
-      <div className="max-w-sm w-full">
-        {/* Header */}
-        <div className="text-center mb-4">
-          <h1 className="text-2xl font-bold text-pos-text-primary mb-1">
-            Enter the amount
-          </h1>
-          <p className="text-xs text-pos-text-secondary">
-            Use the keyboard to enter the amount
-          </p>
-        </div>
+  // Build info panel items
+  const getInfoItems = () => {
+    if (!selectedInfo) return [];
+    
+    const items = [];
+    
+    if (selectedInfo.type === 'sadaka-named') {
+      items.push({ label: 'Type', value: 'Named Sadaka' });
+      items.push({ label: 'Member', value: selectedInfo.member });
+      items.push({ label: 'Goal', value: selectedInfo.goal });
+    } else if (selectedInfo.type === 'sadaka-anonymous') {
+      items.push({ label: 'Type', value: 'Anonymous Sadaka' });
+      items.push({ label: 'Goal', value: selectedInfo.goal });
+    } else if (selectedInfo.type === 'rent') {
+      items.push({ label: 'Type', value: 'Rent Space/Kitchen' });
+      items.push({ label: 'Member', value: selectedInfo.member });
+      items.push({ label: 'From', value: `${selectedInfo.startDate} ${selectedInfo.startTime}` });
+      items.push({ label: 'To', value: `${selectedInfo.endDate} ${selectedInfo.endTime}` });
+    } else if (selectedInfo.type === 'membership') {
+      items.push({ label: 'Type', value: 'Membership Fee' });
+      items.push({ label: 'Member', value: selectedInfo.member });
+    }
+    
+    return items;
+  };
 
-      
-  
-        {/* Amount Display */}
-        <div className="mb-6 flex justify-center">
-          <div className="bg-pos-bg-secondary border border-pos-border-primary rounded-lg px-12 py-4 min-w-[240px] text-center">
-            <div className="text-4xl font-bold text-pos-text-primary">
-              {formatAmount(amount)}
+  return (
+    <KioskLayout maxWidth="4xl">
+      <KioskHeader 
+        title="Enter Amount"
+        subtitle="Use the keypad to enter the payment amount"
+        step={2}
+        totalSteps={3}
+        className="mb-4"
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Left Column - Info and Amount Display */}
+        <div className="space-y-4">
+          {/* Context Info */}
+          {selectedInfo && (
+            <KioskInfoPanel items={getInfoItems()} />
+          )}
+
+          {/* Amount Display */}
+          <div className="flex justify-center">
+            <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-2xl px-12 py-6 shadow-xl">
+              <div className="text-5xl font-bold text-pos-text-primary">
+                {formatAmount(amount)}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Numpad */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          {/* Row 1 */}
-          <button
-            onClick={() => handleNumberClick('1')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            1
-          </button>
-          <button
-            onClick={() => handleNumberClick('2')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            2
-          </button>
-          <button
-            onClick={() => handleNumberClick('3')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            3
-          </button>
-
-          {/* Row 2 */}
-          <button
-            onClick={() => handleNumberClick('4')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            4
-          </button>
-          <button
-            onClick={() => handleNumberClick('5')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            5
-          </button>
-          <button
-            onClick={() => handleNumberClick('6')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            6
-          </button>
-
-          {/* Row 3 */}
-          <button
-            onClick={() => handleNumberClick('7')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            7
-          </button>
-          <button
-            onClick={() => handleNumberClick('8')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            8
-          </button>
-          <button
-            onClick={() => handleNumberClick('9')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            9
-          </button>
-
-          {/* Row 4 */}
-          <button
-            onClick={handleClear}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            C
-          </button>
-          <button
-            onClick={() => handleNumberClick('0')}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            0
-          </button>
-          <button
-            onClick={handleBackspace}
-            className="bg-pos-bg-secondary text-pos-text-primary text-xl font-semibold py-4 rounded-lg hover:bg-pos-interactive-hover transition-colors border border-pos-border-primary"
-          >
-            ←
-          </button>
-        </div>
-
-        {/* Total Display */}
-        <div className="text-center mb-4">
-          <p className="text-pos-text-primary text-sm">
-            Total: <span className="font-bold">{formatAmount(amount)}</span>
-          </p>
-        </div>
-
-        {/* Bottom Buttons */}
-        <div className="flex justify-center gap-3">
-          <button
-            onClick={handleGoBack}
-            className="px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm"
-          >
-            Go back
-          </button>
-          
-          <button
-            onClick={handleNext}
-            className="px-6 py-2 bg-pos-bg-secondary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm"
-          >
-            Next
-          </button>
+        {/* Right Column - Numpad */}
+        <div>
+          <KioskNumpad
+            value={amount}
+            onChange={setAmount}
+            onClear={handleClear}
+            onBackspace={handleBackspace}
+          />
         </div>
       </div>
-    </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-center gap-4 mt-6">
+        <KioskButton
+          variant="secondary"
+          size="medium"
+          onClick={handleGoBack}
+        >
+          ← Go Back
+        </KioskButton>
+        
+        <KioskButton
+          variant="success"
+          size="medium"
+          onClick={handleNext}
+        >
+          Next →
+        </KioskButton>
+      </div>
+    </KioskLayout>
   );
 };
 

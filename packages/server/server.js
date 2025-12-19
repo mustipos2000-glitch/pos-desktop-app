@@ -2,35 +2,23 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const { Server } = require('socket.io');
 
-// Handle better-sqlite3 loading with fallback for different environments
-let runMigrations;
-try {
-  runMigrations = require('./migrate').runMigrations;
-} catch (err) {
-  if (err.code === 'ERR_DLOPEN_FAILED' && err.message.includes('better-sqlite3')) {
-    console.error('Failed to load better-sqlite3 due to Node.js version mismatch');
-    console.log('Attempting to rebuild better-sqlite3 for Node.js...');
-    try {
-      // Try to rebuild and reload
-      require('child_process').execSync('npm rebuild better-sqlite3 --runtime=node', { 
-        stdio: 'inherit',
-        cwd: process.cwd()
-      });
-      runMigrations = require('./migrate').runMigrations;
-      console.log('Successfully reloaded better-sqlite3 after rebuild');
-    } catch (rebuildErr) {
-      console.error('Failed to rebuild better-sqlite3:', rebuildErr.message);
-      throw err;
-    }
-  } else {
-    throw err;
-  }
-}
+// Load migrations
+const { runMigrations } = require('./migrate');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isDev = process.env.NODE_ENV !== 'production';
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: isDev ? "http://localhost:3000" : false,
+    methods: ["GET", "POST"]
+  }
+});
 
 // Run migrations before starting the server
 try {
@@ -55,9 +43,13 @@ app.use(express.urlencoded({ extended: true }));
 
 // Import routes
 const apiRoutes = require('./routes/api');
+const ScaleController = require('./controllers/ScaleController');
 
 // Mount API routes
 app.use('/api', apiRoutes);
+
+// Setup WebSocket for scale integration
+ScaleController.setupWebSocket(io);
 
 // Serve React app in production
 if (!isDev) {
@@ -137,7 +129,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
   console.log(`📡 API endpoints available at http://localhost:${PORT}/api`);
   console.log(`📁 Working directory: ${process.cwd()}`);

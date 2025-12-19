@@ -335,6 +335,11 @@ class ApiService {
     });
   }
 
+  // Printer methods
+  static async getPrinters() {
+    return this.request('/printers');
+  }
+
   // Payment Terminal methods
   static async getPaymentTerminals() {
     return this.request('/payment-terminals');
@@ -422,7 +427,7 @@ static async adjustInventory(productId, data) {
   });
 }
 
-// delete inventory api
+// delete inventory api call if you need it
   static async deleteInventory(productId) {
     return this.request(`/inventory/${productId}`, {
       method: 'DELETE',
@@ -445,6 +450,66 @@ static async adjustInventory(productId, data) {
 
   static async getReportHistory(limit = 30) {
     return this.request(`/reports/history?limit=${limit}`);
+  }
+
+  // Cash Drawer methods
+  static async getCashDrawers() {
+    return this.request('/cash-drawers');
+  }
+
+  static async getActiveCashDrawer() {
+    return this.request('/cash-drawers/active');
+  }
+
+  static async getCashDrawerById(id) {
+    return this.request(`/cash-drawers/${id}`);
+  }
+
+  static async createCashDrawer(drawerData) {
+    return this.request('/cash-drawers', {
+      method: 'POST',
+      body: JSON.stringify(drawerData),
+    });
+  }
+
+  static async updateCashDrawer(id, drawerData) {
+    return this.request(`/cash-drawers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(drawerData),
+    });
+  }
+
+  static async deleteCashDrawer(id) {
+    return this.request(`/cash-drawers/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  static async setActiveCashDrawer(id) {
+    return this.request(`/cash-drawers/${id}/set-active`, {
+      method: 'POST',
+    });
+  }
+
+  static async testCashDrawer(id) {
+    return this.request(`/cash-drawers/${id}/test`, {
+      method: 'POST',
+    });
+  }
+
+  static async openCashDrawer() {
+    return this.request('/printers/open-drawer', {
+      method: 'POST',
+      body: JSON.stringify({})  // Uses main printer
+    });
+  }
+
+  // Email Receipt methods
+  static async sendReceiptEmail(receiptData) {
+    return this.request('/payments/send-receipt-email', {
+      method: 'POST',
+      body: JSON.stringify(receiptData),
+    });
   }
 
 }

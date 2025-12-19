@@ -126,6 +126,11 @@ async function startServer() {
       dialog.showErrorBox('Database Error', 
         'Failed to load database module. The application may not work correctly.\n\n' + error);
     }
+    if (error.includes('Cannot find module') || error.includes('MODULE_NOT_FOUND')) {
+      const { dialog } = require('electron');
+      dialog.showErrorBox('Module Error', 
+        'A required module is missing. Please reinstall the application.\n\n' + error);
+    }
   });
 
   serverProcess.on('error', (err) => {

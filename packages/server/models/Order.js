@@ -53,7 +53,6 @@ class Order {
             });
             insertMany(details);
         }
-
         return { id: orderId, order_no: orderNo, ...order, details };
     }
 
@@ -83,7 +82,6 @@ class Order {
         WHERE id = ?
         `).run(
             payload.tax || 0,
-            newStatus,
             newStatus,
             payload.note || '',
             payload.total || 0,
