@@ -118,6 +118,8 @@ router.post('/payments/send-receipt-email', PaymentController.sendReceiptEmail);
 // Cashmatic routes (for payment machine integration)
 router.post('/cashmatic/start', PaymentController.processCashmaticPayment);
 router.get('/cashmatic/status/:sessionId', PaymentController.getPaymentStatus);
+router.post('/cashmatic/finish/:sessionId', PaymentController.finishCashmaticPayment);
+router.post('/cashmatic/cancel/:sessionId', PaymentController.cancelCashmaticPayment);
 
 // Payworld routes (for Bancontact payment terminal integration)
 router.post('/payworld/start', PaymentController.processPayworldPayment);
@@ -149,6 +151,9 @@ router.get('/inventory/:id', InventoryController.getInventoryById);
 router.post('/inventory', InventoryController.createInventory);
 router.put('/inventory/:id', InventoryController.updateInventory);
 router.delete('/inventory/:id', InventoryController.deleteInventory);
+
+
+
 // Report routes
 router.get('/reports/x-report', ReportController.getXReport);
 router.get('/reports/z-report', ReportController.getZReport);

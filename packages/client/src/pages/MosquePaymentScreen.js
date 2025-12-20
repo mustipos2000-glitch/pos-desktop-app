@@ -45,7 +45,7 @@ const MosquePaymentScreen = () => {
   const handleOptionSelect = (option) => {
     setSelectedOption(option);
     localStorage.setItem('mosquePaymentType', JSON.stringify(option));
-    
+
     if (option.id === 'membership') {
       navigate('/member-selection');
     } else if (option.id === 'sadaka') {
@@ -63,7 +63,7 @@ const MosquePaymentScreen = () => {
 
   const handleSecretClick = () => {
     setClickCount(prev => prev + 1);
-    
+
     // Reset click count after 2 seconds
     setTimeout(() => {
       setClickCount(0);
@@ -72,7 +72,7 @@ const MosquePaymentScreen = () => {
     // After 3 clicks
     if (clickCount + 1 === 3) {
       setClickCount(0);
-      
+
       // If already logged in, directly open settings (no password)
       if (isAdminLoggedIn) {
         setShowSettings(true);
@@ -85,7 +85,7 @@ const MosquePaymentScreen = () => {
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault();
-    
+
     if (password === '1234') {
       // Set admin logged in flag in sessionStorage (clears when browser/tab closes)
       sessionStorage.setItem('mosqueAdminLoggedIn', 'true');
@@ -107,10 +107,45 @@ const MosquePaymentScreen = () => {
     setClickCount(0);
   };
 
+  const handleQuickTest = () => {
+    // Setup mock test data
+    const testMember = {
+      id: 999,
+      fullName: 'Test Member',
+      phone: '0123456789',
+      type: 'test'
+    };
+
+    const testPaymentType = {
+      id: 'sadaka',
+      titleEn: 'Sadaka / Charity',
+      titleNl: 'Sadaka / Don',
+      titleAr: 'صدقة'
+    };
+
+    const testGoal = {
+      titleEn: 'Renovation',
+      titleNl: 'Rénovation',
+      titleAr: 'التجديد'
+    };
+
+    // Store test data
+    localStorage.setItem('selectedMember', JSON.stringify(testMember));
+    localStorage.setItem('mosquePaymentType', JSON.stringify(testPaymentType));
+    localStorage.setItem('sadakaGoal', JSON.stringify(testGoal));
+    localStorage.setItem('sadakaType', 'named');
+    localStorage.setItem('paymentAmount', '100');
+    localStorage.setItem('paymentMethod', 'cash');
+    localStorage.setItem('transactionId', `TEST-${Date.now()}`);
+
+    // Navigate directly to ticket selection
+    navigate('/ticket-selection');
+  };
+
   return (
     <>
       <KioskLayout maxWidth="5xl">
-        <KioskHeader 
+        <KioskHeader
           title="What do you want to pay?"
           subtitle="Choose an option to continue"
         />
@@ -131,7 +166,7 @@ const MosquePaymentScreen = () => {
         </div>
 
         {/* Back Button */}
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-4">
           <KioskButton
             variant="secondary"
             size="medium"
@@ -139,11 +174,19 @@ const MosquePaymentScreen = () => {
           >
             ← Go Back
           </KioskButton>
+
+          <KioskButton
+            variant="primary"
+            size="medium"
+            onClick={handleQuickTest}
+          >
+            🖨️ Quick Test Printer
+          </KioskButton>
         </div>
       </KioskLayout>
 
       {/* Secret Click Area - Bottom Left Corner */}
-      <div 
+      <div
         onClick={handleSecretClick}
         className="fixed bottom-4 left-4 w-16 h-16"
         style={{ opacity: 0, cursor: 'default' }}
@@ -202,8 +245,8 @@ const MosquePaymentScreen = () => {
 
       {/* Settings Modal */}
       {showSettings && (
-        <SettingsModal 
-          onClose={() => setShowSettings(false)} 
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
           initialTab="printer"
           limitedTabs={['printer', 'payment']}
         />

@@ -32,22 +32,86 @@ const PaymentController = {
   // Get payment status (used by /cashmatic/status/:sessionId)
   getPaymentStatus: async (req, res) => {
     try {
-      const { transactionId } = req.params;
-      console.log("helll enter.....");
+      const { sessionId } = req.params;
+      console.log("Getting payment status for sessionId:", sessionId);
       
-
-      const result = await CashmaticService.getStatus(transactionId);
-      console.log("result",result);
+      const result = await CashmaticService.getStatus(sessionId);
+      console.log("Status result:", result);
       
-
-      if (result.success) {
-        res.json({ success: true, data: result.data });
-      } else {
-        res.status(404).json({ success: false, error: result.message });
+      if (!result) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Session not found' 
+        });
       }
+
+      // CashmaticService.getStatus returns { state, requestedAmount, insertedAmount, etc. }
+      res.json({ 
+        success: true, 
+        data: result 
+      });
     } catch (error) {
       console.error('Get payment status error:', error);
-      res.status(500).json({ success: false, error: 'Failed to get payment status' });
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to get payment status: ' + (error.message || 'Unknown error')
+      });
+    }
+  },
+
+  // Finish Cashmatic payment (close transaction and print receipt)
+  finishCashmaticPayment: async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      console.log("Finishing Cashmatic payment for sessionId:", sessionId);
+
+      const result = await CashmaticService.finishPayment(sessionId);
+      
+      if (!result) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Session not found' 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        data: result 
+      });
+    } catch (error) {
+      console.error('Finish Cashmatic payment error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to finish payment: ' + (error.message || 'Unknown error')
+      });
+    }
+  },
+
+  // Cancel Cashmatic payment
+  cancelCashmaticPayment: async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      console.log("Cancelling Cashmatic payment for sessionId:", sessionId);
+
+      const result = await CashmaticService.cancelPayment(sessionId);
+      
+      if (!result) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'Session not found' 
+        });
+      }
+
+      res.json({ 
+        success: true, 
+        data: result 
+      });
+    } catch (error) {
+      console.error('Cancel Cashmatic payment error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to cancel payment: ' + (error.message || 'Unknown error')
+      });
     }
   },
 

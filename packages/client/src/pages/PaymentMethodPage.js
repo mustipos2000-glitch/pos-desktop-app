@@ -5,7 +5,7 @@ import KioskButton from '../components/kiosk/KioskButton';
 
 const PaymentMethodPage = () => {
   const navigate = useNavigate();
-  
+
   const formatAmount = (value) => {
     const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
     return num.toFixed(2);
@@ -50,7 +50,7 @@ const PaymentMethodPage = () => {
     const goal = JSON.parse(localStorage.getItem('sadakaGoal') || 'null');
     const sType = localStorage.getItem('sadakaType');
     const rentDT = JSON.parse(localStorage.getItem('rentDateTime') || 'null');
-    
+
     setMemberInfo(member);
     setAmount(amt);
     setPaymentType(type);
@@ -62,12 +62,12 @@ const PaymentMethodPage = () => {
   // Poll Cashmatic payment status
   useEffect(() => {
     if (!cashmaticPolling || !cashmaticSessionId) return;
-    
+
     const poll = async () => {
       try {
         const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
         const s = res.data || res;
-        
+
         const requested = (s.requestedAmount || 0) / 100;
         const inserted = (s.insertedAmount || 0) / 100;
         const dispensed = (s.dispensedAmount || 0) / 100;
@@ -88,7 +88,7 @@ const PaymentMethodPage = () => {
         if (s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
           setCashmaticPolling(false);
           setCashmaticSessionId(null);
-          
+
           localStorage.setItem('paymentMethod', 'cash');
           localStorage.setItem('paymentResult', JSON.stringify({
             success: true,
@@ -101,11 +101,11 @@ const PaymentMethodPage = () => {
           }));
 
           setProcessing(false);
-          
+
           if (s.state === "FINISHED") {
             setShowCashmaticModal(false);
           }
-          
+
           // Navigate to confirmation
           setTimeout(() => {
             handleConfirm();
@@ -142,10 +142,10 @@ const PaymentMethodPage = () => {
   // Poll Payworld status
   useEffect(() => {
     if (!payworldPolling || !payworldSessionId) return;
-    
+
     const startTime = Date.now();
     const MAX_POLLING_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
-    
+
     const poll = async () => {
       // Check if timeout exceeded
       const elapsed = Date.now() - startTime;
@@ -168,7 +168,7 @@ const PaymentMethodPage = () => {
         const res = await ApiService.getPayworldStatus(payworldSessionId);
         const data = res.data || res;
         if (!data || data.ok === false) return;
-        
+
         const state = data.state || "IN_PROGRESS";
         const message = data.message || payworldStatus.message;
         const details = data.details || payworldStatus.details;
@@ -184,7 +184,7 @@ const PaymentMethodPage = () => {
           payworldFinalizedRef.current = true;
 
           const paymentAmount = parseFloat(amount);
-          
+
           localStorage.setItem('paymentMethod', 'card');
           localStorage.setItem('paymentResult', JSON.stringify({
             success: true,
@@ -216,7 +216,7 @@ const PaymentMethodPage = () => {
           } else if (state === "ERROR") {
             alert("Error during Payworld payment.");
           }
-          
+
           setShowPayworldModal(false);
         }
       } catch (err) {
@@ -252,7 +252,7 @@ const PaymentMethodPage = () => {
     try {
       setProcessing(true);
       setSelectedMethod('cash');
-      
+
       setCashmaticInfo({
         requested: paymentAmount,
         inserted: 0,
@@ -422,8 +422,22 @@ const PaymentMethodPage = () => {
       reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.fullName}`
     };
     localStorage.setItem('paymentData', JSON.stringify(paymentData));
-    
+
     console.log('Navigating to ticket-selection...');
+    navigate('/ticket-selection');
+  };
+
+  // Test function to skip payment and test printer
+  const handleTestPrint = () => {
+    // Generate mock transaction ID
+    const testTransactionId = `TEST-${Date.now()}`;
+
+    // Store test payment data
+    localStorage.setItem('transactionId', testTransactionId);
+    localStorage.setItem('paymentMethod', 'cash'); // Default to cash for testing
+
+    // Navigate directly to ticket selection
+    console.log('Test mode: Skipping payment, going to ticket-selection...');
     navigate('/ticket-selection');
   };
 
@@ -444,7 +458,7 @@ const PaymentMethodPage = () => {
       {/* Main Content Area */}
       <div className="px-8 pb-4">
         <div className="flex-1 flex flex-col justify-center max-w-5xl w-full mx-auto">
-          
+
           {/* Payment Summary Card */}
           <div className="bg-pos-bg-secondary rounded-xl p-3 mb-4 border border-pos-border-primary">
             <div className="flex items-center justify-between">
@@ -523,7 +537,7 @@ const PaymentMethodPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              
+
               {/* Text Content */}
               <div className="space-y-3">
                 <div className="text-3xl font-bold text-pos-text-primary">Cash</div>
@@ -565,7 +579,7 @@ const PaymentMethodPage = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
-              
+
               {/* Text Content */}
               <div className="space-y-3">
                 <div className="text-3xl font-bold text-pos-text-primary">Card</div>
@@ -591,7 +605,7 @@ const PaymentMethodPage = () => {
 
       {/* Footer Navigation */}
       <div className="flex-shrink-0 px-8 pb-8">
-        <div className="max-w-5xl w-full mx-auto">
+        <div className="max-w-5xl w-full mx-auto grid grid-cols-2 gap-4">
           <KioskButton
             variant="secondary"
             onClick={handleGoBack}
@@ -600,111 +614,120 @@ const PaymentMethodPage = () => {
           >
             Go Back
           </KioskButton>
+
+          <KioskButton
+            variant="primary"
+            onClick={handleTestPrint}
+            disabled={processing}
+            fullWidth
+          >
+            🖨️ Test Print (Skip Payment)
+          </KioskButton>
         </div>
       </div>
 
-        {/* Cashmatic Modal */}
-        {showCashmaticModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
-            <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
-              
-              {/* Modal Header */}
-              <div className="px-8 py-2 border-b-2 border-pos-border-primary">
-                <h2 className="text-3xl font-bold text-pos-text-primary text-center">
-                  Cash Payment in Progress
-                </h2>
-              </div>
+      {/* Cashmatic Modal */}
+      {showCashmaticModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+          <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
 
-              {/* Modal Content */}
-              <div className="px-8 py-2">
-                {/* Status Indicator */}
-                <div className="mb-4 text-center">
-                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-4">
-                    {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
-                      <svg className="w-12 h-12 text-pos-text-primary animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    )}
-                    {cashmaticInfo.state === "FINISHED" && (
-                      <svg className="w-12 h-12 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    {cashmaticInfo.state === "FINISHED_MANUAL" && (
-                      <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    {(cashmaticInfo.state === "CANCELLED" || cashmaticInfo.state === "ERROR") && (
-                      <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="text-2xl font-semibold text-pos-text-primary">
-                    {cashmaticInfo.state === "IDLE"
-                      ? "Ready for next customer"
-                      : cashmaticInfo.state === "RUNNING" || cashmaticInfo.state === "IN_PROGRESS"
+            {/* Modal Header */}
+            <div className="px-8 py-2 border-b-2 border-pos-border-primary">
+              <h2 className="text-3xl font-bold text-pos-text-primary text-center">
+                Cash Payment in Progress
+              </h2>
+            </div>
+
+            {/* Modal Content */}
+            <div className="px-8 py-2">
+              {/* Status Indicator */}
+              <div className="mb-4 text-center">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-4">
+                  {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
+                    <svg className="w-12 h-12 text-pos-text-primary animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )}
+                  {cashmaticInfo.state === "FINISHED" && (
+                    <svg className="w-12 h-12 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {cashmaticInfo.state === "FINISHED_MANUAL" && (
+                    <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {(cashmaticInfo.state === "CANCELLED" || cashmaticInfo.state === "ERROR") && (
+                    <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </div>
+                <div className="text-2xl font-semibold text-pos-text-primary">
+                  {cashmaticInfo.state === "IDLE"
+                    ? "Ready for next customer"
+                    : cashmaticInfo.state === "RUNNING" || cashmaticInfo.state === "IN_PROGRESS"
                       ? "Insert cash into the machine"
                       : cashmaticInfo.state === "PAID"
-                      ? "Processing change..."
-                      : cashmaticInfo.state === "FINISHED_MANUAL"
-                      ? "Please provide manual change"
-                      : cashmaticInfo.state === "FINISHED"
-                      ? "Payment completed successfully"
-                      : cashmaticInfo.state === "CANCELLED"
-                      ? "Payment cancelled"
-                      : cashmaticInfo.state === "ERROR" || cashmaticInfo.state === "FAILED"
-                      ? "Error - Please check machine"
-                      : "Processing..."}
-                  </div>
-                </div>
-
-                {/* Payment Details */}
-                <div className="space-y-2 bg-pos-bg-secondary rounded-2xl p-4 border-2 border-pos-border-primary">
-                  <div className="flex justify-between items-center py-3 border-b border-pos-border-primary">
-                    <span className="text-xl text-pos-text-secondary">Amount Due</span>
-                    <span className="text-3xl font-bold text-pos-text-primary">€ {formatAmount(cashmaticInfo?.requested)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
-                    <span className="text-xl text-pos-text-secondary">Cash Inserted</span>
-                    <span className="text-3xl font-bold text-green-600">€ {formatAmount(cashmaticInfo?.inserted)}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
-                    <span className="text-xl text-pos-text-secondary">Change Due</span>
-                    <span className="text-3xl font-bold text-pos-text-primary">
-                      € {formatAmount(Math.max((cashmaticInfo?.inserted ?? 0) - (cashmaticInfo?.requested ?? 0), 0))}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
-                    <span className="text-xl text-pos-text-secondary">Change Dispensed</span>
-                    <span className="text-2xl font-semibold text-pos-text-primary">€ {formatAmount(cashmaticInfo?.dispensed)}</span>
-                  </div>
-                  {cashmaticInfo?.notDispensed > 0 && (
-                    <div className="flex justify-between items-center py-2gdnf bg-yellow-500 bg-opacity-10 rounded-xl px-4">
-                      <span className="text-xl text-yellow-600 font-semibold">Manual Change Required</span>
-                      <span className="text-3xl font-bold text-yellow-600">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
-                    </div>
-                  )}
+                        ? "Processing change..."
+                        : cashmaticInfo.state === "FINISHED_MANUAL"
+                          ? "Please provide manual change"
+                          : cashmaticInfo.state === "FINISHED"
+                            ? "Payment completed successfully"
+                            : cashmaticInfo.state === "CANCELLED"
+                              ? "Payment cancelled"
+                              : cashmaticInfo.state === "ERROR" || cashmaticInfo.state === "FAILED"
+                                ? "Error - Please check machine"
+                                : "Processing..."}
                 </div>
               </div>
 
-              {/* Modal Actions */}
-              <div className="px-8 pb-8">
-                <div className="flex gap-4">
-                  {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
-                    <KioskButton
-                      variant="destructive"
-                      onClick={handleCancelCashmatic}
-                      fullWidth
-                    >
-                      Cancel Payment
-                    </KioskButton>
-                  )}
-                  {(cashmaticInfo.state === "FINISHED" ||
-                    cashmaticInfo.state === "FINISHED_MANUAL" ||
-                    cashmaticInfo.state === "CANCELLED" ||
-                    cashmaticInfo.state === "ERROR") && (
+              {/* Payment Details */}
+              <div className="space-y-2 bg-pos-bg-secondary rounded-2xl p-4 border-2 border-pos-border-primary">
+                <div className="flex justify-between items-center py-3 border-b border-pos-border-primary">
+                  <span className="text-xl text-pos-text-secondary">Amount Due</span>
+                  <span className="text-3xl font-bold text-pos-text-primary">€ {formatAmount(cashmaticInfo?.requested)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
+                  <span className="text-xl text-pos-text-secondary">Cash Inserted</span>
+                  <span className="text-3xl font-bold text-green-600">€ {formatAmount(cashmaticInfo?.inserted)}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
+                  <span className="text-xl text-pos-text-secondary">Change Due</span>
+                  <span className="text-3xl font-bold text-pos-text-primary">
+                    € {formatAmount(Math.max((cashmaticInfo?.inserted ?? 0) - (cashmaticInfo?.requested ?? 0), 0))}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-pos-border-primary">
+                  <span className="text-xl text-pos-text-secondary">Change Dispensed</span>
+                  <span className="text-2xl font-semibold text-pos-text-primary">€ {formatAmount(cashmaticInfo?.dispensed)}</span>
+                </div>
+                {cashmaticInfo?.notDispensed > 0 && (
+                  <div className="flex justify-between items-center py-2gdnf bg-yellow-500 bg-opacity-10 rounded-xl px-4">
+                    <span className="text-xl text-yellow-600 font-semibold">Manual Change Required</span>
+                    <span className="text-3xl font-bold text-yellow-600">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="px-8 pb-8">
+              <div className="flex gap-4">
+                {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
+                  <KioskButton
+                    variant="destructive"
+                    onClick={handleCancelCashmatic}
+                    fullWidth
+                  >
+                    Cancel Payment
+                  </KioskButton>
+                )}
+                {(cashmaticInfo.state === "FINISHED" ||
+                  cashmaticInfo.state === "FINISHED_MANUAL" ||
+                  cashmaticInfo.state === "CANCELLED" ||
+                  cashmaticInfo.state === "ERROR") && (
                     <KioskButton
                       variant="secondary"
                       onClick={() => setShowCashmaticModal(false)}
@@ -713,118 +736,118 @@ const PaymentMethodPage = () => {
                       Close
                     </KioskButton>
                   )}
-                </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Payworld Modal */}
-        { showPayworldModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
-            <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
-              
-              {/* Modal Header */}
-              <div className="px-8 py-3 border-b-2 border-pos-border-primary">
-                <h2 className="text-2xl font-bold text-pos-text-primary text-center">
-                  Card Payment
-                </h2>
-              </div>
+      {/* Payworld Modal */}
+      {showPayworldModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+          <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
 
-              {/* Modal Content */}
-              <div className="px-8 py-4">
-                {/* Status Indicator */}
-                <div className="mb-4 text-center">
-                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-2">
-                    {payworldStatus.state === "IN_PROGRESS" && (
-                      <svg className="w-12 h-12 text-pos-text-primary animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
-                    )}
-                    {payworldStatus.state === "APPROVED" && (
-                      <svg className="w-12 h-12 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    {payworldStatus.state === "DECLINED" && (
-                      <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    {payworldStatus.state === "CANCELLED" && (
-                      <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                    {payworldStatus.state === "ERROR" && (
-                      <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="text-2xl font-semibold text-pos-text-primary mb-2">
-                    {payworldStatus.state === "IN_PROGRESS"
-                      ? "Follow instructions on terminal"
-                      : payworldStatus.state === "APPROVED"
-                      ? "Payment approved"
-                      : payworldStatus.state === "DECLINED"
-                      ? "Payment declined"
-                      : payworldStatus.state === "CANCELLED"
-                      ? "Payment cancelled"
-                      : payworldStatus.state === "ERROR"
-                      ? "Payment error"
-                      : "Ready"}
-                  </div>
-                  {payworldStatus.message && (
-                    <div className="text-lg text-pos-text-secondary max-w-md mx-auto">
-                      {payworldStatus.message}
-                    </div>
+            {/* Modal Header */}
+            <div className="px-8 py-3 border-b-2 border-pos-border-primary">
+              <h2 className="text-2xl font-bold text-pos-text-primary text-center">
+                Card Payment
+              </h2>
+            </div>
+
+            {/* Modal Content */}
+            <div className="px-8 py-4">
+              {/* Status Indicator */}
+              <div className="mb-4 text-center">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-2">
+                  {payworldStatus.state === "IN_PROGRESS" && (
+                    <svg className="w-12 h-12 text-pos-text-primary animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                  )}
+                  {payworldStatus.state === "APPROVED" && (
+                    <svg className="w-12 h-12 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {payworldStatus.state === "DECLINED" && (
+                    <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {payworldStatus.state === "CANCELLED" && (
+                    <svg className="w-12 h-12 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {payworldStatus.state === "ERROR" && (
+                    <svg className="w-12 h-12 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
                   )}
                 </div>
-
-                {/* Payment Amount */}
-                <div className="bg-pos-bg-secondary rounded-2xl px-6 py-2 border-2 border-pos-border-primary">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xl text-pos-text-secondary">Payment Amount</span>
-                    <span className="text-4xl font-bold text-pos-text-primary">€ {formatAmount(parseFloat(amount))}</span>
-                  </div>
+                <div className="text-2xl font-semibold text-pos-text-primary mb-2">
+                  {payworldStatus.state === "IN_PROGRESS"
+                    ? "Follow instructions on terminal"
+                    : payworldStatus.state === "APPROVED"
+                      ? "Payment approved"
+                      : payworldStatus.state === "DECLINED"
+                        ? "Payment declined"
+                        : payworldStatus.state === "CANCELLED"
+                          ? "Payment cancelled"
+                          : payworldStatus.state === "ERROR"
+                            ? "Payment error"
+                            : "Ready"}
                 </div>
-
-                {/* Instructions for IN_PROGRESS state */}
-                {payworldStatus.state === "IN_PROGRESS" && (
-                  <div className="mt-3 bg-blue-500 bg-opacity-10 rounded-2xl px-6 py-3 border-2 border-blue-500">
-                    <div className="flex items-start gap-4">
-                      <svg className="w-8 h-8 text-blue-500 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                      <div className="flex-1">
-                        <div className="text-lg font-semibold text-blue-600 mb-2">Please use the card terminal</div>
-                        <div className="text-base text-pos-text-secondary">
-                          Insert, tap, or swipe your card on the payment terminal and follow the on-screen instructions.
-                        </div>
-                      </div>
-                    </div>
+                {payworldStatus.message && (
+                  <div className="text-lg text-pos-text-secondary max-w-md mx-auto">
+                    {payworldStatus.message}
                   </div>
                 )}
               </div>
 
-              {/* Modal Actions */}
-              <div className="px-8 pb-8">
-                <div className="flex gap-4">
-                  {payworldStatus.state === "IN_PROGRESS" && (
-                    <KioskButton
-                      variant="destructive"
-                      onClick={handleAbortPayworld}
-                      fullWidth
-                    >
-                      Cancel Payment
-                    </KioskButton>
-                  )}
+              {/* Payment Amount */}
+              <div className="bg-pos-bg-secondary rounded-2xl px-6 py-2 border-2 border-pos-border-primary">
+                <div className="flex justify-between items-center">
+                  <span className="text-xl text-pos-text-secondary">Payment Amount</span>
+                  <span className="text-4xl font-bold text-pos-text-primary">€ {formatAmount(parseFloat(amount))}</span>
+                </div>
+              </div>
 
-                  {(payworldStatus.state === "APPROVED" ||
-                    payworldStatus.state === "DECLINED" ||
-                    payworldStatus.state === "CANCELLED" ||
-                    payworldStatus.state === "ERROR") && (
+              {/* Instructions for IN_PROGRESS state */}
+              {payworldStatus.state === "IN_PROGRESS" && (
+                <div className="mt-3 bg-blue-500 bg-opacity-10 rounded-2xl px-6 py-3 border-2 border-blue-500">
+                  <div className="flex items-start gap-4">
+                    <svg className="w-8 h-8 text-blue-500 flex-shrink-0 mt-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <div className="text-lg font-semibold text-blue-600 mb-2">Please use the card terminal</div>
+                      <div className="text-base text-pos-text-secondary">
+                        Insert, tap, or swipe your card on the payment terminal and follow the on-screen instructions.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="px-8 pb-8">
+              <div className="flex gap-4">
+                {payworldStatus.state === "IN_PROGRESS" && (
+                  <KioskButton
+                    variant="destructive"
+                    onClick={handleAbortPayworld}
+                    fullWidth
+                  >
+                    Cancel Payment
+                  </KioskButton>
+                )}
+
+                {(payworldStatus.state === "APPROVED" ||
+                  payworldStatus.state === "DECLINED" ||
+                  payworldStatus.state === "CANCELLED" ||
+                  payworldStatus.state === "ERROR") && (
                     <KioskButton
                       variant="secondary"
                       onClick={() => {
@@ -840,12 +863,12 @@ const PaymentMethodPage = () => {
                       Close
                     </KioskButton>
                   )}
-                </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
     // </div>
   );
 };
