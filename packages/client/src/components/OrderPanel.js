@@ -10,12 +10,12 @@ import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
 
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount, selectedEmployee }) => {
-  
 
-const formatAmount = (value) => {
-  const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
-  return num.toFixed(2);
-};
+
+  const formatAmount = (value) => {
+    const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
+    return num.toFixed(2);
+  };
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
@@ -159,7 +159,7 @@ const formatAmount = (value) => {
       }
 
       const orderType = localStorage.getItem('posVersion') || 'horeca';
-      
+
       const orderData = {
         status: "completed",
         note,
@@ -172,8 +172,8 @@ const formatAmount = (value) => {
           paymentData.cashAmount > 0 && paymentData.cardAmount > 0
             ? "mixed"
             : paymentData.cashAmount > 0
-            ? "cash"
-            : "card",
+              ? "cash"
+              : "card",
         cash_amount: paymentData.cashAmount || 0,
         card_amount: paymentData.cardAmount || 0,
         total_paid: paymentData.totalPaid,
@@ -200,9 +200,8 @@ const formatAmount = (value) => {
                   product_id: subItem.id,
                   qty: subItem.quantity,
                   total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ""
+                    }`,
                   discount: 0,
                 });
                 detailIndex++;
@@ -273,14 +272,14 @@ const formatAmount = (value) => {
   // Poll Cashmatic payment status
   useEffect(() => {
     if (!cashmaticPolling || !cashmaticSessionId) return;
-    
+
     const poll = async () => {
       console.log("Start polling");
-      
+
       const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
       const s = res.data || res;
       console.log("Cashmatic status:", s);
-      
+
       const requested = (s.requestedAmount || 0) / 100;
       const inserted = (s.insertedAmount || 0) / 100;
       const dispensed = (s.dispensedAmount || 0) / 100;
@@ -294,14 +293,14 @@ const formatAmount = (value) => {
         state: s.state,
       });
 
-      if (s.state === "IN_PROGRESS" || s.state === "PAID") {
-        console.log("state is in Progress or Paid");
-        return;
-      }
+      // if (s.state === "IN_PROGRESS" || s.state === "PAID") {
+      //   console.log("state is in Progress or Paid");
+      //   return;
+      // }
 
-      if (s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+      if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
         console.log("Finished the Cashmatic ");
-        
+
         setCashmaticPolling(false);
         setCashmaticSessionId(null);
         setToastType("success");
@@ -330,7 +329,7 @@ const formatAmount = (value) => {
       }
 
       if (s.state === "CANCELLED" || s.state === "ERROR") {
-        console.log("Cancelled");        
+        console.log("Cancelled");
         setCashmaticPolling(false);
         setCashmaticSessionId(null);
         setIsProcessing(false);
@@ -352,10 +351,10 @@ const formatAmount = (value) => {
   useEffect(() => {
     if (!payworldPolling || !payworldSessionId) return;
     console.log("Payworld polling started");
-    
+
     const startTime = Date.now();
     const MAX_POLLING_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
-    
+
     const poll = async () => {
       // Check if timeout exceeded
       const elapsed = Date.now() - startTime;
@@ -487,7 +486,7 @@ const formatAmount = (value) => {
     if (onSelectCustomer) {
       onSelectCustomer(null);
     }
-    
+
     // Notify parent to deselect table and clear order
     if (onDeleteAll) {
       onDeleteAll();
@@ -500,7 +499,7 @@ const formatAmount = (value) => {
   // Cashmatic payment handler
   const handleCashmaticPayment = async () => {
     console.log("Click on handle cashmatic Payment ");
-    
+
     if (cart.length === 0) {
       setToastType("error");
       setToastMessage("Cart is empty. Cannot start Cashmatic payment.");
@@ -521,11 +520,11 @@ const formatAmount = (value) => {
     try {
       setIsProcessing(true);
       console.log("inside try on Button Cashmatic payment started. Please pay at the machine.");
-      
+
       setToastType("info");
       setToastMessage("Cashmatic payment started. Please pay at the machine.");
-      console.log("Setting the cashmatic Info", total,"State is In Progerss");
-      
+      console.log("Setting the cashmatic Info", total, "State is In Progerss");
+
       setCashmaticInfo({
         requested: total,
         inserted: 0,
@@ -578,7 +577,7 @@ const formatAmount = (value) => {
       message: "Payworld payment started. Connecting to terminal...",
       details: null,
     });
-    console.log("Set the Payworld status to In Progress" , payworldFinalizedRef.current);
+    console.log("Set the Payworld status to In Progress", payworldFinalizedRef.current);
     payworldFinalizedRef.current = false;
 
     try {
@@ -726,9 +725,8 @@ const formatAmount = (value) => {
                   product_id: subItem.id,
                   qty: subItem.quantity,
                   total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ""
+                    }`,
                   discount: 0,
                 });
                 detailIndex++;
@@ -785,13 +783,13 @@ const formatAmount = (value) => {
         setToastMessage("Order placed on hold successfully!");
       } catch (error) {
         console.error("Error placing order on hold:", error);
-        
+
         // Show inventory error to user
         if (error.message && error.message.includes('Insufficient inventory')) {
-          const errorDetails = error.details ? 
-            error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
+          const errorDetails = error.details ?
+            error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') :
             error.message;
-          
+
           setToastType("error");
           setToastMessage(`⚠️ Insufficient Inventory\n\n${errorDetails}`);
         } else {
@@ -917,7 +915,7 @@ const formatAmount = (value) => {
       }
 
       const orderType = localStorage.getItem('posVersion') || 'horeca';
-      
+
       const orderData = {
         status: "send_kitchen",
         note: "",
@@ -948,9 +946,8 @@ const formatAmount = (value) => {
                   product_id: subItem.id,
                   qty: subItem.quantity,
                   total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ""
+                    }`,
                   discount: 0,
                 });
                 detailIndex++;
@@ -1045,7 +1042,7 @@ const formatAmount = (value) => {
       try {
         // First, check if there's a printer whose name contains "receipt"
         const receiptPrinter = printers.find(p => p.name.toLowerCase().includes('receipt'));
-        
+
         if (receiptPrinter) {
           // If a "Receipt" printer is found, print only to that printer
           try {
@@ -1072,7 +1069,7 @@ const formatAmount = (value) => {
           // If no printers assigned to products, use browser print
           if (printerNames.size === 0) {
             window.print();
-          } else {            
+          } else {
             // Print to each assigned printer
             const printPromises = [];
             printerNames.forEach(printerName => {
@@ -1102,7 +1099,7 @@ const formatAmount = (value) => {
             const results = await Promise.allSettled(printPromises);
             const successCount = results.filter(r => r.status === 'fulfilled' && r.value && r.value.success !== false).length;
             const failedCount = results.length - successCount;
-                        
+
             if (successCount > 0) {
               setToastType("success");
               setToastMessage(`Receipt sent to ${successCount} printer(s) successfully!`);
@@ -1123,7 +1120,7 @@ const formatAmount = (value) => {
       // No printer configured or no order, use browser print
       window.print();
     }
-    
+
     setShowReceipt(false);
     setCart([]);
     setDiscount(0);
@@ -1132,7 +1129,7 @@ const formatAmount = (value) => {
       onSelectCustomer(null);
     }
     setCompletedOrderId(null);
-    
+
     // Call onOrderComplete to clear table and order selection in parent
     if (onOrderComplete) {
       onOrderComplete();
@@ -1175,7 +1172,7 @@ const formatAmount = (value) => {
                 </span>
               </div>
             </div>
-            
+
             {/* Order No */}
             <div className="flex flex-col">
               <div className="text-[9px] text-pos-text-muted uppercase mb-0.5 font-medium">Order</div>
@@ -1226,8 +1223,8 @@ const formatAmount = (value) => {
               const bgColor = isLastAdded
                 ? "bg-green-500"
                 : isSelected
-                ? "bg-green-500"
-                : "bg-blue-500";
+                  ? "bg-green-500"
+                  : "bg-blue-500";
               const textColor = "text-dark";
 
               return (
@@ -1244,12 +1241,12 @@ const formatAmount = (value) => {
                           {item.name
                             ? item.name.split(" ").length > 1
                               ? item.name.split(" ").slice(0, 5).join(" ") +
-                                (item.name.split(" ").length > 5
-                                  ? "..."
-                                  : "")
+                              (item.name.split(" ").length > 5
+                                ? "..."
+                                : "")
                               : item.name.length > 20
-                              ? item.name.slice(0, 14) + "..."
-                              : item.name
+                                ? item.name.slice(0, 14) + "..."
+                                : item.name
                             : ""}
                         </span>
                         {item.notes && (
@@ -1443,11 +1440,10 @@ const formatAmount = (value) => {
           <button
             onClick={handleClearSelected}
             disabled={!hasSelection}
-            className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${
-              !hasSelection
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-pos-interactive-hover"
-            }`}
+            className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${!hasSelection
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-pos-interactive-hover"
+              }`}
           >
             🗑️
           </button>
@@ -1455,11 +1451,10 @@ const formatAmount = (value) => {
           <button
             onClick={() => setShowDeleteAllModal(true)}
             disabled={cart.length === 0}
-            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${
-              cart.length === 0
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-pos-interactive-hover"
-            }`}
+            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${cart.length === 0
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-pos-interactive-hover"
+              }`}
           >
             <span className="relative inline-block">
               🛒
@@ -1472,11 +1467,10 @@ const formatAmount = (value) => {
           <button
             onClick={handleNotes}
             disabled={cart.length === 0}
-            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${
-              cart.length === 0
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-pos-interactive-hover"
-            }`}
+            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${cart.length === 0
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-pos-interactive-hover"
+              }`}
           >
             📝
           </button>
@@ -1492,11 +1486,10 @@ const formatAmount = (value) => {
           <button
             onClick={handleSplitCart}
             disabled={!hasSelection || !selectedTable}
-            className={`relative text-pos-text-secondary py-2 ${
-              !hasSelection || !selectedTable
-                ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed"
-                : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"
-            }`}
+            className={`relative text-pos-text-secondary py-2 ${!hasSelection || !selectedTable
+              ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed"
+              : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"
+              }`}
             title="Move selected items to another table"
           >
             <span className="text-lg">🔀</span>
@@ -1515,11 +1508,10 @@ const formatAmount = (value) => {
                 key={val}
                 onClick={() => handleNumpadInput(val)}
                 className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 
-        ${
-          val === "C"
-            ? "bg-red-500 hover:bg-red-600 text-white"
-            : "bg-pos-bg-quaternary hover:bg-pos-bg-tertiary text-white active:scale-95"
-        }`}
+        ${val === "C"
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-pos-bg-quaternary hover:bg-pos-bg-tertiary text-white active:scale-95"
+                  }`}
               >
                 {val}
               </button>
@@ -1601,7 +1593,7 @@ const formatAmount = (value) => {
                     {formatAmount(
                       Math.max(
                         (cashmaticInfo?.inserted ?? 0) -
-                          (cashmaticInfo?.requested ?? 0),
+                        (cashmaticInfo?.requested ?? 0),
                         0
                       )
                     )}
@@ -1622,19 +1614,19 @@ const formatAmount = (value) => {
                       ? "Ready for next customer"
                       : cashmaticInfo.state === "RUNNING" ||
                         cashmaticInfo.state === "IN_PROGRESS"
-                      ? "Payment in progress..."
-                      : cashmaticInfo.state === "PAID"
-                      ? "Amount received – change being dispensed"
-                      : cashmaticInfo.state === "FINISHED_MANUAL"
-                      ? "Payment completed – give manual change"
-                      : cashmaticInfo.state === "FINISHED"
-                      ? "Payment completed"
-                      : cashmaticInfo.state === "CANCELLED"
-                      ? "Cancelled"
-                      : cashmaticInfo.state === "ERROR" ||
-                        cashmaticInfo.state === "FAILED"
-                      ? "Error – check Cashmatic"
-                      : "Unknown status"}
+                        ? "Payment in progress..."
+                        : cashmaticInfo.state === "PAID"
+                          ? "Amount received – change being dispensed"
+                          : cashmaticInfo.state === "FINISHED_MANUAL"
+                            ? "Payment completed – give manual change"
+                            : cashmaticInfo.state === "FINISHED"
+                              ? "Payment completed"
+                              : cashmaticInfo.state === "CANCELLED"
+                                ? "Cancelled"
+                                : cashmaticInfo.state === "ERROR" ||
+                                  cashmaticInfo.state === "FAILED"
+                                  ? "Error – check Cashmatic"
+                                  : "Unknown status"}
                   </span>
                 </div>
               </div>
@@ -1644,13 +1636,13 @@ const formatAmount = (value) => {
                   cashmaticInfo.state === "FINISHED_MANUAL" ||
                   cashmaticInfo.state === "CANCELLED" ||
                   cashmaticInfo.state === "ERROR") && (
-                  <button
-                    className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                    onClick={() => setShowCashmaticModal(false)}
-                  >
-                    Close
-                  </button>
-                )}
+                    <button
+                      className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
+                      onClick={() => setShowCashmaticModal(false)}
+                    >
+                      Close
+                    </button>
+                  )}
               </div>
             </div>
           </div>
@@ -1676,14 +1668,14 @@ const formatAmount = (value) => {
                     {payworldStatus.state === "IN_PROGRESS"
                       ? "Payment in progress on terminal..."
                       : payworldStatus.state === "APPROVED"
-                      ? "Payment approved."
-                      : payworldStatus.state === "DECLINED"
-                      ? "Payment declined."
-                      : payworldStatus.state === "CANCELLED"
-                      ? "Payment cancelled."
-                      : payworldStatus.state === "ERROR"
-                      ? "Error during payment."
-                      : "Ready."}
+                        ? "Payment approved."
+                        : payworldStatus.state === "DECLINED"
+                          ? "Payment declined."
+                          : payworldStatus.state === "CANCELLED"
+                            ? "Payment cancelled."
+                            : payworldStatus.state === "ERROR"
+                              ? "Error during payment."
+                              : "Ready."}
                   </span>
                 </div>
 
@@ -1708,20 +1700,20 @@ const formatAmount = (value) => {
                   payworldStatus.state === "DECLINED" ||
                   payworldStatus.state === "CANCELLED" ||
                   payworldStatus.state === "ERROR") && (
-                  <button
-                    className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                    onClick={() => {
-                      setShowPayworldModal(false);
-                      setPayworldStatus({
-                        state: "IDLE",
-                        message: "",
-                        details: null,
-                      });
-                    }}
-                  >
-                    Close
-                  </button>
-                )}
+                    <button
+                      className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
+                      onClick={() => {
+                        setShowPayworldModal(false);
+                        setPayworldStatus({
+                          state: "IDLE",
+                          message: "",
+                          details: null,
+                        });
+                      }}
+                    >
+                      Close
+                    </button>
+                  )}
               </div>
             </div>
           </div>
@@ -1767,12 +1759,12 @@ const formatAmount = (value) => {
               selectedIds.length === 0
                 ? "Whole Order"
                 : selectedIds.length === 1
-                ? cart.find((item) => {
+                  ? cart.find((item) => {
                     const itemCartId =
                       item.cartItemId || `${item.id}_${item.name}`;
                     return itemCartId === selectedIds[0];
                   })?.name
-                : cart
+                  : cart
                     .filter((item) => {
                       const itemCartId =
                         item.cartItemId || `${item.id}_${item.name}`;
@@ -1784,19 +1776,19 @@ const formatAmount = (value) => {
             basePrice={
               selectedIds.length === 0
                 ? cart.reduce((sum, i) => {
+                  const priceToUse = i.originalPrice || i.price;
+                  return sum + priceToUse * i.quantity;
+                }, 0)
+                : cart
+                  .filter((item) => {
+                    const itemCartId =
+                      item.cartItemId || `${item.id}_${item.name}`;
+                    return selectedIds.includes(itemCartId);
+                  })
+                  .reduce((sum, i) => {
                     const priceToUse = i.originalPrice || i.price;
                     return sum + priceToUse * i.quantity;
                   }, 0)
-                : cart
-                    .filter((item) => {
-                      const itemCartId =
-                        item.cartItemId || `${item.id}_${item.name}`;
-                      return selectedIds.includes(itemCartId);
-                    })
-                    .reduce((sum, i) => {
-                      const priceToUse = i.originalPrice || i.price;
-                      return sum + priceToUse * i.quantity;
-                    }, 0)
             }
             onClose={() => setShowDiscountModal(false)}
             onConfirm={({ finalPrice, mode, rawInput }) => {
