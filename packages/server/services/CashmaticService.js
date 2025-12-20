@@ -86,7 +86,7 @@ class CashmaticService {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log("api/transcation/startPayment", body, " Base URL : " , baseUrl, " Token : ", Token);
+    console.log("api/transcation/startPayment", body, " Base URL : " , baseUrl, " Token : ", token);
     const sessionId = generateSessionId();
     sessions.set(sessionId, {
       token,
@@ -118,7 +118,7 @@ class CashmaticService {
       );
 
       const body = res.data || {};
-      console.log('Cashmatic ActiveTransaction raw:', body);
+      console.log('Cashmatic ActiveTransaction raw:', JSON.stringify(body, null, 2));
 
       const data = body.data || body;
 
@@ -191,6 +191,8 @@ class CashmaticService {
       const operation = (data.operation || body.operation || '').toString().toUpperCase();
       const rawStatus = (data.status || body.status || '').toString().toUpperCase();
 
+      console.log(`[Cashmatic] Session ${sessionId}: operation="${operation}", status="${rawStatus}", requested=${requested}, inserted=${inserted}, dispensed=${dispensed}, notDispensed=${notDispensed}`);
+
       // Store latest monetary info in session (for the "no data" fallback)
       session.amount = requested;
       session.insertedAmount = inserted;
@@ -198,20 +200,37 @@ class CashmaticService {
       session.notDispensedAmount = notDispensed;
 
       let state = session.state || 'IN_PROGRESS';
+      console.log(`[Cashmatic] Current session state: ${state}`);
 
       if (operation && operation !== 'IDLE') {
         // Transaction is still running
+        console.log(`[Cashmatic] Operation is active: ${operation}`);
         if (requested > 0 && inserted >= requested) {
           // Money fully inserted, waiting for change
+          console.log('[Cashmatic] Payment complete, waiting for change dispensing...');
           state = 'PAID';
         } else {
+          console.log('[Cashmatic] Payment in progress...');
           state = 'IN_PROGRESS';
         }
       } else {
         // Operation is IDLE => transaction finished on the device
+        console.log('[Cashmatic] Operation is IDLE - transaction ending');
         if (requested > 0 && inserted >= requested) {
+          // Payment was completed successfully
+          console.log('[Cashmatic] Payment amount satisfied, marking as FINISHED');
           if (notDispensed > 0) {
             // Device could not dispense all change – manual change required
+            console.log(`[Cashmatic] Manual change required: ${notDispensed}`);
+            state = 'FINISHED_MANUAL';
+          } else {
+            console.log('[Cashmatic] Change dispensed successfully');
+            state = 'FINISHED';
+          }
+        } else if (session.state === 'PAID' && inserted >= requested) {
+          // Was in PAID state and money is complete, now IDLE = transaction finished
+          console.log('[Cashmatic] Transitioning from PAID to FINISHED');
+          if (notDispensed > 0) {
             state = 'FINISHED_MANUAL';
           } else {
             state = 'FINISHED';
@@ -221,18 +240,33 @@ class CashmaticService {
           rawStatus.includes('ABORT') ||
           rawStatus.includes('STOP')
         ) {
+          console.log('[Cashmatic] Transaction cancelled');
           state = 'CANCELLED';
         } else if (
           rawStatus.includes('ERROR') ||
           rawStatus.includes('FAIL')
         ) {
+          console.log('[Cashmatic] Transaction error');
           state = 'ERROR';
+        } else if (session.state === 'PAID') {
+          // If we were in PAID state, don't revert to CANCELLED
+          // Keep checking until we get proper completion
+          console.log('[Cashmatic] Still in PAID state, waiting for completion...');
+          state = 'PAID';
         } else {
-          // Fallback: consider it cancelled
-          state = 'CANCELLED';
+          // Only mark as cancelled if payment wasn't completed
+          if (inserted < requested) {
+            console.log('[Cashmatic] Insufficient payment, marking as CANCELLED');
+            state = 'CANCELLED';
+          } else {
+            // Payment amount was met, mark as finished
+            console.log('[Cashmatic] Payment satisfied in IDLE, marking as FINISHED');
+            state = notDispensed > 0 ? 'FINISHED_MANUAL' : 'FINISHED';
+          }
         }
       }
 
+      console.log(`[Cashmatic] New state: ${state}`);
       session.state = state;
       sessions.set(sessionId, session);
 
@@ -253,6 +287,39 @@ class CashmaticService {
     //   };
     // }
   }
+  static async finishPayment(sessionId) {
+    const session = sessions.get(sessionId);
+    if (!session) return null;
+
+    const client = this.getHttpClient();
+    const baseUrl = this.getBaseUrl();
+
+    try {
+      console.log('Calling Cashmatic FinishPayment API...');
+      await client.post(
+        `${baseUrl}/api/transaction/FinishPayment`,
+        null,
+        {
+          headers: {
+            Authorization: `Bearer ${session.token}`,
+          },
+        }
+      );
+      console.log('Cashmatic FinishPayment successful');
+    } catch (err) {
+      console.error('Cashmatic finishPayment error:', err.message || err);
+      // Don't throw - payment was successful, just log the error
+    }
+
+    // Clean up session
+    sessions.delete(sessionId);
+
+    return {
+      state: 'FINISHED',
+      success: true,
+    };
+  }
+
   static async cancelPayment(sessionId) {
     const session = sessions.get(sessionId);
     if (!session) return null;

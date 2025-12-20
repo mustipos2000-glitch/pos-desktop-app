@@ -302,27 +302,41 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         console.log("Finished the Cashmatic ");
 
         setCashmaticPolling(false);
+        const currentSessionId = cashmaticSessionId;
         setCashmaticSessionId(null);
-        setToastType("success");
-        setToastMessage(
-          s.state === "FINISHED"
-            ? "Cashmatic payment completed."
-            : "Cashmatic payment completed – give manual change."
-        );
+
+
 
         const subTotal = calculateTotal();
         const total = subTotal - discount;
 
-        await handlePaymentConfirm({
-          totalPaid: total,
-          cashAmount: total,
-          cardAmount: 0,
-          changeDue: 0,
-        });
+        try {
+          // Call finish API to close transaction and print receipt on Cashmatic
+          console.log("Calling finish API to close Cashmatic transaction...");
+          await ApiService.finishCashmaticPayment(currentSessionId);
 
-        setIsProcessing(false);
 
-        if (s.state === "FINISHED") {
+          await handlePaymentConfirm({
+            totalPaid: total,
+            cashAmount: total,
+            cardAmount: 0,
+            changeDue: 0,
+          });
+
+          setToastType("success");
+          setToastMessage(
+            s.state === "FINISHED"
+              ? "Cashmatic payment completed successfully!"
+              : "Cashmatic payment completed – manual change given."
+          );
+
+          setIsProcessing(false);
+        } catch (error) {
+          console.error("Error completing order after Cashmatic payment:", error);
+          setToastType("error");
+          setToastMessage("Payment successful but failed to complete order.");
+          setIsProcessing(false);
+
           setShowCashmaticModal(false);
         }
         return;
