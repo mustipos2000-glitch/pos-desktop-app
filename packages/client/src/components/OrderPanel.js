@@ -18,7 +18,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   };
   
   // Helper function to generate manual change receipt data
-  const generateManualChangeReceipt = (orderData, manualChangeAmount) => {
+  const generateManualChangeReceipt = useCallback((orderData, manualChangeAmount) => {
     return {
       type: 'manual_change',
       orderId: orderData.id || currentOrderId,
@@ -29,7 +29,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       cashier: selectedEmployee?.name || 'Unknown',
       reason: 'Cashmatic insufficient denominations'
     };
-  };
+  });
 
   // Helper function to save manual change record to database (optional)
   const saveManualChangeRecord = async (receiptData) => {
@@ -74,6 +74,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   });
   const [showCashmaticModal, setShowCashmaticModal] = useState(false);
   const [manualChangeReceipt, setManualChangeReceipt] = useState(null);
+  const [showManualChangeModal, setShowManualChangeModal] = useState(false);
+  const [manualChangeAmount, setManualChangeAmount] = useState(0);
 
   // Payworld state
   const [showPayworldModal, setShowPayworldModal] = useState(false);
@@ -337,26 +339,25 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         });
         
         if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
-          // Early return if insufficient payment
-          if (inserted < requested) return;
-          
-          // Calculate change and manual change due
+          if(inserted < requested)  return;  
+          if(inserted > requested && dispensed > 0 ){
             const change = inserted - requested;
-          const manualChangeDue = Math.max(0, change - dispensed);
-          
-          // Generate manual change receipt only if manual change is required
-          if (manualChangeDue > 0) {
-              const receiptData = generateManualChangeReceipt(
-                { id: currentOrderId },
-                manualChangeDue
-              );
-              setManualChangeReceipt(receiptData);
-
-              // Save manual change record for tracking
-              await saveManualChangeRecord(receiptData);
-
-              console.log("Manual change receipt generated:", receiptData);
+            if(change > 0){
+              const manualChangeDue = change - dispensed;
+              if(manualChangeDue > 0){
+               // Show a popup with a button that Manual amount to customer is "Change" and when the operator press the button it should print the order receipt. 
+                setManualChangeAmount(manualChangeDue);
+                setShowManualChangeModal(true);
+                setCashmaticPolling(false);
+                setCashmaticSessionId(null);
+                setShowCashmaticModal(false);
+                return;
+              }
             }
+          }else{
+            return
+          }
+
           console.log("Finished the Cashmatic ");
 
           setCashmaticPolling(false);
@@ -368,7 +369,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
           // Calculate the actual change due
           const totalChange = inserted - requested;
-          // const manualChangeDue = notDispensed; // Amount that needs to be given manually
+          const manualChangeDue = notDispensed; // Amount that needs to be given manually
 
           try {
             // Call finish API to close transaction and print receipt on Cashmatic
@@ -651,6 +652,46 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   };
 
   // Cancel Cashmatic payment
+  // Handle manual change payment and print receipt
+  const handleManualChangePayment = async () => {
+    try {
+      const subTotal = calculateTotal();
+      const total = subTotal - discount;
+
+      // Complete the payment with proper change calculation
+      await handlePaymentConfirm({
+        totalPaid: cashmaticInfo.inserted, // Customer actually paid this amount
+        cashAmount: cashmaticInfo.inserted,
+        cardAmount: 0,
+        changeDue: cashmaticInfo.inserted - cashmaticInfo.requested, // Total change due
+        cashmaticDispensed: cashmaticInfo.dispensed, // Change given by machine
+        manualChangeDue: manualChangeAmount, // Change to be given manually
+      });
+
+      // Generate manual change receipt
+      const receiptData = generateManualChangeReceipt(
+        { id: currentOrderId }, 
+        manualChangeAmount
+      );
+      setManualChangeReceipt(receiptData);
+      
+      // Save manual change record for tracking
+      await saveManualChangeRecord(receiptData);
+
+      setToastType("success");
+      setToastMessage(`Payment completed! Manual change of €${formatAmount(manualChangeAmount)} given to customer.`);
+      setIsProcessing(false);
+      setShowManualChangeModal(false);
+      
+    } catch (error) {
+      console.error("Error completing manual change payment:", error);
+      setToastType("error");
+      setToastMessage("Payment successful but failed to complete order.");
+      setIsProcessing(false);
+      setShowManualChangeModal(false);
+    }
+  };
+
   const handleCancelCashmatic = () => {
     console.log("Cancelling Cashmatic payment");
     
@@ -2137,6 +2178,54 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           title={noteModalTitle}
           currentNote={currentNoteValue}
         />
+
+        {/* Manual Change Modal */}
+        {showManualChangeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+              <div className="text-center">
+                <div className="mb-4">
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                    <span className="text-3xl">💰</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">
+                    Manual Change Required
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    The Cashmatic machine could not dispense the full change amount.
+                  </p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <p className="text-lg font-semibold text-yellow-800">
+                      Manual Amount to Pay: €{formatAmount(manualChangeAmount)}
+                    </p>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Please give this amount to the customer manually
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleManualChangePayment}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    ✓ Manual Amount Paid - Print Receipt
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setShowManualChangeModal(false);
+                      setShowCashmaticModal(true); // Go back to Cashmatic modal
+                    }}
+                    className="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
