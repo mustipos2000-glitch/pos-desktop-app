@@ -94,6 +94,10 @@ class CashmaticService {
       state: 'IN_PROGRESS',
       createdAt: Date.now(),
       insertedAmount: 0,
+      dispensedAmount: 0,
+      notDispensedAmount: 0,
+      dispensedAmountCached: false,
+      notDispensedAmountCached: false,
     });
     console.log("Session Id", sessionId);
     return { sessionId };
@@ -131,14 +135,87 @@ class CashmaticService {
         paymentDispensed: data.paymentDispensed,
         paymentNotDispensed: data.paymentNotDispensed
       });
-      console.log('[Cashmatic] Raw body values (fallback):', {
-        dispensed: body.dispensed,
-        notDispensed: body.notDispensed,
-        dispensedAmount: body.dispensedAmount,
-        notDispensedAmount: body.notDispensedAmount,
-        paymentDispensed: body.paymentDispensed,
-        paymentNotDispensed: body.paymentNotDispensed
-      });
+
+      // Check if ActiveTransaction returns no data or operation is IDLE
+      const operation = (data.operation || body.operation || '').toString().toUpperCase();
+      const hasActiveTransaction = data && Object.keys(data).length > 0 && operation !== 'IDLE';
+
+      // If no active transaction, try LastTransaction to get final dispensed amounts
+      if (!hasActiveTransaction && (session.state === 'PAID' || session.state === 'IN_PROGRESS')) {
+        console.log('[Cashmatic] No active transaction found, checking LastTransaction for final amounts...');
+        
+        try {
+          const lastTxRes = await client.post(
+            `${baseUrl}/api/device/LastTransaction`,
+            null,
+            {
+              headers: {
+                Authorization: `Bearer ${session.token}`,
+              },
+            }
+          );
+
+          const lastTxBody = lastTxRes.data || {};
+          const lastTxData = lastTxBody.data || lastTxBody;
+          
+          console.log('Cashmatic LastTransaction raw:', JSON.stringify(lastTxBody, null, 2));
+          
+          if (lastTxData && Object.keys(lastTxData).length > 0) {
+            // Use LastTransaction data for final amounts
+            const lastRequested = Number(lastTxData.requested) || session.amount;
+            const lastInserted = Number(lastTxData.inserted) || session.insertedAmount || 0;
+            let lastDispensed = Number(lastTxData.dispensed) || 0;
+            let lastNotDispensed = Number(lastTxData.notDispensed) || 0;
+            
+            // Check denominationsDispensed array for actual dispensed amount
+            if (lastDispensed === 0 && lastTxData.denominationsDispensed && Array.isArray(lastTxData.denominationsDispensed)) {
+              lastDispensed = lastTxData.denominationsDispensed.reduce((total, denom) => {
+                return total + (Number(denom.value) || 0);
+              }, 0);
+              console.log(`[Cashmatic] Calculated dispensed from denominations: ${lastDispensed}`);
+            }
+            
+            // Recalculate notDispensed if needed
+            const totalChange = lastInserted - lastRequested;
+            if (totalChange > 0 && lastNotDispensed === 0 && lastDispensed < totalChange) {
+              lastNotDispensed = totalChange - lastDispensed;
+              console.log(`[Cashmatic] Recalculated notDispensed: ${lastNotDispensed}`);
+            }
+            
+            console.log(`[Cashmatic] LastTransaction values: requested=${lastRequested}, inserted=${lastInserted}, dispensed=${lastDispensed}, notDispensed=${lastNotDispensed}`);
+            
+            // Update session with final values
+            session.amount = lastRequested;
+            session.insertedAmount = lastInserted;
+            session.dispensedAmount = lastDispensed;
+            session.notDispensedAmount = lastNotDispensed;
+            
+            // Determine final state
+            let finalState = 'FINISHED';
+            if (lastNotDispensed > 0) {
+              finalState = 'FINISHED_MANUAL';
+              console.log(`[Cashmatic] Manual change required: ${lastNotDispensed}`);
+            } else {
+              console.log('[Cashmatic] Change dispensed successfully');
+            }
+            
+            session.state = finalState;
+            sessions.set(sessionId, session);
+            
+            return {
+              state: finalState,
+              requestedAmount: lastRequested,
+              insertedAmount: lastInserted,
+              dispensedAmount: lastDispensed,
+              notDispensedAmount: lastNotDispensed,
+              rawStatus: 'COMPLETED',
+            };
+          }
+        } catch (lastTxError) {
+          console.error('Error fetching LastTransaction:', lastTxError.message);
+          // Continue with ActiveTransaction logic below
+        }
+      }
 
       // No data at all: treat as end of transaction, re-use session state
       if (!data || (Object.keys(data).length === 0 && data.constructor === Object)) {
@@ -183,7 +260,7 @@ class CashmaticService {
         }
       }
 
-      // FIX: Use correct API field names from documentation
+      // Continue with existing ActiveTransaction processing logic...
       const requestedRaw = typeof data.requested !== 'undefined' ? data.requested : session.amount;
       const insertedRaw = typeof data.inserted !== 'undefined' ? data.inserted : 0;
 
@@ -217,21 +294,46 @@ class CashmaticService {
 
       console.log(`[Cashmatic] Raw dispensed values: dispensed=${dispensedRaw}, notDispensed=${notDispensedRaw}`);
 
-      const operation = (data.operation || body.operation || '').toString().toUpperCase();
       const rawStatus = (data.status || body.status || '').toString().toUpperCase();
 
       console.log(`[Cashmatic] Session ${sessionId}: operation="${operation}", status="${rawStatus}", requested=${requested}, inserted=${inserted}, dispensed=${dispensed}, notDispensed=${notDispensed}`);
 
-      // Store latest monetary info in session (for the "no data" fallback)
-      session.amount = requested;
-      session.insertedAmount = inserted;
+      if (requested > 0) session.amount = requested;
+      if (inserted > 0) session.insertedAmount = inserted;
+
+      // CRITICAL: Cache dispensed amounts when they first appear (they may disappear later)
+      if (dispensed > 0 && !session.dispensedAmountCached) {
+        session.dispensedAmount = dispensed;
+        session.dispensedAmountCached = true;
+        console.log(`[Cashmatic] Cached dispensed amount: ${dispensed}`);
+      }
+      if (notDispensed > 0 && !session.notDispensedAmountCached) {
+        session.notDispensedAmount = notDispensed;
+        session.notDispensedAmountCached = true;
+        console.log(`[Cashmatic] Cached notDispensed amount: ${notDispensed}`);
+      }
+
+      // If both amounts are 0 but we haven't cached anything yet, store them anyway
+      if (!session.dispensedAmountCached && !session.notDispensedAmountCached) {
       session.dispensedAmount = dispensed;
       session.notDispensedAmount = notDispensed;
-
+    }
       let state = session.state || 'IN_PROGRESS';
       console.log(`[Cashmatic] Current session state: ${state}`);
+// Check if transaction completed (API returns empty data after completion)
+      const transactionCompleted = (requested === 0 && inserted === 0 && dispensed === 0 && notDispensed === 0) && 
+                                  (session.dispensedAmountCached || session.notDispensedAmountCached  || session.state === 'PAID');
 
-      if (operation && operation !== 'IDLE') {
+      if (transactionCompleted) {
+        console.log('[Cashmatic] Transaction completed - API returned empty data, using cached values');
+        if (session.notDispensedAmount > 0) {
+          console.log(`[Cashmatic] Manual change required: ${session.notDispensedAmount}`);
+          state = 'FINISHED_MANUAL';
+        } else {
+          console.log('[Cashmatic] Change dispensed successfully');
+          state = 'FINISHED';
+        }
+      } else if (operation && operation !== 'IDLE') {
         // Transaction is still running
         console.log(`[Cashmatic] Operation is active: ${operation}`);
         if (requested > 0 && inserted >= requested) {
@@ -294,17 +396,29 @@ class CashmaticService {
           }
         }
       }
+// Check for timeout (if transaction has been running too long)
+      const transactionAge = Date.now() - session.createdAt;
+      const timeoutMs = 5 * 60 * 1000; // 5 minutes timeout
 
+      if (transactionAge > timeoutMs && session.state !== 'FINISHED' && session.state !== 'FINISHED_MANUAL') {
+        console.log(`[Cashmatic] Transaction timeout after ${transactionAge}ms`);
+        if (session.insertedAmount >= session.amount) {
+          // Payment was made, assume completion
+          state = session.notDispensedAmount > 0 ? 'FINISHED_MANUAL' : 'FINISHED';
+        } else {
+          state = 'CANCELLED';
+        }
+      }
       console.log(`[Cashmatic] New state: ${state}`);
       session.state = state;
       sessions.set(sessionId, session);
 
       return {
         state,
-        requestedAmount: requested,
-        insertedAmount: inserted,
-        dispensedAmount: dispensed,
-        notDispensedAmount: notDispensed,
+        requestedAmount: requested || session.amount || 0,
+        insertedAmount: inserted || session.insertedAmount || 0,
+        dispensedAmount: session.dispensedAmount || 0,
+        notDispensedAmount: session.notDispensedAmount || 0,
         rawStatus,
       };
     } catch (err) {
