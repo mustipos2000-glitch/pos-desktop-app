@@ -164,8 +164,23 @@ class CashmaticService {
             // Use LastTransaction data for final amounts
             const lastRequested = Number(lastTxData.requested) || session.amount;
             const lastInserted = Number(lastTxData.inserted) || session.insertedAmount || 0;
-            const lastDispensed = Number(lastTxData.dispensed) || 0;
-            const lastNotDispensed = Number(lastTxData.notDispensed) || 0;
+            let lastDispensed = Number(lastTxData.dispensed) || 0;
+            let lastNotDispensed = Number(lastTxData.notDispensed) || 0;
+            
+            // Check denominationsDispensed array for actual dispensed amount
+            if (lastDispensed === 0 && lastTxData.denominationsDispensed && Array.isArray(lastTxData.denominationsDispensed)) {
+              lastDispensed = lastTxData.denominationsDispensed.reduce((total, denom) => {
+                return total + (Number(denom.value) || 0);
+              }, 0);
+              console.log(`[Cashmatic] Calculated dispensed from denominations: ${lastDispensed}`);
+            }
+            
+            // Recalculate notDispensed if needed
+            const totalChange = lastInserted - lastRequested;
+            if (totalChange > 0 && lastNotDispensed === 0 && lastDispensed < totalChange) {
+              lastNotDispensed = totalChange - lastDispensed;
+              console.log(`[Cashmatic] Recalculated notDispensed: ${lastNotDispensed}`);
+            }
             
             console.log(`[Cashmatic] LastTransaction values: requested=${lastRequested}, inserted=${lastInserted}, dispensed=${lastDispensed}, notDispensed=${lastNotDispensed}`);
             
