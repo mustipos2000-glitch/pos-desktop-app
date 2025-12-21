@@ -1730,7 +1730,17 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   </span>
                 </div>
               </div>
-
+              <div className="flex justify-center items-center w-full">
+                <button 
+                    className="mt-4 px-4 py-2 rounded bg-red-500 text-white items-center hover:bg-red-600"
+                    onClick={handleCancelCashmatic}
+                    disabled={cashmaticInfo.state === "CANCELLED" ||
+                              cashmaticInfo.state === "FINISHED" ||
+                              cashmaticInfo.state === "FINISHED_MANUAL"}
+                  >
+                    Cancel Payment
+                  </button>
+                </div>
               {/* Manual Change Alert */}
               {(cashmaticInfo.state === "FINISHED_MANUAL" || 
                 (cashmaticInfo.state === "FINISHED" && cashmaticInfo?.notDispensed > 0)) && (
