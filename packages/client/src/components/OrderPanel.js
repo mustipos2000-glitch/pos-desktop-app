@@ -632,6 +632,36 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     }
   };
 
+  // Cancel Cashmatic payment
+  const handleCancelCashmatic = () => {
+    console.log("Cancelling Cashmatic payment");
+    
+    // Stop polling
+    setCashmaticPolling(false);
+    
+    // Clear session
+    setCashmaticSessionId(null);
+    
+    // Reset processing state
+    setIsProcessing(false);
+    
+    // Close modal
+    setShowCashmaticModal(false);
+    
+    // Reset Cashmatic info
+    setCashmaticInfo({
+      requested: 0,
+      inserted: 0,
+      dispensed: 0,
+      notDispensed: 0,
+      state: null,
+    });
+    
+    // Show cancellation message
+    setToastType("info");
+    setToastMessage("Cashmatic payment cancelled.");
+  };
+
   // Payworld flow
   const startPayworldFlow = async () => {
     console.log("Click on start Payworld Flow ");
