@@ -565,6 +565,36 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     }
   };
 
+  // Cancel Cashmatic payment
+  const handleCancelCashmatic = () => {
+    console.log("Cancelling Cashmatic payment");
+    
+    // Stop polling
+    setCashmaticPolling(false);
+    
+    // Clear session
+    setCashmaticSessionId(null);
+    
+    // Reset processing state
+    setIsProcessing(false);
+    
+    // Close modal
+    setShowCashmaticModal(false);
+    
+    // Reset Cashmatic info
+    setCashmaticInfo({
+      requested: 0,
+      inserted: 0,
+      dispensed: 0,
+      notDispensed: 0,
+      state: null,
+    });
+    
+    // Show cancellation message
+    setToastType("info");
+    setToastMessage("Cashmatic payment cancelled.");
+  };
+
   // Payworld flow
   const startPayworldFlow = async () => {
     console.log("Click on start Payworld Flow ");
@@ -1646,6 +1676,19 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               </div>
 
               <div className="mt-6 flex justify-end gap-2">
+                {/* Show Cancel button when payment is in progress */}
+                {(cashmaticInfo.state === "IN_PROGRESS" || 
+                  cashmaticInfo.state === "RUNNING" ||
+                  cashmaticInfo.state === "PAID") && (
+                    <button
+                      className="px-4 py-2 rounded bg-red-500 border border-red-600 text-white hover:bg-red-600"
+                      onClick={handleCancelCashmatic}
+                    >
+                      Cancel Payment
+                    </button>
+                  )}
+                
+                {/* Show Close button when payment is finished/cancelled/error */}
                 {(cashmaticInfo.state === "FINISHED" ||
                   cashmaticInfo.state === "FINISHED_MANUAL" ||
                   cashmaticInfo.state === "CANCELLED" ||
