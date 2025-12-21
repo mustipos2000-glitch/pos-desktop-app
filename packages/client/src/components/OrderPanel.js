@@ -328,6 +328,15 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         const dispensed = (s.dispensedAmount || 0) / 100;
         const notDispensed = (s.notDispensedAmount || 0) / 100;
 
+        console.log('Frontend received Cashmatic status:', {
+          state: s.state,
+          requested,
+          inserted,
+          dispensed,
+          notDispensed,
+          rawResponse: s
+        });
+
         setCashmaticInfo({
           requested,
           inserted,
@@ -1685,9 +1694,50 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         {showCashmaticModal && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-60">
             <div className="bg-pos-bg-primary border border-pos-border-primary rounded-lg shadow-lg w-full max-w-md p-6">
-              <h2 className="text-xl font-semibold text-pos-text-primary mb-4">
+              <h2 className="text-xl font-semibold text-pos-text-primary mb-4 flex items-center">
                 Cashmatic Payment
+                {(cashmaticInfo.state === "IN_PROGRESS" || 
+                  cashmaticInfo.state === "PAID" || 
+                  cashmaticInfo.state === "RUNNING") && (
+                  <div className="ml-2 animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                )}
               </h2>
+              
+              {/* Progress Steps */}
+              <div className="mb-4 flex items-center justify-between text-xs">
+                <div className={`flex items-center ${
+                  cashmaticInfo.state !== "IN_PROGRESS" ? "text-green-600" : "text-blue-600"
+                }`}>
+                  <div className={`w-3 h-3 rounded-full mr-2 ${
+                    cashmaticInfo.state !== "IN_PROGRESS" ? "bg-green-600" : "bg-blue-600"
+                  }`}></div>
+                  Insert Money
+                </div>
+                <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+                <div className={`flex items-center ${
+                  cashmaticInfo.state === "PAID" || 
+                  cashmaticInfo.state === "FINISHED" || 
+                  cashmaticInfo.state === "FINISHED_MANUAL" ? "text-blue-600" : "text-gray-400"
+                }`}>
+                  <div className={`w-3 h-3 rounded-full mr-2 ${
+                    cashmaticInfo.state === "PAID" || 
+                    cashmaticInfo.state === "FINISHED" || 
+                    cashmaticInfo.state === "FINISHED_MANUAL" ? "bg-blue-600" : "bg-gray-400"
+                  }`}></div>
+                  Dispensing Change
+                </div>
+                <div className="flex-1 h-px bg-gray-300 mx-2"></div>
+                <div className={`flex items-center ${
+                  cashmaticInfo.state === "FINISHED" || 
+                  cashmaticInfo.state === "FINISHED_MANUAL" ? "text-green-600" : "text-gray-400"
+                }`}>
+                  <div className={`w-3 h-3 rounded-full mr-2 ${
+                    cashmaticInfo.state === "FINISHED" || 
+                    cashmaticInfo.state === "FINISHED_MANUAL" ? "bg-green-600" : "bg-gray-400"
+                  }`}></div>
+                  Complete
+                </div>
+              </div>
               <div className="space-y-2 text-pos-text-primary text-sm">
                 <div className="flex justify-between">
                   <span>Requested:</span>
@@ -1697,19 +1747,42 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   <span>Inserted:</span>
                   <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Change dispensed by machine:</span>
-                  <span>€ {formatAmount(cashmaticInfo?.dispensed)}</span>
-                </div>
-                {cashmaticInfo?.notDispensed > 0 && (
-                  <div className="flex justify-between bg-yellow-100 p-2 rounded border-l-4 border-yellow-500">
-                    <span className="font-semibold text-yellow-800">Manual change required:</span>
-                    <span className="font-bold text-yellow-800">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
-                  </div>
+                
+                {/* Show change information only when relevant */}
+                {(cashmaticInfo?.state === "PAID" || 
+                  cashmaticInfo?.state === "FINISHED" || 
+                  cashmaticInfo?.state === "FINISHED_MANUAL") && (
+                  <>
+                    <hr className="my-2 border-pos-border-primary" />
+                    <div className="text-xs text-pos-text-secondary mb-1">Change Information:</div>
+                    <div className="flex justify-between">
+                      <span>Change dispensed by machine:</span>
+                      <span className="text-green-600 font-medium">€ {formatAmount(cashmaticInfo?.dispensed)}</span>
+                    </div>
+                    {cashmaticInfo?.notDispensed > 0 && (
+                      <div className="flex justify-between">
+                        <span>Change not dispensed:</span>
+                        <span className="text-orange-600 font-medium">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-semibold">
+                      <span>Total change due:</span>
+                      <span>€ {formatAmount((cashmaticInfo?.dispensed || 0) + (cashmaticInfo?.notDispensed || 0))}</span>
+                    </div>
+                  </>
                 )}
+                
+                <hr className="my-2 border-pos-border-primary" />
                 <div className="flex justify-between">
                   <span>Status:</span>
-                  <span>
+                  <span className={`font-medium ${
+                    cashmaticInfo.state === "FINISHED" ? "text-green-600" :
+                    cashmaticInfo.state === "FINISHED_MANUAL" ? "text-orange-600" :
+                    cashmaticInfo.state === "PAID" ? "text-blue-600" :
+                    cashmaticInfo.state === "CANCELLED" ? "text-red-600" :
+                    cashmaticInfo.state === "ERROR" ? "text-red-600" :
+                    "text-gray-600"
+                  }`}>
                     {cashmaticInfo.state === "IDLE"
                       ? "Ready for next customer"
                       : cashmaticInfo.state === "RUNNING" ||
@@ -1729,6 +1802,16 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                                   : "Unknown status"}
                   </span>
                 </div>
+                
+                {/* Debug information (can be toggled) */}
+                {process.env.NODE_ENV === 'development' && (
+                  <details className="mt-2">
+                    <summary className="text-xs text-gray-500 cursor-pointer">Debug Info</summary>
+                    <div className="mt-1 p-2 bg-gray-100 rounded text-xs">
+                      <pre>{JSON.stringify(cashmaticInfo, null, 2)}</pre>
+                    </div>
+                  </details>
+                )}
               </div>
               <div className="flex justify-center items-center w-full">
                 <button 
@@ -1742,15 +1825,41 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   </button>
                 </div>
               {/* Manual Change Alert */}
-              {(cashmaticInfo.state === "FINISHED_MANUAL" || 
-                (cashmaticInfo.state === "FINISHED" && cashmaticInfo?.notDispensed > 0)) && (
-                <div className="mt-4 p-3 bg-red-100 border border-red-400 rounded">
+              {cashmaticInfo?.notDispensed > 0 && 
+               (cashmaticInfo.state === "FINISHED_MANUAL" || 
+                cashmaticInfo.state === "FINISHED") && (
+                <div className="mt-4 p-4 bg-gradient-to-r from-orange-100 to-red-100 border-2 border-orange-400 rounded-lg">
+                  <div className="flex items-start">
+                    <div className="text-orange-600 mr-3 text-2xl">⚠️</div>
+                    <div className="flex-1">
+                      <p className="text-orange-900 font-bold text-lg">Manual Change Required!</p>
+                      <p className="text-orange-800 text-sm mt-1">
+                        The machine could not dispense all change. Please give the customer:
+                      </p>
+                      <div className="mt-2 p-2 bg-white rounded border border-orange-300">
+                        <p className="text-orange-900 font-bold text-xl text-center">
+                          €{formatAmount(cashmaticInfo?.notDispensed)}
+                        </p>
+                      </div>
+                      <p className="text-orange-700 text-xs mt-2">
+                        Machine dispensed: €{formatAmount(cashmaticInfo?.dispensed)} | 
+                        Manual change: €{formatAmount(cashmaticInfo?.notDispensed)} | 
+                        Total change: €{formatAmount((cashmaticInfo?.dispensed || 0) + (cashmaticInfo?.notDispensed || 0))}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Success message for completed payments */}
+              {cashmaticInfo.state === "FINISHED" && (!cashmaticInfo?.notDispensed || cashmaticInfo?.notDispensed === 0) && (
+                <div className="mt-4 p-3 bg-green-100 border border-green-400 rounded">
                   <div className="flex items-center">
-                    <div className="text-red-600 mr-2">⚠️</div>
+                    <div className="text-green-600 mr-2">✅</div>
                     <div>
-                      <p className="text-red-800 font-semibold">Action Required!</p>
-                      <p className="text-red-700 text-sm">
-                        Please give €{formatAmount(cashmaticInfo?.notDispensed)} change to the customer manually.
+                      <p className="text-green-800 font-semibold">Payment Completed Successfully!</p>
+                      <p className="text-green-700 text-sm">
+                        Change of €{formatAmount(cashmaticInfo?.dispensed)} has been dispensed by the machine.
                       </p>
                     </div>
                   </div>
