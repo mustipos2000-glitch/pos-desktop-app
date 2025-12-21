@@ -306,7 +306,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     const poll = async () => {
       try {
-        console.log("Start polling");
+        console.log("Start polling new");
 
         const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
         const s = res.data || res;
