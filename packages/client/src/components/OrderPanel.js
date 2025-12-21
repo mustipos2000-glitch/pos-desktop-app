@@ -1789,6 +1789,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   </span>
                 </div>
               </div>
+              <div className="flex">
               <div className="flex justify-center items-center w-full">
                 <button 
                     className="mt-4 px-4 py-2 rounded bg-red-500 text-white items-center hover:bg-red-600"
@@ -1868,6 +1869,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                       Close
                     </button>
                   )}
+              </div>
               </div>
             </div>
           </div>
