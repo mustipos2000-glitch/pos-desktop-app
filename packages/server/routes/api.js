@@ -17,6 +17,7 @@ const CustomerController = require('../controllers/CustomerController');
 const InventoryController = require('../controllers/InventoryController');
 const ReportController = require('../controllers/ReportController');
 const ScaleController = require('../controllers/ScaleController');
+const PromotionController = require('../controllers/PromotionController');
 
 
 
@@ -167,5 +168,13 @@ router.get('/scale/test', ScaleController.testConnection);
 router.get('/scale/status', ScaleController.getStatus);
 router.get('/scale/ports', ScaleController.getAvailablePorts);
 router.post('/scale/calculate-price', ScaleController.calculatePrice);
+
+// Promotion routes
+router.get('/promotions', PromotionController.getAllPromotions);
+router.get('/promotions/:id', PromotionController.getPromotionById);
+router.get('/promotions/product/:productId', PromotionController.getActivePromotionByProductId);
+router.post('/promotions', PromotionController.createPromotion);
+router.put('/promotions/:id', PromotionController.updatePromotion);
+router.delete('/promotions/:id', PromotionController.deletePromotion);
 
 module.exports = router;

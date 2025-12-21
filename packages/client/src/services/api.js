@@ -509,6 +509,47 @@ static async adjustInventory(productId, data) {
     });
   }
 
+  // Promotion methods
+  static async getPromotions() {
+    return this.request('/promotions');
+  }
+
+  static async getPromotionById(id) {
+    return this.request(`/promotions/${id}`);
+  }
+
+  static async getActivePromotionByProductId(productId) {
+    return this.request(`/promotions/product/${productId}`);
+  }
+
+  static async createPromotion(promotionData) {
+    return this.request('/promotions', {
+      method: 'POST',
+      body: JSON.stringify(promotionData),
+    });
+  }
+
+  static async updatePromotion(id, promotionData) {
+    return this.request(`/promotions/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(promotionData),
+    });
+  }
+
+  static async deletePromotion(id) {
+    return this.request(`/promotions/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Email Receipt methods
+  static async sendReceiptEmail(receiptData) {
+    return this.request('/payments/send-receipt-email', {
+      method: 'POST',
+      body: JSON.stringify(receiptData),
+    });
+  }
+
 }
 
 export default ApiService;

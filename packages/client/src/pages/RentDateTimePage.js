@@ -150,7 +150,7 @@ const RentDateTimePage = () => {
         <div className="max-w-5xl mx-auto h-full flex flex-col">
           
           <div className="flex-1 bg-pos-bg-secondary rounded-2xl border-2 border-pos-border-primary p-8 overflow-y-auto scrollbar-custom">
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center mb-2 px-1">
               
               {/* Start Date/Time Section */}
               <div className="max-w-sm">

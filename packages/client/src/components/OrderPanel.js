@@ -1245,7 +1245,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             {/* Table No */}
             <div className="flex flex-col">
               <div className="text-[9px] text-pos-text-muted uppercase mb-0.5 font-medium">Table</div>
-              <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded px-2 py-1 text-center">
+              <div className="border border-pos-border-light rounded px-2 py-1 text-center">
                 <span className="text-xs text-pos-text-primary font-semibold">
                   {selectedTable ? selectedTable.table_no : '--'}
                 </span>
@@ -1255,7 +1255,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             {/* Order No */}
             <div className="flex flex-col">
               <div className="text-[9px] text-pos-text-muted uppercase mb-0.5 font-medium">Order</div>
-              <div className="bg-pos-bg-tertiary border border-pos-border-secondary rounded px-2 py-1 text-center">
+              <div className="border border-pos-border-light rounded px-1 py-1 text-center">
                 <span className="text-xs text-pos-text-primary font-semibold">
                   {currentOrderNo ? currentOrderNo : '--'}
                 </span>
@@ -1276,7 +1276,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         </div>
 
         {/* Header */}
-        <div className="px-4 mt-2 bg-pos-bg-secondary border-b border-pos-border-light rounded-lg">
+        <div className="px-4 mt-2 bg-pos-bg-secondary border-b border-pos-border-light">
           <div className="grid grid-cols-12 gap-2.5 text-xs text-pos-text-muted font-semibold uppercase">
             <span className="col-span-4">Item</span>
             <span className="col-span-2 flex justify-center items-center">
@@ -1474,7 +1474,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         </div>
 
         {hasSelection && (
-          <div className="bg-green-600 px-3 py-2 border-t border-green-700">
+          <div className="bg-green-600 px-3 py-1 border-t border-green-700">
             <div className="flex items-center justify-between text-white">
               <div className="flex items-center gap-2">
                 <span className="text-lg">✓</span>

@@ -145,9 +145,9 @@ const AmountEntryPage = () => {
         className="mb-4"
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
         {/* Left Column - Info and Amount Display */}
-        <div className="space-y-4">
+        <div className="space-y-3 lg:space-y-4">
           {/* Context Info */}
           {selectedInfo && (
             <KioskInfoPanel items={getInfoItems()} />
@@ -155,8 +155,8 @@ const AmountEntryPage = () => {
 
           {/* Amount Display */}
           <div className="flex justify-center">
-            <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-2xl px-12 py-6 shadow-xl">
-              <div className="text-5xl font-bold text-pos-text-primary">
+            <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl lg:rounded-2xl px-8 lg:px-12 py-4 lg:py-6 shadow-xl w-full max-w-md">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-pos-text-primary text-center break-all">
                 {formatAmount(amount)}
               </div>
             </div>
@@ -164,7 +164,7 @@ const AmountEntryPage = () => {
         </div>
 
         {/* Right Column - Numpad */}
-        <div>
+        <div className="w-full">
           <KioskNumpad
             value={amount}
             onChange={setAmount}
@@ -175,11 +175,13 @@ const AmountEntryPage = () => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-center gap-4 mt-6">
+      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 lg:mt-6">
         <KioskButton
           variant="secondary"
           size="medium"
           onClick={handleGoBack}
+          fullWidth
+          className="sm:w-auto"
         >
           ← Go Back
         </KioskButton>
@@ -188,6 +190,8 @@ const AmountEntryPage = () => {
           variant="success"
           size="medium"
           onClick={handleNext}
+          fullWidth
+          className="sm:w-auto"
         >
           Next →
         </KioskButton>

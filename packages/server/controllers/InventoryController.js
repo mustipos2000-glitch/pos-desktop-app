@@ -27,10 +27,6 @@ createInventory: (req, res) => {
   }
 },
 
-
-
-
-
   getInventoryById: (req, res) => {
     try {
       const data = InventoryModel.getById(req.params.id);

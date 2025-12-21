@@ -9,7 +9,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useVersion } from '../context/VersionContext';
 import { useMessageModal } from '../hooks/useMessageModal';
 
-const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount, onLoadHoldOrder, selectedEmployeeId, selectedEmployee, onEmployeeChange }) => {
+const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExistingOrder, searchQuery, onSearchChange, onRefreshKitchenCount, onRefreshHoldCount, onLoadHoldOrder, selectedEmployeeId, selectedEmployee, onEmployeeChange }) => {
   const { theme, toggleTheme } = useTheme();
   const { hasFeature } = useVersion();
   const [showTableModal, setShowTableModal] = useState(false);
@@ -244,10 +244,13 @@ const TopBar = ({ selectedTable, onTableSelect, onSendToKitchen, cart, hasExisti
     };
   }, [showEmployeeDropdown]);
 
-  // Expose fetchKitchenOrderCount to parent via callback
+  // Expose fetchKitchenOrderCount and fetchHoldOrderCount to parent via callbacks
   useEffect(() => {
     if (onRefreshKitchenCount) {
       onRefreshKitchenCount(fetchKitchenOrderCount);
+    }
+    if (onRefreshHoldCount) {
+      onRefreshHoldCount(fetchHoldOrderCount);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

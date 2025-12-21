@@ -64,37 +64,53 @@ const PaymentMethodPage = () => {
     if (!cashmaticPolling || !cashmaticSessionId) return;
 
     const poll = async () => {
-      try {
-        const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
-        const s = res.data || res;
+      console.log("Start polling");
 
-        const requested = (s.requestedAmount || 0) / 100;
-        const inserted = (s.insertedAmount || 0) / 100;
-        const dispensed = (s.dispensedAmount || 0) / 100;
-        const notDispensed = (s.notDispensedAmount || 0) / 100;
+      const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
+      const s = res.data || res;
+      console.log("Cashmatic status:", s);
 
-        setCashmaticInfo({
-          requested,
-          inserted,
-          dispensed,
-          notDispensed,
-          state: s.state,
-        });
+      const requested = (s.requestedAmount || 0) / 100;
+      const inserted = (s.insertedAmount || 0) / 100;
+      const dispensed = (s.dispensedAmount || 0) / 100;
+      const notDispensed = (s.notDispensedAmount || 0) / 100;
 
-        if (s.state === "IN_PROGRESS" || s.state === "PAID") {
-          return;
-        }
+      setCashmaticInfo({
+        requested,
+        inserted,
+        dispensed,
+        notDispensed,
+        state: s.state,
+      });
 
-        if (s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
-          setCashmaticPolling(false);
-          setCashmaticSessionId(null);
+      // if (s.state === "IN_PROGRESS" || s.state === "PAID") {
+      //   console.log("state is in Progress or Paid");
+      //   return;
+      // }
+
+      if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+        console.log("Finished the Cashmatic ");
+
+        setCashmaticPolling(false);
+        const currentSessionId = cashmaticSessionId;
+        setCashmaticSessionId(null);
+
+
+
+        const paymentAmount = parseFloat(amount);
+
+        try {
+          // Call finish API to close transaction and print receipt on Cashmatic
+          console.log("Calling finish API to close Cashmatic transaction...");
+          await ApiService.finishCashmaticPayment(currentSessionId);
+
 
           localStorage.setItem('paymentMethod', 'cash');
           localStorage.setItem('paymentResult', JSON.stringify({
             success: true,
             state: s.state,
-            totalPaid: requested,
-            cashAmount: requested,
+            totalPaid: paymentAmount,
+            cashAmount: paymentAmount,
             cardAmount: 0,
             changeDue: 0,
             manualChangeRequired: s.state === "FINISHED_MANUAL",
@@ -102,42 +118,37 @@ const PaymentMethodPage = () => {
 
           setProcessing(false);
 
-          if (s.state === "FINISHED") {
-            setShowCashmaticModal(false);
-          }
-
           // Navigate to confirmation
           setTimeout(() => {
             handleConfirm();
           }, 1500);
-          return;
-        }
-
-        if (s.state === "CANCELLED" || s.state === "ERROR") {
-          setCashmaticPolling(false);
-          setCashmaticSessionId(null);
+        } catch (error) {
+          console.error("Error completing order after Cashmatic payment:", error);
+          alert("Payment successful but failed to complete order.");
           setProcessing(false);
+
           setShowCashmaticModal(false);
-          alert(
-            s.state === "CANCELLED"
-              ? "Cashmatic payment cancelled."
-              : "Error during Cashmatic payment."
-          );
-          return;
         }
-      } catch (error) {
-        console.error("Cashmatic polling error:", error);
+        return;
+      }
+
+      if (s.state === "CANCELLED" || s.state === "ERROR") {
+        console.log("Cancelled");
         setCashmaticPolling(false);
         setCashmaticSessionId(null);
         setProcessing(false);
-        setShowCashmaticModal(false);
-        alert("Error communicating with Cashmatic.");
+        alert(
+          s.state === "CANCELLED"
+            ? "Cashmatic payment cancelled."
+            : "Error during Cashmatic payment."
+        );
+        return;
       }
     };
 
     const intervalId = setInterval(poll, 1000);
     return () => clearInterval(intervalId);
-  }, [cashmaticPolling, cashmaticSessionId]);
+  }, [cashmaticPolling, cashmaticSessionId, amount]);
 
   // Poll Payworld status
   useEffect(() => {
@@ -341,29 +352,6 @@ const PaymentMethodPage = () => {
       await handleCashmaticPayment();
     } else if (method === 'card') {
       handlePayworldPayment();
-    }
-  };
-
-  // Cancel Cashmatic payment
-  const handleCancelCashmatic = async () => {
-    if (!cashmaticSessionId) {
-      setShowCashmaticModal(false);
-      setProcessing(false);
-      return;
-    }
-
-    try {
-      await ApiService.cancelCashmatic(cashmaticSessionId);
-      setCashmaticPolling(false);
-      setCashmaticSessionId(null);
-      setProcessing(false);
-      setShowCashmaticModal(false);
-    } catch (error) {
-      console.error('Cancel Cashmatic error:', error);
-      setCashmaticPolling(false);
-      setCashmaticSessionId(null);
-      setProcessing(false);
-      setShowCashmaticModal(false);
     }
   };
 
@@ -715,15 +703,6 @@ const PaymentMethodPage = () => {
             {/* Modal Actions */}
             <div className="px-8 pb-8">
               <div className="flex gap-4">
-                {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
-                  <KioskButton
-                    variant="destructive"
-                    onClick={handleCancelCashmatic}
-                    fullWidth
-                  >
-                    Cancel Payment
-                  </KioskButton>
-                )}
                 {(cashmaticInfo.state === "FINISHED" ||
                   cashmaticInfo.state === "FINISHED_MANUAL" ||
                   cashmaticInfo.state === "CANCELLED" ||
