@@ -339,8 +339,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         });
         
         if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+          console.log('insertd:' + inserted, " Requested : " + requested , " dispensed " + dispensed );
+          
           if(inserted < requested)  return;  
           if(inserted > requested && dispensed > 0 ){
+
             const change = inserted - requested;
             if(change > 0){
               const manualChangeDue = change - dispensed;
