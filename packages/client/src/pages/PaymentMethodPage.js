@@ -101,7 +101,7 @@ const PaymentMethodPage = () => {
 
         try {
           // Call finish API to close transaction and print receipt on Cashmatic
-          console.log("Calling finish API to close Cashmatic transaction...");
+          console.log("Calling finish API to close Cashmatic transaction... Mosque");
           await ApiService.finishCashmaticPayment(currentSessionId);
 
 

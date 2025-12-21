@@ -121,6 +121,24 @@ class CashmaticService {
       console.log('Cashmatic ActiveTransaction raw:', JSON.stringify(body, null, 2));
 
       const data = body.data || body;
+      
+      console.log('[Cashmatic] Raw data object keys:', Object.keys(data || {}));
+      console.log('[Cashmatic] Raw data values:', {
+        dispensed: data.dispensed,
+        notDispensed: data.notDispensed,
+        dispensedAmount: data.dispensedAmount,
+        notDispensedAmount: data.notDispensedAmount,
+        paymentDispensed: data.paymentDispensed,
+        paymentNotDispensed: data.paymentNotDispensed
+      });
+      console.log('[Cashmatic] Raw body values (fallback):', {
+        dispensed: body.dispensed,
+        notDispensed: body.notDispensed,
+        dispensedAmount: body.dispensedAmount,
+        notDispensedAmount: body.notDispensedAmount,
+        paymentDispensed: body.paymentDispensed,
+        paymentNotDispensed: body.paymentNotDispensed
+      });
 
       // No data at all: treat as end of transaction, re-use session state
       if (!data || (Object.keys(data).length === 0 && data.constructor === Object)) {
@@ -179,11 +197,25 @@ class CashmaticService {
         inserted = 0;
       }
 
-      const dispensedRaw = typeof data.dispensed !== 'undefined' ? data.dispensed : 0;
-      const notDispensedRaw = typeof data.notDispensed !== 'undefined' ? data.notDispensed : 0;
+      // Try multiple possible field names for dispensed amounts, checking both data and body
+      const dispensedRaw = data.dispensed !== undefined ? data.dispensed : 
+                          data.dispensedAmount !== undefined ? data.dispensedAmount :
+                          data.paymentDispensed !== undefined ? data.paymentDispensed :
+                          body.dispensed !== undefined ? body.dispensed :
+                          body.dispensedAmount !== undefined ? body.dispensedAmount :
+                          body.paymentDispensed !== undefined ? body.paymentDispensed : 0;
+      
+      const notDispensedRaw = data.notDispensed !== undefined ? data.notDispensed :
+                             data.notDispensedAmount !== undefined ? data.notDispensedAmount :
+                             data.paymentNotDispensed !== undefined ? data.paymentNotDispensed :
+                             body.notDispensed !== undefined ? body.notDispensed :
+                             body.notDispensedAmount !== undefined ? body.notDispensedAmount :
+                             body.paymentNotDispensed !== undefined ? body.paymentNotDispensed : 0;
 
       const dispensed = Number(dispensedRaw) || 0;
       const notDispensed = Number(notDispensedRaw) || 0;
+
+      console.log(`[Cashmatic] Raw dispensed values: dispensed=${dispensedRaw}, notDispensed=${notDispensedRaw}`);
 
       const operation = (data.operation || body.operation || '').toString().toUpperCase();
       const rawStatus = (data.status || body.status || '').toString().toUpperCase();

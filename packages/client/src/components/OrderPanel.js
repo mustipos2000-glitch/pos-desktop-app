@@ -335,8 +335,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           notDispensed,
           state: s.state,
         });
-
-        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+        if(s.state === "PAID"){
+          console.log("Status is paid Waiting for other status : ");
+        }
+        if (s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
           console.log("Finished the Cashmatic ");
 
           setCashmaticPolling(false);
