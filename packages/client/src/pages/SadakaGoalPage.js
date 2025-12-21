@@ -56,12 +56,8 @@ const SadakaGoalPage = () => {
   const handleGoalSelect = (goal) => {
     setSelectedGoal(goal);
     localStorage.setItem('sadakaGoal', JSON.stringify(goal));
-  };
-
-  const handleNext = () => {
-    if (selectedGoal) {
-      navigate('/amount-entry');
-    }
+    // Automatically navigate to next page
+    navigate('/amount-entry');
   };
 
   const handleGoBack = () => {
@@ -98,34 +94,14 @@ const SadakaGoalPage = () => {
         ))}
       </div>
 
-      {/* Selected Goal Display */}
-      {selectedGoal && (
-        <div className="mb-8">
-          <KioskInfoPanel
-            items={[
-              { label: 'Selected Goal', value: selectedGoal.titleEn }
-            ]}
-          />
-        </div>
-      )}
-
       {/* Navigation Buttons */}
-      <div className="flex justify-center gap-4">
+      <div className="flex justify-center">
         <KioskButton
           variant="secondary"
           size="medium"
           onClick={handleGoBack}
         >
           ← Go Back
-        </KioskButton>
-        
-        <KioskButton
-          variant="primary"
-          size="medium"
-          onClick={handleNext}
-          disabled={!selectedGoal}
-        >
-          Next →
         </KioskButton>
       </div>
     </KioskLayout>
