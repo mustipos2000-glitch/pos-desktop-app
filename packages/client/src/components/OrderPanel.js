@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect,useCallback } from "react";
 import ReceiptModal from "./ReceiptModal";
 import ConfirmationModal from "./ConfirmationModal";
 import PaymentModal from "./PaymentModal";
@@ -15,6 +15,31 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
   const formatAmount = (value) => {
     const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
     return num.toFixed(2);
+  };
+  
+  // Helper function to generate manual change receipt data
+  const generateManualChangeReceipt = (orderData, manualChangeAmount) => {
+    return {
+      type: 'manual_change',
+      orderId: orderData.id || currentOrderId,
+      orderNo: currentOrderNo,
+      tableNo: selectedTable?.table_no,
+      manualChangeAmount,
+      timestamp: new Date().toISOString(),
+      cashier: selectedEmployee?.name || 'Unknown',
+      reason: 'Cashmatic insufficient denominations'
+    };
+  };
+
+  // Helper function to save manual change record to database (optional)
+  const saveManualChangeRecord = async (receiptData) => {
+    try {
+      // You can implement this API call to save manual change records
+      // await ApiService.saveManualChangeRecord(receiptData);
+      console.log("Manual change record saved:", receiptData);
+    } catch (error) {
+      console.error("Error saving manual change record:", error);
+    }
   };
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
@@ -48,6 +73,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     state: null,
   });
   const [showCashmaticModal, setShowCashmaticModal] = useState(false);
+  const [manualChangeReceipt, setManualChangeReceipt] = useState(null);
 
   // Payworld state
   const [showPayworldModal, setShowPayworldModal] = useState(false);
@@ -95,7 +121,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     prevCartLengthRef.current = currLen;
   }, [cart]);
 
-  const calculateTotal = () =>
+  const calculateTotal = useCallback(() =>
     cart.reduce((sum, item) => {
       const price =
         typeof item.price === "number" && !isNaN(item.price) ? item.price : 0;
@@ -120,9 +146,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
       }
 
       return sum + itemTotal;
-    }, 0);
+    }, 0));
 
-  const handlePaymentConfirm = async (paymentData) => {
+  const handlePaymentConfirm = useCallback(async (paymentData) => {
     if (cart.length === 0) {
       alert("Cart is empty. Cannot process payment.");
       return;
@@ -178,6 +204,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         card_amount: paymentData.cardAmount || 0,
         total_paid: paymentData.totalPaid,
         change_due: paymentData.changeDue || 0,
+        // Add Cashmatic-specific fields if present
+        ...(paymentData.cashmaticDispensed !== undefined && {
+          cashmatic_dispensed: paymentData.cashmaticDispensed,
+          manual_change_due: paymentData.manualChangeDue || 0,
+        }),
         details: (() => {
           const allDetails = [];
           let detailIndex = 0;
@@ -267,99 +298,133 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     } finally {
       setIsProcessing(false);
     }
-  };
+  });
 
   // Poll Cashmatic payment status
   useEffect(() => {
     if (!cashmaticPolling || !cashmaticSessionId) return;
 
     const poll = async () => {
-      console.log("Start polling");
+      try {
+        console.log("Start polling");
 
-      const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
-      const s = res.data || res;
-      console.log("Cashmatic status:", s);
+        const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
+        const s = res.data || res;
+        console.log("Cashmatic status:", s);
 
-      const requested = (s.requestedAmount || 0) / 100;
-      const inserted = (s.insertedAmount || 0) / 100;
-      const dispensed = (s.dispensedAmount || 0) / 100;
-      const notDispensed = (s.notDispensedAmount || 0) / 100;
-
-      setCashmaticInfo({
-        requested,
-        inserted,
-        dispensed,
-        notDispensed,
-        state: s.state,
-      });
-
-      // if (s.state === "IN_PROGRESS" || s.state === "PAID") {
-      //   console.log("state is in Progress or Paid");
-      //   return;
-      // }
-
-      if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
-        console.log("Finished the Cashmatic ");
-
-        setCashmaticPolling(false);
-        const currentSessionId = cashmaticSessionId;
-        setCashmaticSessionId(null);
-
-
-
-        const subTotal = calculateTotal();
-        const total = subTotal - discount;
-
-        try {
-          // Call finish API to close transaction and print receipt on Cashmatic
-          console.log("Calling finish API to close Cashmatic transaction...");
-          await ApiService.finishCashmaticPayment(currentSessionId);
-
-
-          await handlePaymentConfirm({
-            totalPaid: total,
-            cashAmount: total,
-            cardAmount: 0,
-            changeDue: 0,
-          });
-
-          setToastType("success");
-          setToastMessage(
-            s.state === "FINISHED"
-              ? "Cashmatic payment completed successfully!"
-              : "Cashmatic payment completed – manual change given."
-          );
-
+        // Handle error state from server
+        if (s.errorMessage) {
+          console.error("Cashmatic error:", s.errorMessage);
+          setCashmaticPolling(false);
+          setCashmaticSessionId(null);
           setIsProcessing(false);
-        } catch (error) {
-          console.error("Error completing order after Cashmatic payment:", error);
           setToastType("error");
-          setToastMessage("Payment successful but failed to complete order.");
-          setIsProcessing(false);
-
-          setShowCashmaticModal(false);
+          setToastMessage("Cashmatic communication error: " + s.errorMessage);
+          return;
         }
-        return;
-      }
 
-      if (s.state === "CANCELLED" || s.state === "ERROR") {
-        console.log("Cancelled");
+        const requested = (s.requestedAmount || 0) / 100;
+        const inserted = (s.insertedAmount || 0) / 100;
+        const dispensed = (s.dispensedAmount || 0) / 100;
+        const notDispensed = (s.notDispensedAmount || 0) / 100;
+
+        setCashmaticInfo({
+          requested,
+          inserted,
+          dispensed,
+          notDispensed,
+          state: s.state,
+        });
+
+        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+          console.log("Finished the Cashmatic ");
+
+          setCashmaticPolling(false);
+          const currentSessionId = cashmaticSessionId;
+          setCashmaticSessionId(null); // FIX: Properly clear session
+
+          const subTotal = calculateTotal();
+          const total = subTotal - discount;
+
+          // Calculate the actual change due
+          const totalChange = inserted - requested;
+          const manualChangeDue = notDispensed; // Amount that needs to be given manually
+
+          try {
+            // Call finish API to close transaction and print receipt on Cashmatic
+            console.log("Calling finish API to close Cashmatic transaction..." + currentSessionId);
+            await ApiService.finishCashmaticPayment(currentSessionId);
+
+            // Generate manual change receipt if needed
+            if (manualChangeDue > 0) {
+              const receiptData = generateManualChangeReceipt(
+                { id: currentOrderId }, 
+                manualChangeDue
+              );
+              setManualChangeReceipt(receiptData);
+              
+              // Save manual change record for tracking
+              await saveManualChangeRecord(receiptData);
+              
+              console.log("Manual change receipt generated:", receiptData);
+            }
+
+            // Complete the payment with proper change calculation
+            await handlePaymentConfirm({
+              totalPaid: inserted, // Customer actually paid this amount
+              cashAmount: inserted,
+              cardAmount: 0,
+              changeDue: totalChange, // Total change due (dispensed + manual)
+              cashmaticDispensed: dispensed, // Change given by machine
+              manualChangeDue: manualChangeDue, // Change to be given manually
+            });
+
+            setToastType("success");
+            let message = "Cashmatic payment completed successfully!";
+            
+            if (manualChangeDue > 0) {
+              message = `Payment completed! Please give €${formatAmount(manualChangeDue)} manual change to customer.`;
+            }
+            
+            setToastMessage(message);
+            setIsProcessing(false);
+          } catch (error) {
+            console.error("Error completing order after Cashmatic payment:", error);
+            setToastType("error");
+            setToastMessage("Payment successful but failed to complete order.");
+            setIsProcessing(false);
+            setShowCashmaticModal(false);
+          }
+          return;
+        }
+
+        if (s.state === "CANCELLED" || s.state === "ERROR") {
+          console.log("Cancelled or Error");
+          setCashmaticPolling(false);
+          setCashmaticSessionId(null);
+          setIsProcessing(false);
+          setToastType("error");
+          setToastMessage(
+            s.state === "CANCELLED"
+              ? "Cashmatic payment cancelled."
+              : "Error during Cashmatic payment."
+          );
+          return;
+        }
+      } catch (error) {
+        console.error("Cashmatic polling error:", error);
         setCashmaticPolling(false);
         setCashmaticSessionId(null);
         setIsProcessing(false);
         setToastType("error");
-        setToastMessage(
-          s.state === "CANCELLED"
-            ? "Cashmatic payment cancelled."
-            : "Error during Cashmatic payment."
-        );
-        return;
+        setToastMessage("Failed to communicate with Cashmatic device.");
+        setShowCashmaticModal(false);
       }
     };
 
     const intervalId = setInterval(poll, 1000);
     return () => clearInterval(intervalId);
-  }, [cashmaticPolling, cashmaticSessionId, cart, discount]);
+  }, [cashmaticPolling, cashmaticSessionId, cart, discount, calculateTotal, handlePaymentConfirm, generateManualChangeReceipt, currentOrderId]);
 
   // Poll Payworld status
   useEffect(() => {
@@ -460,7 +525,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     const id = setInterval(poll, 1000);
     return () => clearInterval(id);
-  }, [payworldPolling, payworldSessionId]);
+  }, [calculateTotal, discount, handlePaymentConfirm, payworldPolling, payworldSessionId, payworldStatus.details, payworldStatus.message]);
 
   const handleSelect = (id) => {
     setSelectedIds((prev) => {
@@ -1601,26 +1666,15 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Change (theoretical):</span>
-                  <span>
-                    €{" "}
-                    {formatAmount(
-                      Math.max(
-                        (cashmaticInfo?.inserted ?? 0) -
-                        (cashmaticInfo?.requested ?? 0),
-                        0
-                      )
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Change via Cashmatic:</span>
+                  <span>Change dispensed by machine:</span>
                   <span>€ {formatAmount(cashmaticInfo?.dispensed)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Manual change:</span>
-                  <span>€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
-                </div>
+                {cashmaticInfo?.notDispensed > 0 && (
+                  <div className="flex justify-between bg-yellow-100 p-2 rounded border-l-4 border-yellow-500">
+                    <span className="font-semibold text-yellow-800">Manual change required:</span>
+                    <span className="font-bold text-yellow-800">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Status:</span>
                   <span>
@@ -1630,7 +1684,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                         cashmaticInfo.state === "IN_PROGRESS"
                         ? "Payment in progress..."
                         : cashmaticInfo.state === "PAID"
-                          ? "Amount received – change being dispensed"
+                          ? "Amount received – processing change"
                           : cashmaticInfo.state === "FINISHED_MANUAL"
                             ? "Payment completed – give manual change"
                             : cashmaticInfo.state === "FINISHED"
@@ -1645,7 +1699,63 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                 </div>
               </div>
 
+              {/* Manual Change Alert */}
+              {(cashmaticInfo.state === "FINISHED_MANUAL" || 
+                (cashmaticInfo.state === "FINISHED" && cashmaticInfo?.notDispensed > 0)) && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-400 rounded">
+                  <div className="flex items-center">
+                    <div className="text-red-600 mr-2">⚠️</div>
+                    <div>
+                      <p className="text-red-800 font-semibold">Action Required!</p>
+                      <p className="text-red-700 text-sm">
+                        Please give €{formatAmount(cashmaticInfo?.notDispensed)} change to the customer manually.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-6 flex justify-end gap-2">
+                {/* Print Manual Change Receipt Button */}
+                {cashmaticInfo?.notDispensed > 0 && 
+                 (cashmaticInfo.state === "FINISHED" || cashmaticInfo.state === "FINISHED_MANUAL") && (
+                  <button
+                    className="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600"
+                    onClick={() => {
+                      if (manualChangeReceipt) {
+                        // Print manual change receipt
+                        const receiptContent = `
+                          MANUAL CHANGE RECEIPT
+                          =====================
+                          Order #: ${manualChangeReceipt.orderNo || 'N/A'}
+                          Table: ${manualChangeReceipt.tableNo || 'N/A'}
+                          Amount Due: €${formatAmount(manualChangeReceipt.manualChangeAmount)}
+                          Reason: ${manualChangeReceipt.reason}
+                          Time: ${new Date(manualChangeReceipt.timestamp).toLocaleString()}
+                          Cashier: ${manualChangeReceipt.cashier}
+                          =====================
+                        `;
+                        
+                        // Create a temporary element for printing
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(`
+                          <html>
+                            <head><title>Manual Change Receipt</title></head>
+                            <body style="font-family: monospace; white-space: pre-line;">
+                              ${receiptContent}
+                            </body>
+                          </html>
+                        `);
+                        printWindow.document.close();
+                        printWindow.print();
+                        printWindow.close();
+                      }
+                    }}
+                  >
+                    Print Change Receipt
+                  </button>
+                )}
+                
                 {(cashmaticInfo.state === "FINISHED" ||
                   cashmaticInfo.state === "FINISHED_MANUAL" ||
                   cashmaticInfo.state === "CANCELLED" ||
