@@ -59,10 +59,6 @@ const MosquePaymentScreen = () => {
     }
   };
 
-  const handleGoBack = () => {
-    navigate('/');
-  };
-
   const handleSecretClick = () => {
     setClickCount(prev => prev + 1);
 
@@ -167,16 +163,8 @@ const MosquePaymentScreen = () => {
           ))}
         </div>
 
-        {/* Back Button */}
+        {/* Action Buttons */}
         <div className="flex justify-center gap-4">
-          <KioskButton
-            variant="secondary"
-            size="medium"
-            onClick={handleGoBack}
-          >
-            ← Go Back
-          </KioskButton>
-
           <KioskButton
             variant="primary"
             size="medium"
