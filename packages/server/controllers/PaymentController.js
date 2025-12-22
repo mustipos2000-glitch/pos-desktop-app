@@ -62,6 +62,8 @@ const PaymentController = {
   // Finish Cashmatic payment (close transaction and print receipt)
   finishCashmaticPayment: async (req, res) => {
     try {
+      console.log("In side finish Cashmatic Payemnt machine ", req, res);
+      
       const { sessionId } = req.params;
       console.log("Finishing Cashmatic payment for sessionId:", sessionId);
 

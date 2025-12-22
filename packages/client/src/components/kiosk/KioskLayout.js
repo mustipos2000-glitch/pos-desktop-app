@@ -23,8 +23,8 @@ const KioskLayout = ({ children, maxWidth = '6xl', className = '' }) => {
   };
 
   return (
-    <div className="min-h-screen bg-pos-bg-primary flex items-center justify-center p-6 md:p-8 overflow-y-auto">
-      <div className={`w-full ${maxWidthClasses[maxWidth]} ${className}`}>
+    <div className="min-h-screen bg-pos-bg-primary flex justify-center p-4 sm:p-6 md:p-8 overflow-y-auto">
+      <div className={`w-full ${maxWidthClasses[maxWidth]} ${className} my-auto`}>
         {children}
       </div>
     </div>
