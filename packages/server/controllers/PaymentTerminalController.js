@@ -37,7 +37,14 @@ const PaymentTerminalController = {
       const terminal = PaymentTerminal.create(payload);
       res.json({ data: terminal });
     } catch (err) {
-      res.status(500).json({ error: 'Internal server error' });
+      console.error('Error creating payment terminal:', err);
+      
+      // Check for unique constraint violation
+      if (err.message && err.message.includes('UNIQUE constraint failed')) {
+        return res.status(400).json({ error: 'A terminal with this configuration already exists' });
+      }
+      
+      res.status(500).json({ error: 'Failed to create payment terminal: ' + (err.message || 'Internal server error') });
     }
   },
 

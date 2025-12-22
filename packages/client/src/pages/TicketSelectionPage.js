@@ -17,10 +17,10 @@ const TicketSelectionPage = () => {
 
   const handleOptionSelect = async (option) => {
     setSelectedOption(option);
-    
+
     // Store the ticket option
     localStorage.setItem('ticketOption', option);
-    
+
     // Navigate based on selection
     if (option === 'print') {
       // Print receipt before completing
@@ -36,7 +36,7 @@ const TicketSelectionPage = () => {
 
   const handlePrintReceipt = async () => {
     setPrinting(true);
-    
+
     try {
       // Get stored payment data
       const transactionId = localStorage.getItem('transactionId');
@@ -47,7 +47,7 @@ const TicketSelectionPage = () => {
       const sadakaGoalStr = localStorage.getItem('sadakaGoal');
       const sadakaType = localStorage.getItem('sadakaType');
       const rentDateTimeStr = localStorage.getItem('rentDateTime');
-      
+
       const member = memberStr ? JSON.parse(memberStr) : null;
       const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
       const sadakaGoal = sadakaGoalStr ? JSON.parse(sadakaGoalStr) : null;
@@ -57,10 +57,10 @@ const TicketSelectionPage = () => {
       const printersResponse = await fetch(`${API_URL}/printers`);
       const printersData = await printersResponse.json();
       const printers = printersData.data || [];
-      
+
       // Find receipt printer
       const receiptPrinter = printers.find(p => p.printer_type === 'receipt') || printers[0];
-      
+
       if (!receiptPrinter) {
         alert('No printer configured. Please configure a printer in settings.');
         handleComplete();
@@ -146,7 +146,7 @@ const TicketSelectionPage = () => {
       const sadakaGoalStr = localStorage.getItem('sadakaGoal');
       const sadakaType = localStorage.getItem('sadakaType');
       const rentDateTimeStr = localStorage.getItem('rentDateTime');
-      
+
       const member = memberStr ? JSON.parse(memberStr) : null;
       const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
       const sadakaGoal = sadakaGoalStr ? JSON.parse(sadakaGoalStr) : null;
@@ -213,7 +213,7 @@ const TicketSelectionPage = () => {
     localStorage.removeItem('sadakaGoal');
     localStorage.removeItem('sadakaType');
     localStorage.removeItem('rentDateTime');
-    
+
     // Navigate back to mosque payment screen
     navigate('/mosque-payment');
   };
@@ -227,68 +227,66 @@ const TicketSelectionPage = () => {
       <div className="flex-1 overflow-y-auto">
         <div className="min-h-full flex flex-col items-center justify-center p-6">
           <div className="max-w-3xl w-full">
-        {/* Header */}
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-pos-text-primary mb-1">
-            Ticket
-          </h1>
-          <p className="text-xs text-pos-text-secondary">
-            How would you like to receive your ticket?
-          </p>
-        </div>
-
-        {/* Ticket Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Print Ticket */}
-          <button
-            onClick={() => handleOptionSelect('print')}
-            disabled={printing}
-            className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover ${
-              printing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <div className="text-center space-y-1">
-              <div className="text-lg font-semibold text-pos-text-primary">
-                {printing ? 'Printing...' : 'Print ticket'}
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Imprimer le ticket
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Print receipt
-              </div>
-              <div className="text-base text-pos-text-secondary" dir="rtl">
-                طباعة التذكرة
-              </div>
+            {/* Header */}
+            <div className="text-center mb-6">
+              <h1 className="text-2xl font-bold text-pos-text-primary mb-1">
+                Ticket
+              </h1>
+              <p className="text-xs text-pos-text-secondary">
+                How would you like to receive your ticket?
+              </p>
             </div>
-          </button>
 
-          {/* No Ticket */}
-          <button
-            onClick={() => handleOptionSelect('no-ticket')}
-            disabled={printing}
-            className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover ${
-              printing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <div className="text-center space-y-1">
-              <div className="text-lg font-semibold text-pos-text-primary">
-                No ticket
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Pass the ticket
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                No receipt
-              </div>
-              <div className="text-base text-pos-text-secondary" dir="rtl">
-                بدون تذكرة
-              </div>
-            </div>
-          </button>
+            {/* Ticket Options */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Print Ticket */}
+              <button
+                onClick={() => handleOptionSelect('print')}
+                disabled={printing}
+                className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover ${printing ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+              >
+                <div className="text-center space-y-1">
+                  <div className="text-lg font-semibold text-pos-text-primary">
+                    {printing ? 'Printing...' : 'Print ticket'}
+                  </div>
+                  <div className="text-base text-pos-text-secondary">
+                    Imprimer le ticket
+                  </div>
+                  <div className="text-base text-pos-text-secondary">
+                    Print receipt
+                  </div>
+                  <div className="text-base text-pos-text-secondary" dir="rtl">
+                    طباعة التذكرة
+                  </div>
+                </div>
+              </button>
 
-          {/* Email Ticket - Full width on second row */}
-          <button
+              {/* No Ticket */}
+              <button
+                onClick={() => handleOptionSelect('no-ticket')}
+                disabled={printing}
+                className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover ${printing ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+              >
+                <div className="text-center space-y-1">
+                  <div className="text-lg font-semibold text-pos-text-primary">
+                    No ticket
+                  </div>
+                  <div className="text-base text-pos-text-secondary">
+                    Pass the ticket
+                  </div>
+                  <div className="text-base text-pos-text-secondary">
+                    No receipt
+                  </div>
+                  <div className="text-base text-pos-text-secondary" dir="rtl">
+                    بدون تذكرة
+                  </div>
+                </div>
+              </button>
+
+              {/* Email Ticket - Full width on second row */}
+              {/* <button
             onClick={() => handleOptionSelect('email')}
             disabled={printing}
             className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover md:col-span-1 ${
@@ -309,21 +307,20 @@ const TicketSelectionPage = () => {
                 التذكرة عبر البريد الإلكتروني
               </div>
             </div>
-          </button>
-        </div>
+          </button> */}
+            </div>
 
-        {/* Bottom Button */}
-        <div className="flex justify-start mb-8">
-          <button
-            onClick={handleGoBack}
-            disabled={printing}
-            className={`px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm ${
-              printing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            Go back
-          </button>
-        </div>
+            {/* Bottom Button */}
+            <div className="flex justify-start mb-8">
+              <button
+                onClick={handleGoBack}
+                disabled={printing}
+                className={`px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm ${printing ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+              >
+                Go back
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -351,7 +348,7 @@ const TicketSelectionPage = () => {
             <p className="text-sm text-pos-text-secondary mb-4 text-center">
               We'll send your receipt to this email
             </p>
-            
+
             <input
               type="email"
               value={email}
@@ -372,15 +369,14 @@ const TicketSelectionPage = () => {
               >
                 Cancel
               </button>
-              
+
               <button
                 onClick={handleSendEmail}
                 disabled={sendingEmail || !email}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors border ${
-                  sendingEmail || !email
-                    ? 'bg-pos-interactive-primary text-pos-text-disabled cursor-not-allowed border-pos-border-primary opacity-50'
-                    : 'bg-pos-bg-primary text-pos-text-primary hover:bg-pos-interactive-hover border-pos-border-primary'
-                }`}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors border ${sendingEmail || !email
+                  ? 'bg-pos-interactive-primary text-pos-text-disabled cursor-not-allowed border-pos-border-primary opacity-50'
+                  : 'bg-pos-bg-primary text-pos-text-primary hover:bg-pos-interactive-hover border-pos-border-primary'
+                  }`}
               >
                 {sendingEmail ? 'Sending...' : 'Send'}
               </button>

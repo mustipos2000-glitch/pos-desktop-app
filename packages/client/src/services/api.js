@@ -280,6 +280,11 @@ class ApiService {
   static async getCashmaticStatus(sessionId) {
     return this.request(`/cashmatic/status/${sessionId}`);
   }
+   static async finishCashmaticPayment(sessionId) {
+    return this.request(`/cashmatic/finish/${sessionId}`, {
+      method: "POST",
+    });
+  }
 
   static async cancelCashmatic(sessionId) {
     return this.request(`/cashmatic/cancel/${sessionId}`, {

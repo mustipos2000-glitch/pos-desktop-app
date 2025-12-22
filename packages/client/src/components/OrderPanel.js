@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect,useCallback } from "react";
 import ReceiptModal from "./ReceiptModal";
 import ConfirmationModal from "./ConfirmationModal";
 import PaymentModal from "./PaymentModal";
@@ -12,10 +12,35 @@ import { printerService } from "../services/printerService";
 const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount, selectedEmployee, billPromotion, billDiscount }) => {
   
 
-const formatAmount = (value) => {
-  const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
-  return num.toFixed(2);
-};
+  const formatAmount = (value) => {
+    const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
+    return num.toFixed(2);
+  };
+  
+  // Helper function to generate manual change receipt data
+  const generateManualChangeReceipt = useCallback((orderData, manualChangeAmount) => {
+    return {
+      type: 'manual_change',
+      orderId: orderData.id || currentOrderId,
+      orderNo: currentOrderNo,
+      tableNo: selectedTable?.table_no,
+      manualChangeAmount,
+      timestamp: new Date().toISOString(),
+      cashier: selectedEmployee?.name || 'Unknown',
+      reason: 'Cashmatic insufficient denominations'
+    };
+  });
+
+  // Helper function to save manual change record to database (optional)
+  const saveManualChangeRecord = async (receiptData) => {
+    try {
+      // You can implement this API call to save manual change records
+      // await ApiService.saveManualChangeRecord(receiptData);
+      console.log("Manual change record saved:", receiptData);
+    } catch (error) {
+      console.error("Error saving manual change record:", error);
+    }
+  };
   const [showReceipt, setShowReceipt] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [note, setNote] = useState("");
@@ -48,6 +73,9 @@ const formatAmount = (value) => {
     state: null,
   });
   const [showCashmaticModal, setShowCashmaticModal] = useState(false);
+  const [manualChangeReceipt, setManualChangeReceipt] = useState(null);
+  const [showManualChangeModal, setShowManualChangeModal] = useState(false);
+  const [manualChangeAmount, setManualChangeAmount] = useState(0);
 
   // Payworld state
   const [showPayworldModal, setShowPayworldModal] = useState(false);
@@ -95,7 +123,7 @@ const formatAmount = (value) => {
     prevCartLengthRef.current = currLen;
   }, [cart]);
 
-  const calculateTotal = () =>
+  const calculateTotal = useCallback(() =>
     cart.reduce((sum, item) => {
       const price =
         typeof item.price === "number" && !isNaN(item.price) ? item.price : 0;
@@ -120,9 +148,9 @@ const formatAmount = (value) => {
       }
 
       return sum + itemTotal;
-    }, 0);
+    }, 0));
 
-  const handlePaymentConfirm = async (paymentData) => {
+  const handlePaymentConfirm = useCallback(async (paymentData) => {
     if (cart.length === 0) {
       alert("Cart is empty. Cannot process payment.");
       return;
@@ -160,7 +188,7 @@ const formatAmount = (value) => {
       }
 
       const orderType = localStorage.getItem('posVersion') || 'horeca';
-      
+
       const orderData = {
         status: "completed",
         note,
@@ -173,12 +201,17 @@ const formatAmount = (value) => {
           paymentData.cashAmount > 0 && paymentData.cardAmount > 0
             ? "mixed"
             : paymentData.cashAmount > 0
-            ? "cash"
-            : "card",
+              ? "cash"
+              : "card",
         cash_amount: paymentData.cashAmount || 0,
         card_amount: paymentData.cardAmount || 0,
         total_paid: paymentData.totalPaid,
         change_due: paymentData.changeDue || 0,
+        // Add Cashmatic-specific fields if present
+        ...(paymentData.cashmaticDispensed !== undefined && {
+          cashmatic_dispensed: paymentData.cashmaticDispensed,
+          manual_change_due: paymentData.manualChangeDue || 0,
+        }),
         details: (() => {
           const allDetails = [];
           let detailIndex = 0;
@@ -201,9 +234,8 @@ const formatAmount = (value) => {
                   product_id: subItem.id,
                   qty: subItem.quantity,
                   total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ""
+                    }`,
                   discount: 0,
                 });
                 detailIndex++;
@@ -269,80 +301,149 @@ const formatAmount = (value) => {
     } finally {
       setIsProcessing(false);
     }
-  };
+  });
 
   // Poll Cashmatic payment status
   useEffect(() => {
     if (!cashmaticPolling || !cashmaticSessionId) return;
-    
+
     const poll = async () => {
-      console.log("Start polling");
-      
-      const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
-      const s = res.data || res;
-      console.log("Cashmatic status:", s);
-      
-      const requested = (s.requestedAmount || 0) / 100;
-      const inserted = (s.insertedAmount || 0) / 100;
-      const dispensed = (s.dispensedAmount || 0) / 100;
-      const notDispensed = (s.notDispensedAmount || 0) / 100;
+      try {
 
-      setCashmaticInfo({
-        requested,
-        inserted,
-        dispensed,
-        notDispensed,
-        state: s.state,
-      });
+        const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
+        const s = res.data || res;
+        console.log("Cashmatic status:", s);
 
-      if (s.state === "IN_PROGRESS" || s.state === "PAID") {
-        console.log("state is in Progress or Paid");
-        return;
-      }
+        // Handle error state from server
+        if (s.errorMessage) {
+          console.error("Cashmatic error:", s.errorMessage);
+          setCashmaticPolling(false);
+          setCashmaticSessionId(null);
+          setIsProcessing(false);
+          setToastType("error");
+          setToastMessage("Cashmatic communication error: " + s.errorMessage);
+          return;
+        }
 
-      if (s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
-        console.log("Finished the Cashmatic ");
+        const requested = (s.requestedAmount || 0) / 100;
+        const inserted = (s.insertedAmount || 0) / 100;
+        const dispensed = (s.dispensedAmount || 0) / 100;
+        const notDispensed = (s.notDispensedAmount || 0) / 100;
+
+        setCashmaticInfo({
+          requested,
+          inserted,
+          dispensed,
+          notDispensed,
+          state: s.state,
+        });
         
-        setCashmaticPolling(false);
-        setCashmaticSessionId(null);
-        setToastType("success");
-        setToastMessage(
-          s.state === "FINISHED"
-            ? "Cashmatic payment completed."
-            : "Cashmatic payment completed – give manual change."
-        );
+        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+          console.log('insertd:' + inserted, " Requested : " + requested , " dispensed " + dispensed , " not Dspensed " + notDispensed );
+          
+          if(inserted < requested)  return;  
+          if(inserted > requested && (dispensed > 0 || notDispensed > 0) ){
+
+            const change = inserted - requested;
+            if(change > 0){
+              const manualChangeDue = change - dispensed;
+              if(manualChangeDue > 0){
+               // Show a popup with a button that Manual amount to customer is "Change" and when the operator press the button it should print the order receipt. 
+                setManualChangeAmount(manualChangeDue);
+                setShowManualChangeModal(true);
+                setCashmaticPolling(false);
+                setCashmaticSessionId(null);
+                setShowCashmaticModal(false);
+                return;
+              }
+            }
+          }else{
+            return
+          }
+
+          console.log("Finished the Cashmatic ");
+
+          setCashmaticPolling(false);
+          const currentSessionId = cashmaticSessionId;
+          setCashmaticSessionId(null); // FIX: Properly clear session
 
         const subTotal = calculateTotal();
         const totalDiscount = discount + (billDiscount || 0);
         const total = subTotal - totalDiscount;
 
-        await handlePaymentConfirm({
-          totalPaid: total,
-          cashAmount: total,
-          cardAmount: 0,
-          changeDue: 0,
-        });
+          // Calculate the actual change due
+          const totalChange = inserted - requested;
+          const manualChangeDue = notDispensed; // Amount that needs to be given manually
 
-        setIsProcessing(false);
+          try {
+            // Call finish API to close transaction and print receipt on Cashmatic
+            console.log("Calling finish API to close Cashmatic transaction..." + currentSessionId);
+            await ApiService.finishCashmaticPayment(currentSessionId);
 
-        if (s.state === "FINISHED") {
-          setShowCashmaticModal(false);
+            // Generate manual change receipt if needed
+            // if (manualChangeDue > 0) {
+              // const receiptData = generateManualChangeReceipt(
+              //   { id: currentOrderId }, 
+              //   manualChangeDue
+              // );
+              // setManualChangeReceipt(receiptData);
+              
+              // // Save manual change record for tracking
+              // await saveManualChangeRecord(receiptData);
+              
+              // console.log("Manual change receipt generated:", receiptData);
+            // }
+
+            // Complete the payment with proper change calculation
+            await handlePaymentConfirm({
+              totalPaid: inserted, // Customer actually paid this amount
+              cashAmount: inserted,
+              cardAmount: 0,
+              changeDue: totalChange, // Total change due (dispensed + manual)
+              cashmaticDispensed: dispensed, // Change given by machine
+              manualChangeDue: manualChangeDue, // Change to be given manually
+            });
+
+            setToastType("success");
+            let message = "Cashmatic payment completed successfully!";
+            
+            if (manualChangeDue > 0) {
+              message = `Payment completed! Please give €${formatAmount(manualChangeDue)} manual change to customer.`;
+            }
+            
+            setToastMessage(message);
+            setIsProcessing(false);
+          } catch (error) {
+            console.error("Error completing order after Cashmatic payment:", error);
+            setToastType("error");
+            setToastMessage("Payment successful but failed to complete order.");
+            setIsProcessing(false);
+            setShowCashmaticModal(false);
+          }
+          return;
         }
-        return;
-      }
 
-      if (s.state === "CANCELLED" || s.state === "ERROR") {
-        console.log("Cancelled");        
+        if (s.state === "CANCELLED" || s.state === "ERROR") {
+          console.log("Cancelled or Error");
+          setCashmaticPolling(false);
+          setCashmaticSessionId(null);
+          setIsProcessing(false);
+          setToastType("error");
+          setToastMessage(
+            s.state === "CANCELLED"
+              ? "Cashmatic payment cancelled."
+              : "Error during Cashmatic payment."
+          );
+          return;
+        }
+      } catch (error) {
+        console.error("Cashmatic polling error:", error);
         setCashmaticPolling(false);
         setCashmaticSessionId(null);
         setIsProcessing(false);
         setToastType("error");
-        setToastMessage(
-          s.state === "CANCELLED"
-            ? "Cashmatic payment cancelled."
-            : "Error during Cashmatic payment."
-        );
-        return;
+        setToastMessage("Failed to communicate with Cashmatic device.");
+        setShowCashmaticModal(false);
       }
     };
 
@@ -354,10 +455,10 @@ const formatAmount = (value) => {
   useEffect(() => {
     if (!payworldPolling || !payworldSessionId) return;
     console.log("Payworld polling started");
-    
+
     const startTime = Date.now();
     const MAX_POLLING_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
-    
+
     const poll = async () => {
       // Check if timeout exceeded
       const elapsed = Date.now() - startTime;
@@ -450,7 +551,7 @@ const formatAmount = (value) => {
 
     const id = setInterval(poll, 1000);
     return () => clearInterval(id);
-  }, [payworldPolling, payworldSessionId]);
+  }, [calculateTotal, discount, handlePaymentConfirm, payworldPolling, payworldSessionId, payworldStatus.details, payworldStatus.message]);
 
   const handleSelect = (id) => {
     setSelectedIds((prev) => {
@@ -490,7 +591,7 @@ const formatAmount = (value) => {
     if (onSelectCustomer) {
       onSelectCustomer(null);
     }
-    
+
     // Notify parent to deselect table and clear order
     if (onDeleteAll) {
       onDeleteAll();
@@ -503,7 +604,7 @@ const formatAmount = (value) => {
   // Cashmatic payment handler
   const handleCashmaticPayment = async () => {
     console.log("Click on handle cashmatic Payment ");
-    
+
     if (cart.length === 0) {
       setToastType("error");
       setToastMessage("Cart is empty. Cannot start Cashmatic payment.");
@@ -525,11 +626,11 @@ const formatAmount = (value) => {
     try {
       setIsProcessing(true);
       console.log("inside try on Button Cashmatic payment started. Please pay at the machine.");
-      
+
       setToastType("info");
       setToastMessage("Cashmatic payment started. Please pay at the machine.");
-      console.log("Setting the cashmatic Info", total,"State is In Progerss");
-      
+      console.log("Setting the cashmatic Info", total, "State is In Progerss");
+
       setCashmaticInfo({
         requested: total,
         inserted: 0,
@@ -554,6 +655,76 @@ const formatAmount = (value) => {
       setToastMessage("Failed to start Cashmatic payment.");
       setShowCashmaticModal(false);
     }
+  };
+
+  // Cancel Cashmatic payment
+  // Handle manual change payment and print receipt
+  const handleManualChangePayment = async () => {
+    try {
+      const subTotal = calculateTotal();
+      const total = subTotal - discount;
+
+      // Complete the payment with proper change calculation
+      await handlePaymentConfirm({
+        totalPaid: cashmaticInfo.inserted, // Customer actually paid this amount
+        cashAmount: cashmaticInfo.inserted,
+        cardAmount: 0,
+        changeDue: cashmaticInfo.inserted - cashmaticInfo.requested, // Total change due
+        cashmaticDispensed: cashmaticInfo.dispensed, // Change given by machine
+        manualChangeDue: manualChangeAmount, // Change to be given manually
+      });
+
+      // Generate manual change receipt
+      const receiptData = generateManualChangeReceipt(
+        { id: currentOrderId }, 
+        manualChangeAmount
+      );
+      setManualChangeReceipt(receiptData);
+      
+      // Save manual change record for tracking
+      await saveManualChangeRecord(receiptData);
+
+      setToastType("success");
+      setToastMessage(`Payment completed! Manual change of €${formatAmount(manualChangeAmount)} given to customer.`);
+      setIsProcessing(false);
+      setShowManualChangeModal(false);
+      
+    } catch (error) {
+      console.error("Error completing manual change payment:", error);
+      setToastType("error");
+      setToastMessage("Payment successful but failed to complete order.");
+      setIsProcessing(false);
+      setShowManualChangeModal(false);
+    }
+  };
+
+  const handleCancelCashmatic = () => {
+    console.log("Cancelling Cashmatic payment");
+    
+    // Stop polling
+    setCashmaticPolling(false);
+    
+    // Clear session
+    setCashmaticSessionId(null);
+    
+    // Reset processing state
+    setIsProcessing(false);
+    
+    // Close modal
+    setShowCashmaticModal(false);
+    
+    // Reset Cashmatic info
+    setCashmaticInfo({
+      requested: 0,
+      inserted: 0,
+      dispensed: 0,
+      notDispensed: 0,
+      state: null,
+    });
+    
+    // Show cancellation message
+    setToastType("info");
+    setToastMessage("Cashmatic payment cancelled.");
   };
 
   // Payworld flow
@@ -583,7 +754,7 @@ const formatAmount = (value) => {
       message: "Payworld payment started. Connecting to terminal...",
       details: null,
     });
-    console.log("Set the Payworld status to In Progress" , payworldFinalizedRef.current);
+    console.log("Set the Payworld status to In Progress", payworldFinalizedRef.current);
     payworldFinalizedRef.current = false;
 
     try {
@@ -732,9 +903,8 @@ const formatAmount = (value) => {
                   product_id: subItem.id,
                   qty: subItem.quantity,
                   total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ""
+                    }`,
                   discount: 0,
                 });
                 detailIndex++;
@@ -791,13 +961,13 @@ const formatAmount = (value) => {
         setToastMessage("Order placed on hold successfully!");
       } catch (error) {
         console.error("Error placing order on hold:", error);
-        
+
         // Show inventory error to user
         if (error.message && error.message.includes('Insufficient inventory')) {
-          const errorDetails = error.details ? 
-            error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') : 
+          const errorDetails = error.details ?
+            error.details.map(d => `• ${d.product_name}: requested ${d.requested}, available ${d.available}`).join('\n') :
             error.message;
-          
+
           setToastType("error");
           setToastMessage(`⚠️ Insufficient Inventory\n\n${errorDetails}`);
         } else {
@@ -923,7 +1093,7 @@ const formatAmount = (value) => {
       }
 
       const orderType = localStorage.getItem('posVersion') || 'horeca';
-      
+
       const orderData = {
         status: "send_kitchen",
         note: "",
@@ -954,9 +1124,8 @@ const formatAmount = (value) => {
                   product_id: subItem.id,
                   qty: subItem.quantity,
                   total: subItem.price * subItem.quantity,
-                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${
-                    subItem.notes || ""
-                  }`,
+                  notes: `__SUBPRODUCT_OF_${parentDetailIndex}__${subItem.notes || ""
+                    }`,
                   discount: 0,
                 });
                 detailIndex++;
@@ -1051,7 +1220,7 @@ const formatAmount = (value) => {
       try {
         // First, check if there's a printer whose name contains "receipt"
         const receiptPrinter = printers.find(p => p.name.toLowerCase().includes('receipt'));
-        
+
         if (receiptPrinter) {
           // If a "Receipt" printer is found, print only to that printer
           try {
@@ -1078,7 +1247,7 @@ const formatAmount = (value) => {
           // If no printers assigned to products, use browser print
           if (printerNames.size === 0) {
             window.print();
-          } else {            
+          } else {
             // Print to each assigned printer
             const printPromises = [];
             printerNames.forEach(printerName => {
@@ -1108,7 +1277,7 @@ const formatAmount = (value) => {
             const results = await Promise.allSettled(printPromises);
             const successCount = results.filter(r => r.status === 'fulfilled' && r.value && r.value.success !== false).length;
             const failedCount = results.length - successCount;
-                        
+
             if (successCount > 0) {
               setToastType("success");
               setToastMessage(`Receipt sent to ${successCount} printer(s) successfully!`);
@@ -1129,7 +1298,7 @@ const formatAmount = (value) => {
       // No printer configured or no order, use browser print
       window.print();
     }
-    
+
     setShowReceipt(false);
     setCart([]);
     setDiscount(0);
@@ -1138,7 +1307,7 @@ const formatAmount = (value) => {
       onSelectCustomer(null);
     }
     setCompletedOrderId(null);
-    
+
     // Call onOrderComplete to clear table and order selection in parent
     if (onOrderComplete) {
       onOrderComplete();
@@ -1181,7 +1350,7 @@ const formatAmount = (value) => {
                 </span>
               </div>
             </div>
-            
+
             {/* Order No */}
             <div className="flex flex-col">
               <div className="text-[9px] text-pos-text-muted uppercase mb-0.5 font-medium">Order</div>
@@ -1232,8 +1401,8 @@ const formatAmount = (value) => {
               const bgColor = isLastAdded
                 ? "bg-green-500"
                 : isSelected
-                ? "bg-green-500"
-                : "bg-blue-500";
+                  ? "bg-green-500"
+                  : "bg-blue-500";
               const textColor = "text-dark";
 
               return (
@@ -1250,12 +1419,12 @@ const formatAmount = (value) => {
                           {item.name
                             ? item.name.split(" ").length > 1
                               ? item.name.split(" ").slice(0, 5).join(" ") +
-                                (item.name.split(" ").length > 5
-                                  ? "..."
-                                  : "")
+                              (item.name.split(" ").length > 5
+                                ? "..."
+                                : "")
                               : item.name.length > 20
-                              ? item.name.slice(0, 14) + "..."
-                              : item.name
+                                ? item.name.slice(0, 14) + "..."
+                                : item.name
                             : ""}
                         </span>
                         {item.notes && (
@@ -1495,11 +1664,10 @@ const formatAmount = (value) => {
           <button
             onClick={handleClearSelected}
             disabled={!hasSelection}
-            className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${
-              !hasSelection
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-pos-interactive-hover"
-            }`}
+            className={`bg-pos-interactive-primary text-pos-text-secondary py-2 ${!hasSelection
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-pos-interactive-hover"
+              }`}
           >
             🗑️
           </button>
@@ -1507,11 +1675,10 @@ const formatAmount = (value) => {
           <button
             onClick={() => setShowDeleteAllModal(true)}
             disabled={cart.length === 0}
-            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${
-              cart.length === 0
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-pos-interactive-hover"
-            }`}
+            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${cart.length === 0
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-pos-interactive-hover"
+              }`}
           >
             <span className="relative inline-block">
               🛒
@@ -1524,11 +1691,10 @@ const formatAmount = (value) => {
           <button
             onClick={handleNotes}
             disabled={cart.length === 0}
-            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${
-              cart.length === 0
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-pos-interactive-hover"
-            }`}
+            className={`bg-pos-interactive-primary text-pos-text-secondary py-1 ${cart.length === 0
+              ? "opacity-50 cursor-not-allowed"
+              : "hover:bg-pos-interactive-hover"
+              }`}
           >
             📝
           </button>
@@ -1544,11 +1710,10 @@ const formatAmount = (value) => {
           <button
             onClick={handleSplitCart}
             disabled={!hasSelection || !selectedTable}
-            className={`relative text-pos-text-secondary py-2 ${
-              !hasSelection || !selectedTable
-                ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed"
-                : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"
-            }`}
+            className={`relative text-pos-text-secondary py-2 ${!hasSelection || !selectedTable
+              ? "bg-pos-interactive-primary opacity-50 cursor-not-allowed"
+              : "bg-pos-interactive-primary hover:bg-pos-interactive-hover"
+              }`}
             title="Move selected items to another table"
           >
             <span className="text-lg">🔀</span>
@@ -1567,11 +1732,10 @@ const formatAmount = (value) => {
                 key={val}
                 onClick={() => handleNumpadInput(val)}
                 className={`aspect-auto flex items-center py-1 justify-center transition-all duration-150 
-        ${
-          val === "C"
-            ? "bg-red-500 hover:bg-red-600 text-white"
-            : "bg-pos-bg-quaternary hover:bg-pos-bg-tertiary text-white active:scale-95"
-        }`}
+        ${val === "C"
+                    ? "bg-red-500 hover:bg-red-600 text-white"
+                    : "bg-pos-bg-quaternary hover:bg-pos-bg-tertiary text-white active:scale-95"
+                  }`}
               >
                 {val}
               </button>
@@ -1647,26 +1811,15 @@ const formatAmount = (value) => {
                   <span>€ {formatAmount(cashmaticInfo?.inserted)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Change (theoretical):</span>
-                  <span>
-                    €{" "}
-                    {formatAmount(
-                      Math.max(
-                        (cashmaticInfo?.inserted ?? 0) -
-                          (cashmaticInfo?.requested ?? 0),
-                        0
-                      )
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Change via Cashmatic:</span>
+                  <span>Change dispensed by machine:</span>
                   <span>€ {formatAmount(cashmaticInfo?.dispensed)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Manual change:</span>
-                  <span>€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
-                </div>
+                {cashmaticInfo?.notDispensed > 0 && (
+                  <div className="flex justify-between bg-yellow-100 p-2 rounded border-l-4 border-yellow-500">
+                    <span className="font-semibold text-yellow-800">Manual change required:</span>
+                    <span className="font-bold text-yellow-800">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Status:</span>
                   <span>
@@ -1674,36 +1827,48 @@ const formatAmount = (value) => {
                       ? "Ready for next customer"
                       : cashmaticInfo.state === "RUNNING" ||
                         cashmaticInfo.state === "IN_PROGRESS"
-                      ? "Payment in progress..."
-                      : cashmaticInfo.state === "PAID"
-                      ? "Amount received – change being dispensed"
-                      : cashmaticInfo.state === "FINISHED_MANUAL"
-                      ? "Payment completed – give manual change"
-                      : cashmaticInfo.state === "FINISHED"
-                      ? "Payment completed"
-                      : cashmaticInfo.state === "CANCELLED"
-                      ? "Cancelled"
-                      : cashmaticInfo.state === "ERROR" ||
-                        cashmaticInfo.state === "FAILED"
-                      ? "Error – check Cashmatic"
-                      : "Unknown status"}
+                        ? "Payment in progress..."
+                        : cashmaticInfo.state === "PAID"
+                          ? "Amount received – processing change"
+                          : cashmaticInfo.state === "FINISHED_MANUAL"
+                            ? "Payment completed – give manual change"
+                            : cashmaticInfo.state === "FINISHED"
+                              ? "Payment completed"
+                              : cashmaticInfo.state === "CANCELLED"
+                                ? "Cancelled"
+                                : cashmaticInfo.state === "ERROR" ||
+                                  cashmaticInfo.state === "FAILED"
+                                  ? "Error – check Cashmatic"
+                                  : "Unknown status"}
                   </span>
                 </div>
               </div>
-
-              <div className="mt-6 flex justify-end gap-2">
-                {(cashmaticInfo.state === "FINISHED" ||
-                  cashmaticInfo.state === "FINISHED_MANUAL" ||
-                  cashmaticInfo.state === "CANCELLED" ||
-                  cashmaticInfo.state === "ERROR") && (
-                  <button
-                    className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                    onClick={() => setShowCashmaticModal(false)}
+             {(cashmaticInfo.state !== "PAID") &&  
+             <div className="flex justify-center items-center w-full">
+                <button 
+                    className="mt-4 px-4 py-2 rounded bg-red-500 text-white items-center hover:bg-red-600"
+                    onClick={handleCancelCashmatic}
+                    disabled={cashmaticInfo.state === "CANCELLED"}
                   >
-                    Close
+                    Cancel Payment
                   </button>
-                )}
-              </div>
+                </div>
+                }
+              {/* Manual Change Alert */}
+              {(cashmaticInfo.state === "FINISHED_MANUAL" || 
+                (cashmaticInfo.state === "FINISHED" && cashmaticInfo?.notDispensed > 0)) && (
+                <div className="mt-4 p-3 bg-red-100 border border-red-400 rounded">
+                  <div className="flex items-center">
+                    <div className="text-red-600 mr-2">⚠️</div>
+                    <div>
+                      <p className="text-red-800 font-semibold">Action Required!</p>
+                      <p className="text-red-700 text-sm">
+                        Please give €{formatAmount(cashmaticInfo?.notDispensed)} change to the customer manually.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1728,14 +1893,14 @@ const formatAmount = (value) => {
                     {payworldStatus.state === "IN_PROGRESS"
                       ? "Payment in progress on terminal..."
                       : payworldStatus.state === "APPROVED"
-                      ? "Payment approved."
-                      : payworldStatus.state === "DECLINED"
-                      ? "Payment declined."
-                      : payworldStatus.state === "CANCELLED"
-                      ? "Payment cancelled."
-                      : payworldStatus.state === "ERROR"
-                      ? "Error during payment."
-                      : "Ready."}
+                        ? "Payment approved."
+                        : payworldStatus.state === "DECLINED"
+                          ? "Payment declined."
+                          : payworldStatus.state === "CANCELLED"
+                            ? "Payment cancelled."
+                            : payworldStatus.state === "ERROR"
+                              ? "Error during payment."
+                              : "Ready."}
                   </span>
                 </div>
 
@@ -1760,20 +1925,20 @@ const formatAmount = (value) => {
                   payworldStatus.state === "DECLINED" ||
                   payworldStatus.state === "CANCELLED" ||
                   payworldStatus.state === "ERROR") && (
-                  <button
-                    className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                    onClick={() => {
-                      setShowPayworldModal(false);
-                      setPayworldStatus({
-                        state: "IDLE",
-                        message: "",
-                        details: null,
-                      });
-                    }}
-                  >
-                    Close
-                  </button>
-                )}
+                    <button
+                      className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
+                      onClick={() => {
+                        setShowPayworldModal(false);
+                        setPayworldStatus({
+                          state: "IDLE",
+                          message: "",
+                          details: null,
+                        });
+                      }}
+                    >
+                      Close
+                    </button>
+                  )}
               </div>
             </div>
           </div>
@@ -1821,12 +1986,12 @@ const formatAmount = (value) => {
               selectedIds.length === 0
                 ? "Whole Order"
                 : selectedIds.length === 1
-                ? cart.find((item) => {
+                  ? cart.find((item) => {
                     const itemCartId =
                       item.cartItemId || `${item.id}_${item.name}`;
                     return itemCartId === selectedIds[0];
                   })?.name
-                : cart
+                  : cart
                     .filter((item) => {
                       const itemCartId =
                         item.cartItemId || `${item.id}_${item.name}`;
@@ -1838,19 +2003,19 @@ const formatAmount = (value) => {
             basePrice={
               selectedIds.length === 0
                 ? cart.reduce((sum, i) => {
+                  const priceToUse = i.originalPrice || i.price;
+                  return sum + priceToUse * i.quantity;
+                }, 0)
+                : cart
+                  .filter((item) => {
+                    const itemCartId =
+                      item.cartItemId || `${item.id}_${item.name}`;
+                    return selectedIds.includes(itemCartId);
+                  })
+                  .reduce((sum, i) => {
                     const priceToUse = i.originalPrice || i.price;
                     return sum + priceToUse * i.quantity;
                   }, 0)
-                : cart
-                    .filter((item) => {
-                      const itemCartId =
-                        item.cartItemId || `${item.id}_${item.name}`;
-                      return selectedIds.includes(itemCartId);
-                    })
-                    .reduce((sum, i) => {
-                      const priceToUse = i.originalPrice || i.price;
-                      return sum + priceToUse * i.quantity;
-                    }, 0)
             }
             onClose={() => setShowDiscountModal(false)}
             onConfirm={({ finalPrice, mode, rawInput }) => {
@@ -2015,6 +2180,54 @@ const formatAmount = (value) => {
           title={noteModalTitle}
           currentNote={currentNoteValue}
         />
+
+        {/* Manual Change Modal */}
+        {showManualChangeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 mx-4">
+              <div className="text-center">
+                <div className="mb-4">
+                  <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-4">
+                    <span className="text-3xl">💰</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">
+                    Manual Change Required
+                  </h2>
+                  <p className="text-gray-600 mb-4">
+                    The Cashmatic machine could not dispense the full change amount.
+                  </p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                    <p className="text-lg font-semibold text-yellow-800">
+                      Manual Amount to Pay: €{formatAmount(manualChangeAmount)}
+                    </p>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Please give this amount to the customer manually
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={handleManualChangePayment}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    ✓ Manual Amount Paid - Print Receipt
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      setShowManualChangeModal(false);
+                      setShowCashmaticModal(true); // Go back to Cashmatic modal
+                    }}
+                    className="w-full bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
