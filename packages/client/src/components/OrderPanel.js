@@ -1817,62 +1817,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   </div>
                 </div>
               )}
-
-              {/* <div className="mt-6 flex justify-end gap-2"> */}
-                {/* Print Manual Change Receipt Button */}
-                {/* {cashmaticInfo?.notDispensed > 0 && 
-                 (cashmaticInfo.state === "FINISHED" || cashmaticInfo.state === "FINISHED_MANUAL") && (
-                  <button
-                    className="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600"
-                    onClick={() => {
-                      if (manualChangeReceipt) { */}
-                        // Print manual change receipt
-                        {/* const receiptContent = `
-                          MANUAL CHANGE RECEIPT
-                          =====================
-                          Order #: ${manualChangeReceipt.orderNo || 'N/A'}
-                          Table: ${manualChangeReceipt.tableNo || 'N/A'}
-                          Amount Due: €${formatAmount(manualChangeReceipt.manualChangeAmount)}
-                          Reason: ${manualChangeReceipt.reason}
-                          Time: ${new Date(manualChangeReceipt.timestamp).toLocaleString()}
-                          Cashier: ${manualChangeReceipt.cashier}
-                          =====================
-                        `; */}
-                        
-                        // Create a temporary element for printing
-                        {/* const printWindow = window.open('', '_blank');
-                        printWindow.document.write(`
-                          <html>
-                            <head><title>Manual Change Receipt</title></head>
-                            <body style="font-family: monospace; white-space: pre-line;">
-                              ${receiptContent}
-                            </body>
-                          </html>
-                        `);
-                        printWindow.document.close();
-                        printWindow.print();
-                        printWindow.close();
-                      }
-                    }}
-                  >
-                    Print Change Receipt
-                  </button>
-                )} */}
-                
-                {/* { (
-                    <button
-                      className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                      onClick={async () => {
-                        setShowCashmaticModal(false);
-                        console.log("completed order id : ", completedOrderId);
-                        // Print receipt if order is completed
-                        
-                      }}
-                    >
-                      Close
-                    </button>
-                  )}
-              </div> */}
             </div>
           </div>
         )}
