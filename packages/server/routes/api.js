@@ -171,6 +171,7 @@ router.post('/scale/calculate-price', ScaleController.calculatePrice);
 
 // Promotion routes
 router.get('/promotions', PromotionController.getAllPromotions);
+router.get('/promotions/bill/active', PromotionController.getActiveBillPromotion);
 router.get('/promotions/:id', PromotionController.getPromotionById);
 router.get('/promotions/product/:productId', PromotionController.getActivePromotionByProductId);
 router.post('/promotions', PromotionController.createPromotion);

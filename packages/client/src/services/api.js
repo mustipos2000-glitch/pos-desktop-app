@@ -522,6 +522,10 @@ static async adjustInventory(productId, data) {
     return this.request(`/promotions/product/${productId}`);
   }
 
+  static async getActiveBillPromotion() {
+    return this.request('/promotions/bill/active');
+  }
+
   static async createPromotion(promotionData) {
     return this.request('/promotions', {
       method: 'POST',

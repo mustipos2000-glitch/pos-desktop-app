@@ -30,10 +30,27 @@ class PromotionController {
   static getActivePromotionByProductId(req, res) {
     try {
       const { productId } = req.params;
+      console.log('🔍 Server: Checking promotion for product ID:', productId);
+      
       const promotion = Promotion.getActiveByProductId(productId);
+      
+      console.log('📦 Server: Promotion found:', promotion ? promotion.name : 'None');
+      
+      if (promotion) {
+        console.log('✅ Server: Returning promotion:', {
+          id: promotion.id,
+          name: promotion.name,
+          discount_type: promotion.discount_type,
+          discount_value: promotion.discount_value,
+          is_active: promotion.is_active,
+          start_date: promotion.start_date,
+          end_date: promotion.end_date
+        });
+      }
+      
       res.json({ success: true, data: promotion });
     } catch (error) {
-      console.error('Error fetching active promotion:', error);
+      console.error('❌ Server: Error fetching active promotion:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
@@ -66,6 +83,33 @@ class PromotionController {
       res.json({ success: true, message: 'Promotion deleted successfully' });
     } catch (error) {
       console.error('Error deleting promotion:', error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  }
+
+  static getActiveBillPromotion(req, res) {
+    try {
+      console.log('🔍 Server: Checking for active bill-level promotion');
+      
+      const promotion = Promotion.getActiveBillPromotion();
+      
+      console.log('📦 Server: Bill promotion found:', promotion ? promotion.name : 'None');
+      
+      if (promotion) {
+        console.log('✅ Server: Returning bill promotion:', {
+          id: promotion.id,
+          name: promotion.name,
+          discount_type: promotion.discount_type,
+          discount_value: promotion.discount_value,
+          is_active: promotion.is_active,
+          start_date: promotion.start_date,
+          end_date: promotion.end_date
+        });
+      }
+      
+      res.json({ success: true, data: promotion });
+    } catch (error) {
+      console.error('❌ Server: Error fetching active bill promotion:', error);
       res.status(500).json({ success: false, error: error.message });
     }
   }
