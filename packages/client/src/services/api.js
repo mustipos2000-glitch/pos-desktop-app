@@ -522,6 +522,10 @@ static async adjustInventory(productId, data) {
     return this.request(`/promotions/product/${productId}`);
   }
 
+  static async getActiveBillPromotion() {
+    return this.request('/promotions/bill/active');
+  }
+
   static async createPromotion(promotionData) {
     return this.request('/promotions', {
       method: 'POST',
@@ -548,6 +552,86 @@ static async adjustInventory(productId, data) {
       method: 'POST',
       body: JSON.stringify(receiptData),
     });
+  }
+
+  // Member Fee methods
+  static async getMemberFees() {
+    return this.request('/member-fees');
+  }
+
+  static async getMemberFeeById(id) {
+    return this.request(`/member-fees/${id}`);
+  }
+
+  static async createMemberFee(feeData) {
+    return this.request('/member-fees', {
+      method: 'POST',
+      body: JSON.stringify(feeData),
+    });
+  }
+
+  static async updateMemberFee(id, feeData) {
+    return this.request(`/member-fees/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(feeData),
+    });
+  }
+
+  static async deleteMemberFee(id) {
+    return this.request(`/member-fees/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Mosque Payment methods
+  static async getMosquePayments() {
+    return this.request('/mosque-payments');
+  }
+
+  static async getMosquePaymentById(id) {
+    return this.request(`/mosque-payments/${id}`);
+  }
+
+  static async getMosquePaymentByTransactionId(transactionId) {
+    return this.request(`/mosque-payments/transaction/${transactionId}`);
+  }
+
+  static async getMosquePaymentsByMemberId(memberId) {
+    return this.request(`/mosque-payments/member/${memberId}`);
+  }
+
+  static async createMosquePayment(paymentData) {
+    return this.request('/mosque-payments', {
+      method: 'POST',
+      body: JSON.stringify(paymentData),
+    });
+  }
+
+  static async updateMosquePayment(id, paymentData) {
+    return this.request(`/mosque-payments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(paymentData),
+    });
+  }
+
+  static async deleteMosquePayment(id) {
+    return this.request(`/mosque-payments/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  static async getMosquePaymentStatsByType(startDate, endDate) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return this.request(`/mosque-payments/stats/by-type?${params.toString()}`);
+  }
+
+  static async getMosquePaymentStatsByMethod(startDate, endDate) {
+    const params = new URLSearchParams();
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+    return this.request(`/mosque-payments/stats/by-method?${params.toString()}`);
   }
 
 }

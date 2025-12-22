@@ -5,6 +5,9 @@ const CategoryController = require('../controllers/CategoryController');
 const GroupController = require('../controllers/GroupController');
 const UserController = require('../controllers/UserController');
 const MemberController = require('../controllers/MemberController');
+const MemberFeeController = require('../controllers/MemberFeeController');
+const RentalChargeController = require('../controllers/RentalChargeController');
+const MosquePaymentController = require('../controllers/MosquePaymentController');
 const ProductController = require('../controllers/ProductController');
 const SubProductController = require('../controllers/SubProductController');
 const OrderController = require('../controllers/OrderController');
@@ -39,6 +42,31 @@ router.get('/members/:id', MemberController.getMemberById);
 router.post('/members', MemberController.createMember);
 router.put('/members/:id', MemberController.updateMember);
 router.delete('/members/:id', MemberController.deleteMember);
+
+// Member Fee routes
+router.get('/member-fees', MemberFeeController.getAllMemberFees);
+router.get('/member-fees/:id', MemberFeeController.getMemberFeeById);
+router.post('/member-fees', MemberFeeController.createMemberFee);
+router.put('/member-fees/:id', MemberFeeController.updateMemberFee);
+router.delete('/member-fees/:id', MemberFeeController.deleteMemberFee);
+
+// Rental Charge routes
+router.get('/rental-charges', RentalChargeController.getAllRentalCharges);
+router.get('/rental-charges/:id', RentalChargeController.getRentalChargeById);
+router.post('/rental-charges', RentalChargeController.createRentalCharge);
+router.put('/rental-charges/:id', RentalChargeController.updateRentalCharge);
+router.delete('/rental-charges/:id', RentalChargeController.deleteRentalCharge);
+
+// Mosque Payment routes
+router.get('/mosque-payments', MosquePaymentController.getAllPayments);
+router.get('/mosque-payments/:id', MosquePaymentController.getPaymentById);
+router.get('/mosque-payments/transaction/:transactionId', MosquePaymentController.getPaymentByTransactionId);
+router.get('/mosque-payments/member/:memberId', MosquePaymentController.getPaymentsByMemberId);
+router.post('/mosque-payments', MosquePaymentController.createPayment);
+router.put('/mosque-payments/:id', MosquePaymentController.updatePayment);
+router.delete('/mosque-payments/:id', MosquePaymentController.deletePayment);
+router.get('/mosque-payments/stats/by-type', MosquePaymentController.getStatsByType);
+router.get('/mosque-payments/stats/by-method', MosquePaymentController.getStatsByMethod);
 
 // Category routes
 router.get('/categories', CategoryController.getAllCategories);
@@ -171,6 +199,7 @@ router.post('/scale/calculate-price', ScaleController.calculatePrice);
 
 // Promotion routes
 router.get('/promotions', PromotionController.getAllPromotions);
+router.get('/promotions/bill/active', PromotionController.getActiveBillPromotion);
 router.get('/promotions/:id', PromotionController.getPromotionById);
 router.get('/promotions/product/:productId', PromotionController.getActivePromotionByProductId);
 router.post('/promotions', PromotionController.createPromotion);

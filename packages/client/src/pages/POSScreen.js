@@ -35,6 +35,82 @@ const POSScreen = () => {
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showBarcodeSearch, setShowBarcodeSearch] = useState(false);
+  const [billPromotion, setBillPromotion] = useState(null);
+  const [billDiscount, setBillDiscount] = useState(0);
+
+  // Helper function to calculate discount from promotion
+  const calculatePromotionDiscount = (product, promotion) => {
+    if (!promotion) return { discount: 0, appliedPromotion: null };
+    
+    if (promotion.discount_type === 'percentage') {
+      const discount = (product.price * promotion.discount_value) / 100;
+      return {
+        discount: discount,
+        appliedPromotion: {
+          id: promotion.id,
+          name: promotion.name,
+          type: 'percentage',
+          value: promotion.discount_value
+        }
+      };
+    } else {
+      // Fixed amount
+      return {
+        discount: promotion.discount_value,
+        appliedPromotion: {
+          id: promotion.id,
+          name: promotion.name,
+          type: 'fixed',
+          value: promotion.discount_value
+        }
+      };
+    }
+  };
+
+  // Helper function to check and apply promotion to a product
+  const checkAndApplyPromotion = async (product) => {
+    console.log('🔍 Checking promotion for product:', product.name, 'ID:', product.id);
+    try {
+      const response = await ApiService.getActivePromotionByProductId(product.id);
+      console.log('📦 API Response:', response);
+      
+      if (response.data) {
+        const promotion = response.data;
+        console.log('🎉 Found promotion:', promotion);
+        
+        const { discount, appliedPromotion } = calculatePromotionDiscount(product, promotion);
+        
+        // Format the discount label for display
+        const discountLabel = promotion.discount_type === 'percentage' 
+          ? `${promotion.discount_value}%` 
+          : `€${promotion.discount_value.toFixed(2)}`;
+        
+        console.log('✅ Promotion applied:', {
+          product: product.name,
+          originalPrice: product.price,
+          discount: discount,
+          newPrice: product.price - discount,
+          promotion: promotion.name,
+          discountLabel: discountLabel
+        });
+        
+        return {
+          ...product,
+          originalPrice: product.price,
+          discount: discount,
+          appliedPromotion: appliedPromotion,
+          appliedDiscount: discountLabel, // This is what OrderPanel displays
+          price: product.price - discount // Update price to discounted price
+        };
+      } else {
+        console.log('ℹ️ No promotion data returned for:', product.name);
+      }
+    } catch (error) {
+      console.log('❌ Error or no active promotion for product:', product.name, error);
+    }
+    console.log('⚠️ Returning product without promotion');
+    return product;
+  };
 
   // Load logged-in user from localStorage on mount
   useEffect(() => {
@@ -83,8 +159,13 @@ const POSScreen = () => {
         // Determine order status based on whether table is selected
         const orderStatus = selectedTable ? 'send_kitchen' : 'on_hold';
 
-        // Calculate total discount from all cart items
-        const totalDiscount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
+        // Calculate total discount from all cart items (product-level)
+        const productDiscount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
+        
+        // Include bill-level discount
+        const totalDiscount = productDiscount + (billDiscount || 0);
+        const finalTotal = subTotal - totalDiscount;
+        
         const orderType = localStorage.getItem('posVersion') || 'horeca';
 
         const orderData = {
@@ -92,7 +173,7 @@ const POSScreen = () => {
           status: orderStatus,
           note: '',
           sub_total: subTotal,
-          total: subTotal,
+          total: finalTotal,
           discount: totalDiscount,
           customer_id: selectedCustomer ? selectedCustomer.id : null,
           employee_id: selectedEmployee ? selectedEmployee.id : null,
@@ -186,7 +267,85 @@ const POSScreen = () => {
     }, 800); // Wait 800ms after last cart change
 
     return () => clearTimeout(timeoutId);
-  }, [cart, selectedTable, currentOrderId, selectedCustomer, selectedEmployee]);
+  }, [cart, selectedTable, currentOrderId, selectedCustomer, selectedEmployee, billDiscount]);
+
+  // Calculate bill-level promotion whenever cart changes
+  useEffect(() => {
+    const calculateBillPromotion = async () => {
+      // Reset bill promotion if cart is empty
+      if (cart.length === 0) {
+        setBillPromotion(null);
+        setBillDiscount(0);
+        return;
+      }
+
+      try {
+        // Fetch active bill-level promotion
+        const response = await ApiService.getActiveBillPromotion();
+        console.log('🎉 Bill promotion response:', response);
+        
+        if (response.data) {
+          const promotion = response.data;
+          console.log('✅ Found bill promotion:', promotion);
+          
+          // Calculate subtotal of items WITHOUT product-level promotions
+          const eligibleSubtotal = cart.reduce((sum, item) => {
+            // Skip items that already have product-level promotions
+            if (item.appliedPromotion) {
+              console.log(`⏭️ Skipping ${item.name} - has product promotion`);
+              return sum;
+            }
+            
+            const price = typeof item.price === 'number' && !isNaN(item.price) ? item.price : 0;
+            const quantity = typeof item.quantity === 'number' && !isNaN(item.quantity) ? item.quantity : 0;
+            let itemTotal = price * quantity;
+            
+            // Add sub-products to total
+            if (item.subProducts && item.subProducts.length > 0) {
+              item.subProducts.forEach(subItem => {
+                const subPrice = typeof subItem.price === 'number' && !isNaN(subItem.price) ? subItem.price : 0;
+                const subQty = typeof subItem.quantity === 'number' && !isNaN(subItem.quantity) ? subItem.quantity : 0;
+                itemTotal += subPrice * subQty;
+              });
+            }
+            
+            return sum + itemTotal;
+          }, 0);
+          
+          console.log('💰 Eligible subtotal for bill promotion:', eligibleSubtotal);
+          
+          // Calculate bill discount
+          let discount = 0;
+          if (promotion.discount_type === 'percentage') {
+            discount = (eligibleSubtotal * promotion.discount_value) / 100;
+          } else {
+            // Fixed amount
+            discount = Math.min(promotion.discount_value, eligibleSubtotal);
+          }
+          
+          console.log('🎁 Bill discount calculated:', discount);
+          
+          setBillPromotion(promotion);
+          setBillDiscount(discount);
+        } else {
+          console.log('ℹ️ No active bill promotion found');
+          setBillPromotion(null);
+          setBillDiscount(0);
+        }
+      } catch (error) {
+        console.log('❌ Error fetching bill promotion:', error);
+        setBillPromotion(null);
+        setBillDiscount(0);
+      }
+    };
+
+    // Debounce the calculation
+    const timeoutId = setTimeout(() => {
+      calculateBillPromotion();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [cart]);
 
   // Fetch categories and products from backend
   useEffect(() => {
@@ -236,15 +395,21 @@ const POSScreen = () => {
   const addToCart = async (product, quantity = 1, isSubProduct = false) => {
   const finalQuantity = quantity > 0 ? quantity : 1;
   
+  // Check for active promotion and apply it (only for regular products, not sub-products)
+  let productWithPromotion = product;
+  if (!isSubProduct) {
+    productWithPromotion = await checkAndApplyPromotion(product);
+  }
+  
   // Check inventory availability before adding (for both new and existing orders)
   if (type === "retail" && !isSubProduct) {
     try {
       // Fetch fresh availability from server
-      let availableQty = product.available_qty;
+      let availableQty = productWithPromotion.available_qty;
       
       if (currentOrderId) {
         // For existing orders, fetch with excludeOrderId to get accurate availability
-        const url = `/products/${product.id}?excludeOrderId=${currentOrderId}`;
+        const url = `/products/${productWithPromotion.id}?excludeOrderId=${currentOrderId}`;
         const response = await fetch(`http://localhost:5000/api${url}`);
         const data = await response.json();
         availableQty = data.data.available_qty || 0;
@@ -252,7 +417,7 @@ const POSScreen = () => {
       
       // Calculate how much of this product is already in cart
       const currentInCart = cart.reduce((total, item) => {
-        if (item.id === product.id && !item.isSubProduct) {
+        if (item.id === productWithPromotion.id && !item.isSubProduct) {
           return total + item.quantity;
         }
         return total;
@@ -263,7 +428,7 @@ const POSScreen = () => {
       // Check if requested total exceeds available
       if (requestedTotal > availableQty) {
         showWarning(
-          `${product.name}\n\nRequested: ${requestedTotal}\nAvailable: ${availableQty}\nAlready in cart: ${currentInCart}`,
+          `${productWithPromotion.name}\n\nRequested: ${requestedTotal}\nAvailable: ${availableQty}\nAlready in cart: ${currentInCart}`,
           '⚠️ Insufficient Stock'
         );
         return; // Don't add to cart
@@ -293,14 +458,14 @@ const POSScreen = () => {
         
         // Create new row with qty 1 and the sub-product
         const newParentCartItemId = `${targetParent.id}_${targetParent.name}_${Date.now()}`;
-        const subProductCartItemId = `${product.id}_${product.name}_${Date.now()}`;
+        const subProductCartItemId = `${productWithPromotion.id}_${productWithPromotion.name}_${Date.now()}`;
         
         const newParentRow = {
           ...targetParent,
           quantity: 1,
           cartItemId: newParentCartItemId,
           subProducts: [{
-            ...product,
+            ...productWithPromotion,
             quantity: finalQuantity,
             cartItemId: subProductCartItemId,
             isSubProduct: true
@@ -322,7 +487,7 @@ const POSScreen = () => {
       
       // Check if this sub-product already exists in active parent
       const existingSubProduct = targetParent.subProducts.find(
-        subItem => subItem.id === product.id && subItem.name === product.name
+        subItem => subItem.id === productWithPromotion.id && subItem.name === productWithPromotion.name
       );
       
       if (existingSubProduct) {
@@ -330,9 +495,9 @@ const POSScreen = () => {
         existingSubProduct.quantity += finalQuantity;
       } else {
         // Different sub-product - add to active parent
-        const cartItemId = `${product.id}_${product.name}_${Date.now()}`;
+        const cartItemId = `${productWithPromotion.id}_${productWithPromotion.name}_${Date.now()}`;
         targetParent.subProducts.push({
-          ...product,
+          ...productWithPromotion,
           quantity: finalQuantity,
           cartItemId,
           isSubProduct: true
@@ -345,12 +510,12 @@ const POSScreen = () => {
   }
   
   // For regular products, track which product was clicked and set as active parent
-  setLastClickedProductId(product.id);
+  setLastClickedProductId(productWithPromotion.id);
   
   // Find existing item with same product ID WITHOUT sub-products
   let existingItemWithoutSubProducts = -1;
   for (let i = cart.length - 1; i >= 0; i--) {
-    if (cart[i].id === product.id && 
+    if (cart[i].id === productWithPromotion.id && 
         !cart[i].isSubProduct && 
         (!cart[i].subProducts || cart[i].subProducts.length === 0)) {
       existingItemWithoutSubProducts = i;
@@ -368,8 +533,8 @@ const POSScreen = () => {
     }));
   } else {
     // Add new product and set as active parent
-    const newCartItemId = `${product.id}_${product.name}_${Date.now()}`;
-    const newCart = [...cart, { ...product, quantity: finalQuantity, cartItemId: newCartItemId, isSubProduct: false, subProducts: [] }];
+    const newCartItemId = `${productWithPromotion.id}_${productWithPromotion.name}_${Date.now()}`;
+    const newCart = [...cart, { ...productWithPromotion, quantity: finalQuantity, cartItemId: newCartItemId, isSubProduct: false, subProducts: [] }];
     setCart(newCart);
     setActiveParentRowIndex(newCart.length - 1); // Set the newly added item as active
   }
@@ -1052,6 +1217,8 @@ const updateQuantity = async (cartItemId, quantity) => {
         onSelectCustomer={setSelectedCustomer}
         selectedEmployee={selectedEmployee}
         onRefreshHoldCount={refreshHoldCount}
+        billPromotion={billPromotion}
+        billDiscount={billDiscount}
         onSplitCart={(items, confirmCallback) => {
           setSplitCartSelectedItems(items);
           setShowSplitCartModal(true);

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import ConfirmationModal from './ConfirmationModal';
 import MessageModal from './MessageModal';
 import PromotionFormModal from './PromotionFormModal';
+import PromotionProductsModal from './PromotionProductsModal';
 import SearchBar from './SearchBar';
 import { useMessageModal } from '../hooks/useMessageModal';
 import ApiService from '../services/api';
@@ -11,7 +12,9 @@ const PromotionManager = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const [showProductsModal, setShowProductsModal] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState(null);
+  const [selectedPromotion, setSelectedPromotion] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     isOpen: false,
     promotionId: null,
@@ -49,8 +52,15 @@ const PromotionManager = () => {
   }, []);
 
   const handleSavePromotion = async (promotionForm) => {
-    if (!promotionForm.name || !promotionForm.product_ids || promotionForm.product_ids.length === 0) {
-      showError('Please fill in all required fields');
+    // Validate required fields
+    if (!promotionForm.name) {
+      showError('Please enter a promotion name');
+      return;
+    }
+    
+    // Only check for products if it's a specific products promotion
+    if (promotionForm.apply_to === 'specific_products' && (!promotionForm.product_ids || promotionForm.product_ids.length === 0)) {
+      showError('Please select at least one product for specific products promotion');
       return;
     }
 
@@ -66,7 +76,18 @@ const PromotionManager = () => {
       });
 
       if (response.ok) {
-        fetchPromotions();
+        await fetchPromotions();
+        
+        // If we were editing, refresh the selected promotion with updated data
+        if (editingPromotion && selectedPromotion?.id === editingPromotion.id) {
+          try {
+            const updatedPromotion = await ApiService.getPromotionById(editingPromotion.id);
+            setSelectedPromotion(updatedPromotion.data);
+          } catch (error) {
+            console.error('Error refreshing selected promotion:', error);
+          }
+        }
+        
         closePromotionModal();
         showSuccess(`Promotion ${editingPromotion ? 'updated' : 'created'} successfully`);
       } else {
@@ -79,9 +100,17 @@ const PromotionManager = () => {
     }
   };
 
-  const handleEditPromotion = (promotion) => {
-    setEditingPromotion(promotion);
-    setShowPromotionModal(true);
+  const handleEditPromotion = () => {
+    if (selectedPromotion) {
+      setEditingPromotion(selectedPromotion);
+      setShowPromotionModal(true);
+    }
+  };
+
+  const handleShowProducts = () => {
+    if (selectedPromotion) {
+      setShowProductsModal(true);
+    }
   };
 
   const closePromotionModal = () => {
@@ -98,6 +127,9 @@ const PromotionManager = () => {
       if (response.ok) {
         fetchPromotions();
         closeDeleteConfirmation();
+        if (selectedPromotion?.id === id) {
+          setSelectedPromotion(null);
+        }
         showSuccess('Promotion deleted successfully');
       } else {
         const error = await response.json();
@@ -111,12 +143,14 @@ const PromotionManager = () => {
     }
   };
 
-  const openDeleteConfirmation = (promotion) => {
-    setDeleteConfirmation({
-      isOpen: true,
-      promotionId: promotion.id,
-      promotionName: promotion.name
-    });
+  const openDeleteConfirmation = () => {
+    if (selectedPromotion) {
+      setDeleteConfirmation({
+        isOpen: true,
+        promotionId: selectedPromotion.id,
+        promotionName: selectedPromotion.name
+      });
+    }
   };
 
   const closeDeleteConfirmation = () => {
@@ -177,7 +211,27 @@ const PromotionManager = () => {
           }}
           className="btn-primary"
         >
-          Add Promotion
+          Add
+        </button>
+        <button
+          onClick={handleEditPromotion}
+          disabled={!selectedPromotion}
+          className={`btn-primary ${!selectedPromotion
+            ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+            : ""
+            }`}
+        >
+          Edit
+        </button>
+        <button
+          onClick={openDeleteConfirmation}
+          disabled={!selectedPromotion}
+          className={`btn-primary ${!selectedPromotion
+            ? "disabled:bg-gray-500 disabled:cursor-not-allowed disabled:opacity-50"
+            : ""
+            }`}
+        >
+          Delete
         </button>
         <SearchBar
           searchQuery={searchQuery}
@@ -187,61 +241,99 @@ const PromotionManager = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="mt-4">
-        <h3 className="text-base font-medium text-pos-text-primary mb-2">
-          Promotions List
-        </h3>
-        {loading ? (
-          <div className="text-pos-text-muted text-lg p-4 text-center">
-            Loading promotions...
-          </div>
-        ) : filteredPromotions.length === 0 ? (
-          <div className="h-[500px] text-pos-text-muted text-lg border border-pos-border-secondary bg-pos-bg-secondary rounded-lg p-4 text-center">
-            {searchQuery ? 'No promotions found matching your search.' : 'No promotions found. Click "Add Promotion" to create one.'}
-          </div>
-        ) : (
-          <div className="h-[500px] border border-pos-border-secondary p-2 text-base overflow-y-auto scrollbar-custom rounded-lg bg-pos-bg-secondary">
-            {filteredPromotions.map((promotion) => (
-              <div
-                key={promotion.id}
-                className="flex justify-between items-center border border-pos-border-primary mt-1 mb-2 transition-all duration-200 rounded-lg px-3 py-2 hover:bg-black/5 hover:shadow-sm"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <div className="font-medium text-lg">{promotion.name}</div>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(promotion.is_active)}`}>
-                      {promotion.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getDiscountTypeBadge(promotion.discount_type)}`}>
-                      {promotion.discount_type === 'percentage' ? `${promotion.discount_value}%` : `$${promotion.discount_value}`}
-                    </span>
-                  </div>
-                  <div className="text-sm text-pos-text-muted flex gap-4">
-                    <span>Products: <span className="font-medium">{promotion.product_names || 'N/A'}</span></span>
-                  </div>
-                  <div className="text-xs text-pos-text-muted mt-1 flex gap-4">
-                    <span>Start: {formatDate(promotion.start_date)}</span>
-                    <span>End: {formatDate(promotion.end_date)}</span>
+      <div className="flex gap-2 mt-4">
+        {/* Left Sidebar - Promotions List */}
+        <div className="flex-1 max-w-[11rem]">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
+            Promotions
+          </h3>
+          {loading ? (
+            <div className="text-pos-text-muted text-lg p-4 text-center">
+              Loading...
+            </div>
+          ) : filteredPromotions.length === 0 ? (
+            <div className="h-[500px] text-pos-text-muted text-sm border border-pos-border-secondary bg-pos-bg-secondary rounded-lg p-2 overflow-y-auto scrollbar-custom">
+              No promotions found.
+            </div>
+          ) : (
+            <div className="h-[500px] min-w-[160px] max-w-[200px] border border-pos-border-secondary p-2 overflow-y-auto scrollbar-custom bg-pos-bg-secondary rounded-lg">
+              {filteredPromotions.map(promo => (
+                <div
+                  key={promo.id}
+                  onClick={() => setSelectedPromotion(promo)}
+                  className={`flex text-lg mt-1 mb-2 shadow-md cursor-pointer transition-all duration-200 rounded-lg border border-pos-border-primary px-1 py-1 ${selectedPromotion?.id === promo.id
+                    ? 'bg-pos-bg-primary shadow-md'
+                    : 'hover:bg-black/5 hover:shadow-sm hover:scale-[1.02]'
+                    }`}
+                >
+                  <div className="px-1 py-1 flex-1">
+                    {promo.name}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right Content - Promotion Details */}
+        <div className="flex-[3] min-w-[300px]">
+          <h3 className="text-base font-medium text-pos-text-primary mb-2">
+            Details
+          </h3>
+          {!selectedPromotion ? (
+            <div className="h-[500px] text-pos-text-muted text-lg border border-pos-border-secondary bg-pos-bg-secondary p-2 rounded-lg text-pos-error">
+              Select a promotion to view details
+            </div>
+          ) : (
+            <div className="h-[500px] border border-pos-border-secondary p-2 text-base overflow-y-auto scrollbar-custom rounded-lg bg-pos-bg-secondary">
+              {/* Details Table */}
+              <div className="flex gap-2 flex-wrap">
+                {/* Start Date */}
+                <div className="flex-1 min-w-[180px]  px-2 py-2">
+                  <div className="font-medium text-pos-text-muted mb-1">Start Date</div>
+                  <div className="text-pos-text-primary text-sm">{formatDate(selectedPromotion.start_date)}</div>
+                </div>
+
+                {/* End Date */}
+                <div className="flex-1 min-w-[180px]  px-2 py-2">
+                  <div className="font-medium text-pos-text-muted mb-1">End Date</div>
+                  <div className="text-pos-text-primary text-sm">{formatDate(selectedPromotion.end_date)}</div>
+                </div>
+
+                {/* Discount */}
+                <div className="flex-1 min-w-[120px]  px-2 py-2">
+                  <div className="font-medium text-pos-text-muted mb-1">Discount</div>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${getDiscountTypeBadge(selectedPromotion.discount_type)}`}>
+                      {selectedPromotion.discount_type === 'percentage' 
+                        ? `${selectedPromotion.discount_value}%` 
+                        : `$${selectedPromotion.discount_value}`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="flex-1 min-w-[100px]  px-2 py-2">
+                  <div className="font-medium text-pos-text-muted mb-1">Status</div>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusBadge(selectedPromotion.is_active)}`}>
+                    {selectedPromotion.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+
+                {/* Products - Clickable */}
+                <div className="flex-1 min-w-[150px]  px-2 py-2">
+                  <div className="font-medium text-pos-text-muted mb-1">Products</div>
                   <button
-                    onClick={() => handleEditPromotion(promotion)}
-                    className="text-xs px-3 py-1.5 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
+                    onClick={handleShowProducts}
+                    className="text-blue-400 hover:text-blue-300 underline transition-colors text-sm"
                   >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => openDeleteConfirmation(promotion)}
-                    className="text-xs px-3 py-1.5 bg-pos-bg-primary hover:bg-pos-interactive-primary rounded transition-colors"
-                  >
-                    Delete
+                    {selectedPromotion.product_names || 'N/A'} ({selectedPromotion.products?.length || 0})
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
 
       <PromotionFormModal
@@ -250,6 +342,13 @@ const PromotionManager = () => {
         onSubmit={handleSavePromotion}
         promotion={editingPromotion}
         products={products}
+      />
+
+      <PromotionProductsModal
+        isOpen={showProductsModal}
+        onClose={() => setShowProductsModal(false)}
+        promotion={selectedPromotion}
+        products={selectedPromotion?.products || []}
       />
 
       <ConfirmationModal
