@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SettingsModal from '../components/common/SettingsModal';
+import SettingsModal from '../../components/common/SettingsModal';
 import { 
   KioskLayout, 
   KioskHeader, 
   KioskCard, 
   KioskButton 
-} from '../components/mosque';
+} from '../../components/mosque';
 
 const MosquePaymentScreen = () => {
   const navigate = useNavigate();
@@ -49,11 +49,11 @@ const MosquePaymentScreen = () => {
     localStorage.setItem('mosquePaymentType', JSON.stringify(option));
 
     if (option.id === 'membership') {
-      navigate('/member-selection');
+      navigate('/mosque/member-selection');
     } else if (option.id === 'sadaka') {
-      navigate('/sadaka-selection');
+      navigate('/mosque/sadaka-selection');
     } else if (option.id === 'rent') {
-      navigate('/member-selection');
+      navigate('/mosque/member-selection');
     } else {
       navigate('/pos');
     }
@@ -141,7 +141,7 @@ const MosquePaymentScreen = () => {
     localStorage.setItem('transactionId', `TEST-${Date.now()}`);
 
     // Navigate directly to ticket selection
-    navigate('/ticket-selection');
+    navigate('/mosque/ticket-selection');
   };
 
   return (

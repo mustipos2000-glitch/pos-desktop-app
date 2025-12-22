@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import TopBar from '../components/TopBar';
-import Sidebar from '../components/Sidebar';
-import ProductGrid from '../components/ProductGrid';
-import OrderPanel from '../components/OrderPanel';
-import BottomBar from '../components/BottomBar';
-import SettingsModal from '../components/common/SettingsModal';
-import UnifiedTableModal from '../components/UnifiedTableModal';
-import MessageModal from '../components/MessageModal';
-import BarcodeSearchModal from '../components/BarcodeSearchModal';
-import ApiService from '../services/api';
-import { useVersion } from '../context/VersionContext';
-import { useMessageModal } from '../hooks/useMessageModal';
+import TopBar from '../../components/TopBar';
+import Sidebar from '../../components/Sidebar';
+import ProductGrid from '../../components/ProductGrid';
+import OrderPanel from '../../components/OrderPanel';
+import BottomBar from '../../components/BottomBar';
+import SettingsModal from '../../components/common/SettingsModal';
+import UnifiedTableModal from '../../components/UnifiedTableModal';
+import MessageModal from '../../components/MessageModal';
+import BarcodeSearchModal from '../../components/BarcodeSearchModal';
+import ApiService from '../../services/api';
+import { useVersion } from '../../context/VersionContext';
+import { useMessageModal } from '../../hooks/useMessageModal';
 
 const POSScreen = () => {
   const { hasFeature } = useVersion();

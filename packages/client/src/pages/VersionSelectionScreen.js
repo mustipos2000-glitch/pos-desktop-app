@@ -5,7 +5,10 @@ const VersionSelectionScreen = () => {
   const navigate = useNavigate();
   const { changeVersion } = useVersion();
 
-  const versions = [
+  // Check if we should show only mosque version (you can modify this logic)
+  const showOnlyMosque = window.location.search.includes('mosque-only');
+
+  const allVersions = [
     {
       id: 'horeca',
       name: 'Horeca POS',
@@ -28,14 +31,19 @@ const VersionSelectionScreen = () => {
     }
   ];
 
+  // Filter versions based on context
+  const versions = showOnlyMosque 
+    ? allVersions.filter(v => v.id === 'mosque')
+    : allVersions;
+
   const handleVersionSelect = (versionId) => {
     changeVersion(versionId);
     
-    // For mosque version, go directly to payment screen (no login)
+    // Route to appropriate app based on version
     if (versionId === 'mosque') {
-      navigate('/mosque-payment');
+      navigate('/mosque');
     } else {
-      navigate('/login');
+      navigate('/pos');
     }
   };
 
