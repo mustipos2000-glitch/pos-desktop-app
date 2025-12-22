@@ -308,7 +308,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     const poll = async () => {
       try {
-        console.log("Start polling new");
 
         const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
         const s = res.data || res;
@@ -339,10 +338,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         });
         
         if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
-          console.log('insertd:' + inserted, " Requested : " + requested , " dispensed " + dispensed );
+          console.log('insertd:' + inserted, " Requested : " + requested , " dispensed " + dispensed , " not Dspensed " + notDispensed );
           
           if(inserted < requested)  return;  
-          if(inserted > requested && dispensed > 0 ){
+          if(inserted > requested && (dispensed > 0 || notDispensed > 0) ){
 
             const change = inserted - requested;
             if(change > 0){
@@ -380,18 +379,18 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             await ApiService.finishCashmaticPayment(currentSessionId);
 
             // Generate manual change receipt if needed
-            if (manualChangeDue > 0) {
-              const receiptData = generateManualChangeReceipt(
-                { id: currentOrderId }, 
-                manualChangeDue
-              );
-              setManualChangeReceipt(receiptData);
+            // if (manualChangeDue > 0) {
+              // const receiptData = generateManualChangeReceipt(
+              //   { id: currentOrderId }, 
+              //   manualChangeDue
+              // );
+              // setManualChangeReceipt(receiptData);
               
-              // Save manual change record for tracking
-              await saveManualChangeRecord(receiptData);
+              // // Save manual change record for tracking
+              // await saveManualChangeRecord(receiptData);
               
-              console.log("Manual change receipt generated:", receiptData);
-            }
+              // console.log("Manual change receipt generated:", receiptData);
+            // }
 
             // Complete the payment with proper change calculation
             await handlePaymentConfirm({
@@ -1792,17 +1791,17 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   </span>
                 </div>
               </div>
-              <div className="flex justify-center items-center w-full">
+             {(cashmaticInfo.state !== "PAID") &&  
+             <div className="flex justify-center items-center w-full">
                 <button 
                     className="mt-4 px-4 py-2 rounded bg-red-500 text-white items-center hover:bg-red-600"
                     onClick={handleCancelCashmatic}
-                    disabled={cashmaticInfo.state === "CANCELLED" ||
-                              cashmaticInfo.state === "FINISHED" ||
-                              cashmaticInfo.state === "FINISHED_MANUAL"}
+                    disabled={cashmaticInfo.state === "CANCELLED"}
                   >
                     Cancel Payment
                   </button>
                 </div>
+                }
               {/* Manual Change Alert */}
               {(cashmaticInfo.state === "FINISHED_MANUAL" || 
                 (cashmaticInfo.state === "FINISHED" && cashmaticInfo?.notDispensed > 0)) && (
@@ -1819,16 +1818,16 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                 </div>
               )}
 
-              <div className="mt-6 flex justify-end gap-2">
+              {/* <div className="mt-6 flex justify-end gap-2"> */}
                 {/* Print Manual Change Receipt Button */}
-                {cashmaticInfo?.notDispensed > 0 && 
+                {/* {cashmaticInfo?.notDispensed > 0 && 
                  (cashmaticInfo.state === "FINISHED" || cashmaticInfo.state === "FINISHED_MANUAL") && (
                   <button
                     className="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600"
                     onClick={() => {
-                      if (manualChangeReceipt) {
+                      if (manualChangeReceipt) { */}
                         // Print manual change receipt
-                        const receiptContent = `
+                        {/* const receiptContent = `
                           MANUAL CHANGE RECEIPT
                           =====================
                           Order #: ${manualChangeReceipt.orderNo || 'N/A'}
@@ -1838,10 +1837,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                           Time: ${new Date(manualChangeReceipt.timestamp).toLocaleString()}
                           Cashier: ${manualChangeReceipt.cashier}
                           =====================
-                        `;
+                        `; */}
                         
                         // Create a temporary element for printing
-                        const printWindow = window.open('', '_blank');
+                        {/* const printWindow = window.open('', '_blank');
                         printWindow.document.write(`
                           <html>
                             <head><title>Manual Change Receipt</title></head>
@@ -1858,20 +1857,22 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   >
                     Print Change Receipt
                   </button>
-                )}
+                )} */}
                 
-                {(cashmaticInfo.state === "FINISHED" ||
-                  cashmaticInfo.state === "FINISHED_MANUAL" ||
-                  cashmaticInfo.state === "CANCELLED" ||
-                  cashmaticInfo.state === "ERROR") && (
+                {/* { (
                     <button
                       className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                      onClick={() => setShowCashmaticModal(false)}
+                      onClick={async () => {
+                        setShowCashmaticModal(false);
+                        console.log("completed order id : ", completedOrderId);
+                        // Print receipt if order is completed
+                        
+                      }}
                     >
                       Close
                     </button>
                   )}
-              </div>
+              </div> */}
             </div>
           </div>
         )}
