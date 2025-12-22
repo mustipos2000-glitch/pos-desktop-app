@@ -13,9 +13,12 @@ const AmountEntryPage = () => {
   const navigate = useNavigate();
   const [amount, setAmount] = useState('0');
   const [selectedInfo, setSelectedInfo] = useState(null);
+  const [isMembershipPayment, setIsMembershipPayment] = useState(false);
+  const [memberFeeAmount, setMemberFeeAmount] = useState(null);
 
   useEffect(() => {
     loadSelectedInfo();
+    checkIfMembershipPayment();
   }, []);
 
   const loadSelectedInfo = () => {
@@ -64,6 +67,30 @@ const AmountEntryPage = () => {
     }
   };
 
+  const checkIfMembershipPayment = () => {
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+    const memberFeeAmountStr = localStorage.getItem('memberFeeAmount');
+    
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+      
+      if (paymentType && paymentType.id === 'membership') {
+        setIsMembershipPayment(true);
+        
+        if (memberFeeAmountStr) {
+          const feeAmount = parseFloat(memberFeeAmountStr);
+          setMemberFeeAmount(feeAmount);
+          console.log('Member fee amount:', feeAmount);
+        }
+      } else {
+        setIsMembershipPayment(false);
+      }
+    } catch (error) {
+      console.error('Error checking membership payment:', error);
+      setIsMembershipPayment(false);
+    }
+  };
+
   const handleClear = () => {
     setAmount('0');
   };
@@ -105,6 +132,29 @@ const AmountEntryPage = () => {
     navigate('/payment-method');
   };
 
+  const handleHalfPayment = () => {
+    if (!memberFeeAmount) {
+      alert('Member fee not available');
+      return;
+    }
+    
+    const halfAmount = (memberFeeAmount / 2).toFixed(2);
+    localStorage.setItem('paymentAmount', halfAmount);
+    localStorage.setItem('paymentSubtype', 'half'); // Store payment subtype
+    navigate('/payment-method');
+  };
+
+  const handleFullPayment = () => {
+    if (!memberFeeAmount) {
+      alert('Member fee not available');
+      return;
+    }
+    
+    localStorage.setItem('paymentAmount', memberFeeAmount.toString());
+    localStorage.setItem('paymentSubtype', 'full'); // Store payment subtype
+    navigate('/payment-method');
+  };
+
   const formatAmount = (value) => {
     return `€ ${value}`;
   };
@@ -130,6 +180,9 @@ const AmountEntryPage = () => {
     } else if (selectedInfo.type === 'membership') {
       items.push({ label: 'Type', value: 'Membership Fee' });
       items.push({ label: 'Member', value: selectedInfo.member });
+      if (memberFeeAmount) {
+        items.push({ label: 'Fee Amount', value: `€ ${memberFeeAmount.toFixed(2)}` });
+      }
     }
     
     return items;
@@ -139,7 +192,7 @@ const AmountEntryPage = () => {
     <KioskLayout maxWidth="4xl">
       <KioskHeader 
         title="Enter Amount"
-        subtitle="Use the keypad to enter the payment amount"
+        subtitle={isMembershipPayment ? "Choose payment option" : "Use the keypad to enter the payment amount"}
         step={2}
         totalSteps={3}
         className="mb-4"
@@ -157,20 +210,55 @@ const AmountEntryPage = () => {
           <div className="flex justify-center">
             <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl lg:rounded-2xl px-8 lg:px-12 py-4 lg:py-6 shadow-xl w-full max-w-md">
               <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-pos-text-primary text-center break-all">
-                {formatAmount(amount)}
+                {isMembershipPayment && memberFeeAmount ? formatAmount(memberFeeAmount.toString()) : formatAmount(amount)}
               </div>
+              {isMembershipPayment && memberFeeAmount && (
+                <div className="text-center mt-2 text-lg text-pos-text-secondary">
+                  Full Membership Fee
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Right Column - Numpad */}
+        {/* Right Column - Numpad OR Payment Buttons */}
         <div className="w-full">
-          <KioskNumpad
-            value={amount}
-            onChange={setAmount}
-            onClear={handleClear}
-            onBackspace={handleBackspace}
-          />
+          {isMembershipPayment && memberFeeAmount ? (
+            // Membership Payment Buttons
+            <div className="space-y-4">
+              <KioskButton
+                variant="primary"
+                size="large"
+                onClick={handleFullPayment}
+                fullWidth
+              >
+                <div className="text-center">
+                  <div className="text-2xl font-bold">Full Payment</div>
+                  <div className="text-xl mt-1">€ {memberFeeAmount.toFixed(2)}</div>
+                </div>
+              </KioskButton>
+              
+              <KioskButton
+                variant="secondary"
+                size="large"
+                onClick={handleHalfPayment}
+                fullWidth
+              >
+                <div className="text-center">
+                  <div className="text-2xl font-bold">Half Payment</div>
+                  <div className="text-xl mt-1">€ {(memberFeeAmount / 2).toFixed(2)}</div>
+                </div>
+              </KioskButton>
+            </div>
+          ) : (
+            // Regular Numpad for other payment types
+            <KioskNumpad
+              value={amount}
+              onChange={setAmount}
+              onClear={handleClear}
+              onBackspace={handleBackspace}
+            />
+          )}
         </div>
       </div>
 
@@ -186,15 +274,17 @@ const AmountEntryPage = () => {
           ← Go Back
         </KioskButton>
         
-        <KioskButton
-          variant="success"
-          size="medium"
-          onClick={handleNext}
-          fullWidth
-          className="sm:w-auto"
-        >
-          Next →
-        </KioskButton>
+        {!isMembershipPayment && (
+          <KioskButton
+            variant="success"
+            size="medium"
+            onClick={handleNext}
+            fullWidth
+            className="sm:w-auto"
+          >
+            Next →
+          </KioskButton>
+        )}
       </div>
     </KioskLayout>
   );

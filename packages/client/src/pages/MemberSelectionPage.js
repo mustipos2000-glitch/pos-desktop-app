@@ -25,10 +25,12 @@ const MemberSelectionPage = () => {
   
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [memberFee, setMemberFee] = useState(null);
 
   useEffect(() => {
     fetchMembers();
     loadSelectedMember();
+    fetchMemberFee();
   }, []);
 
   const loadSelectedMember = () => {
@@ -56,6 +58,19 @@ const MemberSelectionPage = () => {
     }
   };
 
+  const fetchMemberFee = async () => {
+    try {
+      const response = await ApiService.getMemberFees();
+      if (response && response.data && response.data.length > 0) {
+        // Get the first member fee (assuming there's only one)
+        setMemberFee(response.data[0]);
+        console.log('Member fee loaded:', response.data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching member fee:', error);
+    }
+  };
+
   const handleSelectMember = (member) => {
     setSelectedMember({
       id: member.id,
@@ -64,6 +79,17 @@ const MemberSelectionPage = () => {
       type: 'existing'
     });
     setShowCreateForm(false);
+    
+    // Store member fee if it's a membership payment
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+      if (paymentType && paymentType.id === 'membership' && memberFee) {
+        localStorage.setItem('memberFeeAmount', memberFee.member_fee);
+      }
+    } catch (error) {
+      console.error('Error storing member fee:', error);
+    }
   };
 
   const handleCreateMember = async () => {
@@ -88,6 +114,17 @@ const MemberSelectionPage = () => {
       
       setSelectedMember(member);
       setShowCreateForm(false);
+      
+      // Store member fee if it's a membership payment
+      const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+      try {
+        const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+        if (paymentType && paymentType.id === 'membership' && memberFee) {
+          localStorage.setItem('memberFeeAmount', memberFee.member_fee);
+        }
+      } catch (error) {
+        console.error('Error storing member fee:', error);
+      }
       
       // Refresh members list
       await fetchMembers();

@@ -43,6 +43,71 @@ const PaymentMethodPage = () => {
   const [payworldPolling, setPayworldPolling] = useState(false);
   const payworldFinalizedRef = useRef(false);
 
+  // Function to save mosque payment to database
+  const saveMosquePayment = async (paymentMethod, paymentAmount) => {
+    try {
+      // Generate transaction ID if not exists
+      let transactionId = localStorage.getItem('transactionId');
+      if (!transactionId) {
+        transactionId = `MP-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('transactionId', transactionId);
+      }
+
+      // Get member fee amount to check if it's half payment
+      const memberFeeAmountStr = localStorage.getItem('memberFeeAmount');
+      const memberFeeAmount = memberFeeAmountStr ? parseFloat(memberFeeAmountStr) : null;
+      
+      // Determine if it's half payment (for membership only)
+      const isHalfPayment = paymentType?.id === 'membership' && 
+                           memberFeeAmount && 
+                           Math.abs(paymentAmount - (memberFeeAmount / 2)) < 0.01;
+
+      // Prepare payment data
+      const mosquePaymentData = {
+        transaction_id: transactionId,
+        member_id: memberInfo?.id || null,
+        member_name: memberInfo?.fullName || 'Anonymous',
+        payment_type: paymentType?.id || 'unknown',
+        payment_subtype: null,
+        amount: paymentAmount,
+        payment_method: paymentMethod,
+        sadaka_goal: null,
+        sadaka_type: null,
+        rent_start_date: null,
+        rent_start_time: null,
+        rent_end_date: null,
+        rent_end_time: null,
+        is_half_payment: isHalfPayment,
+        status: 'completed'
+      };
+
+      // Add specific details based on payment type
+      if (paymentType?.id === 'sadaka') {
+        mosquePaymentData.sadaka_type = sadakaType;
+        mosquePaymentData.sadaka_goal = sadakaGoal?.titleEn || null;
+        mosquePaymentData.payment_subtype = sadakaType === 'named' ? 'Named Sadaka' : 'Anonymous Sadaka';
+      } else if (paymentType?.id === 'rent' && rentDateTime) {
+        mosquePaymentData.rent_start_date = rentDateTime.startDate;
+        mosquePaymentData.rent_start_time = rentDateTime.startTime;
+        mosquePaymentData.rent_end_date = rentDateTime.endDate;
+        mosquePaymentData.rent_end_time = rentDateTime.endTime;
+        mosquePaymentData.payment_subtype = 'Rent Space/Kitchen';
+      } else if (paymentType?.id === 'membership') {
+        mosquePaymentData.payment_subtype = isHalfPayment ? 'Half Payment' : 'Full Payment';
+      }
+
+      // Save to database
+      console.log('Saving mosque payment:', mosquePaymentData);
+      const response = await ApiService.createMosquePayment(mosquePaymentData);
+      console.log('Mosque payment saved successfully:', response);
+      
+      return response;
+    } catch (error) {
+      console.error('Error saving mosque payment:', error);
+      // Don't throw error - payment was successful, just log the database save failure
+    }
+  };
+
   useEffect(() => {
     const member = JSON.parse(localStorage.getItem('selectedMember') || 'null');
     const amt = localStorage.getItem('paymentAmount') || '0';
@@ -104,6 +169,8 @@ const PaymentMethodPage = () => {
           console.log("Calling finish API to close Cashmatic transaction... Mosque");
           await ApiService.finishCashmaticPayment(currentSessionId);
 
+          // Save mosque payment to database
+          await saveMosquePayment('cash', paymentAmount);
 
           localStorage.setItem('paymentMethod', 'cash');
           localStorage.setItem('paymentResult', JSON.stringify({
@@ -195,6 +262,9 @@ const PaymentMethodPage = () => {
           payworldFinalizedRef.current = true;
 
           const paymentAmount = parseFloat(amount);
+
+          // Save mosque payment to database
+          await saveMosquePayment('card', paymentAmount);
 
           localStorage.setItem('paymentMethod', 'card');
           localStorage.setItem('paymentResult', JSON.stringify({
