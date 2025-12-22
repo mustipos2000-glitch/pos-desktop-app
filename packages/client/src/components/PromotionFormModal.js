@@ -9,12 +9,14 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
     discount_value: 0,
     start_date: '',
     end_date: '',
-    is_active: 1
+    is_active: 1,
+    apply_to: 'specific_products' // 'specific_products' or 'entire_order'
   });
 
   const [activeField, setActiveField] = useState('name');
   const [showKeypad, setShowKeypad] = useState(true);
   const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [productSearchQuery, setProductSearchQuery] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -27,7 +29,8 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
           discount_value: promotion.discount_value || 0,
           start_date: promotion.start_date || '',
           end_date: promotion.end_date || '',
-          is_active: promotion.is_active !== undefined ? promotion.is_active : 1
+          is_active: promotion.is_active !== undefined ? promotion.is_active : 1,
+          apply_to: promotion.apply_to || 'specific_products'
         });
       } else {
         setFormData({
@@ -37,7 +40,8 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
           discount_value: 0,
           start_date: '',
           end_date: '',
-          is_active: 1
+          is_active: 1,
+          apply_to: 'specific_products'
         });
       }
     }
@@ -82,7 +86,7 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
       alert('Please enter a promotion name');
       return;
     }
-    if (formData.product_ids.length === 0) {
+    if (formData.apply_to === 'specific_products' && formData.product_ids.length === 0) {
       alert('Please select at least one product');
       return;
     }
@@ -90,8 +94,15 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
       alert('Please enter a valid discount value');
       return;
     }
-    console.log('Submitting promotion:', formData);
-    onSubmit(formData);
+    
+    // For entire_order promotions, clear product_ids to avoid confusion
+    const submissionData = {
+      ...formData,
+      product_ids: formData.apply_to === 'entire_order' ? [] : formData.product_ids
+    };
+    
+    console.log('Submitting promotion:', submissionData);
+    onSubmit(submissionData);
   };
 
   const handleKeyDown = (e) => {
@@ -164,7 +175,7 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
 
         {/* Modal Body - Form Section */}
         <div className="px-6 py-2">
-          {/* Row 1: Name, Discount Type, Discount Value */}
+          {/* Row 1: Name, Apply To, Discount Type */}
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-pos-text-muted mb-2">
@@ -184,6 +195,21 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
 
             <div>
               <label className="block text-sm font-medium text-pos-text-muted mb-2">
+                Apply To <span className="text-pos-error">*</span>
+              </label>
+              <select
+                name="apply_to"
+                value={formData.apply_to}
+                onChange={handleChange}
+                className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors"
+              >
+                <option value="specific_products">Specific Products</option>
+                <option value="entire_order">Entire Bill</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-pos-text-muted mb-2">
                 Discount Type <span className="text-pos-error">*</span>
               </label>
               <select
@@ -196,7 +222,10 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
                 <option value="fixed">Fixed Amount ($)</option>
               </select>
             </div>
+          </div>
 
+          {/* Row 2: Discount Value */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-pos-text-muted mb-2">
                 Discount Value <span className="text-pos-error">*</span>
@@ -215,7 +244,8 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
             </div>
           </div>
 
-          {/* Products Multi-Select Dropdown */}
+          {/* Products Multi-Select Dropdown - Only show for specific products */}
+          {formData.apply_to === 'specific_products' && (
           <div className="mb-4">
             <label className="block text-sm font-medium text-pos-text-muted mb-2">
               Products <span className="text-pos-error">*</span> ({formData.product_ids.length} selected)
@@ -224,7 +254,12 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
               {/* Dropdown Button */}
               <button
                 type="button"
-                onClick={() => setShowProductDropdown(!showProductDropdown)}
+                onClick={() => {
+                  setShowProductDropdown(!showProductDropdown);
+                  if (showProductDropdown) {
+                    setProductSearchQuery('');
+                  }
+                }}
                 className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2.5 text-sm rounded-xl focus:outline-none focus:border-pos-info transition-colors text-left flex items-center justify-between"
               >
                 <span className={formData.product_ids.length === 0 ? 'text-pos-text-muted' : ''}>
@@ -245,7 +280,19 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
 
               {/* Dropdown Menu */}
               {showProductDropdown && (
-                <div className="absolute z-10 w-full mt-1 bg-pos-bg-primary border border-pos-border-secondary rounded-xl shadow-lg max-h-[300px] overflow-hidden">
+                <div className="absolute z-10 w-full mt-1 bg-pos-bg-primary border border-pos-border-secondary rounded-xl shadow-lg max-h-[350px] overflow-hidden">
+                  {/* Search Input */}
+                  <div className="p-2 border-b border-pos-border-secondary bg-pos-bg-secondary">
+                    <input
+                      type="text"
+                      value={productSearchQuery}
+                      onChange={(e) => setProductSearchQuery(e.target.value)}
+                      placeholder="Search products..."
+                      className="w-full bg-pos-bg-primary border border-pos-border-secondary text-pos-text-primary px-3 py-2 text-sm rounded-lg focus:outline-none focus:border-pos-info transition-colors"
+                      autoFocus
+                    />
+                  </div>
+
                   {/* Quick Actions */}
                   <div className="flex gap-2 p-2 border-b border-pos-border-secondary bg-pos-bg-secondary">
                     <button
@@ -266,31 +313,42 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
 
                   {/* Product List */}
                   <div className="overflow-y-auto max-h-[240px] p-2">
-                    {products.map(product => (
-                      <label
-                        key={product.id}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors mb-1 ${
-                          formData.product_ids.includes(product.id)
-                            ? 'bg-pos-info/20 border border-pos-info'
-                            : 'hover:bg-pos-bg-tertiary'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.product_ids.includes(product.id)}
-                          onChange={() => toggleProduct(product.id)}
-                          className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
-                        />
-                        <span className="text-sm text-pos-text-primary flex-1">
-                          {product.name}
-                        </span>
-                        {formData.product_ids.includes(product.id) && (
-                          <svg className="w-4 h-4 text-pos-info" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </label>
-                    ))}
+                    {products
+                      .filter(product => 
+                        product.name.toLowerCase().includes(productSearchQuery.toLowerCase())
+                      )
+                      .map(product => (
+                        <label
+                          key={product.id}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors mb-1 ${
+                            formData.product_ids.includes(product.id)
+                              ? 'bg-pos-info/20 border border-pos-info'
+                              : 'hover:bg-pos-bg-tertiary'
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.product_ids.includes(product.id)}
+                            onChange={() => toggleProduct(product.id)}
+                            className="w-4 h-4 text-pos-info bg-pos-bg-primary border-pos-border-secondary rounded focus:ring-pos-info focus:ring-2"
+                          />
+                          <span className="text-sm text-pos-text-primary flex-1">
+                            {product.name}
+                          </span>
+                          {formData.product_ids.includes(product.id) && (
+                            <svg className="w-4 h-4 text-pos-info" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </label>
+                      ))}
+                    {products.filter(product => 
+                      product.name.toLowerCase().includes(productSearchQuery.toLowerCase())
+                    ).length === 0 && (
+                      <div className="text-center text-pos-text-muted py-4 text-sm">
+                        No products found
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -299,8 +357,9 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
             {/* Selected Products Tags */}
             
           </div>
+          )}
 
-          {/* Row 2: Start Date, End Date, Active */}
+          {/* Row 3: Start Date, End Date, Active */}
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div>
               <label className="block text-sm ps-2 font-medium text-pos-text-muted mb-1.5">
@@ -387,7 +446,7 @@ const PromotionFormModal = ({ isOpen, onClose, onSubmit, promotion, products }) 
             </button>
             <button
               onClick={handleSubmit}
-              disabled={!formData.name.trim() || formData.product_ids.length === 0}
+              disabled={!formData.name.trim() || !formData.discount_value || formData.discount_value <= 0 || (formData.apply_to === 'specific_products' && formData.product_ids.length === 0)}
               className="px-6 py-2 bg-pos-bg-primary text-pos-text-primary border border-pos-border-secondary text-sm font-medium hover:bg-pos-interactive-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed rounded-xl"
             >
               {promotion ? 'Update' : 'Add'}

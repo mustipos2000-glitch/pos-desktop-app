@@ -9,8 +9,8 @@ import CustomerSelector from "./CustomerSelector";
 import ApiService from "../services/api";
 import { printerService } from "../services/printerService";
 
-const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount, selectedEmployee }) => {
-
+const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustomQuantity, currentOrderId, currentOrderNo, selectedTable, onOrderComplete, onDeleteAll, onSplitCart, selectedCustomer, onSelectCustomer, onRefreshHoldCount, selectedEmployee, billPromotion, billDiscount }) => {
+  
 
   const formatAmount = (value) => {
     const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
@@ -168,7 +168,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setIsProcessing(true);
     try {
       const subTotal = calculateTotal();
-      const total = subTotal - discount;
+      const totalDiscount = discount + (billDiscount || 0);
+      const total = subTotal - totalDiscount;
 
       if (total < 0) {
         alert("Order total cannot be negative. Please review discounts.");
@@ -193,7 +194,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         note,
         sub_total: subTotal,
         total,
-        discount,
+        discount: totalDiscount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
         order_type: orderType,
         payment_method:
@@ -308,7 +309,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     const poll = async () => {
       try {
-        console.log("Start polling new");
 
         const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
         const s = res.data || res;
@@ -339,10 +339,10 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         });
         
         if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
-          console.log('insertd:' + inserted, " Requested : " + requested , " dispensed " + dispensed );
+          console.log('insertd:' + inserted, " Requested : " + requested , " dispensed " + dispensed , " not Dspensed " + notDispensed );
           
           if(inserted < requested)  return;  
-          if(inserted > requested && dispensed > 0 ){
+          if(inserted > requested && (dispensed > 0 || notDispensed > 0) ){
 
             const change = inserted - requested;
             if(change > 0){
@@ -367,8 +367,9 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           const currentSessionId = cashmaticSessionId;
           setCashmaticSessionId(null); // FIX: Properly clear session
 
-          const subTotal = calculateTotal();
-          const total = subTotal - discount;
+        const subTotal = calculateTotal();
+        const totalDiscount = discount + (billDiscount || 0);
+        const total = subTotal - totalDiscount;
 
           // Calculate the actual change due
           const totalChange = inserted - requested;
@@ -380,18 +381,18 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
             await ApiService.finishCashmaticPayment(currentSessionId);
 
             // Generate manual change receipt if needed
-            if (manualChangeDue > 0) {
-              const receiptData = generateManualChangeReceipt(
-                { id: currentOrderId }, 
-                manualChangeDue
-              );
-              setManualChangeReceipt(receiptData);
+            // if (manualChangeDue > 0) {
+              // const receiptData = generateManualChangeReceipt(
+              //   { id: currentOrderId }, 
+              //   manualChangeDue
+              // );
+              // setManualChangeReceipt(receiptData);
               
-              // Save manual change record for tracking
-              await saveManualChangeRecord(receiptData);
+              // // Save manual change record for tracking
+              // await saveManualChangeRecord(receiptData);
               
-              console.log("Manual change receipt generated:", receiptData);
-            }
+              // console.log("Manual change receipt generated:", receiptData);
+            // }
 
             // Complete the payment with proper change calculation
             await handlePaymentConfirm({
@@ -448,7 +449,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
 
     const intervalId = setInterval(poll, 1000);
     return () => clearInterval(intervalId);
-  }, [cashmaticPolling, cashmaticSessionId, cart, discount, calculateTotal, handlePaymentConfirm, generateManualChangeReceipt, currentOrderId]);
+  }, [cashmaticPolling, cashmaticSessionId, cart, discount, billDiscount]);
 
   // Poll Payworld status
   useEffect(() => {
@@ -498,7 +499,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
           payworldFinalizedRef.current = true;
 
           const subTotal = calculateTotal();
-          const total = subTotal - discount;
+          const totalDiscount = discount + (billDiscount || 0);
+          const total = subTotal - totalDiscount;
 
           await handlePaymentConfirm({
             totalPaid: total,
@@ -610,7 +612,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     }
 
     const subTotal = calculateTotal();
-    const total = subTotal - discount;
+    const totalDiscount = discount + (billDiscount || 0);
+    const total = subTotal - totalDiscount;
 
     if (total <= 0) {
       setToastType("error");
@@ -734,7 +737,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     }
 
     const subTotal = calculateTotal();
-    const total = subTotal - discount;
+    const totalDiscount = discount + (billDiscount || 0);
+    const total = subTotal - totalDiscount;
 
     if (total <= 0) {
       setToastType("error");
@@ -863,7 +867,8 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
     setIsProcessing(true);
     try {
       const subTotal = calculateTotal();
-      const total = subTotal - discount;
+      const totalDiscount = discount + (billDiscount || 0);
+      const total = subTotal - totalDiscount;
       const orderType = localStorage.getItem('posVersion') || 'horeca';
 
       const orderData = {
@@ -871,7 +876,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         note,
         sub_total: subTotal,
         total,
-        discount,
+        discount: totalDiscount,
         customer_id: selectedCustomer ? selectedCustomer.id : null,
         employee_id: selectedEmployee ? selectedEmployee.id : null,
         table_id: selectedTable ? selectedTable.id : null,
@@ -1591,21 +1596,67 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         )}
 
         <div className="bg-pos-bg-secondary px-2 py-1 border-t border-pos-border-light">
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-xs font-semibold text-pos-text-disabled uppercase">
-              Total
-            </div>
-            <div className="text-lg font-bold text-pos-text-secondary">
-              {formatAmount(calculateTotal() - discount)}
+          <div className="space-y-1">
+            {/* Subtotal */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-xs font-semibold text-pos-text-disabled uppercase">
+                Subtotal
+              </div>
+              <div className="text-sm font-semibold text-pos-text-secondary">
+                €{formatAmount(calculateTotal())}
+              </div>
             </div>
 
-            <input
-              type="text"
-              placeholder="Add Quantity"
-              value={customQuantity}
-              onChange={(e) => setCustomQuantity(e.target.value)}
-              className="max-w-[7rem] text-center py-1 px-2 bg-white text-black text-sm outline-none"
-            />
+            {/* Bill Promotion Discount (if applicable) */}
+            {billPromotion && billDiscount > 0 && (
+              <div className="flex items-center justify-between gap-3 text-green-600">
+                <div className="text-xs font-semibold uppercase flex items-center gap-1">
+                  <span>🎁</span>
+                  <span>{billPromotion.name}</span>
+                  <span className="text-[10px]">
+                    ({billPromotion.discount_type === 'percentage' 
+                      ? `${billPromotion.discount_value}%` 
+                      : `€${billPromotion.discount_value.toFixed(2)}`})
+                  </span>
+                </div>
+                <div className="text-sm font-semibold">
+                  -€{formatAmount(billDiscount)}
+                </div>
+              </div>
+            )}
+
+            {/* Manual Discount (if applicable) */}
+            {discount > 0 && (
+              <div className="flex items-center justify-between gap-3 text-orange-600">
+                <div className="text-xs font-semibold uppercase">
+                  Manual Discount
+                </div>
+                <div className="text-sm font-semibold">
+                  -€{formatAmount(discount)}
+                </div>
+              </div>
+            )}
+
+            {/* Total */}
+            <div className="flex items-center justify-between gap-3 pt-1 border-t border-pos-border-light">
+              <div className="text-xs font-semibold text-pos-text-disabled uppercase">
+                Total
+              </div>
+              <div className="text-lg font-bold text-pos-text-secondary">
+                €{formatAmount(calculateTotal() - (billDiscount || 0) - discount)}
+              </div>
+            </div>
+
+            {/* Quantity Input */}
+            <div className="flex justify-end pt-1">
+              <input
+                type="text"
+                placeholder="Add Quantity"
+                value={customQuantity}
+                onChange={(e) => setCustomQuantity(e.target.value)}
+                className="max-w-[7rem] text-center py-1 px-2 bg-white text-black text-sm outline-none"
+              />
+            </div>
           </div>
         </div>
 
@@ -1792,18 +1843,17 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   </span>
                 </div>
               </div>
-              <div className="flex">
-              <div className="flex justify-center items-center w-full">
+             {(cashmaticInfo.state !== "PAID") &&  
+             <div className="flex justify-center items-center w-full">
                 <button 
                     className="mt-4 px-4 py-2 rounded bg-red-500 text-white items-center hover:bg-red-600"
                     onClick={handleCancelCashmatic}
-                    disabled={cashmaticInfo.state === "CANCELLED" ||
-                              cashmaticInfo.state === "FINISHED" ||
-                              cashmaticInfo.state === "FINISHED_MANUAL"}
+                    disabled={cashmaticInfo.state === "CANCELLED"}
                   >
                     Cancel Payment
                   </button>
                 </div>
+                }
               {/* Manual Change Alert */}
               {(cashmaticInfo.state === "FINISHED_MANUAL" || 
                 (cashmaticInfo.state === "FINISHED" && cashmaticInfo?.notDispensed > 0)) && (
@@ -1819,61 +1869,6 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
                   </div>
                 </div>
               )}
-
-              <div className="mt-6 flex justify-end gap-2">
-                {/* Print Manual Change Receipt Button */}
-                {cashmaticInfo?.notDispensed > 0 && 
-                 (cashmaticInfo.state === "FINISHED" || cashmaticInfo.state === "FINISHED_MANUAL") && (
-                  <button
-                    className="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600"
-                    onClick={() => {
-                      if (manualChangeReceipt) {
-                        // Print manual change receipt
-                        const receiptContent = `
-                          MANUAL CHANGE RECEIPT
-                          =====================
-                          Order #: ${manualChangeReceipt.orderNo || 'N/A'}
-                          Table: ${manualChangeReceipt.tableNo || 'N/A'}
-                          Amount Due: €${formatAmount(manualChangeReceipt.manualChangeAmount)}
-                          Reason: ${manualChangeReceipt.reason}
-                          Time: ${new Date(manualChangeReceipt.timestamp).toLocaleString()}
-                          Cashier: ${manualChangeReceipt.cashier}
-                          =====================
-                        `;
-                        
-                        // Create a temporary element for printing
-                        const printWindow = window.open('', '_blank');
-                        printWindow.document.write(`
-                          <html>
-                            <head><title>Manual Change Receipt</title></head>
-                            <body style="font-family: monospace; white-space: pre-line;">
-                              ${receiptContent}
-                            </body>
-                          </html>
-                        `);
-                        printWindow.document.close();
-                        printWindow.print();
-                        printWindow.close();
-                      }
-                    }}
-                  >
-                    Print Change Receipt
-                  </button>
-                )}
-                
-                {(cashmaticInfo.state === "FINISHED" ||
-                  cashmaticInfo.state === "FINISHED_MANUAL" ||
-                  cashmaticInfo.state === "CANCELLED" ||
-                  cashmaticInfo.state === "ERROR") && (
-                    <button
-                      className="px-4 py-2 rounded bg-pos-bg-secondary border border-pos-border-primary text-pos-text-primary hover:bg-pos-interactive-hover"
-                      onClick={() => setShowCashmaticModal(false)}
-                    >
-                      Close
-                    </button>
-                  )}
-              </div>
-              </div>
             </div>
           </div>
         )}
@@ -1889,7 +1884,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
               <div className="space-y-2 text-pos-text-primary text-sm">
                 <div className="flex justify-between">
                   <span>Amount:</span>
-                  <span>€ {formatAmount(calculateTotal() - discount)}</span>
+                  <span>€ {formatAmount(calculateTotal() - (billDiscount || 0) - discount)}</span>
                 </div>
 
                 <div className="flex justify-between">
@@ -1966,7 +1961,7 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         <PaymentModal
           isOpen={showPaymentModal}
           onClose={() => setShowPaymentModal(false)}
-          total={calculateTotal() - discount}
+          total={calculateTotal() - (billDiscount || 0) - discount}
           onConfirm={handlePaymentConfirm}
           defaultPaymentMethod={selectedPaymentMethod}
         />
@@ -1975,9 +1970,11 @@ const OrderPanel = ({ cart, setCart, onUpdateQuantity, customQuantity, setCustom
         {showReceipt && (
           <ReceiptModal
             cart={cart}
-            total={calculateTotal() - discount}
+            total={calculateTotal() - (billDiscount || 0) - discount}
             subTotal={calculateTotal()}
             discount={discount}
+            billDiscount={billDiscount}
+            billPromotion={billPromotion}
             onClose={handleCloseReceipt}
             onPrint={handlePrintReceipt}
           />
