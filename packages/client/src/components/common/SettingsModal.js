@@ -130,7 +130,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
       const allMembers = membersResult || [];
 
       // Fetch all mosque payments
-      const paymentsResponse = await fetch('http://localhost:5000/api/mosque-payments');
+      const paymentsResponse = await fetch('http://localhost:5000/api/mosque/payments');
       const paymentsResult = await paymentsResponse.json();
       const allPayments = paymentsResult.data || [];
 
