@@ -1713,16 +1713,57 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                   )}
                 </div>
 
-                <button 
-                  onClick={fetchMembersWithPayments}
-                  disabled={loadingMembers}
-                  className="px-4 py-1.5 bg-pos-interactive-primary text-pos-text-primary border border-pos-border-secondary text-sm font-medium hover:bg-pos-interactive-hover transition-colors disabled:opacity-50 flex-shrink-0"
-                >
-                  {loadingMembers ? '⏳ Loading...' : '🔄 Refresh'}
-                </button>
               </div>
 
               <div className="overflow-x-auto">
+                  {/* Summary Stats */}
+              {!loadingMembers && membersWithPayments.length > 0 && (
+                <div className="grid grid-cols-3 mb-2 gap-3 mt-4 pt-4 border-t border-pos-border-primary">
+                  <div className="bg-pos-bg-tertiary rounded-lg p-3 border border-pos-border-secondary">
+                    <div className="text-xs text-pos-text-muted mb-1">
+                      {memberSearchQuery ? 'Filtered Results' : 'Total Members'}
+                    </div>
+                    <div className="text-2xl font-bold text-pos-text-primary">
+                      {memberSearchQuery 
+                        ? membersWithPayments.filter(m => {
+                            const searchLower = memberSearchQuery.toLowerCase();
+                            return m.full_name.toLowerCase().includes(searchLower) || 
+                                   (m.phone && m.phone.includes(memberSearchQuery));
+                          }).length
+                        : membersWithPayments.length
+                      }
+                    </div>
+                  </div>
+                  <div className="bg-green-900 bg-opacity-20 rounded-lg p-3 border border-green-700">
+                    <div className="text-xs text-green-400 mb-1">Members Paid</div>
+                    <div className="text-2xl font-bold text-green-400">
+                      {memberSearchQuery
+                        ? membersWithPayments.filter(m => {
+                            const searchLower = memberSearchQuery.toLowerCase();
+                            const matchesSearch = m.full_name.toLowerCase().includes(searchLower) || 
+                                                 (m.phone && m.phone.includes(memberSearchQuery));
+                            return matchesSearch && m.hasPayment;
+                          }).length
+                        : membersWithPayments.filter(m => m.hasPayment).length
+                      }
+                    </div>
+                  </div>
+                  <div className="bg-gray-900 bg-opacity-20 rounded-lg p-3 border border-gray-700">
+                    <div className="text-xs text-gray-400 mb-1">No Payment</div>
+                    <div className="text-2xl font-bold text-gray-400">
+                      {memberSearchQuery
+                        ? membersWithPayments.filter(m => {
+                            const searchLower = memberSearchQuery.toLowerCase();
+                            const matchesSearch = m.full_name.toLowerCase().includes(searchLower) || 
+                                                 (m.phone && m.phone.includes(memberSearchQuery));
+                            return matchesSearch && !m.hasPayment;
+                          }).length
+                        : membersWithPayments.filter(m => !m.hasPayment).length
+                      }
+                    </div>
+                  </div>
+                </div>
+              )}
                 <table className="data-table">
                   <thead>
                     <tr>
@@ -1816,54 +1857,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                 </table>
               </div>
 
-              {/* Summary Stats */}
-              {!loadingMembers && membersWithPayments.length > 0 && (
-                <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-pos-border-primary">
-                  <div className="bg-pos-bg-tertiary rounded-lg p-3 border border-pos-border-secondary">
-                    <div className="text-xs text-pos-text-muted mb-1">
-                      {memberSearchQuery ? 'Filtered Results' : 'Total Members'}
-                    </div>
-                    <div className="text-2xl font-bold text-pos-text-primary">
-                      {memberSearchQuery 
-                        ? membersWithPayments.filter(m => {
-                            const searchLower = memberSearchQuery.toLowerCase();
-                            return m.full_name.toLowerCase().includes(searchLower) || 
-                                   (m.phone && m.phone.includes(memberSearchQuery));
-                          }).length
-                        : membersWithPayments.length
-                      }
-                    </div>
-                  </div>
-                  <div className="bg-green-900 bg-opacity-20 rounded-lg p-3 border border-green-700">
-                    <div className="text-xs text-green-400 mb-1">Members Paid</div>
-                    <div className="text-2xl font-bold text-green-400">
-                      {memberSearchQuery
-                        ? membersWithPayments.filter(m => {
-                            const searchLower = memberSearchQuery.toLowerCase();
-                            const matchesSearch = m.full_name.toLowerCase().includes(searchLower) || 
-                                                 (m.phone && m.phone.includes(memberSearchQuery));
-                            return matchesSearch && m.hasPayment;
-                          }).length
-                        : membersWithPayments.filter(m => m.hasPayment).length
-                      }
-                    </div>
-                  </div>
-                  <div className="bg-gray-900 bg-opacity-20 rounded-lg p-3 border border-gray-700">
-                    <div className="text-xs text-gray-400 mb-1">No Payment</div>
-                    <div className="text-2xl font-bold text-gray-400">
-                      {memberSearchQuery
-                        ? membersWithPayments.filter(m => {
-                            const searchLower = memberSearchQuery.toLowerCase();
-                            const matchesSearch = m.full_name.toLowerCase().includes(searchLower) || 
-                                                 (m.phone && m.phone.includes(memberSearchQuery));
-                            return matchesSearch && !m.hasPayment;
-                          }).length
-                        : membersWithPayments.filter(m => !m.hasPayment).length
-                      }
-                    </div>
-                  </div>
-                </div>
-              )}
+            
             </div>
           )}
         </div>

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import KioskLayout from '../../components/kiosk/KioskLayout';
-import KioskHeader from '../../components/kiosk/KioskHeader';
-import KioskButton from '../../components/kiosk/KioskButton';
-import KioskNumpad from '../../components/kiosk/KioskNumpad';
-import KioskInfoPanel from '../../components/kiosk/KioskInfoPanel';
+import KioskLayout from '../components/kiosk/KioskLayout';
+import KioskHeader from '../components/kiosk/KioskHeader';
+import KioskButton from '../components/kiosk/KioskButton';
+import KioskNumpad from '../components/kiosk/KioskNumpad';
+import KioskInfoPanel from '../components/kiosk/KioskInfoPanel';
 
 /**
  * AmountEntryPage - A page for entering payment amount using a numpad
@@ -71,27 +71,18 @@ const AmountEntryPage = () => {
     const paymentTypeStr = localStorage.getItem('mosquePaymentType');
     const memberFeeAmountStr = localStorage.getItem('memberFeeAmount');
     
-    console.log('=== Checking Membership Payment ===');
-    console.log('Payment Type String:', paymentTypeStr);
-    console.log('Member Fee Amount String:', memberFeeAmountStr);
-    
     try {
       const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
-      console.log('Parsed Payment Type:', paymentType);
       
       if (paymentType && paymentType.id === 'membership') {
-        console.log('✅ This is a membership payment');
         setIsMembershipPayment(true);
         
         if (memberFeeAmountStr) {
           const feeAmount = parseFloat(memberFeeAmountStr);
-          console.log('✅ Member fee amount found:', feeAmount);
           setMemberFeeAmount(feeAmount);
-        } else {
-          console.log('❌ No member fee amount in localStorage');
+          console.log('Member fee amount:', feeAmount);
         }
       } else {
-        console.log('❌ Not a membership payment');
         setIsMembershipPayment(false);
       }
     } catch (error) {
@@ -119,15 +110,15 @@ const AmountEntryPage = () => {
       const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
 
       if (paymentType && paymentType.id === 'sadaka') {
-        navigate('/mosque/sadaka-goal');
+        navigate('/sadaka-goal');
       } else if (paymentType && paymentType.id === 'rent') {
-        navigate('/mosque/rent-datetime');
+        navigate('/rent-datetime');
       } else {
-        navigate('/mosque/member-selection');
+        navigate('/member-selection');
       }
     } catch (error) {
       console.error('Error parsing payment type:', error);
-      navigate('/mosque/member-selection');
+      navigate('/member-selection');
     }
   };
 
@@ -138,7 +129,7 @@ const AmountEntryPage = () => {
     }
 
     localStorage.setItem('paymentAmount', amount);
-    navigate('/mosque/payment-method');
+    navigate('/payment-method');
   };
 
   const handleHalfPayment = () => {
@@ -150,7 +141,7 @@ const AmountEntryPage = () => {
     const halfAmount = (memberFeeAmount / 2).toFixed(2);
     localStorage.setItem('paymentAmount', halfAmount);
     localStorage.setItem('paymentSubtype', 'half'); // Store payment subtype
-    navigate('/mosque/payment-method');
+    navigate('/payment-method');
   };
 
   const handleFullPayment = () => {
@@ -161,7 +152,7 @@ const AmountEntryPage = () => {
     
     localStorage.setItem('paymentAmount', memberFeeAmount.toString());
     localStorage.setItem('paymentSubtype', 'full'); // Store payment subtype
-    navigate('/mosque/payment-method');
+    navigate('/payment-method');
   };
 
   const formatAmount = (value) => {
