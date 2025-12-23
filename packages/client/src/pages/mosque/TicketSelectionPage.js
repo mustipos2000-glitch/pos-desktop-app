@@ -223,105 +223,144 @@ const TicketSelectionPage = () => {
   };
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
-        <div className="min-h-full flex flex-col items-center justify-center p-6">
-          <div className="max-w-3xl w-full">
-            {/* Header */}
-            <div className="text-center mb-6">
-              <h1 className="text-2xl font-bold text-pos-text-primary mb-1">
-                Ticket
-              </h1>
-              <p className="text-xs text-pos-text-secondary">
-                How would you like to receive your ticket?
-              </p>
-            </div>
+    <div className="h-screen bg-pos-bg-primary flex flex-col">
+      {/* Header Section */}
+      <div className="flex-shrink-0 px-8 pt-8 pb-6">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
+            Ticket Options
+          </h1>
+          <p className="text-xl text-pos-text-secondary">
+            How would you like to receive your ticket?
+          </p>
+        </div>
+      </div>
 
-            {/* Ticket Options */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {/* Print Ticket */}
-              <button
-                onClick={() => handleOptionSelect('print')}
-                disabled={printing}
-                className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover ${printing ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-              >
-                <div className="text-center space-y-1">
-                  <div className="text-lg font-semibold text-pos-text-primary">
-                    {printing ? 'Printing...' : 'Print ticket'}
-                  </div>
-                  <div className="text-base text-pos-text-secondary">
-                    Imprimer le ticket
-                  </div>
-                  <div className="text-base text-pos-text-secondary">
-                    Print receipt
-                  </div>
-                  <div className="text-base text-pos-text-secondary" dir="rtl">
-                    طباعة التذكرة
+      {/* Main Content Area */}
+      <div className="flex-1 px-8 pb-4">
+        <div className="flex flex-col justify-center max-w-5xl w-full mx-auto h-full">
+          {/* Ticket Options */}
+          <div className="grid grid-cols-2 gap-8 mb-8">
+            {/* Print Ticket */}
+            <button
+              onClick={() => handleOptionSelect('print')}
+              disabled={printing}
+              className={`
+                relative bg-pos-bg-secondary rounded-xl p-8 
+                transition-all duration-200 border
+                ${selectedOption === 'print'
+                  ? 'border-pos-interactive-hover shadow-lg scale-[1.02]'
+                  : 'border-pos-border-primary'
+                }
+                hover:border-pos-interactive-hover hover:shadow-lg
+                disabled:opacity-40 disabled:cursor-not-allowed
+                active:scale-[0.98]
+              `}
+            >
+              {/* Icon */}
+              <div className="mb-6">
+                <svg className="w-20 h-20 mx-auto text-pos-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+              </div>
+
+              {/* Text Content */}
+              <div className="space-y-3">
+                <div className="text-2xl font-bold text-pos-text-primary">
+                  {printing ? 'Printing...' : 'Print Ticket'}
+                </div>
+                <div className="text-lg text-pos-text-secondary">
+                  Imprimer le ticket
+                </div>
+                <div className="text-lg text-pos-text-secondary">
+                  Print receipt
+                </div>
+                <div className="text-lg text-pos-text-secondary" dir="rtl">
+                  طباعة التذكرة
+                </div>
+              </div>
+
+              {/* Selected Indicator */}
+              {selectedOption === 'print' && (
+                <div className="absolute top-4 right-4">
+                  <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
                   </div>
                 </div>
-              </button>
+              )}
+            </button>
 
-              {/* No Ticket */}
-              <button
-                onClick={() => handleOptionSelect('no-ticket')}
-                disabled={printing}
-                className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover ${printing ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-              >
-                <div className="text-center space-y-1">
-                  <div className="text-lg font-semibold text-pos-text-primary">
-                    No ticket
-                  </div>
-                  <div className="text-base text-pos-text-secondary">
-                    Pass the ticket
-                  </div>
-                  <div className="text-base text-pos-text-secondary">
-                    No receipt
-                  </div>
-                  <div className="text-base text-pos-text-secondary" dir="rtl">
-                    بدون تذكرة
+            {/* No Ticket */}
+            <button
+              onClick={() => handleOptionSelect('no-ticket')}
+              disabled={printing}
+              className={`
+                relative bg-pos-bg-secondary rounded-xl p-8 
+                transition-all duration-200 border
+                ${selectedOption === 'no-ticket'
+                  ? 'border-pos-interactive-hover shadow-lg scale-[1.02]'
+                  : 'border-pos-border-primary'
+                }
+                hover:border-pos-interactive-hover hover:shadow-lg
+                disabled:opacity-40 disabled:cursor-not-allowed
+                active:scale-[0.98]
+              `}
+            >
+              {/* Icon */}
+              <div className="mb-6">
+                <svg className="w-20 h-20 mx-auto text-pos-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+
+              {/* Text Content */}
+              <div className="space-y-3">
+                <div className="text-2xl font-bold text-pos-text-primary">
+                  No Ticket
+                </div>
+                <div className="text-lg text-pos-text-secondary">
+                  Pas de ticket
+                </div>
+                <div className="text-lg text-pos-text-secondary">
+                  No receipt
+                </div>
+                <div className="text-lg text-pos-text-secondary" dir="rtl">
+                  بدون تذكرة
+                </div>
+              </div>
+
+              {/* Selected Indicator */}
+              {selectedOption === 'no-ticket' && (
+                <div className="absolute top-4 right-4">
+                  <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
                   </div>
                 </div>
-              </button>
-
-              {/* Email Ticket - Full width on second row */}
-              {/* <button
-            onClick={() => handleOptionSelect('email')}
-            disabled={printing}
-            className={`bg-pos-bg-secondary rounded-lg p-8 transition-all border border-pos-border-primary hover:border-pos-interactive-hover md:col-span-1 ${
-              printing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <div className="text-center space-y-1">
-              <div className="text-lg font-semibold text-pos-text-primary">
-                Ticket via Email
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Ticket par Email
-              </div>
-              <div className="text-base text-pos-text-secondary">
-                Receipt via Email
-              </div>
-              <div className="text-base text-pos-text-secondary" dir="rtl">
-                التذكرة عبر البريد الإلكتروني
-              </div>
-            </div>
-          </button> */}
-            </div>
-
-            {/* Bottom Button */}
-            <div className="flex justify-start mb-8">
-              <button
-                onClick={handleGoBack}
-                disabled={printing}
-                className={`px-6 py-2 bg-pos-interactive-primary text-pos-text-primary rounded-lg hover:bg-pos-interactive-hover transition-colors font-medium border border-pos-border-primary text-sm ${printing ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
-              >
-                Go back
-              </button>
-            </div>
+              )}
+            </button>
           </div>
+        </div>
+      </div>
+
+      {/* Footer Navigation */}
+      <div className="flex-shrink-0 px-8 pb-8">
+        <div className="max-w-5xl w-full mx-auto">
+          <button
+            onClick={handleGoBack}
+            disabled={printing}
+            className={`
+              px-8 py-4 bg-pos-bg-secondary text-pos-text-primary 
+              rounded-xl hover:bg-pos-interactive-hover transition-colors 
+              font-semibold border border-pos-border-primary text-lg
+              ${printing ? 'opacity-50 cursor-not-allowed' : ''}
+            `}
+          >
+            ← Go Back
+          </button>
         </div>
       </div>
 
