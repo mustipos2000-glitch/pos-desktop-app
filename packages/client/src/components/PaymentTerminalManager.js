@@ -364,14 +364,14 @@ const PaymentTerminalManager = () => {
                   </td>
                   <td>
                     <div className="flex items-center justify-center gap-2">
-                      <button
+                      {/* <button
                         onClick={() => handleTestTerminal(terminal.id)}
                         disabled={testingTerminal === terminal.id}
                         className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title="Test connection"
                       >
                         {testingTerminal === terminal.id ? '⏳ Testing...' : '🔌 Test'}
-                      </button>
+                      </button> */}
                       <IconButton
                         icon="✏️"
                         className="edit"

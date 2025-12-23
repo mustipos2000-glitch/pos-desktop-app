@@ -1012,14 +1012,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
                           </td>
                           <td>
                             <div className="flex items-center justify-center gap-2">
-                              <button
-                                onClick={() => handleTestPrinter(printer.id)}
-                                disabled={testingPrinter === printer.id}
-                                className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                title="Test printer"
-                              >
-                                {testingPrinter === printer.id ? '⏳ Testing...' : '🖨️ Test'}
-                              </button>
+                            
                               <IconButton
                                 icon="✏️"
                                 className="edit"
