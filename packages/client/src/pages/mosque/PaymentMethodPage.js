@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
 import { KioskButton } from '../../components/mosque';
@@ -6,10 +6,10 @@ import { KioskButton } from '../../components/mosque';
 const PaymentMethodPage = () => {
   const navigate = useNavigate();
 
-  const formatAmount = (value) => {
+  const formatAmount = useCallback((value) => {
     const num = typeof value === 'number' && !Number.isNaN(value) ? value : 0;
     return num.toFixed(2);
-  };
+  }, []);
 
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [memberInfo, setMemberInfo] = useState(null);
@@ -19,6 +19,11 @@ const PaymentMethodPage = () => {
   const [sadakaType, setSadakaType] = useState(null);
   const [rentDateTime, setRentDateTime] = useState(null);
   const [processing, setProcessing] = useState(false);
+
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState("error");
+  const [manualChangeAmount, setManualChangeAmount] = useState(0);
+  const [showManualChangeModal, setShowManualChangeModal] = useState(false);
 
   // Cashmatic state
   const [cashmaticSessionId, setCashmaticSessionId] = useState(null);
@@ -43,6 +48,70 @@ const PaymentMethodPage = () => {
   const [payworldPolling, setPayworldPolling] = useState(false);
   const payworldFinalizedRef = useRef(false);
 
+  const handleConfirm = useCallback(() => {
+    // Payment already processed, just navigate
+    const paymentData = {
+      amount: parseFloat(amount),
+      member_id: memberInfo?.id,
+      payment_type: paymentType?.id,
+      reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.fullName}`
+    };
+    localStorage.setItem('paymentData', JSON.stringify(paymentData));
+
+    console.log('Navigating to ticket-selection...');
+    navigate('/mosque/ticket-selection');
+  }, [amount, memberInfo, paymentType, navigate]);
+
+  // Store payment data function
+  const storePaymentData = useCallback(async (paymentMethod, paymentDetails) => {
+    try {
+      const transactionId = `${paymentMethod.toUpperCase()}-${Date.now()}`;
+      
+      // Complete payment data object
+      const paymentData = {
+        transactionId,
+        amount: parseFloat(amount),
+        member_id: memberInfo?.id,
+        member_name: memberInfo?.fullName,
+        payment_type: paymentType?.id,
+        payment_type_title: paymentType?.titleEn,
+        sadaka_goal: sadakaGoal?.titleEn,
+        sadaka_type: sadakaType,
+        rent_datetime: rentDateTime,
+        payment_method: paymentMethod,
+        timestamp: new Date().toISOString(),
+        ...paymentDetails
+      };
+
+      // Store in localStorage for immediate use
+      localStorage.setItem('transactionId', transactionId);
+      localStorage.setItem('paymentMethod', paymentMethod);
+      localStorage.setItem('paymentData', JSON.stringify(paymentData));
+      localStorage.setItem('paymentResult', JSON.stringify({
+        success: true,
+        ...paymentDetails
+      }));
+
+      console.log('Payment data stored:', paymentData);
+      return paymentData;
+    } catch (error) {
+      console.error('Error storing payment data:', error);
+      throw error;
+    }
+  }, [amount, memberInfo, paymentType, sadakaGoal, sadakaType, rentDateTime]);
+
+  // Handle manual change confirmation
+  const handleManualChangeConfirm = useCallback(() => {
+    setShowManualChangeModal(false);
+    setToastType("success");
+    setToastMessage("Payment completed successfully!");
+    
+    // Navigate to confirmation after manual change is acknowledged
+    setTimeout(() => {
+      handleConfirm();
+    }, 1500);
+  }, [handleConfirm]);
+
   useEffect(() => {
     const member = JSON.parse(localStorage.getItem('selectedMember') || 'null');
     const amt = localStorage.getItem('paymentAmount') || '0';
@@ -65,90 +134,140 @@ const PaymentMethodPage = () => {
 
     const poll = async () => {
       console.log("Start polling");
-
-      const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
-      const s = res.data || res;
-      console.log("Cashmatic status:", s);
-
-      const requested = (s.requestedAmount || 0) / 100;
-      const inserted = (s.insertedAmount || 0) / 100;
-      const dispensed = (s.dispensedAmount || 0) / 100;
-      const notDispensed = (s.notDispensedAmount || 0) / 100;
-
-      setCashmaticInfo({
-        requested,
-        inserted,
-        dispensed,
-        notDispensed,
-        state: s.state,
-      });
-
-      // if (s.state === "IN_PROGRESS" || s.state === "PAID") {
-      //   console.log("state is in Progress or Paid");
-      //   return;
-      // }
-
-      if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
-        console.log("Finished the Cashmatic ");
-
-        setCashmaticPolling(false);
-        const currentSessionId = cashmaticSessionId;
-        setCashmaticSessionId(null);
-
-
-
-        const paymentAmount = parseFloat(amount);
-
-        try {
-          // Call finish API to close transaction and print receipt on Cashmatic
-          console.log("Calling finish API to close Cashmatic transaction... Mosque");
-          await ApiService.finishCashmaticPayment(currentSessionId);
-
-
-          localStorage.setItem('paymentMethod', 'cash');
-          localStorage.setItem('paymentResult', JSON.stringify({
-            success: true,
-            state: s.state,
-            totalPaid: paymentAmount,
-            cashAmount: paymentAmount,
-            cardAmount: 0,
-            changeDue: 0,
-            manualChangeRequired: s.state === "FINISHED_MANUAL",
-          }));
-
-          setProcessing(false);
-
-          // Navigate to confirmation
-          setTimeout(() => {
-            handleConfirm();
-          }, 1500);
-        } catch (error) {
-          console.error("Error completing order after Cashmatic payment:", error);
-          alert("Payment successful but failed to complete order.");
-          setProcessing(false);
-
-          setShowCashmaticModal(false);
+      try {
+        const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
+        const s = res.data || res;
+        console.log("Cashmatic status:", s);
+        // Handle error state from server
+        if (s.errorMessage) {
+          console.error("Cashmatic error:", s.errorMessage);
+          setCashmaticPolling(false);
+          setCashmaticSessionId(null);
+          setProcessing(false); // Fixed: was processing(false)
+          setToastType("error");
+          setToastMessage("Cashmatic communication error: " + s.errorMessage);
+          return;
         }
-        return;
-      }
+        const requested = (s.requestedAmount || 0) / 100;
+        const inserted = (s.insertedAmount || 0) / 100;
+        const dispensed = (s.dispensedAmount || 0) / 100;
+        const notDispensed = (s.notDispensedAmount || 0) / 100;
 
-      if (s.state === "CANCELLED" || s.state === "ERROR") {
-        console.log("Cancelled");
+        setCashmaticInfo({
+          requested,
+          inserted,
+          dispensed,
+          notDispensed,
+          state: s.state,
+        });
+
+        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+          console.log('insertd:' + inserted, " Requested : " + requested, " dispensed " + dispensed, " not Dspensed " + notDispensed);
+
+          if (inserted < requested) return;
+          if (inserted > requested && (dispensed > 0 || notDispensed > 0)) {
+
+            const change = inserted - requested;
+            if (change > 0) {
+              const manualChangeDue = change - dispensed;
+              if (manualChangeDue > 0) {
+                // Store payment data and show manual change modal
+                await storePaymentData('cash', {
+                  totalPaid: inserted,
+                  cashAmount: inserted,
+                  cardAmount: 0,
+                  changeDue: change,
+                  cashmaticDispensed: dispensed,
+                  manualChangeDue: manualChangeDue,
+                  state: s.state
+                });
+                
+                setManualChangeAmount(manualChangeDue);
+                setShowManualChangeModal(true);
+                setCashmaticPolling(false);
+                setCashmaticSessionId(null);
+                setShowCashmaticModal(false);
+                return;
+              }
+            }
+          } else {
+            return
+          }
+          console.log("Finished the Cashmatic ");
+
+          setCashmaticPolling(false);
+          const currentSessionId = cashmaticSessionId;
+          setCashmaticSessionId(null);
+
+          const manualChangeDue = notDispensed;
+          try {
+            // Call finish API to close transaction and print receipt on Cashmatic
+            console.log("Calling finish API to close Cashmatic transaction... Mosque");
+            await ApiService.finishCashmaticPayment(currentSessionId);
+
+            // Store payment data
+            await storePaymentData('cash', {
+              totalPaid: inserted,
+              cashAmount: inserted,
+              cardAmount: 0,
+              changeDue: inserted - requested,
+              cashmaticDispensed: dispensed,
+              manualChangeDue: manualChangeDue,
+              state: s.state
+            });
+
+            setToastType("success");
+            let message = "Cashmatic Payment completed successfully.";
+
+            if (manualChangeDue > 0) {
+              message = `Payment Completed! Please give ${formatAmount(manualChangeDue)} manual change to customer`;
+            } else {
+              // Navigate to confirmation
+              setTimeout(() => {
+                handleConfirm();
+              }, 2000);
+            }
+            setToastMessage(message);
+
+            setProcessing(false);
+
+          } catch (error) {
+            console.error("Error completing order after Cashmatic payment:", error);
+            setToastType("error");
+            setToastMessage("Payment successful but failed to complete order.");
+            setProcessing(false);
+            setShowCashmaticModal(false);
+          }
+          return;
+        }
+
+        if (s.state === "CANCELLED" || s.state === "ERROR") {
+          console.log("Cancelled");
+          setCashmaticPolling(false);
+          setCashmaticSessionId(null);
+          setProcessing(false);
+          alert(
+            s.state === "CANCELLED"
+              ? "Cashmatic payment cancelled."
+              : "Error during Cashmatic payment."
+          );
+          return;
+        }
+      }
+      catch (error) {
+        console.error("Cashmatic polling error:", error);
         setCashmaticPolling(false);
         setCashmaticSessionId(null);
         setProcessing(false);
-        alert(
-          s.state === "CANCELLED"
-            ? "Cashmatic payment cancelled."
-            : "Error during Cashmatic payment."
-        );
-        return;
+        setToastType("error");
+        setToastMessage("Failed to communicate with Cashmatic device.");
+        setShowCashmaticModal(false);
       }
     };
 
     const intervalId = setInterval(poll, 1000);
     return () => clearInterval(intervalId);
-  }, [cashmaticPolling, cashmaticSessionId, amount]);
+  }, [cashmaticPolling, cashmaticSessionId, amount, formatAmount, storePaymentData, handleConfirm]);
 
   // Poll Payworld status
   useEffect(() => {
@@ -196,15 +315,15 @@ const PaymentMethodPage = () => {
 
           const paymentAmount = parseFloat(amount);
 
-          localStorage.setItem('paymentMethod', 'card');
-          localStorage.setItem('paymentResult', JSON.stringify({
-            success: true,
-            state,
+          // Store payment data
+          await storePaymentData('card', {
             totalPaid: paymentAmount,
             cashAmount: 0,
             cardAmount: paymentAmount,
             changeDue: 0,
-          }));
+            state: state,
+            details: details
+          });
 
           setShowPayworldModal(false);
           setPayworldPolling(false);
@@ -247,12 +366,12 @@ const PaymentMethodPage = () => {
 
     const id = setInterval(poll, 1000);
     return () => clearInterval(id);
-  }, [payworldPolling, payworldSessionId, amount]);
+  }, [payworldPolling, payworldSessionId, amount, payworldStatus.message, payworldStatus.details, storePaymentData, handleConfirm]);
 
   // Cashmatic payment handler
   const handleCashmaticPayment = async () => {
     if (processing) return;
-
+    console.log("Cashmatic payment handler called amount : " + amount);
     const paymentAmount = parseFloat(amount);
 
     if (paymentAmount <= 0) {
@@ -355,17 +474,69 @@ const PaymentMethodPage = () => {
     }
   };
 
+  // Cancel Cashmatic payment
+  const handleCancelCashmatic = async () => {
+    if (!cashmaticSessionId) {
+      cashmaticSessionId = "devsessionId";
+      setCashmaticPolling(false);
+      setCashmaticSessionId(null);
+      setProcessing(false);
+      setShowCashmaticModal(false);
+    //   setToastType("error");
+    //   setToastMessage("No active Cashmatic session to cancel.");
+    //   return;
+    }
+
+    try {
+      console.log("Cancelling Cashmatic payment...");
+      
+      // Call API to cancel the payment
+      await ApiService.cancelCashmatic(cashmaticSessionId);
+
+      // Update state to show cancellation
+      setCashmaticInfo(prev => ({
+        ...prev,
+        state: "CANCELLED"
+      }));
+
+      // Stop polling and reset session
+      setCashmaticPolling(false);
+      setCashmaticSessionId(null);
+      setProcessing(false);
+      
+      setToastType("success");
+      setToastMessage("Cashmatic payment cancelled successfully.");
+
+      // Close modal after a short delay
+      setTimeout(() => {
+        setShowCashmaticModal(false);
+      }, 2000);
+
+    } catch (error) {
+      console.error("Error cancelling Cashmatic payment:", error);
+      setToastType("error");
+      setToastMessage("Failed to cancel Cashmatic payment.");
+    }
+  };
+
   // Cancel Payworld payment
   const handleAbortPayworld = async () => {
     if (!payworldSessionId) {
+      console.log('We are here in not payworkd session Id ');
+      
+      setPayworldPolling(false);
+      setPayworldSessionId(null);
+      setProcessing(false);
       setPayworldStatus({
         state: "ERROR",
         message: "No active Payworld session to cancel.",
         details: null,
       });
+      setShowPayworldModal(false);
       return;
     }
-
+    console.log("outside the payeworkd machin abort");
+    
     setPayworldStatus({
       state: "IN_PROGRESS",
       message: "Payment is being cancelled on the terminal...",
@@ -373,8 +544,15 @@ const PaymentMethodPage = () => {
     });
 
     try {
-      await ApiService.cancelPayworldPayment(payworldSessionId);
-
+     const res =  await ApiService.cancelPayworldPayment(payworldSessionId);
+      console.log("result is : " , res);
+      if(!res.success){
+        setPayworldPolling(false);
+        setPayworldSessionId(null);
+        setProcessing(false);
+        setShowManualChangeModal(false);
+        return ;
+      }
       setPayworldStatus({
         state: "CANCELLED",
         message: "Payworld payment cancelled on the terminal.",
@@ -399,20 +577,6 @@ const PaymentMethodPage = () => {
 
   const handleGoBack = () => {
     navigate('/mosque/amount-entry');
-  };
-
-  const handleConfirm = () => {
-    // Payment already processed, just navigate
-    const paymentData = {
-      amount: parseFloat(amount),
-      member_id: memberInfo?.id,
-      payment_type: paymentType?.id,
-      reference: `${paymentType?.titleEn || 'Payment'} - ${memberInfo?.fullName}`
-    };
-    localStorage.setItem('paymentData', JSON.stringify(paymentData));
-
-    console.log('Navigating to ticket-selection...');
-    navigate('/mosque/ticket-selection');
   };
 
   // Test function to skip payment and test printer
@@ -703,6 +867,18 @@ const PaymentMethodPage = () => {
             {/* Modal Actions */}
             <div className="px-8 pb-8">
               <div className="flex gap-4">
+                {/* Cancel button for active payment states */}
+                {(cashmaticInfo.state !== "PAID") && (
+                  <KioskButton
+                    variant="danger"
+                    onClick={handleCancelCashmatic}
+                    fullWidth
+                  >
+                    Cancel Payment
+                  </KioskButton>
+                )}
+
+                {/* Close button for finished states */}
                 {(cashmaticInfo.state === "FINISHED" ||
                   cashmaticInfo.state === "FINISHED_MANUAL" ||
                   cashmaticInfo.state === "CANCELLED" ||
@@ -815,7 +991,7 @@ const PaymentMethodPage = () => {
               <div className="flex gap-4">
                 {payworldStatus.state === "IN_PROGRESS" && (
                   <KioskButton
-                    variant="destructive"
+                    variant="danger"
                     onClick={handleAbortPayworld}
                     fullWidth
                   >
@@ -844,6 +1020,85 @@ const PaymentMethodPage = () => {
                   )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Manual Change Modal */}
+      {showManualChangeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+          <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
+            
+            {/* Modal Header */}
+            <div className="px-8 py-6 border-b-2 border-pos-border-primary">
+              <h2 className="text-3xl font-bold text-pos-text-primary text-center">
+                Manual Change Required
+              </h2>
+            </div>
+
+            {/* Modal Content */}
+            <div className="px-8 py-6">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-yellow-500 mb-4">
+                  <svg className="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="text-2xl font-semibold text-pos-text-primary mb-4">
+                  Please provide manual change to customer
+                </div>
+              </div>
+
+              <div className="bg-yellow-500 bg-opacity-10 rounded-2xl p-6 border-2 border-yellow-500 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-2xl font-semibold text-yellow-600">Change Due:</span>
+                  <span className="text-4xl font-bold text-yellow-600">€ {formatAmount(manualChangeAmount)}</span>
+                </div>
+              </div>
+
+              <div className="text-lg text-pos-text-secondary text-center">
+                After providing the change to the customer, click "Confirm" to print the receipt and complete the transaction.
+              </div>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="px-8 pb-8">
+              <KioskButton
+                variant="primary"
+                onClick={handleManualChangeConfirm}
+                fullWidth
+              >
+                Confirm Change Given
+              </KioskButton>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className={`fixed top-8 right-8 z-50 px-6 py-4 rounded-lg shadow-lg ${
+          toastType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+        }`}>
+          <div className="flex items-center gap-3">
+            {toastType === 'success' ? (
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            )}
+            <span className="text-lg font-medium">{toastMessage}</span>
+            <button 
+              onClick={() => setToastMessage("")}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
