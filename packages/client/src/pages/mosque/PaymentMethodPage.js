@@ -93,6 +93,32 @@ const PaymentMethodPage = () => {
       }));
 
       console.log('Payment data stored:', paymentData);
+
+      // If this is a rental payment, create rental booking in database
+      if (paymentType?.id === 'rent' && rentDateTime) {
+        try {
+          console.log('📅 Creating rental booking in database...');
+          const bookingData = {
+            member_id: memberInfo?.id,
+            member_name: memberInfo?.fullName,
+            start_datetime: rentDateTime.startDatetime,
+            end_datetime: rentDateTime.endDatetime,
+            duration_hours: rentDateTime.durationHours,
+            amount: parseFloat(amount),
+            transaction_id: transactionId,
+            payment_method: paymentMethod,
+            status: 'active'
+          };
+
+          const bookingResponse = await ApiService.createRentalBooking(bookingData);
+          console.log('✅ Rental booking created:', bookingResponse);
+        } catch (bookingError) {
+          console.error('❌ Error creating rental booking:', bookingError);
+          // Don't fail the payment, just log the error
+          // The payment was successful, booking creation is secondary
+        }
+      }
+
       return paymentData;
     } catch (error) {
       console.error('Error storing payment data:', error);
@@ -576,7 +602,14 @@ const PaymentMethodPage = () => {
   };
 
   const handleGoBack = () => {
-    navigate('/mosque/amount-entry');
+    // Check payment type to determine correct back navigation
+    if (paymentType?.id === 'rent') {
+      // For rent, go back to rent datetime page (skip amount entry)
+      navigate('/mosque/rent-datetime');
+    } else {
+      // For other payment types, go back to amount entry
+      navigate('/mosque/amount-entry');
+    }
   };
 
   // Test function to skip payment and test printer

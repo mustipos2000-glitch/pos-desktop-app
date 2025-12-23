@@ -587,6 +587,67 @@ static async adjustInventory(productId, data) {
     });
   }
 
+  // Rental Charge methods
+  static async getRentalCharges() {
+    return this.request('/rental-charges');
+  }
+
+  static async getRentalChargeById(id) {
+    return this.request(`/rental-charges/${id}`);
+  }
+
+  // Rental Booking methods
+  static async getRentalBookings() {
+    return this.request('/rental-bookings');
+  }
+
+  static async getActiveRentalBookings() {
+    return this.request('/rental-bookings/active');
+  }
+
+  static async getRentalBookingById(id) {
+    return this.request(`/rental-bookings/${id}`);
+  }
+
+  static async getRentalBookingsByMemberId(memberId) {
+    return this.request(`/rental-bookings/member/${memberId}`);
+  }
+
+  static async createRentalBooking(bookingData) {
+    return this.request('/rental-bookings', {
+      method: 'POST',
+      body: JSON.stringify(bookingData),
+    });
+  }
+
+  static async checkRentalOverlap(startDatetime, endDatetime, excludeId = null) {
+    return this.request('/rental-bookings/check-overlap', {
+      method: 'POST',
+      body: JSON.stringify({
+        start_datetime: startDatetime,
+        end_datetime: endDatetime,
+        exclude_id: excludeId
+      }),
+    });
+  }
+
+  static async updateRentalBooking(id, bookingData) {
+    return this.request(`/rental-bookings/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(bookingData),
+    });
+  }
+
+  static async deleteRentalBooking(id) {
+    return this.request(`/rental-bookings/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  static async getRentalBookingsByDateRange(startDate, endDate) {
+    return this.request(`/rental-bookings/range?start_date=${startDate}&end_date=${endDate}`);
+  }
+
 
 
 }

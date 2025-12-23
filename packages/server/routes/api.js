@@ -7,6 +7,7 @@ const UserController = require('../controllers/UserController');
 const MemberController = require('../controllers/MemberController');
 const MemberFeeController = require('../controllers/MemberFeeController');
 const RentalChargeController = require('../controllers/RentalChargeController');
+const RentalBookingController = require('../mosque/controllers/RentalBookingController');
 
 const ProductController = require('../controllers/ProductController');
 const SubProductController = require('../controllers/SubProductController');
@@ -57,6 +58,17 @@ router.get('/rental-charges/:id', RentalChargeController.getRentalChargeById);
 router.post('/rental-charges', RentalChargeController.createRentalCharge);
 router.put('/rental-charges/:id', RentalChargeController.updateRentalCharge);
 router.delete('/rental-charges/:id', RentalChargeController.deleteRentalCharge);
+
+// Rental Booking routes
+router.get('/rental-bookings', RentalBookingController.getAllBookings);
+router.get('/rental-bookings/active', RentalBookingController.getActiveBookings);
+router.get('/rental-bookings/member/:memberId', RentalBookingController.getBookingsByMemberId);
+router.get('/rental-bookings/:id', RentalBookingController.getBookingById);
+router.post('/rental-bookings', RentalBookingController.createBooking);
+router.post('/rental-bookings/check-overlap', RentalBookingController.checkOverlap);
+router.put('/rental-bookings/:id', RentalBookingController.updateBooking);
+router.delete('/rental-bookings/:id', RentalBookingController.deleteBooking);
+router.get('/rental-bookings/range', RentalBookingController.getBookingsByDateRange);
 
 
 

@@ -53,6 +53,8 @@ const MosquePaymentScreen = () => {
     } else if (option.id === 'sadaka') {
       navigate('/mosque/sadaka-selection');
     } else if (option.id === 'rent') {
+      // For rent, go directly to member selection, then to date/time page
+      // Skip amount entry as it will be calculated from rental charge settings
       navigate('/mosque/member-selection');
     } else {
       navigate('/pos');
