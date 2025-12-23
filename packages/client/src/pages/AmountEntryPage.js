@@ -208,7 +208,7 @@ const AmountEntryPage = () => {
 
           {/* Amount Display */}
           <div className="flex justify-center">
-            <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl lg:rounded-2xl px-8 lg:px-12 py-4 lg:py-6 shadow-xl w-full max-w-md">
+            <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl lg:rounded-2xl px-12 py-7 shadow-xl w-full">
               <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-pos-text-primary text-center break-all">
                 {isMembershipPayment && memberFeeAmount ? formatAmount(memberFeeAmount.toString()) : formatAmount(amount)}
               </div>
@@ -232,7 +232,7 @@ const AmountEntryPage = () => {
                 onClick={handleFullPayment}
                 fullWidth
               >
-                <div className="text-center">
+                <div className="text-center p-5">
                   <div className="text-2xl font-bold">Full Payment</div>
                   <div className="text-xl mt-1">€ {memberFeeAmount.toFixed(2)}</div>
                 </div>
@@ -244,7 +244,7 @@ const AmountEntryPage = () => {
                 onClick={handleHalfPayment}
                 fullWidth
               >
-                <div className="text-center">
+                <div className="text-center p-5">
                   <div className="text-2xl font-bold">Half Payment</div>
                   <div className="text-xl mt-1">€ {(memberFeeAmount / 2).toFixed(2)}</div>
                 </div>
