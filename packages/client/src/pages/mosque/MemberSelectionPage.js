@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
-import { KioskButton } from '../../components/mosque';
+import KioskButton from '../../components/kiosk/KioskButton';
 
 /**
  * MemberSelectionPage - Modern kiosk-optimized member selection interface
@@ -25,10 +25,12 @@ const MemberSelectionPage = () => {
   
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [memberFee, setMemberFee] = useState(null);
 
   useEffect(() => {
     fetchMembers();
     loadSelectedMember();
+    fetchMemberFee();
   }, []);
 
   const loadSelectedMember = () => {
@@ -56,7 +58,45 @@ const MemberSelectionPage = () => {
     }
   };
 
+  const fetchMemberFee = async () => {
+    try {
+      console.log('🔍 Fetching member fees from API...');
+      const response = await ApiService.getMemberFees();
+      console.log('📦 API Response:', response);
+      
+      if (response && response.data && response.data.length > 0) {
+        // Get the first member fee (assuming there's only one)
+        const fee = response.data[0];
+        setMemberFee(fee);
+        console.log('✅ Member fee loaded:', fee);
+        console.log('💰 Fee amount:', fee.member_fee);
+        
+        // IMPORTANT: Store it immediately for membership payments
+        const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+        if (paymentTypeStr) {
+          try {
+            const paymentType = JSON.parse(paymentTypeStr);
+            if (paymentType && paymentType.id === 'membership') {
+              console.log('💾 Auto-storing member fee for membership payment');
+              localStorage.setItem('memberFeeAmount', fee.member_fee.toString());
+            }
+          } catch (e) {
+            console.error('Error parsing payment type:', e);
+          }
+        }
+      } else {
+        console.warn('⚠️ No member fees found in database');
+        alert('No member fee configured. Please add a member fee in Settings.');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching member fee:', error);
+      alert('Failed to load member fee. Please check your connection.');
+    }
+  };
+
   const handleSelectMember = (member) => {
+    console.log('👤 Selecting member:', member.full_name);
+    
     setSelectedMember({
       id: member.id,
       fullName: member.full_name,
@@ -64,6 +104,33 @@ const MemberSelectionPage = () => {
       type: 'existing'
     });
     setShowCreateForm(false);
+    
+    // Store member fee if it's a membership payment
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+    console.log('=== Selecting Member ===');
+    console.log('Payment Type:', paymentTypeStr);
+    console.log('Member Fee State:', memberFee);
+    
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+      console.log('Parsed Payment Type:', paymentType);
+      
+      if (paymentType && paymentType.id === 'membership') {
+        if (memberFee && memberFee.member_fee) {
+          console.log('✅ Storing member fee:', memberFee.member_fee);
+          localStorage.setItem('memberFeeAmount', memberFee.member_fee.toString());
+          console.log('✅ Stored in localStorage:', localStorage.getItem('memberFeeAmount'));
+        } else {
+          console.error('❌ Member fee not available!');
+          console.log('Member fee state:', memberFee);
+          alert('Member fee not loaded. Please refresh the page or configure member fee in Settings.');
+        }
+      } else {
+        console.log('ℹ️ Not a membership payment, skipping fee storage');
+      }
+    } catch (error) {
+      console.error('❌ Error storing member fee:', error);
+    }
   };
 
   const handleCreateMember = async () => {
@@ -88,6 +155,26 @@ const MemberSelectionPage = () => {
       
       setSelectedMember(member);
       setShowCreateForm(false);
+      
+      // Store member fee if it's a membership payment
+      const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+      console.log('=== Creating New Member ===');
+      console.log('Payment Type:', paymentTypeStr);
+      console.log('Member Fee State:', memberFee);
+      
+      try {
+        const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+        if (paymentType && paymentType.id === 'membership') {
+          if (memberFee && memberFee.member_fee) {
+            console.log('✅ Storing member fee for new member:', memberFee.member_fee);
+            localStorage.setItem('memberFeeAmount', memberFee.member_fee.toString());
+          } else {
+            console.error('❌ Member fee not available for new member!');
+          }
+        }
+      } catch (error) {
+        console.error('Error storing member fee:', error);
+      }
       
       // Refresh members list
       await fetchMembers();
@@ -140,11 +227,11 @@ const MemberSelectionPage = () => {
       if (paymentType && paymentType.id === 'sadaka' && sadakaType === 'named') {
         navigate('/mosque/sadaka-selection');
       } else {
-        navigate('/mosque');
+        navigate('/mosque/mosque-payment');
       }
     } catch (error) {
       console.error('Error parsing payment type:', error);
-      navigate('/mosque');
+      navigate('/mosque/mosque-payment');
     }
   };
 
