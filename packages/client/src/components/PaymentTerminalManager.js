@@ -139,7 +139,10 @@ const PaymentTerminalManager = () => {
     }
 
     try {
-      await ApiService.createPaymentTerminal(terminalForm);
+      await ApiService.createPaymentTerminal({
+        ...terminalForm,
+        enabled: terminalForm.enabled ? 1 : 0
+      });
       await fetchTerminals();
       setShowAddTerminal(false);
       resetForm();
@@ -281,7 +284,7 @@ const PaymentTerminalManager = () => {
         <div>
           <h3 className="text-pos-text-primary text-base font-semibold">Payment Terminals</h3>
           <p className="text-pos-text-muted text-xs mt-1">
-            Configure Cashmatic and Bancontact payment machines
+            Configure Cashmatic and Bancontact/Payworld payment machines
           </p>
         </div>
         <button 
@@ -336,7 +339,7 @@ const PaymentTerminalManager = () => {
                         ? 'bg-yellow-500 bg-opacity-20 text-yellow-400'
                         : 'bg-blue-500 bg-opacity-20 text-blue-400'
                     }`}>
-                      {terminal.type === 'cashmatic' ? '💰 Cashmatic' : '🏦 Bancontact'}
+                      {terminal.type === 'cashmatic' ? '💰 Cashmatic' : '🏦 Bancontact/Payworld'}
                     </span>
                   </td>
                   <td>
@@ -454,7 +457,7 @@ const PaymentTerminalManager = () => {
                     className={`w-full bg-pos-bg-primary border ${formErrors.type ? 'border-pos-error' : 'border-pos-border-secondary'} text-pos-text-primary px-2 py-1.5 text-sm focus:outline-none focus:border-pos-info transition-colors`}
                   >
                     <option value="cashmatic">💰 Cashmatic</option>
-                    <option value="bancontact">🏦 Bancontact</option>
+                    <option value="bancontact">🏦 Bancontact/Payworld</option>
                   </select>
                   {formErrors.type && (
                     <p className="text-pos-error text-xs mt-1">{formErrors.type}</p>
