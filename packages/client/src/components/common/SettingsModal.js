@@ -740,7 +740,7 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden">
         <div className="flex justify-between items-center p-6 border-b border-pos-border-primary">
           <h2 className="text-pos-text-primary text-xl font-semibold">Settings</h2>
           <button className="text-pos-text-muted hover:text-pos-text-primary text-2xl" onClick={onClose}>×</button>
