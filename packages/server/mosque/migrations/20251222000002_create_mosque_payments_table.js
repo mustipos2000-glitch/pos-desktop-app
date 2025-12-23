@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const db = require('../../config/database');
 
 module.exports = {
   name: '20251222000002_create_mosque_payments_table',

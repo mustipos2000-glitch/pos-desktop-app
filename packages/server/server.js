@@ -43,10 +43,12 @@ app.use(express.urlencoded({ extended: true }));
 
 // Import routes
 const apiRoutes = require('./routes/api');
+const mosqueRoutes = require('./routes/mosque');
 const ScaleController = require('./controllers/ScaleController');
 
 // Mount API routes
 app.use('/api', apiRoutes);
+app.use('/api/mosque', mosqueRoutes);
 
 // Setup WebSocket for scale integration
 ScaleController.setupWebSocket(io);
