@@ -22,6 +22,15 @@ const MemberController = {
     }
   },
 
+  getNextMemberId: (req, res) => {
+    try {
+      const nextId = Member.getNextMemberId();
+      res.json({ nextMemberId: nextId });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
   searchMembers: (req, res) => {
     try {
       const { q } = req.query;
@@ -37,13 +46,13 @@ const MemberController = {
 
   createMember: (req, res) => {
     try {
-      const { full_name, phone, email, address } = req.body;
+      const { full_name, phone, email, address, member_id } = req.body;
       
       if (!full_name) {
         return res.status(400).json({ error: 'Full name is required' });
       }
 
-      const newMember = Member.create(full_name, phone, email, address);
+      const newMember = Member.create(full_name, phone, email, address, member_id);
       res.status(201).json(newMember);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -52,14 +61,15 @@ const MemberController = {
 
   updateMember: (req, res) => {
     try {
-      const { full_name, phone, email, address } = req.body;
+      const { full_name, phone, email, address, member_id } = req.body;
       
       const updatedMember = Member.update(
         req.params.id, 
         full_name, 
         phone, 
         email, 
-        address
+        address,
+        member_id
       );
 
       if (!updatedMember) {

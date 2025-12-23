@@ -240,6 +240,10 @@ class ApiService {
     return this.request('/members');
   }
 
+  static async getNextMemberId() {
+    return this.request('/members/next-id');
+  }
+
   static async searchMembers(searchTerm) {
     return this.request(`/members/search?q=${encodeURIComponent(searchTerm)}`);
   }

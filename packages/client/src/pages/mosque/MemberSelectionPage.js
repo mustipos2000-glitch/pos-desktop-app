@@ -20,6 +20,7 @@ const MemberSelectionPage = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   
+  const [newMemberId, setNewMemberId] = useState('');
   const [newFullName, setNewFullName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   
@@ -31,7 +32,19 @@ const MemberSelectionPage = () => {
     fetchMembers();
     loadSelectedMember();
     fetchMemberFee();
+    fetchNextMemberId();
   }, []);
+
+  const fetchNextMemberId = async () => {
+    try {
+      const response = await ApiService.getNextMemberId();
+      if (response && response.nextMemberId) {
+        setNewMemberId(response.nextMemberId);
+      }
+    } catch (error) {
+      console.error('Error fetching next member ID:', error);
+    }
+  };
 
   const loadSelectedMember = () => {
     const storedMember = localStorage.getItem('selectedMember');
@@ -99,6 +112,7 @@ const MemberSelectionPage = () => {
     
     setSelectedMember({
       id: member.id,
+      memberId: member.member_id,
       fullName: member.full_name,
       phone: member.phone,
       type: 'existing'
@@ -139,15 +153,22 @@ const MemberSelectionPage = () => {
       return;
     }
     
+    if (!newMemberId.trim()) {
+      alert('Please enter a member ID');
+      return;
+    }
+    
     try {
       setCreating(true);
       const response = await ApiService.createMember({
+        member_id: newMemberId.trim(),
         full_name: newFullName.trim(),
         phone: newPhone.trim()
       });
       
       const member = {
         id: response.id,
+        memberId: response.member_id,
         fullName: response.full_name,
         phone: response.phone,
         type: 'new'
@@ -179,12 +200,15 @@ const MemberSelectionPage = () => {
       // Refresh members list
       await fetchMembers();
       
+      // Fetch next member ID for the next creation
+      await fetchNextMemberId();
+      
       // Clear form
       setNewFullName('');
       setNewPhone('');
     } catch (error) {
       console.error('Error creating member:', error);
-      alert('Failed to create member');
+      alert('Failed to create member. Member ID might already exist.');
     } finally {
       setCreating(false);
     }
@@ -238,13 +262,14 @@ const MemberSelectionPage = () => {
   // Filter members based on search
   const filteredMembers = members.filter(member => 
     member.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (member.phone && member.phone.includes(searchQuery))
+    (member.phone && member.phone.includes(searchQuery)) ||
+    (member.member_id && member.member_id.includes(searchQuery))
   );
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 px-8 pt-8 pb-6">
+      <div className="flex-shrink-0 px-8 pt-8 pb-2">
         <div className="text-center">
           <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
             Select Member
@@ -258,25 +283,36 @@ const MemberSelectionPage = () => {
       {/* Selected Member Banner */}
       {selectedMember && (
         <div className="flex-shrink-0 px-8 pb-2">
-          <div className="bg-green-600 bg-opacity-20 border-2 border-green-600 rounded-2xl p-1 max-w-5xl mx-auto">
+          <div className="bg-green-600 bg-opacity-20 border-2 border-green-600 rounded-2xl p-3 max-w-5xl mx-auto">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
                   <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <div>
-                  <div className="text-sm text-green-600 font-medium">Selected Member</div>
-                  <div className="text-2xl font-bold text-pos-text-primary">{selectedMember.fullName}</div>
-                  {selectedMember.phone && (
-                    <div className="text-lg text-pos-text-secondary">{selectedMember.phone}</div>
-                  )}
+                <div className="flex-1">
+                  <div className="text-sm text-green-600 font-medium mb-1">Selected Member</div>
+                  <div className="text-2xl font-bold text-pos-text-primary flex items-center gap-3">
+                    {selectedMember.memberId && (
+                      <span className="bg-blue-600 text-white px-3 py-.5 rounded-lg text-base font-bold">
+                        ID: {selectedMember.memberId}
+                      </span>
+                    )}
+                    <span>{selectedMember.fullName}</span>
+                            {selectedMember.phone && (
+                              <span className="text-base text-pos-text-secondary font-normal">
+                                📞 {selectedMember.phone}
+                              </span>
+                            )}
+                   
+                  </div>
+                 
                 </div>
               </div>
               <button
                 onClick={() => setSelectedMember(null)}
-                className="text-pos-text-secondary hover:text-pos-text-primary transition-colors"
+                className="text-pos-text-secondary hover:text-pos-text-primary transition-colors flex-shrink-0 ml-3"
               >
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -292,10 +328,10 @@ const MemberSelectionPage = () => {
         <div className="max-w-5xl mx-auto h-full flex flex-col">
           
           {/* Toggle View Buttons */}
-          <div className="flex gap-3 mb-4">
+          <div className="flex gap-3 mb-2">
             <button
               onClick={() => setShowCreateForm(false)}
-              className={`flex-1 py-4 rounded-xl font-semibold text-lg transition-all border-2 ${
+              className={`flex-1 py-2 rounded-xl font-semibold text-lg transition-all border-2 ${
                 !showCreateForm
                   ? 'bg-pos-bg-secondary text-pos-text-primary border-pos-interactive-hover shadow-lg'
                   : 'bg-pos-interactive-primary text-pos-text-secondary border-pos-border-primary'
@@ -305,7 +341,7 @@ const MemberSelectionPage = () => {
             </button>
             <button
               onClick={() => setShowCreateForm(true)}
-              className={`flex-1 py-4 rounded-xl font-semibold text-lg transition-all border-2 ${
+              className={`flex-1 py-2 rounded-xl font-semibold text-lg transition-all border-2 ${
                 showCreateForm
                   ? 'bg-pos-bg-secondary text-pos-text-primary border-pos-interactive-hover shadow-lg'
                   : 'bg-pos-interactive-primary text-pos-text-secondary border-pos-border-primary'
@@ -318,16 +354,16 @@ const MemberSelectionPage = () => {
           {/* Content Area */}
           {!showCreateForm ? (
             // Member List View
-            <div className="flex-1 flex flex-col overflow-hidden bg-pos-bg-secondary rounded-2xl border-2 border-pos-border-primary p-6">
+            <div className="flex-1 flex flex-col overflow-hidden bg-pos-bg-secondary rounded-2xl border-2 border-pos-border-primary p-3">
               {/* Search Bar */}
-              <div className="mb-4">
+              <div className="mb-2">
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder="Search by name or phone..."
+                    placeholder="Search by ID, name or phone..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full px-6 py-4 text-lg bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:border-pos-interactive-hover"
+                    className="w-full px-6 py-2 text-lg bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:border-pos-interactive-hover"
                   />
                   <svg className="absolute right-6 top-1/2 -translate-y-1/2 w-6 h-6 text-pos-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -347,7 +383,7 @@ const MemberSelectionPage = () => {
                 ) : filteredMembers.length === 0 ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <svg className="w-20 h-20 text-pos-text-muted mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-20 h-20 text-pos-text-muted mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
                       <p className="text-xl text-pos-text-secondary">
@@ -360,27 +396,31 @@ const MemberSelectionPage = () => {
                     <button
                       key={member.id}
                       onClick={() => handleSelectMember(member)}
-                      className={`w-full px-5 py-2 rounded-xl border-2 transition-all text-left ${
+                      className={`w-full px-5 py-3 rounded-xl border-2 transition-all text-left ${
                         selectedMember?.id === member.id
                           ? 'bg-pos-interactive-hover border-pos-interactive-hover shadow-lg'
                           : 'bg-pos-bg-primary border-pos-border-primary hover:border-pos-interactive-hover hover:shadow-md'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-xl font-semibold text-pos-text-primary flex items-center">
-                            {member.full_name}
+                        <div className="flex-1">
+                          <div className="text-xl font-semibold text-pos-text-primary flex items-center gap-3">
+                            {member.member_id && (
+                              <span className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm font-bold">
+                                ID: {member.member_id}
+                              </span>
+                            )}
+                            <span>{member.full_name}</span>
                             {member.phone && (
-                            <div className="text-lg text-pos-text-secondary ml-3">
-                              {member.phone}
-                            </div>
-                          )}
+                              <span className="text-base text-pos-text-secondary font-normal">
+                                📞 {member.phone}
+                              </span>
+                            )}
                           </div>
-                          
                         </div>
                         {selectedMember?.id === member.id && (
-                          <div className="bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                            <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <div className="bg-green-600 rounded-full p-1 flex items-center justify-center flex-shrink-0 ml-3">
+                            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
@@ -392,10 +432,25 @@ const MemberSelectionPage = () => {
               </div>
             </div>
           ) : (
-            // Create Member Form
-            <div className="flex-1 flex items-center justify-center">
-              <div className="w-full bg-pos-bg-secondary rounded-2xl border-2 border-pos-border-primary px-8 py-4">
+            // Create Member Form - Scrollable with only required fields
+            <div className="flex-1 flex flex-col overflow-hidden bg-pos-bg-secondary rounded-2xl border-2 border-pos-border-primary">
+              <div className="flex-1 overflow-y-auto scrollbar-custom px-8 py-3">
                 <div className="space-y-2">
+                  <div>
+                    <label className="block text-lg font-semibold text-pos-text-primary mb-2">
+                      Member ID *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Auto-generated ID"
+                      value={newMemberId} readOnly
+                      onChange={(e) => setNewMemberId(e.target.value)}
+                      className="w-full px-6 py-2 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:border-pos-interactive-hover"
+                      disabled={creating}
+                    />
+                    {/* <p className="text-sm text-pos-text-muted mt-2">Next available ID: {newMemberId}</p> */}
+                  </div>
+                  
                   <div>
                     <label className="block text-lg font-semibold text-pos-text-primary mb-1">
                       Full Name *
@@ -405,34 +460,36 @@ const MemberSelectionPage = () => {
                       placeholder="Enter member's full name"
                       value={newFullName}
                       onChange={(e) => setNewFullName(e.target.value)}
-                      className="w-full px-6 py-3 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full px-6 py-2 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:border-pos-interactive-hover"
                       disabled={creating}
                     />
                   </div>
                   
                   <div>
                     <label className="block text-lg font-semibold text-pos-text-primary mb-1">
-                      Phone Number (Optional)
+                      Phone Number
                     </label>
                     <input
                       type="tel"
-                      placeholder="Enter phone number"
+                      placeholder="Enter phone number (optional)"
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
-                      className="w-full px-6 py-3 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full px-6 py-2 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary placeholder-pos-text-disabled focus:outline-none focus:border-pos-interactive-hover"
                       disabled={creating}
                     />
                   </div>
                   
-                  <KioskButton
-                    variant="success"
-                    size="large"
-                    onClick={handleCreateMember}
-                    disabled={!newFullName.trim() || creating}
-                    fullWidth
-                  >
-                    {creating ? 'Creating Member...' : 'Create Member'}
-                  </KioskButton>
+                  <div className="pt-2">
+                    <KioskButton
+                      variant="success"
+                      size="small"
+                      onClick={handleCreateMember}
+                      disabled={!newFullName.trim() || !newMemberId.trim() || creating}
+                      fullWidth
+                    >
+                      {creating ? 'Creating Member...' : 'Create Member'}
+                    </KioskButton>
+                  </div>
                 </div>
               </div>
             </div>
@@ -445,7 +502,7 @@ const MemberSelectionPage = () => {
         <div className="max-w-5xl mx-auto grid grid-cols-2 gap-4">
           <KioskButton
             variant="secondary"
-            size="large"
+            size="small"
             onClick={handleGoBack}
             disabled={loading || creating}
           >
@@ -454,7 +511,7 @@ const MemberSelectionPage = () => {
           
           <KioskButton
             variant="primary"
-            size="large"
+            size="small"
             onClick={handleNext}
             disabled={!selectedMember || loading || creating}
           >
