@@ -37,6 +37,7 @@ router.post('/users/verify', UserController.verifyPincode);
 
 // Member routes
 router.get('/members', MemberController.getAllMembers);
+router.get('/members/next-id', MemberController.getNextMemberId);
 router.get('/members/search', MemberController.searchMembers);
 router.get('/members/:id', MemberController.getMemberById);
 router.post('/members', MemberController.createMember);
