@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import ConfirmationModal from './ConfirmationModal';
-import MessageModal from './MessageModal';
-import IconButton from './IconButton';
-import { useMessageModal } from '../hooks/useMessageModal';
-import PaymentTerminalManager from './PaymentTerminalManager';
-import KeypadNumpad from './KeypadNumpad';
+import ConfirmationModal from '../ConfirmationModal';
+import MessageModal from '../MessageModal';
+import IconButton from '../IconButton';
+import { useMessageModal } from '../../hooks/useMessageModal';
+import PaymentTerminalManager from '../PaymentTerminalManager';
+import KeypadNumpad from '../KeypadNumpad';
 
 
 const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) => {

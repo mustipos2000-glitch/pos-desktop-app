@@ -1,4 +1,4 @@
-import { useVersion } from '../context/VersionContext';
+import { useVersion } from '../../context/VersionContext';
 
 const MosqueProtectedRoute = ({ children }) => {
   const { version } = useVersion();
