@@ -118,108 +118,108 @@ const PaymentController = {
   },
 
 
-  async processPayworldPayment(req, res) {
-    const { amount, cancel, sessionId } = req.body || {};
+  // async processPayworldPayment(req, res) {
+  //   const { amount, cancel, sessionId } = req.body || {};
 
-    const config = PaymentController.loadConfig();
-    if (!config.ip || !config.port) {
-      return res.status(500).json({
-        ok: false,
-        provider: "payworld",
-        error:
-          "Payworld config ontbreekt. Vul IP en poort in via Settings (Payworld).",
-      });
-    }
+  //   const config = PaymentController.loadConfig();
+  //   if (!config.ip || !config.port) {
+  //     return res.status(500).json({
+  //       ok: false,
+  //       provider: "payworld",
+  //       error:
+  //         "Payworld config ontbreekt. Vul IP en poort in via Settings (Payworld).",
+  //     });
+  //   }
 
-    // 🔴 ANNULEREN VANUIT POS
-    if (cancel) {
-      console.log("[Payworld] Cancel requested from POS.");
-      try {
-        if (sessionId) {
-          PaymentController.updateSession(sessionId, {
-            state: "CANCELLED",
-            message: "Annuleren aangevraagd vanaf POS...",
-            lastEvent: "POS_CANCEL",
-          });
-        }
+  //   // 🔴 ANNULEREN VANUIT POS
+  //   if (cancel) {
+  //     console.log("[Payworld] Cancel requested from POS.");
+  //     try {
+  //       if (sessionId) {
+  //         PaymentController.updateSession(sessionId, {
+  //           state: "CANCELLED",
+  //           message: "Annuleren aangevraagd vanaf POS...",
+  //           lastEvent: "POS_CANCEL",
+  //         });
+  //       }
 
-        await PaymentController.sendAbort({
-          ip: config.ip,
-          port: config.port,
-        });
+  //       await PaymentController.sendAbort({
+  //         ip: config.ip,
+  //         port: config.port,
+  //       });
 
-        if (sessionId) {
-          PaymentController.updateSession(sessionId, {
-            state: "CANCELLED",
-            message: "Transactie geannuleerd op terminal.",
-            lastEvent: "POS_CANCEL_DONE",
-          });
-        }
+  //       if (sessionId) {
+  //         PaymentController.updateSession(sessionId, {
+  //           state: "CANCELLED",
+  //           message: "Transactie geannuleerd op terminal.",
+  //           lastEvent: "POS_CANCEL_DONE",
+  //         });
+  //       }
 
-        return res.json({
-          ok: true,
-          provider: "payworld",
-          cancelled: true,
-        });
-      } catch (err) {
-        console.error("[Payworld] ERROR while cancelling:", err);
-        if (sessionId) {
-          PaymentController.updateSession(sessionId, {
-            state: "ERROR",
-            message: "Fout bij annuleren op terminal.",
-            lastEvent: "POS_CANCEL_ERROR",
-            details: { error: err.message },
-          });
-        }
-        return res.status(500).json({
-          ok: false,
-          provider: "payworld",
-          error: "Fout bij annuleren op Payworld terminal.",
-          details: err.message,
-        });
-      }
-    }
+  //       return res.json({
+  //         ok: true,
+  //         provider: "payworld",
+  //         cancelled: true,
+  //       });
+  //     } catch (err) {
+  //       console.error("[Payworld] ERROR while cancelling:", err);
+  //       if (sessionId) {
+  //         PaymentController.updateSession(sessionId, {
+  //           state: "ERROR",
+  //           message: "Fout bij annuleren op terminal.",
+  //           lastEvent: "POS_CANCEL_ERROR",
+  //           details: { error: err.message },
+  //         });
+  //       }
+  //       return res.status(500).json({
+  //         ok: false,
+  //         provider: "payworld",
+  //         error: "Fout bij annuleren op Payworld terminal.",
+  //         details: err.message,
+  //       });
+  //     }
+  //   }
 
-    // 🔵 NORMALE BETALING STARTEN
-    if (!amount || amount <= 0) {
-      return res.status(400).json({
-        ok: false,
-        provider: "payworld",
-        error: "Invalid amount for Payworld",
-      });
-    }
+  //   // 🔵 NORMALE BETALING STARTEN
+  //   if (!amount || amount <= 0) {
+  //     return res.status(400).json({
+  //       ok: false,
+  //       provider: "payworld",
+  //       error: "Invalid amount for Payworld",
+  //     });
+  //   }
 
-    const amountCents = Math.round(Number(amount) * 100);
-    console.log("[Payworld] Start betaling:", amount, "=>", amountCents, "cents");
+  //   const amountCents = Math.round(Number(amount) * 100);
+  //   console.log("[Payworld] Start betaling:", amount, "=>", amountCents, "cents");
 
-    const session = PaymentController.createSession(amountCents);
+  //   const session = PaymentController.createSession(amountCents);
 
-    // Background TCP-flow starten, HTTP-call direct antwoord geven
-    PaymentController.processPayment({
-      sessionId: session.id,
-      ip: config.ip,
-      port: config.port,
-      amountCents,
-      posId: config.posId || "2001",
-      currencyCode: config.currencyCode || "978",
-    }).catch((err) => {
-      console.error("[Payworld] processPayment error (uncaught):", err);
-      PaymentController.updateSession(session.id, {
-        state: "ERROR",
-        message: err.message || "Onbekende fout tijdens betaling.",
-        lastEvent: "PROCESS_ERROR",
-        details: { error: err.message },
-      });
-    });
+  //   // Background TCP-flow starten, HTTP-call direct antwoord geven
+  //   PaymentController.processPayment({
+  //     sessionId: session.id,
+  //     ip: config.ip || "192.168.1.22",
+  //     port: config.port || "50000",
+  //     amountCents,
+  //     posId: config.posId || "2001",
+  //     currencyCode: config.currencyCode || "978",
+  //   }).catch((err) => {
+  //     console.error("[Payworld] processPayment error (uncaught):", err);
+  //     PaymentController.updateSession(session.id, {
+  //       state: "ERROR",
+  //       message: err.message || "Onbekende fout tijdens betaling.",
+  //       lastEvent: "PROCESS_ERROR",
+  //       details: { error: err.message },
+  //     });
+  //   });
 
-    // POS krijgt meteen een sessionId terug en kan poll'en
-    return res.json({
-      ok: true,
-      provider: "payworld",
-      sessionId: session.id,
-      amountInCents: amountCents,
-    });
-  },
+  //   // POS krijgt meteen een sessionId terug en kan poll'en
+  //   return res.json({
+  //     ok: true,
+  //     provider: "payworld",
+  //     sessionId: session.id,
+  //     amountInCents: amountCents,
+  //   });
+  // },
 
   updateSession(id, patch) {
     const s = PaymentController.sessions.get(id);

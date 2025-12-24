@@ -187,7 +187,7 @@ const PaymentMethodPage = () => {
           state: s.state,
         });
 
-        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL" || s.state === "COMPLETED") {
           console.log('insertd:' + inserted, " Requested : " + requested, " dispensed " + dispensed, " not Dspensed " + notDispensed);
 
           if (inserted < requested) return;
@@ -216,7 +216,7 @@ const PaymentMethodPage = () => {
                 return;
               }
             }
-          } else if(s.state !== "FINISH"){
+          } else if(s.state === "PAID"){
             return;
           }
           console.log("Finished the Cashmatic ");
@@ -299,26 +299,26 @@ const PaymentMethodPage = () => {
   useEffect(() => {
     if (!payworldPolling || !payworldSessionId) return;
 
-    const startTime = Date.now();
-    const MAX_POLLING_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
+    // const startTime = Date.now();
+    // const MAX_POLLING_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
 
     const poll = async () => {
       // Check if timeout exceeded
-      const elapsed = Date.now() - startTime;
-      if (elapsed >= MAX_POLLING_DURATION) {
-        console.log("Payworld polling timeout reached (2 minutes)");
-        setPayworldPolling(false);
-        setPayworldSessionId(null);
-        setProcessing(false);
-        setShowPayworldModal(false);
-        setPayworldStatus({
-          state: "ERROR",
-          message: "Payment timeout - maximum polling duration exceeded.",
-          details: null,
-        });
-        alert("Payworld payment timeout. Please try again.");
-        return;
-      }
+      // const elapsed = Date.now() - startTime;
+      // if (elapsed >= MAX_POLLING_DURATION) {
+      //   console.log("Payworld polling timeout reached (2 minutes)");
+      //   setPayworldPolling(false);
+      //   setPayworldSessionId(null);
+      //   setProcessing(false);
+      //   setShowPayworldModal(false);
+      //   setPayworldStatus({
+      //     state: "ERROR",
+      //     message: "Payment timeout - maximum polling duration exceeded.",
+      //     details: null,
+      //   });
+      //   alert("Payworld payment timeout. Please try again.");
+      //   return;
+      // }
 
       try {
         const res = await ApiService.getPayworldStatus(payworldSessionId);
@@ -447,10 +447,10 @@ const PaymentMethodPage = () => {
     }
 
     // Add minimum amount validation for Payworld
-    if (paymentAmount < 1.00) {
-      setToastMessage("Minimum payment amount for card transactions is €1.00. Please use cash for smaller amounts.");
-      return;
-    }
+    // if (paymentAmount < 1.00) {
+    //   setToastMessage("Minimum payment amount for card transactions is €1.00. Please use cash for smaller amounts.");
+    //   return;
+    // }
 
     setShowPayworldModal(true);
     setSelectedMethod('card');

@@ -22,6 +22,7 @@ const InventoryController = require('../controllers/InventoryController');
 const ReportController = require('../controllers/ReportController');
 const ScaleController = require('../controllers/ScaleController');
 const PromotionController = require('../controllers/PromotionController');
+const PayworldController = require('../controllers/PayworldController');
 
 
 
@@ -154,11 +155,11 @@ router.post('/cashmatic/finish/:sessionId', PaymentController.finishCashmaticPay
 router.post('/cashmatic/cancel/:sessionId', PaymentController.cancelCashmaticPayment);
 
 // Payworld routes (for Bancontact payment terminal integration)
-router.post('/payworld/start', PaymentController.processPayworldPayment);
-router.get('/payworld/status/:sessionId', PaymentController.getPayworldStatus);
+router.post('/payworld/start', PayworldController.startPayment);
+router.get('/payworld/status/:sessionId', PayworldController.getStatus);
 router.post('/payworld/cancel/:sessionId', PaymentController.cancelPayworldPayment);
-// router.get('/payworld/config', PaymentController.getPayworldConfig);
-// router.post('/payworld/config', PaymentController.savePayworldConfig);
+router.get('/payworld/config', PayworldController.getConfigHandler);
+router.post('/payworld/config', PayworldController.updateConfigHandler);
 // router.get('/payworld/test', PaymentController.testPayworldConfig);
 
 // Viva routes (for Viva Wallet payment integration)

@@ -296,10 +296,10 @@ class ApiService {
     });
   }
 
-  // ---------- PAYWORLD ----------
+  // ---------- PAYWORLD ---------- Api Started Here  ---------------------------
   // start betaling → geeft sessionId
   static async startPayworldPayment(payload) {
-    console.log("startPayworldPayment payload:", payload);
+    // console.log("startPayworldPayment payload:", payload);
     const res = await this.request("/payworld/start", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -334,7 +334,7 @@ class ApiService {
       body: JSON.stringify(config),
     });
   }
-
+///////////////////////////////////////////////////////////////////////////////////
   // Viva methods
   static async startVivaPayment(data) {
     console.log('startVivaPayment data:', data);
