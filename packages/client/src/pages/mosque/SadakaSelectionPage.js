@@ -27,45 +27,54 @@ const SadakaSelectionPage = () => {
   };
 
   return (
-    <KioskLayout maxWidth="4xl">
-      <KioskHeader 
+    <KioskLayout maxWidth="">
+      {/* <KioskHeader 
         title="Sadaka"
         subtitle="Choose whether the sadaka is named or anonymous"
         step={0}
         totalSteps={3}
-      />
-
-      {/* Two Options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-        <KioskCard
-          title="Sadaka by Name"
-          subtitle="Sadaka au nom"
-          subtitleNl="Sadaka on name"
-          subtitleAr="صدقة بالاسم"
-          icon="📝"
-          onClick={handleNamedSadaka}
-        />
-
-        <KioskCard
-          title="Sadaka Anonymous"
-          subtitle="Sadaka anonyme"
-          subtitleNl="Sadaka anonymous"
-          subtitleAr="صدقة مجهولة"
-          icon="🔒"
-          onClick={handleAnonymousSadaka}
-        />
-      </div>
-
-      {/* Go Back Button */}
-      <div className="flex justify-center">
+      /> */}
+    {/* Go Back Button */}
+      <div className="absolute left-2 top-1 w-24">
         <KioskButton
           variant="secondary"
           size="medium"
           onClick={handleGoBack}
+          icon={"true"}
         >
-          ← Go Back
+          <img 
+            src="/icon kiosk/terug.png" 
+            alt="Go Back" 
+            className="rounded-3xl"
+          />
+          {/* Go Back */}
         </KioskButton>
       </div>
+
+      {/* Two Options */}
+      <div className="flex justify-center my-auto flex gap-6 ">
+        <KioskCard
+          // title="Sadaka by Name"
+          // subtitle="Sadaka au nom"
+          // subtitleNl="Sadaka on name"
+          // subtitleAr="صدقة بالاسم"
+          icon="/icon kiosk/leden.png"
+          onClick={handleNamedSadaka}
+          className='max-w-sm'
+        />
+
+        <KioskCard
+          // title="Sadaka Anonymous"
+          // subtitle="Sadaka anonyme"
+          // subtitleNl="Sadaka anonymous"
+          // subtitleAr="صدقة مجهولة"
+          icon="/icon kiosk/anoniem.png"
+          className='max-w-sm'
+          onClick={handleAnonymousSadaka}
+        />
+      </div>
+
+     
     </KioskLayout>
   );
 };

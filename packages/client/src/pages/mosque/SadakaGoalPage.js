@@ -35,7 +35,7 @@ const SadakaGoalPage = () => {
       titleFr: 'Mosquée',
       titleNl: 'Mosque',
       titleAr: 'المسجد',
-      icon: '🕌'
+      icon: "/icon kiosk/mosque.png"
     },
     {
       id: 'mortuary',
@@ -43,7 +43,7 @@ const SadakaGoalPage = () => {
       titleFr: 'Funeral home',
       titleNl: 'Mortuary',
       titleAr: 'المقبلة',
-      icon: '🏛️'
+      icon: "/icon kiosk/mortuarium.png"
     },
     {
       id: 'renovation',
@@ -51,7 +51,7 @@ const SadakaGoalPage = () => {
       titleFr: 'Rénovation',
       titleNl: 'Renovation',
       titleAr: 'التجديد',
-      icon: '🔨'
+      icon: "/icon kiosk/renovation.png"
     }
   ];
 
@@ -72,39 +72,44 @@ const SadakaGoalPage = () => {
   };
 
   return (
-    <KioskLayout maxWidth="5xl">
-      <KioskHeader 
+    <KioskLayout maxWidth="">
+      {/* <KioskHeader 
         title="Choose the Goal"
         subtitle="Select what the sadaka is for"
         step={1}
         totalSteps={3}
-      />
-
-      {/* Goals Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {goals.map((goal) => (
-          <KioskCard
-            key={goal.id}
-            title={goal.titleEn}
-            subtitle={goal.titleFr}
-            subtitleNl={goal.titleNl}
-            subtitleAr={goal.titleAr}
-            icon={goal.icon}
-            onClick={() => handleGoalSelect(goal)}
-            selected={selectedGoal?.id === goal.id}
-          />
-        ))}
-      </div>
-
-      {/* Navigation Buttons */}
-      <div className="flex justify-center">
+      /> */}
+    {/* Navigation Buttons */}
+      <div className="absolute left-2 top-1 w-24">
         <KioskButton
           variant="secondary"
           size="medium"
           onClick={handleGoBack}
+          icon={"true"}
         >
-          ← Go Back
+          <img 
+            src="/icon kiosk/terug.png" 
+            alt="Go Back" 
+            className="rounded-3xl"
+          />
+          {/* ← Go Back */}
         </KioskButton>
+      </div>
+      {/* Goals Grid */}
+      <div className="flex justify-center gap-6 ml-4">
+        {goals.map((goal) => (
+          <KioskCard
+            key={goal.id}
+            // title={goal.titleEn}
+            // subtitle={goal.titleFr}
+            // subtitleNl={goal.titleNl}
+            // subtitleAr={goal.titleAr}
+            icon={goal.icon}
+            onClick={() => handleGoalSelect(goal)}
+            className='max-w-sm'
+            selected={selectedGoal?.id === goal.id}
+          />
+        ))}
       </div>
     </KioskLayout>
   );

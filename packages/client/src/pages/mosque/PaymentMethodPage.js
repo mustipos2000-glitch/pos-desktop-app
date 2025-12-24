@@ -216,8 +216,8 @@ const PaymentMethodPage = () => {
                 return;
               }
             }
-          } else {
-            return
+          } else if(s.state !== "FINISH"){
+            return;
           }
           console.log("Finished the Cashmatic ");
 
@@ -366,9 +366,10 @@ const PaymentMethodPage = () => {
           setProcessing(false);
 
           if (state === "CANCELLED") {
-            alert("Payworld payment cancelled.");
+            setToastMessage("Payworld payment cancelled.");
           } else if (state === "DECLINED") {
-            alert("Payworld payment declined.");
+            const declineMessage = details?.error || "Payment declined by terminal.";
+            setToastMessage(`Payworld payment declined: ${declineMessage}\n\nFor test transactions, try amounts ≥ €1.00`);
           } else if (state === "ERROR") {
             alert("Error during Payworld payment.");
           }
@@ -445,6 +446,12 @@ const PaymentMethodPage = () => {
       return;
     }
 
+    // Add minimum amount validation for Payworld
+    if (paymentAmount < 1.00) {
+      setToastMessage("Minimum payment amount for card transactions is €1.00. Please use cash for smaller amounts.");
+      return;
+    }
+
     setShowPayworldModal(true);
     setSelectedMethod('card');
     setPayworldStatus({
@@ -503,7 +510,7 @@ const PaymentMethodPage = () => {
   // Cancel Cashmatic payment
   const handleCancelCashmatic = async () => {
     if (!cashmaticSessionId) {
-      cashmaticSessionId = "devsessionId";
+      setCashmaticSessionId("devsessionId");
       setCashmaticPolling(false);
       setCashmaticSessionId(null);
       setProcessing(false);
@@ -628,6 +635,25 @@ const PaymentMethodPage = () => {
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
+       {/* Footer Navigation */}
+      <div className="absolute w-40 left-1 top-1 w-24">
+        <div className="w-24">
+          <KioskButton
+            variant="secondary"
+            onClick={handleGoBack}
+            disabled={processing}
+            fullWidth
+            icon={"true"}
+          >
+            <img 
+            src="/icon kiosk/terug.png" 
+            alt="Go Back" 
+            className="rounded-3xl"
+          />
+            {/* Go Back */}
+          </KioskButton>
+        </div>
+      </div>
       {/* Header Section */}
       <div className="flex-shrink-0 px-8 pt-8 pb-6">
         <div className="text-center">
@@ -704,34 +730,26 @@ const PaymentMethodPage = () => {
             <button
               onClick={() => handleMethodSelect('cash')}
               disabled={processing}
-              className={`
-                relative bg-pos-bg-secondary rounded-xl p-6 
-                transition-all duration-200 border
-                ${selectedMethod === 'cash'
-                  ? 'border-pos-interactive-hover shadow-lg scale-[1.02]'
-                  : 'border-pos-border-primary'
-                }
-                hover:border-pos-interactive-hover hover:shadow-lg
-                disabled:opacity-40 disabled:cursor-not-allowed
-                active:scale-[0.98]
-              `}
+             
             >
               {/* Icon/Visual */}
-              <div className="mb-6">
-                <svg className="w-24 h-24 mx-auto text-pos-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              <div className="">
+                <img 
+                  src="/icon kiosk/cash.png" 
+                  alt="Cash Payment" 
+                  className="rounded-3xl"
+                />
               </div>
 
               {/* Text Content */}
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 <div className="text-3xl font-bold text-pos-text-primary">Cash</div>
                 <div className="text-xl text-pos-text-secondary">Cashmatic</div>
                 <div className="text-lg text-pos-text-secondary" dir="rtl">كاشماتيك</div>
-              </div>
+              </div> */}
 
               {/* Selected Indicator */}
-              {selectedMethod === 'cash' && (
+              {/* {selectedMethod === 'cash' && (
                 <div className="absolute top-4 right-4">
                   <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -739,41 +757,33 @@ const PaymentMethodPage = () => {
                     </svg>
                   </div>
                 </div>
-              )}
+              )} */}
             </button>
 
             {/* Card Payment Button */}
             <button
               onClick={() => handleMethodSelect('card')}
               disabled={processing}
-              className={`
-                relative bg-pos-bg-secondary rounded-xl p-6 
-                transition-all duration-200 border
-                ${selectedMethod === 'card'
-                  ? 'border-pos-interactive-hover shadow-lg scale-[1.02]'
-                  : 'border-pos-border-primary'
-                }
-                hover:border-pos-interactive-hover hover:shadow-lg
-                disabled:opacity-40 disabled:cursor-not-allowed
-                active:scale-[0.98]
-              `}
+              
             >
               {/* Icon/Visual */}
-              <div className="mb-6">
-                <svg className="w-24 h-24 mx-auto text-pos-text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
+              <div className="">
+                <img 
+                  src="/icon kiosk/bancontact.png" 
+                  alt="Card Payment" 
+                  className="rounded-3xl"
+                />
               </div>
 
               {/* Text Content */}
-              <div className="space-y-3">
+              {/* <div className="space-y-3">
                 <div className="text-3xl font-bold text-pos-text-primary">Card</div>
                 <div className="text-xl text-pos-text-secondary">Bancontact</div>
                 <div className="text-lg text-pos-text-secondary" dir="rtl">بانكونتاكت</div>
-              </div>
+              </div> */}
 
               {/* Selected Indicator */}
-              {selectedMethod === 'card' && (
+              {/* {selectedMethod === 'card' && (
                 <div className="absolute top-4 right-4">
                   <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -781,33 +791,10 @@ const PaymentMethodPage = () => {
                     </svg>
                   </div>
                 </div>
-              )}
+              )} */}
             </button>
           </div>
 
-        </div>
-      </div>
-
-      {/* Footer Navigation */}
-      <div className="flex-shrink-0 px-8 pb-8">
-        <div className="max-w-5xl w-full mx-auto grid grid-cols-2 gap-4">
-          <KioskButton
-            variant="secondary"
-            onClick={handleGoBack}
-            disabled={processing}
-            fullWidth
-          >
-            Go Back
-          </KioskButton>
-
-          <KioskButton
-            variant="primary"
-            onClick={handleTestPrint}
-            disabled={processing}
-            fullWidth
-          >
-            🖨️ Test Print (Skip Payment)
-          </KioskButton>
         </div>
       </div>
 

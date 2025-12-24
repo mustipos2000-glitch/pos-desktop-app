@@ -31,7 +31,7 @@ const KioskButton = ({
   
   const sizes = {
     small: 'px-6 py-3 text-base min-h-[50px]',
-    medium: 'px-8 py-4 text-lg min-h-[60px]',
+    medium: 'px-8 py-4 text-2xl min-h-[60px]',
     large: 'px-10 py-5 text-xl min-h-[70px]',
     xlarge: 'px-12 py-6 text-2xl min-h-[80px]'
   };
