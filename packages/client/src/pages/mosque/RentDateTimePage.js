@@ -233,37 +233,37 @@ const RentDateTimePage = () => {
   });
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col">
+    <div className="min-h-screen bg-pos-bg-primary flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 px-8 pt-8 pb-6">
+      {/* <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-pos-text-primary mb-2 sm:mb-3">
             Select Rental Period
           </h1>
-          <p className="text-xl text-pos-text-secondary">
+          <p className="text-base sm:text-lg lg:text-xl text-pos-text-secondary">
             Choose the date and time for space/kitchen rental
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Member Info Banner */}
       {selectedMember && (
-        <div className="flex-shrink-0 px-8 pb-4">
-          <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-2xl p-4 max-w-5xl mx-auto">
-            <div className="flex items-center justify-between">
+        <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4 mt-2">
+          <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl sm:rounded-2xl p-3 sm:p-4 max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-3">
-                <svg className="w-10 h-10 text-pos-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-pos-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <div>
-                  <div className="text-sm text-pos-text-secondary">Renting for</div>
-                  <div className="text-xl font-bold text-pos-text-primary">{selectedMember.fullName}</div>
+                  <div className="text-xs sm:text-sm text-pos-text-secondary">Renting for</div>
+                  <div className="text-lg sm:text-xl font-bold text-pos-text-primary">{selectedMember.fullName}</div>
                 </div>
               </div>
               {rentalCharge && (
-                <div className="text-right">
-                  <div className="text-sm text-pos-text-secondary">Daily Rate</div>
-                  <div className="text-2xl font-bold text-green-600">€ {parseFloat(rentalCharge.rental_charge).toFixed(2)}/day</div>
+                <div className="text-left sm:text-right">
+                  <div className="text-xs sm:text-sm text-pos-text-secondary">Daily Rate</div>
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">€ {parseFloat(rentalCharge.rental_charge).toFixed(2)}/day</div>
                 </div>
               )}
             </div>
@@ -272,28 +272,28 @@ const RentDateTimePage = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden px-8 pb-4">
+      <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4">
         <div className="max-w-5xl mx-auto h-full flex flex-col">
           
-          <div className="flex-1 bg-pos-bg-secondary rounded-2xl border-2 border-pos-border-primary p-8 overflow-y-auto scrollbar-custom">
-            <div className="flex justify-between items-start mb-6 px-1 gap-8">
+          <div className="flex-1 bg-pos-bg-secondary rounded-xl sm:rounded-2xl border-2 border-pos-border-primary p-4 sm:p-6 lg:p-8 overflow-y-auto scrollbar-custom">
+            <div className="flex flex-col lg:flex-row justify-between items-start gap-6 lg:gap-8 mb-4 sm:mb-6 px-1">
               
               {/* Start Date/Time Section */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-full lg:flex-1">
+                <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-pos-text-primary">
+                  <h3 className="text-xl sm:text-2xl font-bold text-pos-text-primary">
                     Start Date & Time
                   </h3>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-2">
+                    <label className="block text-base sm:text-lg lg:text-xl font-bold text-pos-text-primary mb-2 sm:mb-3">
                       Start Date
                     </label>
                     <input
@@ -301,17 +301,17 @@ const RentDateTimePage = () => {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-6 py-4 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full px-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     />
                   </div>
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-2">
+                    <label className="block text-xl font-bold text-pos-text-primary mb-3">
                       Start Hour
                     </label>
                     <select
                       value={startHour}
                       onChange={(e) => setStartHour(e.target.value)}
-                      className="w-full px-6 py-4 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="px-6 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     >
                       {hourOptions.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -322,8 +322,8 @@ const RentDateTimePage = () => {
               </div>
 
               {/* End Date/Time Section */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
+              <div className="w-full lg:flex-1">
+                <div className="flex items-center gap-3 mb-3 sm:mb-4">
                   <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -334,9 +334,9 @@ const RentDateTimePage = () => {
                   </h3>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-2">
+                    <label className="block text-xl font-bold text-pos-text-primary mb-3">
                       End Date
                     </label>
                     <input
@@ -344,17 +344,17 @@ const RentDateTimePage = () => {
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-6 py-4 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full px-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     />
                   </div>
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-2">
+                    <label className="block text-xl font-bold text-pos-text-primary mb-3">
                       End Hour
                     </label>
                     <select
                       value={endHour}
                       onChange={(e) => setEndHour(e.target.value)}
-                      className="w-full px-6 py-4 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="px-6 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     >
                       {hourOptions.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -367,32 +367,32 @@ const RentDateTimePage = () => {
 
             {/* Checking Overlap Indicator */}
             {checkingOverlap && (
-              <div className="bg-blue-500 bg-opacity-10 border-2 border-blue-500 rounded-xl p-4 mb-4">
+              <div className="bg-blue-500 bg-opacity-10 border-2 border-blue-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
                 <div className="flex items-center gap-3">
-                  <svg className="w-6 h-6 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 animate-spin flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
-                  <p className="text-lg font-semibold text-blue-600">Checking availability...</p>
+                  <p className="text-base sm:text-lg font-semibold text-blue-600">Checking availability...</p>
                 </div>
               </div>
             )}
 
             {/* Validation Error */}
             {validationError && !checkingOverlap && (
-              <div className="bg-red-600 bg-opacity-20 border-2 border-red-600 rounded-xl p-4 mb-4">
+              <div className="bg-red-600 bg-opacity-20 border-2 border-red-600 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
                 <div className="flex items-start gap-3">
-                  <svg className="w-8 h-8 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                   <div className="flex-1">
-                    <p className="text-lg font-semibold text-red-600 mb-2">{validationError}</p>
+                    <p className="text-base sm:text-lg font-semibold text-red-600 mb-2">{validationError}</p>
                     {overlappingBookings.length > 0 && (
                       <div className="mt-3 space-y-2">
                         <p className="text-sm font-semibold text-red-600">Conflicting bookings:</p>
                         {overlappingBookings.map((booking, idx) => (
                           <div key={idx} className="bg-red-500 bg-opacity-10 rounded-lg p-3 text-sm">
                             <div className="font-semibold text-pos-text-primary">{booking.member_name}</div>
-                            <div className="text-pos-text-secondary">
+                            <div className="text-pos-text-secondary text-xs sm:text-sm">
                               {new Date(booking.start_datetime).toLocaleString()} - {new Date(booking.end_datetime).toLocaleString()}
                             </div>
                           </div>
@@ -414,42 +414,55 @@ const RentDateTimePage = () => {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h4 className="text-xl font-bold text-green-600 mb-3">✅ Time Slot Available</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg text-pos-text-secondary">From:</span>
-                        <span className="text-lg font-semibold text-pos-text-primary">
-                          {new Date(`${startDate}T${startHour}:00:00`).toLocaleString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
+                    <h4 className="text-2xl font-bold text-green-600 mb-4">✅ Time Slot Available</h4>
+                    <div className="space-y-4">
+                      {/* From → To → Duration in one line */}
+                      <div className="flex items-center justify-between gap-4 bg-pos-bg-primary rounded-lg p-4">
+                        <div className="flex-1">
+                          <div className="text-base text-pos-text-secondary mb-1">From</div>
+                          <div className="text-xl font-bold text-pos-text-primary">
+                            {new Date(`${startDate}T${startHour}:00:00`).toLocaleString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
+                        
+                        <div className="text-3xl text-green-600 font-bold">→</div>
+                        
+                        <div className="flex-1">
+                          <div className="text-base text-pos-text-secondary mb-1">To</div>
+                          <div className="text-xl font-bold text-pos-text-primary">
+                            {new Date(`${endDate}T${endHour}:00:00`).toLocaleString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="text-3xl text-green-600 font-bold">=</div>
+
+                        <div className="flex-1">
+                          <div className="text-base text-pos-text-secondary mb-1">Duration</div>
+                          <div className="text-xl font-bold text-green-600">{formatDuration()}</div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg text-pos-text-secondary">To:</span>
-                        <span className="text-lg font-semibold text-pos-text-primary">
-                          {new Date(`${endDate}T${endHour}:00:00`).toLocaleString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 pt-2 border-t border-green-600">
-                        <span className="text-lg text-pos-text-secondary">Duration:</span>
-                        <span className="text-xl font-bold text-green-600">{formatDuration()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 pt-2 border-t border-green-600">
-                        <span className="text-lg text-pos-text-secondary">Total Amount:</span>
-                        <span className="text-3xl font-bold text-green-600">€ {calculateTotalAmount().toFixed(2)}</span>
-                      </div>
-                      <div className="text-sm text-pos-text-secondary mt-2">
-                        ({calculateDuration().days} day{calculateDuration().days !== 1 ? 's' : ''} × €{rentalCharge ? parseFloat(rentalCharge.rental_charge).toFixed(2) : '0.00'}/day)
+                     
+                      {/* Total Amount - Prominent */}
+                      <div className="bg-green-600 bg-opacity-10 rounded-lg p-5 border-2 border-green-600">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-2xl font-bold text-pos-text-primary">Total Amount:</span>
+                          <span className="text-4xl font-bold text-green-600">€ {calculateTotalAmount().toFixed(2)}</span>
+                        </div>
+                        <div className="text-base text-pos-text-secondary text-right">
+                          ({calculateDuration().days} day{calculateDuration().days !== 1 ? 's' : ''} × €{rentalCharge ? parseFloat(rentalCharge.rental_charge).toFixed(2) : '0.00'}/day)
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -461,8 +474,8 @@ const RentDateTimePage = () => {
       </div>
 
       {/* Footer Navigation */}
-      <div className="flex-shrink-0 px-8 pb-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 gap-4">
+      <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <KioskButton
             variant="secondary"
             size="large"
