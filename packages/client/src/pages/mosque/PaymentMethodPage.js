@@ -187,7 +187,7 @@ const PaymentMethodPage = () => {
           state: s.state,
         });
 
-        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL") {
+        if (s.state === "PAID" || s.state === "FINISHED" || s.state === "FINISHED_MANUAL" || s.state === "COMPLETED") {
           console.log('insertd:' + inserted, " Requested : " + requested, " dispensed " + dispensed, " not Dspensed " + notDispensed);
 
           if (inserted < requested) return;
