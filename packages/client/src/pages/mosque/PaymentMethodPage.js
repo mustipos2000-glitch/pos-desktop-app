@@ -216,7 +216,7 @@ const PaymentMethodPage = () => {
                 return;
               }
             }
-          } else if(s.state !== "FINISH"){
+          } else if(s.state === "PAID"){
             return;
           }
           console.log("Finished the Cashmatic ");
