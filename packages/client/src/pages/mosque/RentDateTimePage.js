@@ -1,45 +1,46 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ApiService from '../../services/api';
 import { KioskButton } from '../../components/mosque';
 
 /**
- * RentDateTimePage - Modern kiosk-optimized date/time selection
+ * RentDateTimePage - Hour-based rental period selection with overlap validation
  * 
- * Design Features:
- * - Large, touch-friendly date/time inputs
- * - Real-time validation feedback
- * - Clear visual summary of selection
- * - Optimized for landscape kiosk displays
+ * Features:
+ * - Hour-based selection only (no minutes)
+ * - Fetches rental charge from settings
+ * - Validates overlapping bookings
+ * - Calculates total amount automatically
+ * - Goes directly to payment method page
  */
 const RentDateTimePage = () => {
   const navigate = useNavigate();
   const [selectedMember, setSelectedMember] = useState(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [startHour, setStartHour] = useState('09');
+  const [endHour, setEndHour] = useState('17');
   const [validationError, setValidationError] = useState('');
+  const [rentalCharge, setRentalCharge] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [checkingOverlap, setCheckingOverlap] = useState(false);
+  const [overlappingBookings, setOverlappingBookings] = useState([]);
 
   useEffect(() => {
     loadSelectedMember();
     loadSavedDateTime();
+    fetchRentalCharge();
   }, []);
 
   useEffect(() => {
-    // Real-time validation
-    if (startDate && endDate && startTime && endTime) {
-      const start = new Date(`${startDate}T${startTime}`);
-      const end = new Date(`${endDate}T${endTime}`);
-      
-      if (end <= start) {
-        setValidationError('End date/time must be after start date/time');
-      } else {
-        setValidationError('');
-      }
+    // Real-time validation and overlap checking
+    if (startDate && endDate && startHour && endHour) {
+      validateAndCheckOverlap();
     } else {
       setValidationError('');
+      setOverlappingBookings([]);
     }
-  }, [startDate, endDate, startTime, endTime]);
+  }, [startDate, endDate, startHour, endHour]);
 
   const loadSelectedMember = () => {
     const storedMember = localStorage.getItem('selectedMember');
@@ -60,20 +61,105 @@ const RentDateTimePage = () => {
         const data = JSON.parse(saved);
         setStartDate(data.startDate || '');
         setEndDate(data.endDate || '');
-        setStartTime(data.startTime || '');
-        setEndTime(data.endTime || '');
+        setStartHour(data.startHour || '09');
+        setEndHour(data.endHour || '17');
       } catch (error) {
         console.error('Error loading saved date/time:', error);
       }
     }
   };
 
-  const handleGoBack = () => {
-    navigate('/member-selection');
+  const fetchRentalCharge = async () => {
+    try {
+      const response = await ApiService.getRentalCharges();
+      if (response && response.data && response.data.length > 0) {
+        const charge = response.data[0];
+        setRentalCharge(charge);
+        console.log('✅ Rental charge loaded:', charge);
+      } else {
+        console.warn('⚠️ No rental charge found in settings');
+        alert('Please configure rental charge in settings first');
+      }
+    } catch (error) {
+      console.error('Error fetching rental charge:', error);
+      alert('Failed to load rental charge settings');
+    }
   };
 
-  const handleNext = () => {
-    if (!startDate || !endDate || !startTime || !endTime) {
+  const validateAndCheckOverlap = async () => {
+    // Basic validation
+    const start = new Date(`${startDate}T${startHour}:00:00`);
+    const end = new Date(`${endDate}T${endHour}:00:00`);
+    
+    if (end <= start) {
+      setValidationError('End date/time must be after start date/time');
+      setOverlappingBookings([]);
+      return;
+    }
+
+    // Check for overlapping bookings
+    setCheckingOverlap(true);
+    try {
+      const startDatetime = `${startDate}T${startHour}:00:00`;
+      const endDatetime = `${endDate}T${endHour}:00:00`;
+      
+      const response = await ApiService.checkRentalOverlap(startDatetime, endDatetime);
+      
+      if (response.hasOverlap) {
+        setValidationError('⚠️ Time slot conflict: This period overlaps with an existing booking');
+        setOverlappingBookings(response.overlappingBookings || []);
+      } else {
+        setValidationError('');
+        setOverlappingBookings([]);
+      }
+    } catch (error) {
+      console.error('Error checking overlap:', error);
+      setValidationError('Failed to check availability');
+    } finally {
+      setCheckingOverlap(false);
+    }
+  };
+
+  const calculateDuration = () => {
+    if (!startDate || !endDate || !startHour || !endHour) return { hours: 0, days: 0 };
+    
+    const start = new Date(`${startDate}T${startHour}:00:00`);
+    const end = new Date(`${endDate}T${endHour}:00:00`);
+    
+    if (end <= start) return { hours: 0, days: 0 };
+    
+    const diffMs = end - start;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    
+    return { hours: diffHours, days: diffDays };
+  };
+
+  const calculateTotalAmount = () => {
+    if (!rentalCharge) return 0;
+    const { days } = calculateDuration();
+    // Rental charge is per day, not per hour
+    return days * parseFloat(rentalCharge.rental_charge);
+  };
+
+  const formatDuration = () => {
+    const { hours, days } = calculateDuration();
+    if (hours === 0) return null;
+    
+    const remainingHours = hours % 24;
+    
+    if (days > 0) {
+      return `${days} day${days > 1 ? 's' : ''} ${remainingHours > 0 ? ` ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}` : ''}`;
+    }
+    return `${hours} hour${hours !== 1 ? 's' : ''}`;
+  };
+
+  const handleGoBack = () => {
+    navigate('/mosque/member-selection');
+  };
+
+  const handleNext = async () => {
+    if (!startDate || !endDate || !startHour || !endHour) {
       alert('Please fill in all date and time fields');
       return;
     }
@@ -83,91 +169,131 @@ const RentDateTimePage = () => {
       return;
     }
 
-    const rentDateTime = {
-      startDate,
-      endDate,
-      startTime,
-      endTime
-    };
-    localStorage.setItem('rentDateTime', JSON.stringify(rentDateTime));
-    navigate('/mosque/amount-entry');
-  };
-
-  const formatDuration = () => {
-    if (!startDate || !endDate || !startTime || !endTime) return null;
-    
-    const start = new Date(`${startDate}T${startTime}`);
-    const end = new Date(`${endDate}T${endTime}`);
-    
-    if (end <= start) return null;
-    
-    const diffMs = end - start;
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-    const remainingHours = diffHours % 24;
-    
-    if (diffDays > 0) {
-      return `${diffDays} day${diffDays > 1 ? 's' : ''} ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}`;
+    if (!rentalCharge) {
+      alert('Rental charge not configured. Please contact administrator.');
+      return;
     }
-    return `${diffHours} hour${diffHours !== 1 ? 's' : ''}`;
+
+    const { hours, days } = calculateDuration();
+    if (hours <= 0) {
+      alert('Invalid rental period');
+      return;
+    }
+    
+    if (days === 0) {
+      alert('Rental period must be at least 1 full day (24 hours)');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Store rental date/time data
+      const rentDateTime = {
+        startDate,
+        endDate,
+        startHour,
+        endHour,
+        startDatetime: `${startDate}T${startHour}:00:00`,
+        endDatetime: `${endDate}T${endHour}:00:00`,
+        durationHours: hours,
+        durationDays: days
+      };
+      localStorage.setItem('rentDateTime', JSON.stringify(rentDateTime));
+
+      // Calculate and store amount
+      const totalAmount = calculateTotalAmount();
+      localStorage.setItem('paymentAmount', totalAmount.toString());
+
+      console.log('📅 Rental booking details:', {
+        member: selectedMember?.fullName,
+        startDatetime: rentDateTime.startDatetime,
+        endDatetime: rentDateTime.endDatetime,
+        duration: `${days} days (${hours} hours)`,
+        dailyRate: rentalCharge.rental_charge,
+        totalAmount: totalAmount
+      });
+
+      // Navigate directly to payment method page (skip amount entry)
+      navigate('/mosque/payment-method');
+    } catch (error) {
+      console.error('Error processing rental booking:', error);
+      alert('Failed to process rental booking');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const isFormComplete = startDate && endDate && startTime && endTime && !validationError;
+  const isFormComplete = startDate && endDate && startHour && endHour && !validationError && !checkingOverlap;
+
+  // Generate hour options (00-23)
+  const hourOptions = Array.from({ length: 24 }, (_, i) => {
+    const hour = i.toString().padStart(2, '0');
+    return { value: hour, label: `${hour}:00` };
+  });
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col">
+    <div className="min-h-screen bg-pos-bg-primary flex flex-col">
       {/* Header */}
-      <div className="flex-shrink-0 px-8 pt-8 pb-6">
+      {/* <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-pos-text-primary mb-2 sm:mb-3">
             Select Rental Period
           </h1>
-          <p className="text-xl text-pos-text-secondary">
+          <p className="text-base sm:text-lg lg:text-xl text-pos-text-secondary">
             Choose the date and time for space/kitchen rental
           </p>
         </div>
-      </div>
+      </div> */}
 
       {/* Member Info Banner */}
       {selectedMember && (
-        <div className="flex-shrink-0 px-8 pb-4">
-          <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-2xl p-4 max-w-5xl mx-auto">
-            <div className="flex items-center gap-3">
-              <svg className="w-10 h-10 text-pos-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <div>
-                <div className="text-sm text-pos-text-secondary">Renting for</div>
-                <div className="text-xl font-bold text-pos-text-primary">{selectedMember.fullName}</div>
+        <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4 mt-2">
+          <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl sm:rounded-2xl p-3 sm:p-4 max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+              <div className="flex items-center gap-3">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10 text-pos-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <div>
+                  <div className="text-xs sm:text-sm text-pos-text-secondary">Renting for</div>
+                  <div className="text-lg sm:text-xl font-bold text-pos-text-primary">{selectedMember.fullName}</div>
+                </div>
               </div>
+              {rentalCharge && (
+                <div className="text-left sm:text-right">
+                  <div className="text-xs sm:text-sm text-pos-text-secondary">Daily Rate</div>
+                  <div className="text-xl sm:text-2xl font-bold text-green-600">€ {parseFloat(rentalCharge.rental_charge).toFixed(2)}/day</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden px-8 pb-4">
+      <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4">
         <div className="max-w-5xl mx-auto h-full flex flex-col">
           
-          <div className="flex-1 bg-pos-bg-secondary rounded-2xl border-2 border-pos-border-primary p-8 overflow-y-auto scrollbar-custom">
-            <div className="flex justify-between items-center mb-2 px-1">
+          <div className="flex-1 bg-pos-bg-secondary rounded-xl sm:rounded-2xl border-2 border-pos-border-primary p-4 sm:p-6 lg:p-8 overflow-y-auto scrollbar-custom">
+            <div className="flex flex-col lg:flex-row justify-between items-start gap-6 lg:gap-8 mb-4 sm:mb-6 px-1">
               
               {/* Start Date/Time Section */}
-              <div className="max-w-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0 mb-2">
-                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              <div className="w-full lg:flex-1">
+                <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                     </svg>
                   </div>
-                  <h3 className="text-2xl font-bold text-pos-text-primary">
+                  <h3 className="text-xl sm:text-2xl font-bold text-pos-text-primary">
                     Start Date & Time
                   </h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-1">
+                    <label className="block text-base sm:text-lg lg:text-xl font-bold text-pos-text-primary mb-2 sm:mb-3">
                       Start Date
                     </label>
                     <input
@@ -175,29 +301,32 @@ const RentDateTimePage = () => {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-6 py-3 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full px-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     />
                   </div>
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-1">
-                      Start Time
+                    <label className="block text-xl font-bold text-pos-text-primary mb-3">
+                      Start Hour
                     </label>
-                    <input
-                      type="time"
-                      value={startTime}
-                      onChange={(e) => setStartTime(e.target.value)}
-                      className="w-full px-6 py-3 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
-                    />
+                    <select
+                      value={startHour}
+                      onChange={(e) => setStartHour(e.target.value)}
+                      className="px-6 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                    >
+                      {hourOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
 
               {/* End Date/Time Section */}
-              <div className="max-w-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mb-2">
+              <div className="w-full lg:flex-1">
+                <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                  <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </div>
                   <h3 className="text-2xl font-bold text-pos-text-primary">
@@ -205,9 +334,9 @@ const RentDateTimePage = () => {
                   </h3>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-1">
+                    <label className="block text-xl font-bold text-pos-text-primary mb-3">
                       End Date
                     </label>
                     <input
@@ -215,91 +344,143 @@ const RentDateTimePage = () => {
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-6 py-3 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full px-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     />
                   </div>
                   <div>
-                    <label className="block text-lg font-semibold text-pos-text-primary mb-1">
-                      End Time
+                    <label className="block text-xl font-bold text-pos-text-primary mb-3">
+                      End Hour
                     </label>
-                    <input
-                      type="time"
-                      value={endTime}
-                      onChange={(e) => setEndTime(e.target.value)}
-                      className="w-full px-6 py-3 text-xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
-                    />
+                    <select
+                      value={endHour}
+                      onChange={(e) => setEndHour(e.target.value)}
+                      className="px-6 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                    >
+                      {hourOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
             </div>
-             {/* Validation Error */}
-              {validationError && (
-                <div className="bg-red-600 bg-opacity-20 border-2 border-red-600 rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <svg className="w-8 h-8 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                    <p className="text-lg font-semibold text-red-600">{validationError}</p>
+
+            {/* Checking Overlap Indicator */}
+            {checkingOverlap && (
+              <div className="bg-blue-500 bg-opacity-10 border-2 border-blue-500 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                <div className="flex items-center gap-3">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 animate-spin flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <p className="text-base sm:text-lg font-semibold text-blue-600">Checking availability...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Validation Error */}
+            {validationError && !checkingOverlap && (
+              <div className="bg-red-600 bg-opacity-20 border-2 border-red-600 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 sm:mb-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-base sm:text-lg font-semibold text-red-600 mb-2">{validationError}</p>
+                    {overlappingBookings.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-sm font-semibold text-red-600">Conflicting bookings:</p>
+                        {overlappingBookings.map((booking, idx) => (
+                          <div key={idx} className="bg-red-500 bg-opacity-10 rounded-lg p-3 text-sm">
+                            <div className="font-semibold text-pos-text-primary">{booking.member_name}</div>
+                            <div className="text-pos-text-secondary text-xs sm:text-sm">
+                              {new Date(booking.start_datetime).toLocaleString()} - {new Date(booking.end_datetime).toLocaleString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Summary Card */}
-              {isFormComplete && (
-                <div className="bg-green-600 bg-opacity-10 border-2 border-green-600 rounded-xl p-6 py-2 mt-2">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-xl font-bold text-green-600 mb-3">Rental Period Summary</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg text-pos-text-secondary">From:</span>
-                          <span className="text-lg font-semibold text-pos-text-primary">
-                            {new Date(`${startDate}T${startTime}`).toLocaleString('en-US', {
+            {/* Summary Card */}
+            {isFormComplete && (
+              <div className="bg-green-600 bg-opacity-10 border-2 border-green-600 rounded-xl p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-2xl font-bold text-green-600 mb-4">✅ Time Slot Available</h4>
+                    <div className="space-y-4">
+                      {/* From → To → Duration in one line */}
+                      <div className="flex items-center justify-between gap-4 bg-pos-bg-primary rounded-lg p-4">
+                        <div className="flex-1">
+                          <div className="text-base text-pos-text-secondary mb-1">From</div>
+                          <div className="text-xl font-bold text-pos-text-primary">
+                            {new Date(`${startDate}T${startHour}:00:00`).toLocaleString('en-US', {
                               weekday: 'short',
                               month: 'short',
                               day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
-                          </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg text-pos-text-secondary">To:</span>
-                          <span className="text-lg font-semibold text-pos-text-primary">
-                            {new Date(`${endDate}T${endTime}`).toLocaleString('en-US', {
+                        
+                        <div className="text-3xl text-green-600 font-bold">→</div>
+                        
+                        <div className="flex-1">
+                          <div className="text-base text-pos-text-secondary mb-1">To</div>
+                          <div className="text-xl font-bold text-pos-text-primary">
+                            {new Date(`${endDate}T${endHour}:00:00`).toLocaleString('en-US', {
                               weekday: 'short',
                               month: 'short',
                               day: 'numeric',
                               hour: '2-digit',
                               minute: '2-digit'
                             })}
-                          </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 pt-2 border-t border-green-600">
-                          <span className="text-lg text-pos-text-secondary">Duration:</span>
-                          <span className="text-xl font-bold text-green-600">{formatDuration()}</span>
+
+                        <div className="text-3xl text-green-600 font-bold">=</div>
+
+                        <div className="flex-1">
+                          <div className="text-base text-pos-text-secondary mb-1">Duration</div>
+                          <div className="text-xl font-bold text-green-600">{formatDuration()}</div>
+                        </div>
+                      </div>
+                     
+                      {/* Total Amount - Prominent */}
+                      <div className="bg-green-600 bg-opacity-10 rounded-lg p-5 border-2 border-green-600">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-2xl font-bold text-pos-text-primary">Total Amount:</span>
+                          <span className="text-4xl font-bold text-green-600">€ {calculateTotalAmount().toFixed(2)}</span>
+                        </div>
+                        <div className="text-base text-pos-text-secondary text-right">
+                          ({calculateDuration().days} day{calculateDuration().days !== 1 ? 's' : ''} × €{rentalCharge ? parseFloat(rentalCharge.rental_charge).toFixed(2) : '0.00'}/day)
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Footer Navigation */}
-      <div className="flex-shrink-0 px-8 pb-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 gap-4">
+      <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           <KioskButton
             variant="secondary"
             size="large"
             onClick={handleGoBack}
+            disabled={loading}
           >
             Go Back
           </KioskButton>
@@ -308,9 +489,9 @@ const RentDateTimePage = () => {
             variant="primary"
             size="large"
             onClick={handleNext}
-            disabled={!isFormComplete}
+            disabled={!isFormComplete || loading}
           >
-            Continue
+            {loading ? 'Processing...' : 'Continue to Payment'}
           </KioskButton>
         </div>
       </div>
