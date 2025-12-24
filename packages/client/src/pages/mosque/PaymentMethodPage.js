@@ -510,7 +510,7 @@ const PaymentMethodPage = () => {
   // Cancel Cashmatic payment
   const handleCancelCashmatic = async () => {
     if (!cashmaticSessionId) {
-      cashmaticSessionId = "devsessionId";
+      setCashmaticSessionId("devsessionId");
       setCashmaticPolling(false);
       setCashmaticSessionId(null);
       setProcessing(false);
@@ -636,13 +636,14 @@ const PaymentMethodPage = () => {
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
        {/* Footer Navigation */}
-      <div className="absolute w-40 left-1 top-1">
-        <div className="max-w-5xl w-full mx-auto grid grid-cols-1 gap-4">
+      <div className="absolute w-40 left-1 top-1 w-24">
+        <div className="w-24">
           <KioskButton
             variant="secondary"
             onClick={handleGoBack}
             disabled={processing}
             fullWidth
+            icon={"true"}
           >
             <img 
             src="/icon kiosk/terug.png" 

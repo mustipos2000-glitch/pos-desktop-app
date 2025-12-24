@@ -35,11 +35,12 @@ const SadakaSelectionPage = () => {
         totalSteps={3}
       /> */}
     {/* Go Back Button */}
-      <div className="absolute left-2 top-1 w-40">
+      <div className="absolute left-2 top-1 w-24">
         <KioskButton
           variant="secondary"
           size="medium"
           onClick={handleGoBack}
+          icon={"true"}
         >
           <img 
             src="/icon kiosk/terug.png" 

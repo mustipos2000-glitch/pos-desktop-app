@@ -80,11 +80,12 @@ const SadakaGoalPage = () => {
         totalSteps={3}
       /> */}
     {/* Navigation Buttons */}
-      <div className="absolute left-2 top-1 w-32">
+      <div className="absolute left-2 top-1 w-24">
         <KioskButton
           variant="secondary"
           size="medium"
           onClick={handleGoBack}
+          icon={"true"}
         >
           <img 
             src="/icon kiosk/terug.png" 
