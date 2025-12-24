@@ -23,24 +23,27 @@ const KioskCard = ({
     <button
       onClick={onClick}
       className={`
-        w-full p-8 rounded-3xl transition-all duration-200
-        border-3 min-h-[140px]
-        active:scale-[0.97]
-        ${selected 
-          ? 'bg-pos-interactive-hover border-white shadow-2xl' 
-          : 'bg-pos-bg-secondary border-pos-border-primary hover:border-pos-interactive-hover shadow-lg hover:shadow-xl'
-        }
         ${className}
       `}
     >
-      <div className="flex flex-col items-center justify-center gap-3 text-center">
+      <div className="">
         {icon && (
-          <div className="text-5xl mb-2">
-            {icon}
+          <div className="">
+            {typeof icon === 'string' && icon.startsWith('/') ? (
+              <img 
+                src={icon} 
+                alt={title}
+                className="mx-auto object-contain rounded-3xl"
+              />
+            ) : (
+              <div className="text-5xl">
+                {icon}
+              </div>
+            )}
           </div>
         )}
         
-        <h3 className="text-2xl font-bold text-pos-text-primary leading-tight">
+        {/* <h3 className="text-2xl font-bold text-pos-text-primary leading-tight">
           {title}
         </h3>
         
@@ -60,7 +63,7 @@ const KioskCard = ({
           <p className="text-lg text-pos-text-muted" dir="rtl">
             {subtitleAr}
           </p>
-        )}
+        )} */}
       </div>
     </button>
   );

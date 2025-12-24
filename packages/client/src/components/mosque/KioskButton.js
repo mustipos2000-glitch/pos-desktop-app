@@ -42,7 +42,7 @@ const KioskButton = ({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${widthClass} ${className}`}
+      className={`${className}`}
     >
       {icon && <span className="text-2xl">{icon}</span>}
       {children}

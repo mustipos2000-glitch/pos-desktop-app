@@ -157,6 +157,9 @@ router.post('/cashmatic/cancel/:sessionId', PaymentController.cancelCashmaticPay
 router.post('/payworld/start', PaymentController.processPayworldPayment);
 router.get('/payworld/status/:sessionId', PaymentController.getPayworldStatus);
 router.post('/payworld/cancel/:sessionId', PaymentController.cancelPayworldPayment);
+// router.get('/payworld/config', PaymentController.getPayworldConfig);
+// router.post('/payworld/config', PaymentController.savePayworldConfig);
+// router.get('/payworld/test', PaymentController.testPayworldConfig);
 
 // Viva routes (for Viva Wallet payment integration)
 router.post('/viva/start', PaymentController.processVivaPayment);

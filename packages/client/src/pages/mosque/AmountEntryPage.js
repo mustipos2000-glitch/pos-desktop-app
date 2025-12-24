@@ -272,13 +272,13 @@ const AmountEntryPage = () => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-4 lg:mt-6">
+      <div className="flex flex-col w-full sm:flex-row justify-center gap-3 sm:gap-4 mt-4 lg:mt-6">
         <KioskButton
           variant="secondary"
           size="medium"
           onClick={handleGoBack}
           fullWidth
-          className="sm:w-auto"
+          className=""
         >
           ← Go Back
         </KioskButton>
@@ -289,7 +289,7 @@ const AmountEntryPage = () => {
             size="medium"
             onClick={handleNext}
             fullWidth
-            className="sm:w-auto"
+            className=""
           >
             Next →
           </KioskButton>

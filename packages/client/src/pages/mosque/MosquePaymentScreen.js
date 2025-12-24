@@ -26,21 +26,21 @@ const MosquePaymentScreen = () => {
       titleEn: 'Membership Fee',
       titleNl: 'Cotisation',
       titleAr: 'رسوم العضوية',
-      icon: '👤'
+      icon: '/icon kiosk/leden.png'
     },
     {
       id: 'sadaka',
       titleEn: 'Sadaka / Charity',
       titleNl: 'Sadaka / Don',
       titleAr: 'صدقة',
-      icon: '🤲'
+      icon: '/icon kiosk/sadaka.png'
     },
     {
       id: 'rent',
       titleEn: 'Rent Space / Kitchen',
       titleNl: 'Location salle / cuisine',
       titleAr: 'استئجار قاعة / مطبخ',
-      icon: '🏢'
+      icon: '/icon kiosk/rent room.png'
     }
   ];
 
@@ -107,73 +107,27 @@ const MosquePaymentScreen = () => {
     setClickCount(0);
   };
 
-  const handleQuickTest = () => {
-    // Setup mock test data
-    const testMember = {
-      id: 999,
-      fullName: 'Test Member',
-      phone: '0123456789',
-      type: 'test'
-    };
-
-    const testPaymentType = {
-      id: 'sadaka',
-      titleEn: 'Sadaka / Charity',
-      titleNl: 'Sadaka / Don',
-      titleAr: 'صدقة'
-    };
-
-    const testGoal = {
-      titleEn: 'Renovation',
-      titleNl: 'Rénovation',
-      titleAr: 'التجديد'
-    };
-
-    // Store test data
-    localStorage.setItem('selectedMember', JSON.stringify(testMember));
-    localStorage.setItem('mosquePaymentType', JSON.stringify(testPaymentType));
-    localStorage.setItem('sadakaGoal', JSON.stringify(testGoal));
-    localStorage.setItem('sadakaType', 'named');
-    localStorage.setItem('paymentAmount', '100');
-    localStorage.setItem('paymentMethod', 'cash');
-    localStorage.setItem('transactionId', `TEST-${Date.now()}`);
-
-    // Navigate directly to ticket selection
-    navigate('/mosque/ticket-selection');
-  };
-
   return (
     <>
-      <KioskLayout maxWidth="5xl">
-        <KioskHeader
+      <KioskLayout>
+        {/* <KioskHeader
           title="What do you want to pay?"
           subtitle="Choose an option to continue"
-        />
+        /> */}
 
         {/* Payment Options Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {paymentOptions.map((option) => (
             <KioskCard
               key={option.id}
-              title={option.titleEn}
-              subtitle={option.titleNl}
-              subtitleAr={option.titleAr}
+              // title={option.titleEn}
+              // subtitle={option.titleNl}
+              // subtitleAr={option.titleAr}
               icon={option.icon}
               onClick={() => handleOptionSelect(option)}
               selected={selectedOption?.id === option.id}
             />
           ))}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-center gap-4">
-          <KioskButton
-            variant="primary"
-            size="medium"
-            onClick={handleQuickTest}
-          >
-            🖨️ Quick Test Printer
-          </KioskButton>
         </div>
       </KioskLayout>
 

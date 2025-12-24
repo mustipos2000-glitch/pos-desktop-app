@@ -328,7 +328,7 @@ const PaymentController = {
       if (!fs.existsSync(configPath)) {
         console.warn("[Payworld] payworld.config.json not found. Using defaults.");
         return {
-          ip: "182.168.1.22",
+          ip: "192.168.1.22",
           port: 50000,
           posId: "2001",
           currencyCode: "978",
@@ -337,7 +337,7 @@ const PaymentController = {
       const raw = fs.readFileSync(configPath, "utf8");
       const parsed = JSON.parse(raw);
       return {
-        ip: parsed.ip || "182.168.1.22",
+        ip: parsed.ip || "192.168.1.22",
         port: parsed.port || 50000,
         posId: parsed.posId || "2001",
         currencyCode: parsed.currencyCode || "978",
@@ -345,7 +345,7 @@ const PaymentController = {
     } catch (err) {
       console.error("[Payworld] Failed to load payworld.config.json:", err);
       return {
-        ip: "182.168.1.22",
+        ip: "192.168.1.22",
         port: 50000,
         posId: "2001",
         currencyCode: "978",
