@@ -16,6 +16,7 @@ const MosquePaymentScreen = () => {
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [selectedUserType, setSelectedUserType] = useState('admin');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
     return sessionStorage.getItem('mosqueAdminLoggedIn') === 'true';
   });
@@ -74,28 +75,58 @@ const MosquePaymentScreen = () => {
       setClickCount(0);
 
       // If already logged in, directly open settings (no password)
-      if (isAdminLoggedIn) {
-        setShowSettings(true);
-      } else {
+      // if (isAdminLoggedIn) {
+      //   setShowSettings(true);
+      // } else {
         // Show password prompt
         setShowPasswordPrompt(true);
-      }
+      // }
     }
   };
 
-  const handlePasswordSubmit = (e) => {
+  const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    if (password === '1234') {
-      // Set admin logged in flag in sessionStorage (clears when browser/tab closes)
-      sessionStorage.setItem('mosqueAdminLoggedIn', 'true');
-      setIsAdminLoggedIn(true);
-      setShowPasswordPrompt(false);
-      setPassword('');
-      setPasswordError('');
-      setShowSettings(true);
-    } else {
-      setPasswordError('Incorrect password');
+    try {
+      // Fetch all users
+      const response = await fetch('http://localhost:5000/api/users');
+      const users = await response.json();
+
+      // Find user with matching role and password
+      const matchedUser = users.find(user => {
+        // Strict role matching
+        if (selectedUserType === 'superadmin') {
+          // Only match Super Admin role
+          return user.role === 'Super Admin' && user.pincode === password;
+        } else if (selectedUserType === 'admin') {
+          // Only match Admin role (not Super Admin)
+          return user.role === 'Admin' && user.pincode === password;
+        }
+        return false;
+      });
+
+      if (matchedUser) {
+        // Store the logged-in user info
+        sessionStorage.setItem('mosqueAdminLoggedIn', 'true');
+        sessionStorage.setItem('mosqueAdminUser', JSON.stringify({
+          id: matchedUser.id,
+          name: matchedUser.name,
+          role: matchedUser.role
+        }));
+        
+        setIsAdminLoggedIn(true);
+        setShowPasswordPrompt(false);
+        setPassword('');
+        setPasswordError('');
+        setSelectedUserType('admin');
+        setShowSettings(true);
+      } else {
+        setPasswordError('Incorrect password for selected user type');
+        setPassword('');
+      }
+    } catch (error) {
+      console.error('Error verifying password:', error);
+      setPasswordError('Error verifying credentials');
       setPassword('');
     }
   };
@@ -104,6 +135,7 @@ const MosquePaymentScreen = () => {
     setShowPasswordPrompt(false);
     setPassword('');
     setPasswordError('');
+    setSelectedUserType('admin');
     setClickCount(0);
   };
 
@@ -194,6 +226,22 @@ const MosquePaymentScreen = () => {
             <form onSubmit={handlePasswordSubmit}>
               <div className="mb-6">
                 <label className="block text-lg text-pos-text-secondary mb-3">
+                  Select User Type
+                </label>
+                <select
+                  value={selectedUserType}
+                  onChange={(e) => {
+                    setSelectedUserType(e.target.value);
+                    setPasswordError('');
+                  }}
+                  className="w-full px-4 py-4 text-lg bg-pos-bg-tertiary border-2 border-pos-border-primary text-pos-text-primary rounded-xl focus:outline-none focus:border-pos-info mb-4"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="superadmin">Super Admin</option>
+                </select>
+              </div>
+              <div className="mb-6">
+                <label className="block text-lg text-pos-text-secondary mb-3">
                   Enter Password
                 </label>
                 <input
@@ -238,9 +286,16 @@ const MosquePaymentScreen = () => {
       {/* Settings Modal */}
       {showSettings && (
         <SettingsModal
-          onClose={() => setShowSettings(false)}
+          onClose={() => {
+            setShowSettings(false);
+            // Clear admin session when closing settings
+            sessionStorage.removeItem('mosqueAdminLoggedIn');
+            sessionStorage.removeItem('mosqueAdminUser');
+            setIsAdminLoggedIn(false);
+          }}
           initialTab="printer"
           limitedTabs={['printer', 'payment']}
+          mosqueMode={true}
         />
       )}
     </>

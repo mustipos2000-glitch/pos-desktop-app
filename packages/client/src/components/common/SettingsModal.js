@@ -5,9 +5,10 @@ import IconButton from '../IconButton';
 import { useMessageModal } from '../../hooks/useMessageModal';
 import PaymentTerminalManager from '../PaymentTerminalManager';
 import KeypadNumpad from '../KeypadNumpad';
+import UserManager from '../UserManager';
 
 
-const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) => {
+const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null, mosqueMode = false }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [rolePermissions, setRolePermissions] = useState({
     'Super Admin': { admin: true, settings: true, reports: true },
@@ -31,8 +32,13 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
     printerName: ''
   });
   const [testingPrinter, setTestingPrinter] = useState(null);
-  const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+  
+  // Get current user from sessionStorage if in mosque mode, otherwise from localStorage
+  const currentUser = mosqueMode 
+    ? JSON.parse(sessionStorage.getItem('mosqueAdminUser') || '{}')
+    : JSON.parse(localStorage.getItem('currentUser') || '{}');
   const isSuperAdmin = currentUser.role === 'Super Admin';
+  
   const [showKeypad, setShowKeypad] = useState(true);
   const [activeField, setActiveField] = useState(null);
   const [generalSettings, setGeneralSettings] = useState({
@@ -740,13 +746,13 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-5xl w-full mx-4 max-h-[90vh] overflow-hidden">
-        <div className="flex justify-between items-center p-6 border-b border-pos-border-primary">
+      <div className="bg-pos-bg-secondary rounded-lg shadow-lg max-w-5xl w-full mx-4 h-[90vh] flex flex-col overflow-hidden">
+        <div className="flex justify-between items-center p-6 border-b border-pos-border-primary flex-shrink-0">
           <h2 className="text-pos-text-primary text-xl font-semibold">Settings</h2>
           <button className="text-pos-text-muted hover:text-pos-text-primary text-2xl" onClick={onClose}>×</button>
         </div>
 
-        <div className="flex border-b pb-1 mt-1 border-pos-border-primary">
+        <div className="flex border-b pb-1 mt-1 border-pos-border-primary flex-shrink-0 overflow-x-auto">
           {(!limitedTabs || limitedTabs.includes('general')) && (
             <button
               className={`px-6 py-3 text-sm font-medium transition-colors duration-200 ${
@@ -850,9 +856,23 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
               Members
             </button>
           )}
+
+          {/* Users tab - Only visible for Super Admin in mosque mode */}
+          {version === 'mosque' && isSuperAdmin && (
+            <button
+              className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
+                activeTab === 'users' 
+                  ? 'bg-pos-bg-primary text-pos-text-primary' 
+                  : 'text-pos-text-muted hover:text-pos-text-primary hover:bg-pos-bg-tertiary'
+              }`}
+              onClick={() => setActiveTab('users')}
+            >
+              Users
+            </button>
+          )}
         </div>
 
-        <div className="px-4 py-2 overflow-y-auto max-h-[60vh] scrollbar-custom">
+        <div className="px-4 py-2 overflow-y-auto flex-1 scrollbar-custom">
           {activeTab === 'general' && (
             <div>
               <div className="grid grid-cols-3 gap-3 mb-2">
@@ -1853,11 +1873,18 @@ const SettingsModal = ({ onClose, initialTab = 'general', limitedTabs = null }) 
             
             </div>
           )}
+
+          {/* Users Tab Content - Only for Super Admin in mosque mode */}
+          {activeTab === 'users' && version === 'mosque' && isSuperAdmin && (
+            <div className="space-y-2">
+              <UserManager />
+            </div>
+          )}
         </div>
 
         {/* Keyboard Toggle Button - Only show for General tab */}
         {activeTab === 'general' && (
-          <div className="px-4 py-2 border-t border-pos-border-primary flex justify-center">
+          <div className="px-4 py-2 border-t border-pos-border-primary flex justify-center flex-shrink-0">
             <button
               type="button"
               onClick={() => setShowKeypad(!showKeypad)}
