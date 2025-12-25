@@ -500,32 +500,40 @@ class PaymentService {
    * @param {string} sessionId - Session ID
    * @returns {Promise<Object>} Cancellation result
    */
-  // static async cancelPayworldPayment(sessionId) {
-  //   try {
-  //     console.log(`🚫 Cancelling Payworld payment: ${sessionId}`);
-      
-  //     // Get terminal to create service instance
-  //     const terminal = PaymentTerminal.getByType('bancontact') || 
-  //                      PaymentTerminal.getByType('payworld') || 
-  //                      PaymentTerminal.getByType('payword');
-      
-  //     if (terminal && terminal.enabled) {
-  //       const service = createPayworldService(terminal);
-  //       const result = await service.cancelSession(sessionId);
-  //       return result;
-  //     } else {
-  //       return {
-  //         success: false,
-  //         message: 'Payworld terminal not configured'
-  //       };
-  //     }
-  //   } catch (error) {
-  //     return {
-  //       success: false,
-  //       message: error.message || 'Failed to cancel Payworld payment'
-  //     };
-  //   }
-  // }
+  static async cancelPayworldPayment(sessionId) {
+    try {
+      console.log(`🚫 Cancelling Payworld payment: ${sessionId}`);
+
+      // Get terminal to create service instance
+      const terminal = PaymentTerminal.getByType('bancontact') ||
+        PaymentTerminal.getByType('payworld') ||
+        PaymentTerminal.getByType('payword');
+
+      if (terminal && terminal.enabled) {
+        const service = createPayworldService(terminal);
+        if (typeof service.cancelSession === 'function') {
+          const result = await service.cancelSession(sessionId);
+          return result;
+        }
+
+        return {
+          success: false,
+          message: 'Payworld service does not implement cancelSession'
+        };
+      }
+
+      return {
+        success: false,
+        message: 'Payworld terminal not configured'
+      };
+    } catch (error) {
+      console.error('❌ cancelPayworldPayment error:', error);
+      return {
+        success: false,
+        message: error.message || 'Failed to cancel Payworld payment'
+      };
+    }
+  }
 
   /**
    * Process TCP payment (generic)
