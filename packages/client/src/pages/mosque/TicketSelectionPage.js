@@ -218,9 +218,6 @@ const TicketSelectionPage = () => {
     navigate('/mosque-payment');
   };
 
-  const handleGoBack = () => {
-    navigate('/mosque/payment-method');
-  };
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col">
@@ -343,24 +340,6 @@ const TicketSelectionPage = () => {
               )}
             </button>
           </div>
-        </div>
-      </div>
-
-      {/* Footer Navigation */}
-      <div className="flex-shrink-0 px-8 pb-8">
-        <div className="max-w-5xl w-full mx-auto">
-          <button
-            onClick={handleGoBack}
-            disabled={printing}
-            className={`
-              px-8 py-4 bg-pos-bg-secondary text-pos-text-primary 
-              rounded-xl hover:bg-pos-interactive-hover transition-colors 
-              font-semibold border border-pos-border-primary text-lg
-              ${printing ? 'opacity-50 cursor-not-allowed' : ''}
-            `}
-          >
-            ← Go Back
-          </button>
         </div>
       </div>
 
