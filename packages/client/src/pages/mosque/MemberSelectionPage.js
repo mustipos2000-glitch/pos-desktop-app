@@ -271,12 +271,14 @@ const MemberSelectionPage = () => {
       {/* Header */}
       <div className="flex-shrink-0 px-8 pt-8 pb-2">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
-            Select Member
-          </h1>
-          <p className="text-xl text-pos-text-secondary">
-            Choose an existing member or create a new one
-          </p>
+         <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
+          <span>Select Member</span>
+          <span className="mx-3">|</span>
+          <span>Selecteer Lid</span>
+          <span className="mx-3">|</span>
+          <span>اختر عضوا</span>
+        </h1>
+
         </div>
       </div>
 
@@ -337,7 +339,11 @@ const MemberSelectionPage = () => {
                   : 'bg-pos-interactive-primary text-pos-text-secondary border-pos-border-primary'
               }`}
             >
-              Find Existing Member
+              Find Existing <span>Member</span>
+              <span className="mx-3">|</span>
+              <span>Lid</span>
+              <span className="mx-3">|</span>
+              <span> العضو</span>
             </button>
             <button
               onClick={() => setShowCreateForm(true)}
@@ -347,7 +353,11 @@ const MemberSelectionPage = () => {
                   : 'bg-pos-interactive-primary text-pos-text-secondary border-pos-border-primary'
               }`}
             >
-              Create New Member
+              Create <span> New Member</span>
+                <span className="mx-3">|</span>
+                <span>Nieuw lid</span>
+                <span className="mx-3">|</span>
+                <span> عضو جديد</span>
             </button>
           </div>
 
