@@ -3,16 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
 import { KioskButton } from '../../components/mosque';
 
-/**
- * RentDateTimePage - Hour-based rental period selection with overlap validation
- * 
- * Features:
- * - Hour-based selection only (no minutes)
- * - Fetches rental charge from settings
- * - Validates overlapping bookings
- * - Calculates total amount automatically
- * - Goes directly to payment method page
- */
 const RentDateTimePage = () => {
   const navigate = useNavigate();
   const [selectedMember, setSelectedMember] = useState(null);
@@ -241,11 +231,28 @@ const RentDateTimePage = () => {
           </p>
         </div>
       </div> */}
-
+      <div className="absolute left-2 top-1 w-24">
+        <KioskButton
+          variant="secondary"
+          size="large"
+          onClick={handleGoBack}
+          disabled={loading}
+          icon={true}
+        >
+          <img src="/icon kiosk/terug.png" alt="Go Back" className="rounded-2xl" />
+          {/* Go Back */}
+        </KioskButton>
+      </div>
       {/* Member Info Banner */}
       {selectedMember && (
-        <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4 mt-2">
-          <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl sm:rounded-2xl p-3 sm:p-4 max-w-5xl mx-auto">
+        <div className="flex max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4 mt-2">
+        
+        </div>
+      )}
+
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4">
+         {selectedMember && ( <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl sm:rounded-2xl p-3 sm:p-4 max-w-5xl mx-auto mb-2">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
               <div className="flex items-center gap-3">
                 <svg className="w-8 h-8 sm:w-10 sm:h-10 text-pos-text-secondary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,13 +270,8 @@ const RentDateTimePage = () => {
                 </div>
               )}
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4">
-        <div className="max-w-5xl mx-auto h-full flex flex-col">
+          </div>)}
+        <div className=" h-full flex flex-col">
           
           <div className="flex-1 bg-pos-bg-secondary rounded-xl sm:rounded-2xl border-2 border-pos-border-primary p-4 sm:p-6 lg:p-8 overflow-y-auto scrollbar-custom">
             <div className="flex flex-col lg:flex-row justify-between items-start gap-6 lg:gap-8 mb-4 sm:mb-6 px-1">
@@ -467,29 +469,21 @@ const RentDateTimePage = () => {
             )}
           </div>
         </div>
+          <KioskButton
+          variant="success"
+          size="large"
+          onClick={handleNext}
+          disabled={!isFormComplete || loading}
+          fullWidth
+          className='mt-2'
+        >
+          {loading ? 'Processing...' : 'Continue to Payment'}
+        </KioskButton>
       </div>
 
       {/* Footer Navigation */}
       <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <KioskButton
-            variant="secondary"
-            size="large"
-            onClick={handleGoBack}
-            disabled={loading}
-          >
-            Go Back
-          </KioskButton>
-          
-          <KioskButton
-            variant="primary"
-            size="large"
-            onClick={handleNext}
-            disabled={!isFormComplete || loading}
-          >
-            {loading ? 'Processing...' : 'Continue to Payment'}
-          </KioskButton>
-        </div>
+      
       </div>
     </div>
   );

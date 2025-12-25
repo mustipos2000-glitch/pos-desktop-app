@@ -198,11 +198,11 @@ const AmountEntryPage = () => {
   };
 
   return (
-    <KioskLayout maxWidth="4xl">
+    <KioskLayout maxWidth="3xl">
       <KioskHeader 
       title={
         <span className="flex items-center justify-center">
-          <span>Enter Amount</span>
+          <span>Amount</span>
           <span className="mx-3">|</span>
           <span>Voer Bedrag In</span>
           <span className="mx-3">|</span>
@@ -229,7 +229,7 @@ const AmountEntryPage = () => {
           />
           {/* ← Go Back */}
         </KioskButton>
-        </div>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
         {/* Left Column - Info and Amount Display */}
         <div className="space-y-3 lg:space-y-4">
