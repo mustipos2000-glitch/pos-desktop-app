@@ -267,7 +267,21 @@ const MemberSelectionPage = () => {
   );
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col">
+    
+    <div className="h-screen bg-pos-bg-primary flex flex-col max-w-5xl mx-auto">
+      <div className="absolute left-2 top-1 w-24">
+          <KioskButton
+            variant="secondary"
+            size="medium"
+            onClick={handleGoBack}
+            disabled={loading || creating}
+            icon={true}
+          >
+            <img src="/icon kiosk/terug.png" alt="Go Back" className="rounded-2xl" />
+            {/* Go Back */}
+      </KioskButton>
+    </div>
+    <div className='max-w-3xl mx-auto'> 
       {/* Header */}
       <div className="flex-shrink-0 px-8 pt-8 pb-2">
         <div className="text-center">
@@ -281,18 +295,7 @@ const MemberSelectionPage = () => {
 
         </div>
       </div>
-    <div className="absolute left-2 top-1 w-24">
-          <KioskButton
-            variant="secondary"
-            size="medium"
-            onClick={handleGoBack}
-            disabled={loading || creating}
-            icon={true}
-          >
-            <img src="/icon kiosk/terug.png" alt="Go Back" className="rounded-2xl" />
-            {/* Go Back */}
-      </KioskButton>
-      </div>
+    
       {/* Selected Member Banner */}
       {selectedMember && (
         <div className="flex-shrink-0 px-8 pb-2">
@@ -518,20 +521,19 @@ const MemberSelectionPage = () => {
         </div>
       </div>
 
-      <div className="flex width-full justify-center px-8 pb-6 pt-2">
-          
-          <KioskButton
-            variant="success"
-            size="small"
-            onClick={handleNext}
-            disabled={!selectedMember || loading || creating}
-            fullWidth
-          >
-            Continue
-          </KioskButton>
-        </div>
+      <div className="flex width-full justify-center px-8 pb-6 pt-2">    
+        <KioskButton
+          variant="success"
+          size="small"
+          onClick={handleNext}
+          disabled={!selectedMember || loading || creating}
+          fullWidth
+        >
+          Continue
+        </KioskButton>
       </div>
-    // </div>
+    </div>
+   </div>
   );
 };
 
