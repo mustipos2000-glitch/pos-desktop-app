@@ -66,7 +66,7 @@ const PaymentMethodPage = () => {
   const storePaymentData = useCallback(async (paymentMethod, paymentDetails) => {
     try {
       const transactionId = `${paymentMethod.toUpperCase()}-${Date.now()}`;
-      
+
       // Complete payment data object
       const paymentData = {
         transactionId,
@@ -131,7 +131,7 @@ const PaymentMethodPage = () => {
     setShowManualChangeModal(false);
     setToastType("success");
     setToastMessage("Payment completed successfully!");
-    
+
     // Navigate to confirmation after manual change is acknowledged
     setTimeout(() => {
       handleConfirm();
@@ -207,7 +207,7 @@ const PaymentMethodPage = () => {
                   manualChangeDue: manualChangeDue,
                   state: s.state
                 });
-                
+
                 setManualChangeAmount(manualChangeDue);
                 setShowManualChangeModal(true);
                 setCashmaticPolling(false);
@@ -216,7 +216,7 @@ const PaymentMethodPage = () => {
                 return;
               }
             }
-          } else if(s.state === "PAID"){
+          } else if (s.state === "PAID") {
             return;
           }
           console.log("Finished the Cashmatic ");
@@ -515,14 +515,14 @@ const PaymentMethodPage = () => {
       setCashmaticSessionId(null);
       setProcessing(false);
       setShowCashmaticModal(false);
-    //   setToastType("error");
-    //   setToastMessage("No active Cashmatic session to cancel.");
-    //   return;
+      //   setToastType("error");
+      //   setToastMessage("No active Cashmatic session to cancel.");
+      //   return;
     }
 
     try {
       console.log("Cancelling Cashmatic payment...");
-      
+
       // Call API to cancel the payment
       await ApiService.cancelCashmatic(cashmaticSessionId);
 
@@ -536,7 +536,7 @@ const PaymentMethodPage = () => {
       setCashmaticPolling(false);
       setCashmaticSessionId(null);
       setProcessing(false);
-      
+
       setToastType("success");
       setToastMessage("Cashmatic payment cancelled successfully.");
 
@@ -556,7 +556,7 @@ const PaymentMethodPage = () => {
   const handleAbortPayworld = async () => {
     if (!payworldSessionId) {
       console.log('We are here in not payworkd session Id ');
-      
+
       setPayworldPolling(false);
       setPayworldSessionId(null);
       setProcessing(false);
@@ -569,7 +569,7 @@ const PaymentMethodPage = () => {
       return;
     }
     console.log("outside the payeworkd machin abort");
-    
+
     setPayworldStatus({
       state: "IN_PROGRESS",
       message: "Payment is being cancelled on the terminal...",
@@ -577,14 +577,14 @@ const PaymentMethodPage = () => {
     });
 
     try {
-     const res =  await ApiService.cancelPayworldPayment(payworldSessionId);
-      console.log("result is : " , res);
-      if(!res.success){
+      const res = await ApiService.cancelPayworldPayment(payworldSessionId);
+      console.log("result is : ", res);
+      if (!res.success) {
         setPayworldPolling(false);
         setPayworldSessionId(null);
         setProcessing(false);
         setShowManualChangeModal(false);
-        return ;
+        return;
       }
       setPayworldStatus({
         state: "CANCELLED",
@@ -634,8 +634,8 @@ const PaymentMethodPage = () => {
   };
 
   return (
-    <div className="h-screen bg-pos-bg-primary flex flex-col">
-       {/* Footer Navigation */}
+    <div className="h-screen bg-pos-bg-primary flex flex-col mt-2">
+      {/* Footer Navigation */}
       <div className="absolute w-40 left-1 top-1 w-24">
         <div className="w-24">
           <KioskButton
@@ -645,33 +645,23 @@ const PaymentMethodPage = () => {
             fullWidth
             icon={"true"}
           >
-            <img 
-            src="/icon kiosk/terug.png" 
-            alt="Go Back" 
-            className="rounded-3xl"
-          />
+            <img
+              src="/icon kiosk/terug.png"
+              alt="Go Back"
+              className="rounded-3xl"
+            />
             {/* Go Back */}
           </KioskButton>
         </div>
       </div>
-      {/* Header Section */}
-      <div className="flex-shrink-0 px-8 pt-8 pb-6">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
-            Select Payment Method
-          </h1>
-          <p className="text-xl text-pos-text-secondary">
-            Choose how you would like to pay
-          </p>
-        </div>
-      </div>
+
 
       {/* Main Content Area */}
       <div className="px-8 pb-4">
         <div className="flex-1 flex flex-col justify-center max-w-5xl w-full mx-auto">
 
           {/* Payment Summary Card */}
-          <div className="bg-pos-bg-secondary rounded-xl p-3 mb-4 border border-pos-border-primary">
+          <div className="bg-pos-bg-secondary rounded-xl p-3 mb-4 border border-pos-border-primary w-1/2 mx-auto">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="text-lg text-pos-text-secondary mb-1">Payment Amount</div>
@@ -725,52 +715,54 @@ const PaymentMethodPage = () => {
           </div>
 
           {/* Payment Method Buttons */}
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Cash Payment Button */}
             <button
               onClick={() => handleMethodSelect('cash')}
               disabled={processing}
-             
+
             >
+              <div className="text-center mb-3">
+
+                <div className="text-center mt-2 text-3xl text-pos-text-secondary">
+                  <span>Cashmatic</span>
+                  <span className="mx-3">|</span>
+                  <span >Cashmatisch</span>
+                  <span className="mx-3">|</span>
+                  <span >كاشماتيك</span>
+                </div>
+              </div>
               {/* Icon/Visual */}
               <div className="">
-                <img 
-                  src="/icon kiosk/cash.png" 
-                  alt="Cash Payment" 
+                <img
+                  src="/icon kiosk/cash.png"
+                  alt="Cash Payment"
                   className="rounded-3xl"
                 />
               </div>
 
-              {/* Text Content */}
-              {/* <div className="space-y-3">
-                <div className="text-3xl font-bold text-pos-text-primary">Cash</div>
-                <div className="text-xl text-pos-text-secondary">Cashmatic</div>
-                <div className="text-lg text-pos-text-secondary" dir="rtl">كاشماتيك</div>
-              </div> */}
 
-              {/* Selected Indicator */}
-              {/* {selectedMethod === 'cash' && (
-                <div className="absolute top-4 right-4">
-                  <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-              )} */}
             </button>
 
             {/* Card Payment Button */}
             <button
               onClick={() => handleMethodSelect('card')}
               disabled={processing}
-              
             >
+              <div className="text-center mb-3">
+                <div className="text-center mt-2 text-3xl text-pos-text-secondary">
+                  <span>Payworld</span>
+                  <span className="mx-3">|</span>
+                  <span>Betaalwereld</span>
+                  <span className="mx-3">|</span>
+                  <span>عالم الدفع</span>
+                </div>
+              </div>
               {/* Icon/Visual */}
               <div className="">
-                <img 
-                  src="/icon kiosk/bancontact.png" 
-                  alt="Card Payment" 
+                <img
+                  src="/icon kiosk/bancontact.png"
+                  alt="Card Payment"
                   className="rounded-3xl"
                 />
               </div>
@@ -1048,7 +1040,7 @@ const PaymentMethodPage = () => {
       {showManualChangeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
           <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
-            
+
             {/* Modal Header */}
             <div className="px-8 py-6 border-b-2 border-pos-border-primary">
               <h2 className="text-3xl font-bold text-pos-text-primary text-center">
@@ -1097,9 +1089,8 @@ const PaymentMethodPage = () => {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className={`fixed top-8 right-8 z-50 px-6 py-4 rounded-lg shadow-lg ${
-          toastType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        }`}>
+        <div className={`fixed top-8 right-8 z-50 px-6 py-4 rounded-lg shadow-lg ${toastType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+          }`}>
           <div className="flex items-center gap-3">
             {toastType === 'success' ? (
               <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
@@ -1111,7 +1102,7 @@ const PaymentMethodPage = () => {
               </svg>
             )}
             <span className="text-lg font-medium">{toastMessage}</span>
-            <button 
+            <button
               onClick={() => setToastMessage("")}
               className="ml-4 text-white hover:text-gray-200"
             >

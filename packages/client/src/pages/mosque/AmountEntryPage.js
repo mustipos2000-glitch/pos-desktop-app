@@ -200,8 +200,15 @@ const AmountEntryPage = () => {
   return (
     <KioskLayout maxWidth="4xl">
       <KioskHeader 
-        title="Enter Amount"
-        subtitle={isMembershipPayment ? "Choose payment option" : "Use the keypad to enter the payment amount"}
+      title={
+        <span className="flex items-center justify-center">
+          <span>Enter Amount</span>
+          <span className="mx-3">|</span>
+          <span>Voer Bedrag In</span>
+          <span className="mx-3">|</span>
+          <span dir="rtl">أدخل المبلغ</span>
+        </span>
+      }
         step={2}
         totalSteps={3}
         className="mb-4"
@@ -238,9 +245,14 @@ const AmountEntryPage = () => {
                 {isMembershipPayment && memberFeeAmount ? formatAmount(memberFeeAmount.toString()) : formatAmount(amount)}
               </div>
               {isMembershipPayment && memberFeeAmount && (
-                <div className="text-center mt-2 text-lg text-pos-text-secondary">
-                  Full Membership Fee
-                </div>
+               <div className="text-center mt-2 text-lg text-pos-text-secondary">
+                <span>Full Membership Fee</span>
+                <span className="mx-3">|</span>
+                <span>Volledig Lidmaatschapsgeld</span>
+                <span className="mx-3">|</span>
+                <span dir="rtl">رسوم العضوية الكاملة</span>
+              </div>
+
               )}
             </div>
           </div>
@@ -257,9 +269,15 @@ const AmountEntryPage = () => {
                 onClick={handleFullPayment}
                 fullWidth
               >
-                <div className="text-center p-5">
-                  <div className="text-2xl font-bold">Full Payment</div>
-                  <div className="text-xl mt-1">€ {memberFeeAmount.toFixed(2)}</div>
+                <div className="text-center p-2">
+              <div className=" text-lg font-bold flex justify-center items-center gap-x-3">
+                  <span>Full Payment</span>
+                  <span className="opacity-60">|</span>
+                  <span>Volledige Betaling</span>
+                  <span className="opacity-60">|</span>
+                  <span dir="rtl">الدفع الكامل</span>
+                </div>     
+               <div className="text-4xl mt-4">€ {memberFeeAmount.toFixed(2)}</div>
                 </div>
               </KioskButton>
               
@@ -269,9 +287,15 @@ const AmountEntryPage = () => {
                 onClick={handleHalfPayment}
                 fullWidth
               >
-                <div className="text-center p-5">
-                  <div className="text-2xl font-bold">Half Payment</div>
-                  <div className="text-xl mt-1">€ {(memberFeeAmount / 2).toFixed(2)}</div>
+                <div className="text-center p-2">
+                <div className="text-lg font-bold flex justify-center items-center gap-x-3">
+                    <span>Half Payment</span>
+                    <span className="opacity-60">|</span>
+                    <span>Halve Betaling</span>
+                    <span className="opacity-60">|</span>
+                    <span dir="rtl">الدفع الجزئي</span>
+                  </div>                 
+                   <div className="text-4xl mt-4">€ {(memberFeeAmount / 2).toFixed(2)}</div>
                 </div>
               </KioskButton>
             </div>
