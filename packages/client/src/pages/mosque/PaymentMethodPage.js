@@ -510,45 +510,44 @@ const PaymentMethodPage = () => {
   // Cancel Cashmatic payment
   const handleCancelCashmatic = async () => {
     if (!cashmaticSessionId) {
-      setCashmaticSessionId("devsessionId");
-      setCashmaticPolling(false);
-      setCashmaticSessionId(null);
+      setToastType("error");
+      setToastMessage("No active Cashmatic session to cancel.");
       setProcessing(false);
-      setShowCashmaticModal(false);
-    //   setToastType("error");
-    //   setToastMessage("No active Cashmatic session to cancel.");
-    //   return;
+      setCashmaticPolling(false);
+      return;
     }
 
     try {
       console.log("Cancelling Cashmatic payment...");
-      
-      // Call API to cancel the payment
-      await ApiService.cancelCashmatic(cashmaticSessionId);
 
-      // Update state to show cancellation
-      setCashmaticInfo(prev => ({
-        ...prev,
-        state: "CANCELLED"
-      }));
+      const res = await ApiService.cancelCashmatic(cashmaticSessionId);
 
-      // Stop polling and reset session
+      // Accept several shapes: { success: true } or { ok: true } or raw response
+      const ok = (res && (res.success === true || res.ok === true)) || !res;
+
+      if (!ok) {
+        console.warn('Cashmatic cancel returned unexpected response:', res);
+        setToastType("error");
+        setToastMessage("Failed to cancel Cashmatic payment.");
+        return;
+      }
+
+      setCashmaticInfo(prev => ({ ...prev, state: "CANCELLED" }));
       setCashmaticPolling(false);
       setCashmaticSessionId(null);
       setProcessing(false);
-      
+
       setToastType("success");
       setToastMessage("Cashmatic payment cancelled successfully.");
 
-      // Close modal after a short delay
-      setTimeout(() => {
-        setShowCashmaticModal(false);
-      }, 2000);
-
+      // Close modal after a short delay so user sees the toast
+      setTimeout(() => setShowCashmaticModal(false), 1200);
     } catch (error) {
       console.error("Error cancelling Cashmatic payment:", error);
       setToastType("error");
       setToastMessage("Failed to cancel Cashmatic payment.");
+      setProcessing(false);
+      setCashmaticPolling(false);
     }
   };
 
@@ -577,24 +576,30 @@ const PaymentMethodPage = () => {
     });
 
     try {
-     const res =  await ApiService.cancelPayworldPayment(payworldSessionId);
-      console.log("result is : " , res);
-      if(!res.success){
+      const res = await ApiService.cancelPayworldPayment(payworldSessionId);
+      console.log("cancelPayworldPayment result:", res);
+
+      const ok = (res && (res.success === true || res.ok === true)) || !res;
+
+      if (!ok) {
+        console.warn('Payworld cancel returned unexpected response:', res);
         setPayworldPolling(false);
         setPayworldSessionId(null);
         setProcessing(false);
-        setShowManualChangeModal(false);
-        return ;
+        setPayworldStatus({ state: "ERROR", message: "Failed to cancel Payworld payment.", details: res });
+        setToastType("error");
+        setToastMessage("Failed to cancel Payworld payment.");
+        setShowPayworldModal(false);
+        return;
       }
-      setPayworldStatus({
-        state: "CANCELLED",
-        message: "Payworld payment cancelled on the terminal.",
-        details: null,
-      });
 
+      setPayworldStatus({ state: "CANCELLED", message: "Payworld payment cancelled on the terminal.", details: null });
       setPayworldPolling(false);
       setPayworldSessionId(null);
       setProcessing(false);
+      setToastType("success");
+      setToastMessage("Payworld payment cancelled.");
+      setShowPayworldModal(false);
     } catch (err) {
       console.error("Error cancelling Payworld:", err);
       setPayworldStatus({
