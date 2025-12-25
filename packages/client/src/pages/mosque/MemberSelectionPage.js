@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
-import KioskButton from '../../components/kiosk/KioskButton';
+import KioskButton from '../../components/mosque/KioskButton';
 
 /**
  * MemberSelectionPage - Modern kiosk-optimized member selection interface
@@ -271,15 +271,28 @@ const MemberSelectionPage = () => {
       {/* Header */}
       <div className="flex-shrink-0 px-8 pt-8 pb-2">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
-            Select Member
-          </h1>
-          <p className="text-xl text-pos-text-secondary">
-            Choose an existing member or create a new one
-          </p>
+         <h1 className="text-4xl font-bold text-pos-text-primary mb-3">
+          <span>Select Member</span>
+          <span className="mx-3">|</span>
+          <span>Selecteer Lid</span>
+          <span className="mx-3">|</span>
+          <span>اختر عضوا</span>
+        </h1>
+
         </div>
       </div>
-
+    <div className="absolute left-2 top-1 w-24">
+          <KioskButton
+            variant="secondary"
+            size="medium"
+            onClick={handleGoBack}
+            disabled={loading || creating}
+            icon={true}
+          >
+            <img src="/icon kiosk/terug.png" alt="Go Back" className="rounded-2xl" />
+            {/* Go Back */}
+      </KioskButton>
+      </div>
       {/* Selected Member Banner */}
       {selectedMember && (
         <div className="flex-shrink-0 px-8 pb-2">
@@ -337,7 +350,11 @@ const MemberSelectionPage = () => {
                   : 'bg-pos-interactive-primary text-pos-text-secondary border-pos-border-primary'
               }`}
             >
-              Find Existing Member
+              Find Existing <span>Member</span>
+              <span className="mx-3">|</span>
+              <span>Lid</span>
+              <span className="mx-3">|</span>
+              <span> العضو</span>
             </button>
             <button
               onClick={() => setShowCreateForm(true)}
@@ -347,7 +364,11 @@ const MemberSelectionPage = () => {
                   : 'bg-pos-interactive-primary text-pos-text-secondary border-pos-border-primary'
               }`}
             >
-              Create New Member
+              Create <span> New Member</span>
+                <span className="mx-3">|</span>
+                <span>Nieuw lid</span>
+                <span className="mx-3">|</span>
+                <span> عضو جديد</span>
             </button>
           </div>
 
@@ -497,29 +518,20 @@ const MemberSelectionPage = () => {
         </div>
       </div>
 
-      {/* Footer Navigation */}
-      <div className="flex-shrink-0 px-8 pb-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 gap-4">
-          <KioskButton
-            variant="secondary"
-            size="small"
-            onClick={handleGoBack}
-            disabled={loading || creating}
-          >
-            Go Back
-          </KioskButton>
+      <div className="flex width-full justify-center px-8 pb-6 pt-2">
           
           <KioskButton
-            variant="primary"
+            variant="success"
             size="small"
             onClick={handleNext}
             disabled={!selectedMember || loading || creating}
+            fullWidth
           >
             Continue
           </KioskButton>
         </div>
       </div>
-    </div>
+    // </div>
   );
 };
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import KioskLayout from '../../components/kiosk/KioskLayout';
 import KioskHeader from '../../components/kiosk/KioskHeader';
-import KioskButton from '../../components/kiosk/KioskButton';
+import KioskButton from '../../components/mosque/KioskButton';
 import KioskNumpad from '../../components/kiosk/KioskNumpad';
 import KioskInfoPanel from '../../components/kiosk/KioskInfoPanel';
 
@@ -200,13 +200,36 @@ const AmountEntryPage = () => {
   return (
     <KioskLayout maxWidth="4xl">
       <KioskHeader 
-        title="Enter Amount"
-        subtitle={isMembershipPayment ? "Choose payment option" : "Use the keypad to enter the payment amount"}
+      title={
+        <span className="flex items-center justify-center">
+          <span>Enter Amount</span>
+          <span className="mx-3">|</span>
+          <span>Voer Bedrag In</span>
+          <span className="mx-3">|</span>
+          <span dir="rtl">أدخل المبلغ</span>
+        </span>
+      }
         step={2}
         totalSteps={3}
         className="mb-4"
       />
-
+      <div className="absolute left-2 top-1 w-24">
+        <KioskButton
+          variant="secondary"
+          size="medium"
+          onClick={handleGoBack}
+          fullWidth
+          className=""
+          icon={true}
+        >
+          <img 
+            src="/icon kiosk/terug.png" 
+            alt="Go Back" 
+            className="rounded-3xl"
+          />
+          {/* ← Go Back */}
+        </KioskButton>
+        </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
         {/* Left Column - Info and Amount Display */}
         <div className="space-y-3 lg:space-y-4">
@@ -222,9 +245,14 @@ const AmountEntryPage = () => {
                 {isMembershipPayment && memberFeeAmount ? formatAmount(memberFeeAmount.toString()) : formatAmount(amount)}
               </div>
               {isMembershipPayment && memberFeeAmount && (
-                <div className="text-center mt-2 text-lg text-pos-text-secondary">
-                  Full Membership Fee
-                </div>
+               <div className="text-center mt-2 text-lg text-pos-text-secondary">
+                <span>Full Membership Fee</span>
+                <span className="mx-3">|</span>
+                <span>Volledig Lidmaatschapsgeld</span>
+                <span className="mx-3">|</span>
+                <span dir="rtl">رسوم العضوية الكاملة</span>
+              </div>
+
               )}
             </div>
           </div>
@@ -241,9 +269,15 @@ const AmountEntryPage = () => {
                 onClick={handleFullPayment}
                 fullWidth
               >
-                <div className="text-center p-5">
-                  <div className="text-2xl font-bold">Full Payment</div>
-                  <div className="text-xl mt-1">€ {memberFeeAmount.toFixed(2)}</div>
+                <div className="text-center p-2">
+              <div className=" text-lg font-bold flex justify-center items-center gap-x-3">
+                  <span>Full Payment</span>
+                  <span className="opacity-60">|</span>
+                  <span>Volledige Betaling</span>
+                  <span className="opacity-60">|</span>
+                  <span dir="rtl">الدفع الكامل</span>
+                </div>     
+               <div className="text-4xl mt-4">€ {memberFeeAmount.toFixed(2)}</div>
                 </div>
               </KioskButton>
               
@@ -253,9 +287,15 @@ const AmountEntryPage = () => {
                 onClick={handleHalfPayment}
                 fullWidth
               >
-                <div className="text-center p-5">
-                  <div className="text-2xl font-bold">Half Payment</div>
-                  <div className="text-xl mt-1">€ {(memberFeeAmount / 2).toFixed(2)}</div>
+                <div className="text-center p-2">
+                <div className="text-lg font-bold flex justify-center items-center gap-x-3">
+                    <span>Half Payment</span>
+                    <span className="opacity-60">|</span>
+                    <span>Halve Betaling</span>
+                    <span className="opacity-60">|</span>
+                    <span dir="rtl">الدفع الجزئي</span>
+                  </div>                 
+                   <div className="text-4xl mt-4">€ {(memberFeeAmount / 2).toFixed(2)}</div>
                 </div>
               </KioskButton>
             </div>
@@ -273,15 +313,6 @@ const AmountEntryPage = () => {
 
       {/* Navigation Buttons */}
       <div className="flex flex-col w-full sm:flex-row justify-center gap-3 sm:gap-4 mt-4 lg:mt-6">
-        <KioskButton
-          variant="secondary"
-          size="medium"
-          onClick={handleGoBack}
-          fullWidth
-          className=""
-        >
-          ← Go Back
-        </KioskButton>
         
         {!isMembershipPayment && (
           <KioskButton

@@ -137,8 +137,9 @@ const RentDateTimePage = () => {
 
   const calculateTotalAmount = () => {
     if (!rentalCharge) return 0;
-    const { days } = calculateDuration();
-    // Rental charge is per day, not per hour
+    const { hours } = calculateDuration();
+    // Calculate based on hours - charge for any part of a day
+    const days = Math.ceil(hours / 24); // Round up to next day
     return days * parseFloat(rentalCharge.rental_charge);
   };
 
@@ -177,11 +178,6 @@ const RentDateTimePage = () => {
     const { hours, days } = calculateDuration();
     if (hours <= 0) {
       alert('Invalid rental period');
-      return;
-    }
-    
-    if (days === 0) {
-      alert('Rental period must be at least 1 full day (24 hours)');
       return;
     }
 
@@ -461,7 +457,7 @@ const RentDateTimePage = () => {
                           <span className="text-4xl font-bold text-green-600">€ {calculateTotalAmount().toFixed(2)}</span>
                         </div>
                         <div className="text-base text-pos-text-secondary text-right">
-                          ({calculateDuration().days} day{calculateDuration().days !== 1 ? 's' : ''} × €{rentalCharge ? parseFloat(rentalCharge.rental_charge).toFixed(2) : '0.00'}/day)
+                          ({Math.ceil(calculateDuration().hours / 24)} day{Math.ceil(calculateDuration().hours / 24) !== 1 ? 's' : ''} × €{rentalCharge ? parseFloat(rentalCharge.rental_charge).toFixed(2) : '0.00'}/day)
                         </div>
                       </div>
                     </div>
