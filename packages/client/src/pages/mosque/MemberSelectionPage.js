@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
-import KioskButton from '../../components/kiosk/KioskButton';
+import KioskButton from '../../components/mosque/KioskButton';
 
 /**
  * MemberSelectionPage - Modern kiosk-optimized member selection interface
@@ -279,7 +279,18 @@ const MemberSelectionPage = () => {
           </p>
         </div>
       </div>
-
+    <div className="absolute left-2 top-1 w-24">
+          <KioskButton
+            variant="secondary"
+            size="medium"
+            onClick={handleGoBack}
+            disabled={loading || creating}
+            icon={true}
+          >
+            <img src="/icon kiosk/terug.png" alt="Go Back" className="rounded-2xl" />
+            {/* Go Back */}
+      </KioskButton>
+      </div>
       {/* Selected Member Banner */}
       {selectedMember && (
         <div className="flex-shrink-0 px-8 pb-2">
@@ -497,29 +508,20 @@ const MemberSelectionPage = () => {
         </div>
       </div>
 
-      {/* Footer Navigation */}
-      <div className="flex-shrink-0 px-8 pb-8">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 gap-4">
-          <KioskButton
-            variant="secondary"
-            size="small"
-            onClick={handleGoBack}
-            disabled={loading || creating}
-          >
-            Go Back
-          </KioskButton>
+      <div className="flex width-full justify-center px-8 pb-6 pt-2">
           
           <KioskButton
-            variant="primary"
+            variant="success"
             size="small"
             onClick={handleNext}
             disabled={!selectedMember || loading || creating}
+            fullWidth
           >
             Continue
           </KioskButton>
         </div>
       </div>
-    </div>
+    // </div>
   );
 };
 
