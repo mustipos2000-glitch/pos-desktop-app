@@ -1,14 +1,14 @@
 const express = require('express');
 const multer = require('multer');
+
 const router = express.Router();
+
+// ✅ Upload setup
+const upload = multer({ dest: 'uploads/' });
+
+// Controllers
 const CategoryController = require('../controllers/CategoryController');
 const GroupController = require('../controllers/GroupController');
-const UserController = require('../controllers/UserController');
-const MemberController = require('../controllers/MemberController');
-const MemberFeeController = require('../controllers/MemberFeeController');
-const RentalChargeController = require('../controllers/RentalChargeController');
-const RentalBookingController = require('../mosque/controllers/RentalBookingController');
-
 const ProductController = require('../controllers/ProductController');
 const SubProductController = require('../controllers/SubProductController');
 const OrderController = require('../controllers/OrderController');
@@ -24,9 +24,12 @@ const ScaleController = require('../controllers/ScaleController');
 const PromotionController = require('../controllers/PromotionController');
 const PayworldController = require('../controllers/PayworldController');
 
+const UserController = require('../controllers/UserController');
+const MemberController = require('../controllers/MemberController');
+const MemberFeeController = require('../controllers/MemberFeeController');
+const RentalChargeController = require('../controllers/RentalChargeController');
 
-
-const upload = multer({ dest: 'uploads/' }); // saves uploaded files in /uploads
+const RentalBookingController = require('../mosque/controllers/RentalBookingController');
 
 // User routes
 router.get('/users', UserController.getAllUsers);
@@ -37,7 +40,7 @@ router.patch('/users/:id/permissions', UserController.updatePermissions);
 router.delete('/users/:id', UserController.deleteUser);
 router.post('/users/verify', UserController.verifyPincode);
 
-// Member routes
+// Members routes
 router.get('/members', MemberController.getAllMembers);
 router.get('/members/next-id', MemberController.getNextMemberId);
 router.get('/members/search', MemberController.searchMembers);
@@ -71,8 +74,6 @@ router.put('/rental-bookings/:id', RentalBookingController.updateBooking);
 router.delete('/rental-bookings/:id', RentalBookingController.deleteBooking);
 router.get('/rental-bookings/range', RentalBookingController.getBookingsByDateRange);
 
-
-
 // Category routes
 router.get('/categories', CategoryController.getAllCategories);
 router.get('/categories/:id', CategoryController.getCategoryById);
@@ -93,7 +94,6 @@ router.delete('/groups/:id', GroupController.deleteGroup);
 router.get('/products', ProductController.getAllProducts);
 router.get('/products/barcode/:barcode', ProductController.getProductByBarcode);
 router.get('/products/:id', ProductController.getProductById);
-// ✅ if you're uploading image + text form-data
 router.post('/products', upload.single('image'), ProductController.createProduct);
 router.put('/products/:id', upload.single('image'), ProductController.updateProduct);
 router.delete('/products/:id', ProductController.deleteProduct);
@@ -133,22 +133,13 @@ router.delete('/pr-tables/:id', PrTableController.deletePrTable);
 
 // Printer routes
 router.get('/printers', PrinterController.getAllPrinters);
-router.get('/printers/main', PrinterController.getMainPrinter);
 router.get('/printers/:id', PrinterController.getPrinterById);
 router.post('/printers', PrinterController.createPrinter);
 router.put('/printers/:id', PrinterController.updatePrinter);
 router.delete('/printers/:id', PrinterController.deletePrinter);
 router.post('/printers/:id/test', PrinterController.testPrinter);
-router.post('/printers/print-receipt', PrinterController.printReceipt);
-router.post('/printers/print-kitchen', PrinterController.printKitchenOrder);
-router.post('/printers/print-kitchen-batch', PrinterController.printKitchenOrderBatch);
-router.post('/printers/print-custom', PrinterController.printCustom);
-router.post('/printers/open-drawer', PrinterController.openDrawer);
 
-// Payment routes
-router.post('/payments/send-receipt-email', PaymentController.sendReceiptEmail);
-
-// Cashmatic routes (for payment machine integration)
+// Cashmatic routes
 router.post('/cashmatic/start', PaymentController.processCashmaticPayment);
 router.get('/cashmatic/status/:sessionId', PaymentController.getPaymentStatus);
 router.post('/cashmatic/finish/:sessionId', PaymentController.finishCashmaticPayment);
@@ -157,7 +148,10 @@ router.post('/cashmatic/cancel/:sessionId', PaymentController.cancelCashmaticPay
 // Payworld routes (for Bancontact payment terminal integration)
 router.post('/payworld/start', PayworldController.startPayment);
 router.get('/payworld/status/:sessionId', PayworldController.getStatus);
-router.post('/payworld/cancel/:sessionId', PaymentController.cancelPayworldPayment);
+
+// ✅ FIX: cancel ook via PayworldController (Optie 2)
+router.post('/payworld/cancel/:sessionId', PayworldController.cancelPayment);
+
 router.get('/payworld/config', PayworldController.getConfigHandler);
 router.post('/payworld/config', PayworldController.updateConfigHandler);
 // router.get('/payworld/test', PaymentController.testPayworldConfig);
@@ -187,8 +181,6 @@ router.get('/inventory/:id', InventoryController.getInventoryById);
 router.post('/inventory', InventoryController.createInventory);
 router.put('/inventory/:id', InventoryController.updateInventory);
 router.delete('/inventory/:id', InventoryController.deleteInventory);
-
-
 
 // Report routes
 router.get('/reports/x-report', ReportController.getXReport);

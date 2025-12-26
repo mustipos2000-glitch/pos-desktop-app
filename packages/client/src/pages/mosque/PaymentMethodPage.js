@@ -115,7 +115,6 @@ const PaymentMethodPage = () => {
         } catch (bookingError) {
           console.error('❌ Error creating rental booking:', bookingError);
           // Don't fail the payment, just log the error
-          // The payment was successful, booking creation is secondary
         }
       }
 
@@ -156,6 +155,7 @@ const PaymentMethodPage = () => {
 
   // Poll Cashmatic payment status
   useEffect(() => {
+    console.log("Cashmatic polling effect triggered", cashmaticPolling, cashmaticSessionId);
     if (!cashmaticPolling || !cashmaticSessionId) return;
 
     const poll = async () => {
@@ -164,16 +164,18 @@ const PaymentMethodPage = () => {
         const res = await ApiService.getCashmaticStatus(cashmaticSessionId);
         const s = res.data || res;
         console.log("Cashmatic status:", s);
+
         // Handle error state from server
         if (s.errorMessage) {
           console.error("Cashmatic error:", s.errorMessage);
           setCashmaticPolling(false);
           setCashmaticSessionId(null);
-          setProcessing(false); // Fixed: was processing(false)
+          setProcessing(false);
           setToastType("error");
           setToastMessage("Cashmatic communication error: " + s.errorMessage);
           return;
         }
+
         const requested = (s.requestedAmount || 0) / 100;
         const inserted = (s.insertedAmount || 0) / 100;
         const dispensed = (s.dispensedAmount || 0) / 100;
@@ -191,8 +193,8 @@ const PaymentMethodPage = () => {
           console.log('insertd:' + inserted, " Requested : " + requested, " dispensed " + dispensed, " not Dspensed " + notDispensed);
 
           if (inserted < requested) return;
-          if (inserted > requested && (dispensed > 0 || notDispensed > 0)) {
 
+          if (inserted > requested && (dispensed > 0 || notDispensed > 0)) {
             const change = inserted - requested;
             if (change > 0) {
               const manualChangeDue = change - dispensed;
@@ -219,6 +221,7 @@ const PaymentMethodPage = () => {
           } else if (s.state === "PAID") {
             return;
           }
+
           console.log("Finished the Cashmatic ");
 
           setCashmaticPolling(false);
@@ -248,13 +251,12 @@ const PaymentMethodPage = () => {
             if (manualChangeDue > 0) {
               message = `Payment Completed! Please give ${formatAmount(manualChangeDue)} manual change to customer`;
             } else {
-              // Navigate to confirmation
               setTimeout(() => {
                 handleConfirm();
               }, 2000);
             }
-            setToastMessage(message);
 
+            setToastMessage(message);
             setProcessing(false);
 
           } catch (error) {
@@ -299,27 +301,7 @@ const PaymentMethodPage = () => {
   useEffect(() => {
     if (!payworldPolling || !payworldSessionId) return;
 
-    // const startTime = Date.now();
-    // const MAX_POLLING_DURATION = 2 * 60 * 1000; // 2 minutes in milliseconds
-
     const poll = async () => {
-      // Check if timeout exceeded
-      // const elapsed = Date.now() - startTime;
-      // if (elapsed >= MAX_POLLING_DURATION) {
-      //   console.log("Payworld polling timeout reached (2 minutes)");
-      //   setPayworldPolling(false);
-      //   setPayworldSessionId(null);
-      //   setProcessing(false);
-      //   setShowPayworldModal(false);
-      //   setPayworldStatus({
-      //     state: "ERROR",
-      //     message: "Payment timeout - maximum polling duration exceeded.",
-      //     details: null,
-      //   });
-      //   alert("Payworld payment timeout. Please try again.");
-      //   return;
-      // }
-
       try {
         const res = await ApiService.getPayworldStatus(payworldSessionId);
         const data = res.data || res;
@@ -356,7 +338,6 @@ const PaymentMethodPage = () => {
           setPayworldSessionId(null);
           setProcessing(false);
 
-          // Navigate to confirmation
           setTimeout(() => {
             handleConfirm();
           }, 1500);
@@ -446,12 +427,6 @@ const PaymentMethodPage = () => {
       return;
     }
 
-    // Add minimum amount validation for Payworld
-    // if (paymentAmount < 1.00) {
-    //   setToastMessage("Minimum payment amount for card transactions is €1.00. Please use cash for smaller amounts.");
-    //   return;
-    // }
-
     setShowPayworldModal(true);
     setSelectedMethod('card');
     setPayworldStatus({
@@ -521,8 +496,6 @@ const PaymentMethodPage = () => {
       console.log("Cancelling Cashmatic payment...");
 
       const res = await ApiService.cancelCashmatic(cashmaticSessionId);
-
-      // Accept several shapes: { success: true } or { ok: true } or raw response
       const ok = (res && (res.success === true || res.ok === true)) || !res;
 
       if (!ok) {
@@ -537,11 +510,9 @@ const PaymentMethodPage = () => {
       setCashmaticSessionId(null);
       setProcessing(false);
 
-
       setToastType("success");
       setToastMessage("Cashmatic payment cancelled successfully.");
 
-      // Close modal after a short delay so user sees the toast
       setTimeout(() => setShowCashmaticModal(false), 1200);
     } catch (error) {
       console.error("Error cancelling Cashmatic payment:", error);
@@ -555,8 +526,6 @@ const PaymentMethodPage = () => {
   // Cancel Payworld payment
   const handleAbortPayworld = async () => {
     if (!payworldSessionId) {
-      console.log('We are here in not payworkd session Id ');
-
       setPayworldPolling(false);
       setPayworldSessionId(null);
       setProcessing(false);
@@ -568,7 +537,6 @@ const PaymentMethodPage = () => {
       setShowPayworldModal(false);
       return;
     }
-    console.log("outside the payeworkd machin abort");
 
     setPayworldStatus({
       state: "IN_PROGRESS",
@@ -615,52 +583,43 @@ const PaymentMethodPage = () => {
   };
 
   const handleGoBack = () => {
-    // Check payment type to determine correct back navigation
     if (paymentType?.id === 'rent') {
-      // For rent, go back to rent datetime page (skip amount entry)
       navigate('/mosque/rent-datetime');
     } else {
-      // For other payment types, go back to amount entry
       navigate('/mosque/amount-entry');
     }
   };
 
   // Test function to skip payment and test printer
   const handleTestPrint = () => {
-    // Generate mock transaction ID
     const testTransactionId = `TEST-${Date.now()}`;
-
-    // Store test payment data
     localStorage.setItem('transactionId', testTransactionId);
-    localStorage.setItem('paymentMethod', 'cash'); // Default to cash for testing
-
-    // Navigate directly to ticket selection
+    localStorage.setItem('paymentMethod', 'cash');
     console.log('Test mode: Skipping payment, going to ticket-selection...');
     navigate('/mosque/ticket-selection');
   };
 
   return (
     <div className="h-screen bg-pos-bg-primary flex flex-col mt-2">
-      {/* Footer Navigation */}
-      <div className="absolute w-40 left-1 top-1 w-24">
-        <div className="w-24">
+      {/* Back Button - bottom-left, red, double size */}
+      <div className="absolute left-6 bottom-6 z-50 scale-150 origin-bottom-left">
+        <div className="w-36">
           <KioskButton
-            variant="secondary"
+            variant="danger"
             onClick={handleGoBack}
             disabled={processing}
-            fullWidth
             icon={"true"}
           >
             <img
               src="/icon kiosk/terug.png"
               alt="Go Back"
               className="rounded-3xl"
+              draggable={false}
             />
             {/* Go Back */}
           </KioskButton>
         </div>
       </div>
-
 
       {/* Main Content Area */}
       <div className="px-8 pb-4">
@@ -724,35 +683,32 @@ const PaymentMethodPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Cash Payment Button */}
             <button
-              onClick={() => handleMethodSelect('cash')}
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMethodSelect('cash'); }}
               disabled={processing}
-
             >
               <div className="text-center mb-3">
-
                 <div className="text-center mt-2 text-3xl text-pos-text-secondary">
                   <span>Cashmatic</span>
                   <span className="mx-3">|</span>
-                  <span >Cashmatisch</span>
+                  <span>Cashmatisch</span>
                   <span className="mx-3">|</span>
-                  <span >كاشماتيك</span>
+                  <span>كاشماتيك</span>
                 </div>
               </div>
-              {/* Icon/Visual */}
-              <div className="">
+              <div>
                 <img
                   src="/icon kiosk/cash.png"
                   alt="Cash Payment"
                   className="rounded-3xl"
                 />
               </div>
-
-
             </button>
 
             {/* Card Payment Button */}
             <button
-              onClick={() => handleMethodSelect('card')}
+              type="button"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMethodSelect('card'); }}
               disabled={processing}
             >
               <div className="text-center mb-3">
@@ -764,32 +720,13 @@ const PaymentMethodPage = () => {
                   <span>عالم الدفع</span>
                 </div>
               </div>
-              {/* Icon/Visual */}
-              <div className="">
+              <div>
                 <img
                   src="/icon kiosk/bancontact.png"
                   alt="Card Payment"
                   className="rounded-3xl"
                 />
               </div>
-
-              {/* Text Content */}
-              {/* <div className="space-y-3">
-                <div className="text-3xl font-bold text-pos-text-primary">Card</div>
-                <div className="text-xl text-pos-text-secondary">Bancontact</div>
-                <div className="text-lg text-pos-text-secondary" dir="rtl">بانكونتاكت</div>
-              </div> */}
-
-              {/* Selected Indicator */}
-              {/* {selectedMethod === 'card' && (
-                <div className="absolute top-4 right-4">
-                  <div className="w-8 h-8 bg-pos-interactive-hover rounded-full flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                </div>
-              )} */}
             </button>
           </div>
 
@@ -801,16 +738,13 @@ const PaymentMethodPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
           <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
 
-            {/* Modal Header */}
             <div className="px-8 py-2 border-b-2 border-pos-border-primary">
               <h2 className="text-3xl font-bold text-pos-text-primary text-center">
                 Cash Payment in Progress
               </h2>
             </div>
 
-            {/* Modal Content */}
             <div className="px-8 py-2">
-              {/* Status Indicator */}
               <div className="mb-4 text-center">
                 <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-4">
                   {(cashmaticInfo.state === "IN_PROGRESS" || cashmaticInfo.state === "PAID") && (
@@ -853,7 +787,6 @@ const PaymentMethodPage = () => {
                 </div>
               </div>
 
-              {/* Payment Details */}
               <div className="space-y-2 bg-pos-bg-secondary rounded-2xl p-4 border-2 border-pos-border-primary">
                 <div className="flex justify-between items-center py-3 border-b border-pos-border-primary">
                   <span className="text-xl text-pos-text-secondary">Amount Due</span>
@@ -874,7 +807,7 @@ const PaymentMethodPage = () => {
                   <span className="text-2xl font-semibold text-pos-text-primary">€ {formatAmount(cashmaticInfo?.dispensed)}</span>
                 </div>
                 {cashmaticInfo?.notDispensed > 0 && (
-                  <div className="flex justify-between items-center py-2gdnf bg-yellow-500 bg-opacity-10 rounded-xl px-4">
+                  <div className="flex justify-between items-center py-2 bg-yellow-500 bg-opacity-10 rounded-xl px-4">
                     <span className="text-xl text-yellow-600 font-semibold">Manual Change Required</span>
                     <span className="text-3xl font-bold text-yellow-600">€ {formatAmount(cashmaticInfo?.notDispensed)}</span>
                   </div>
@@ -882,10 +815,8 @@ const PaymentMethodPage = () => {
               </div>
             </div>
 
-            {/* Modal Actions */}
             <div className="px-8 pb-8">
               <div className="flex gap-4">
-                {/* Cancel button for active payment states */}
                 {(cashmaticInfo.state !== "PAID") && (
                   <KioskButton
                     variant="danger"
@@ -896,7 +827,6 @@ const PaymentMethodPage = () => {
                   </KioskButton>
                 )}
 
-                {/* Close button for finished states */}
                 {(cashmaticInfo.state === "FINISHED" ||
                   cashmaticInfo.state === "FINISHED_MANUAL" ||
                   cashmaticInfo.state === "CANCELLED" ||
@@ -920,16 +850,13 @@ const PaymentMethodPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
           <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
 
-            {/* Modal Header */}
             <div className="px-8 py-3 border-b-2 border-pos-border-primary">
               <h2 className="text-2xl font-bold text-pos-text-primary text-center">
                 Card Payment
               </h2>
             </div>
 
-            {/* Modal Content */}
             <div className="px-8 py-4">
-              {/* Status Indicator */}
               <div className="mb-4 text-center">
                 <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-pos-interactive-primary mb-2">
                   {payworldStatus.state === "IN_PROGRESS" && (
@@ -978,7 +905,6 @@ const PaymentMethodPage = () => {
                 )}
               </div>
 
-              {/* Payment Amount */}
               <div className="bg-pos-bg-secondary rounded-2xl px-6 py-2 border-2 border-pos-border-primary">
                 <div className="flex justify-between items-center">
                   <span className="text-xl text-pos-text-secondary">Payment Amount</span>
@@ -986,7 +912,6 @@ const PaymentMethodPage = () => {
                 </div>
               </div>
 
-              {/* Instructions for IN_PROGRESS state */}
               {payworldStatus.state === "IN_PROGRESS" && (
                 <div className="mt-3 bg-blue-500 bg-opacity-10 rounded-2xl px-6 py-3 border-2 border-blue-500">
                   <div className="flex items-start gap-4">
@@ -1004,7 +929,6 @@ const PaymentMethodPage = () => {
               )}
             </div>
 
-            {/* Modal Actions */}
             <div className="px-8 pb-8">
               <div className="flex gap-4">
                 {payworldStatus.state === "IN_PROGRESS" && (
@@ -1046,15 +970,12 @@ const PaymentMethodPage = () => {
       {showManualChangeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
           <div className="bg-pos-bg-primary border-4 border-pos-border-primary rounded-3xl shadow-2xl w-full max-w-2xl mx-8">
-
-            {/* Modal Header */}
             <div className="px-8 py-6 border-b-2 border-pos-border-primary">
               <h2 className="text-3xl font-bold text-pos-text-primary text-center">
                 Manual Change Required
               </h2>
             </div>
 
-            {/* Modal Content */}
             <div className="px-8 py-6">
               <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-yellow-500 mb-4">
@@ -1079,7 +1000,6 @@ const PaymentMethodPage = () => {
               </div>
             </div>
 
-            {/* Modal Actions */}
             <div className="px-8 pb-8">
               <KioskButton
                 variant="primary"
@@ -1111,6 +1031,7 @@ const PaymentMethodPage = () => {
             <button
               onClick={() => setToastMessage("")}
               className="ml-4 text-white hover:text-gray-200"
+              type="button"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -1120,7 +1041,6 @@ const PaymentMethodPage = () => {
         </div>
       )}
     </div>
-    // </div>
   );
 };
 

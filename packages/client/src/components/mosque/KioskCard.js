@@ -1,70 +1,84 @@
-import React from 'react';
+import React from "react";
 
 /**
- * KioskCard - Touch-optimized card component for selections
- * 
- * Features:
- * - Large touch area
- * - Clear visual hierarchy
- * - Multilingual support
- * - Active state indication
+ * KioskCard
+ * - Witte achtergrond
+ * - Grote, duidelijke teksten
+ * - Elke taal eigen kleur
+ * - Afbeeldingen blijven origineel van grootte
  */
-const KioskCard = ({ 
-  title, 
-  subtitle, 
-  subtitleNl, 
+const KioskCard = ({
+  title,
+  subtitle,
+  subtitleNl,
   subtitleAr,
-  onClick, 
+  onClick,
   selected = false,
   icon = null,
-  className = ''
+  className = "",
 }) => {
   return (
     <button
+      type="button"
       onClick={onClick}
       className={`
+        w-full max-w-sm
+        bg-white
+        border-2 border-pos-border-primary
+        rounded-3xl
+        shadow-xl
+        px-6 py-8
+        flex flex-col items-center justify-center
+        transition
+        active:scale-[0.99]
+        ${selected ? "ring-4 ring-pos-info" : ""}
         ${className}
       `}
     >
-      <div className="">
-        {icon && (
-          <div className="">
-            {typeof icon === 'string' && icon.startsWith('/') ? (
-              <img 
-                src={icon} 
-                alt={title}
-                className="mx-auto object-contain rounded-3xl"
-              />
-            ) : (
-              <div className="text-5xl">
-                {icon}
-              </div>
-            )}
-          </div>
-        )}
-        
-        {/* <h3 className="text-2xl font-bold text-pos-text-primary leading-tight">
-          {title}
-        </h3>
-        
-        {subtitle && (
-          <p className="text-lg text-pos-text-secondary">
-            {subtitle}
-          </p>
-        )}
-        
-        {subtitleNl && (
-          <p className="text-base text-pos-text-muted">
-            {subtitleNl}
-          </p>
-        )}
-        
-        {subtitleAr && (
-          <p className="text-lg text-pos-text-muted" dir="rtl">
-            {subtitleAr}
-          </p>
-        )} */}
-      </div>
+      {/* ===== AFBEELDING (ONVERANDERD) ===== */}
+      {icon && (
+        <div className="w-full flex items-center justify-center">
+          {typeof icon === "string" ? (
+            <img
+              src={icon}
+              alt={title || ""}
+              className="object-contain"
+              draggable={false}
+            />
+          ) : (
+            icon
+          )}
+        </div>
+      )}
+
+      {/* ===== TEKSTEN ===== */}
+      {(subtitleNl || subtitle || subtitleAr) && (
+        <div className="mt-6 text-center leading-tight">
+          {/* Nederlands */}
+          {subtitleNl && (
+            <div className="text-4xl font-extrabold text-black">
+              {subtitleNl}
+            </div>
+          )}
+
+          {/* Engels */}
+          {subtitle && (
+            <div className="text-3xl font-semibold text-gray-600 mt-3">
+              {subtitle}
+            </div>
+          )}
+
+          {/* Arabisch */}
+          {subtitleAr && (
+            <div
+              className="text-4xl font-bold text-green-700 mt-4"
+              dir="rtl"
+            >
+              {subtitleAr}
+            </div>
+          )}
+        </div>
+      )}
     </button>
   );
 };

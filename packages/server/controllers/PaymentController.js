@@ -7,12 +7,15 @@ const net = require('net');
 
 const PaymentController = {
   sessions: new Map(), // In-memory session store for Payworld payments
+  trxSyncNumber: 0,
 
-  // Process Cashmatic payment
+  // -------------------------
+  // CASHMATIC
+  // -------------------------
   processCashmaticPayment: async (req, res) => {
-      console.log("enter.....");
+    console.log("enter.....");
 
-    try {      
+    try {
       const { amount } = req.body;
       if (!amount || amount <= 0) {
         return res.status(400).json({ error: 'amount should be greater then ' });
@@ -29,198 +32,93 @@ const PaymentController = {
     }
   },
 
-  // Get payment status (used by /cashmatic/status/:sessionId)
   getPaymentStatus: async (req, res) => {
     try {
       const { sessionId } = req.params;
       console.log("Getting payment status for sessionId:", sessionId);
-      
+
       const result = await CashmaticService.getStatus(sessionId);
       console.log("Status result:", result);
-      
+
       if (!result) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Session not found' 
+        return res.status(404).json({
+          success: false,
+          error: 'Session not found'
         });
       }
 
-      // CashmaticService.getStatus returns { state, requestedAmount, insertedAmount, etc. }
-      res.json({ 
-        success: true, 
-        data: result 
+      res.json({
+        success: true,
+        data: result
       });
     } catch (error) {
       console.error('Get payment status error:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         error: 'Failed to get payment status: ' + (error.message || 'Unknown error')
       });
     }
   },
 
-  // Finish Cashmatic payment (close transaction and print receipt)
   finishCashmaticPayment: async (req, res) => {
     try {
       console.log("In side finish Cashmatic Payemnt machine ", req, res);
-      
+
       const { sessionId } = req.params;
       console.log("Finishing Cashmatic payment for sessionId:", sessionId);
 
       const result = await CashmaticService.finishPayment(sessionId);
-      
+
       if (!result) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Session not found' 
+        return res.status(404).json({
+          success: false,
+          error: 'Session not found'
         });
       }
 
-      res.json({ 
-        success: true, 
-        data: result 
+      res.json({
+        success: true,
+        data: result
       });
     } catch (error) {
       console.error('Finish Cashmatic payment error:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         error: 'Failed to finish payment: ' + (error.message || 'Unknown error')
       });
     }
   },
 
-  // Cancel Cashmatic payment
   cancelCashmaticPayment: async (req, res) => {
     try {
       const { sessionId } = req.params;
       console.log("Cancelling Cashmatic payment for sessionId:", sessionId);
 
       const result = await CashmaticService.cancelPayment(sessionId);
-      
+
       if (!result) {
-        return res.status(404).json({ 
-          success: false, 
-          error: 'Session not found' 
+        return res.status(404).json({
+          success: false,
+          error: 'Session not found'
         });
       }
 
-      res.json({ 
-        success: true, 
-        data: result 
+      res.json({
+        success: true,
+        data: result
       });
     } catch (error) {
       console.error('Cancel Cashmatic payment error:', error);
-      res.status(500).json({ 
-        success: false, 
+      res.status(500).json({
+        success: false,
         error: 'Failed to cancel payment: ' + (error.message || 'Unknown error')
       });
     }
   },
 
-
-  // async processPayworldPayment(req, res) {
-  //   const { amount, cancel, sessionId } = req.body || {};
-
-  //   const config = PaymentController.loadConfig();
-  //   if (!config.ip || !config.port) {
-  //     return res.status(500).json({
-  //       ok: false,
-  //       provider: "payworld",
-  //       error:
-  //         "Payworld config ontbreekt. Vul IP en poort in via Settings (Payworld).",
-  //     });
-  //   }
-
-  //   // 🔴 ANNULEREN VANUIT POS
-  //   if (cancel) {
-  //     console.log("[Payworld] Cancel requested from POS.");
-  //     try {
-  //       if (sessionId) {
-  //         PaymentController.updateSession(sessionId, {
-  //           state: "CANCELLED",
-  //           message: "Annuleren aangevraagd vanaf POS...",
-  //           lastEvent: "POS_CANCEL",
-  //         });
-  //       }
-
-  //       await PaymentController.sendAbort({
-  //         ip: config.ip,
-  //         port: config.port,
-  //       });
-
-  //       if (sessionId) {
-  //         PaymentController.updateSession(sessionId, {
-  //           state: "CANCELLED",
-  //           message: "Transactie geannuleerd op terminal.",
-  //           lastEvent: "POS_CANCEL_DONE",
-  //         });
-  //       }
-
-  //       return res.json({
-  //         ok: true,
-  //         provider: "payworld",
-  //         cancelled: true,
-  //       });
-  //     } catch (err) {
-  //       console.error("[Payworld] ERROR while cancelling:", err);
-  //       if (sessionId) {
-  //         PaymentController.updateSession(sessionId, {
-  //           state: "ERROR",
-  //           message: "Fout bij annuleren op terminal.",
-  //           lastEvent: "POS_CANCEL_ERROR",
-  //           details: { error: err.message },
-  //         });
-  //       }
-  //       return res.status(500).json({
-  //         ok: false,
-  //         provider: "payworld",
-  //         error: "Fout bij annuleren op Payworld terminal.",
-  //         details: err.message,
-  //       });
-  //     }
-  //   }
-
-  //   // 🔵 NORMALE BETALING STARTEN
-  //   if (!amount || amount <= 0) {
-  //     return res.status(400).json({
-  //       ok: false,
-  //       provider: "payworld",
-  //       error: "Invalid amount for Payworld",
-  //     });
-  //   }
-
-  //   const amountCents = Math.round(Number(amount) * 100);
-  //   console.log("[Payworld] Start betaling:", amount, "=>", amountCents, "cents");
-
-  //   const session = PaymentController.createSession(amountCents);
-
-  //   // Background TCP-flow starten, HTTP-call direct antwoord geven
-  //   PaymentController.processPayment({
-  //     sessionId: session.id,
-  //     ip: config.ip || "192.168.1.22",
-  //     port: config.port || "50000",
-  //     amountCents,
-  //     posId: config.posId || "2001",
-  //     currencyCode: config.currencyCode || "978",
-  //   }).catch((err) => {
-  //     console.error("[Payworld] processPayment error (uncaught):", err);
-  //     PaymentController.updateSession(session.id, {
-  //       state: "ERROR",
-  //       message: err.message || "Onbekende fout tijdens betaling.",
-  //       lastEvent: "PROCESS_ERROR",
-  //       details: { error: err.message },
-  //     });
-  //   });
-
-  //   // POS krijgt meteen een sessionId terug en kan poll'en
-  //   return res.json({
-  //     ok: true,
-  //     provider: "payworld",
-  //     sessionId: session.id,
-  //     amountInCents: amountCents,
-  //   });
-  // },
-
+  // -------------------------
+  // PAYWORLD HELPERS
+  // -------------------------
   updateSession(id, patch) {
     const s = PaymentController.sessions.get(id);
     if (!s) return;
@@ -229,6 +127,37 @@ const PaymentController = {
 
   getConfigPath() {
     return path.join(__dirname, "..", "config", "payworld.config.json");
+  },
+
+  loadConfig() {
+    try {
+      const configPath = PaymentController.getConfigPath();
+      if (!fs.existsSync(configPath)) {
+        console.warn("[Payworld] payworld.config.json not found. Using defaults.");
+        return {
+          ip: "192.168.1.22",
+          port: 50000,
+          posId: "2001",
+          currencyCode: "978",
+        };
+      }
+      const raw = fs.readFileSync(configPath, "utf8");
+      const parsed = JSON.parse(raw);
+      return {
+        ip: parsed.ip || "192.168.1.22",
+        port: parsed.port || 50000,
+        posId: parsed.posId || "2001",
+        currencyCode: parsed.currencyCode || "978",
+      };
+    } catch (err) {
+      console.error("[Payworld] Failed to load payworld.config.json:", err);
+      return {
+        ip: "192.168.1.22",
+        port: 50000,
+        posId: "2001",
+        currencyCode: "978",
+      };
+    }
   },
 
   sendAbort({ ip, port }) {
@@ -267,17 +196,32 @@ const PaymentController = {
     });
   },
 
+  createSession(amountInCents) {
+    const id = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+    const session = {
+      id,
+      amountInCents,
+      state: "IN_PROGRESS", // IN_PROGRESS | APPROVED | DECLINED | CANCELLED | ERROR
+      message: "Betaling gestart...",
+      details: null,
+      lastEvent: null,
+      lastUpdate: Date.now(),
+      trxSyncNumber: null,
+    };
+    PaymentController.sessions.set(id, session);
+    return session;
+  },
+
   async processPayment({ sessionId, ip, port, amountCents, posId, currencyCode }) {
-    console.log("Start Payment : " + sessionId, ip, amountCents, posId,currencyCode);
-    
+    console.log("[Payworld] Start Payment:", sessionId, ip, amountCents, posId, currencyCode);
+
     try {
       PaymentController.updateSession(sessionId, {
         state: "IN_PROGRESS",
         message: "Verbinding met terminal wordt opgebouwd...",
         lastEvent: "CONNECTING",
       });
-      console.log("Sending Financial Transcation with status ");
-      
+
       const response = await PaymentController.sendFinancialTrxWithStatus({
         sessionId,
         ip,
@@ -290,9 +234,7 @@ const PaymentController = {
       if (response && typeof response.approved === "boolean") {
         PaymentController.updateSession(sessionId, {
           state: response.approved ? "APPROVED" : "DECLINED",
-          message: response.approved
-            ? "Transactie goedgekeurd."
-            : response.error || "Transactie geweigerd.",
+          message: response.approved ? "Transactie goedgekeurd." : (response.error || "Transactie geweigerd."),
           lastEvent: response.approved ? "APPROVED" : "DECLINED",
           details: response,
         });
@@ -307,84 +249,35 @@ const PaymentController = {
       });
     }
   },
-  createSession(amountInCents) {
-    const id = `${Date.now()
-      } - ${Math.floor(Math.random() * 1e6)}`;
-    const session = {
-      id,
-      amountInCents,
-      state: "IN_PROGRESS", // IN_PROGRESS | APPROVED | DECLINED | CANCELLED | ERROR
-      message: "Betaling gestart...",
-      details: null,
-      lastEvent: null,
-      lastUpdate: Date.now(),
-    };
-    PaymentController.sessions.set(id, session);
-    return session;
-  },
-  loadConfig() {
-    try {
-      const configPath = PaymentController.getConfigPath();
-      if (!fs.existsSync(configPath)) {
-        console.warn("[Payworld] payworld.config.json not found. Using defaults.");
-        return {
-          ip: "192.168.1.22",
-          port: 50000,
-          posId: "2001",
-          currencyCode: "978",
-        };
-      }
-      const raw = fs.readFileSync(configPath, "utf8");
-      const parsed = JSON.parse(raw);
-      return {
-        ip: parsed.ip || "192.168.1.22",
-        port: parsed.port || 50000,
-        posId: parsed.posId || "2001",
-        currencyCode: parsed.currencyCode || "978",
-      };
-    } catch (err) {
-      console.error("[Payworld] Failed to load payworld.config.json:", err);
-      return {
-        ip: "192.168.1.22",
-        port: 50000,
-        posId: "2001",
-        currencyCode: "978",
-      };
-    }
-  },
 
-  sendFinancialTrxWithStatus({
-    sessionId,
-    ip,
-    port,
-    amountCents,
-    posId,
-    currencyCode,
-  }) {
+  sendFinancialTrxWithStatus({ sessionId, ip, port, amountCents, posId, currencyCode }) {
     return new Promise((resolve, reject) => {
       const client = new net.Socket();
       let buffer = Buffer.alloc(0);
       let resolved = false;
 
-      PaymentController.trxSyncNumber =
-        (PaymentController.trxSyncNumber + 1) % 1000000 || 1;
+      // sync nummer verhogen (zorgt dat het altijd bestaat)
+      PaymentController.trxSyncNumber = (PaymentController.trxSyncNumber + 1) % 1000000 || 1;
       const syncNumber = PaymentController.trxSyncNumber;
 
+      // bewaar syncNumber in session (handig voor debugging/latere abort-types)
+      PaymentController.updateSession(sessionId, { trxSyncNumber: syncNumber });
+
       const xml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-      <vcs-pos:financialTrxRequest xmlns:vcs-pos="http://www.vibbek.com/pos">
-        <posId>${posId}</posId>
-        <trxSyncNumber>${syncNumber}</trxSyncNumber>
-        <trxData>
-          <amount>${amountCents}</amount>
-          <currency>${currencyCode}</currency>
-          <transactionType>0</transactionType>
-          <partialApprovalCap>1</partialApprovalCap>
-          <noDCC>true</noDCC>
-        </trxData>
-        <trxInfo>AAAf</trxInfo>
-        <receiptFormat>1</receiptFormat>
-        <selectedLang>en</selectedLang>
-      </vcs-pos:financialTrxRequest>`;
+<vcs-pos:financialTrxRequest xmlns:vcs-pos="http://www.vibbek.com/pos">
+  <posId>${posId}</posId>
+  <trxSyncNumber>${syncNumber}</trxSyncNumber>
+  <trxData>
+    <amount>${amountCents}</amount>
+    <currency>${currencyCode}</currency>
+    <transactionType>0</transactionType>
+    <partialApprovalCap>1</partialApprovalCap>
+    <noDCC>true</noDCC>
+  </trxData>
+  <trxInfo>AAAf</trxInfo>
+  <receiptFormat>1</receiptFormat>
+  <selectedLang>en</selectedLang>
+</vcs-pos:financialTrxRequest>`;
 
       const xmlBytes = Buffer.from(xml, "utf8");
       const lenHeader = Buffer.alloc(4);
@@ -403,19 +296,22 @@ const PaymentController = {
         client.write(payload);
       });
 
-      client.on("data", (chunk) => {
-        buffer = Buffer.concat([buffer, chunk]);
-        processBuffer();
-      });
-
       const processBuffer = () => {
         while (buffer.length >= 4) {
           const msgLen = buffer.readUInt32BE(0);
+          if (msgLen <= 0 || msgLen > 10 * 1024 * 1024) {
+            if (!resolved) {
+              resolved = true;
+              client.destroy();
+              reject(new Error(`Invalid Payworld frame length: ${msgLen}`));
+            }
+            return;
+          }
           if (buffer.length < 4 + msgLen) return;
 
-          const xmlBytes = buffer.slice(4, 4 + msgLen);
+          const xmlBytesFrame = buffer.slice(4, 4 + msgLen);
           buffer = buffer.slice(4 + msgLen);
-          const xmlString = xmlBytes.toString("utf8");
+          const xmlString = xmlBytesFrame.toString("utf8");
 
           console.log("[Payworld] Received frame XML:", xmlString);
 
@@ -480,10 +376,7 @@ const PaymentController = {
             }
             const text = lines.join(" | ") || "Bericht op terminal.";
 
-            const prefix =
-              displayType === "ATTENDANT"
-                ? "[Personeel] "
-                : "[Klant] ";
+            const prefix = displayType === "ATTENDANT" ? "[Personeel] " : "[Klant] ";
 
             PaymentController.updateSession(sessionId, {
               state: "IN_PROGRESS",
@@ -531,6 +424,11 @@ const PaymentController = {
         }
       };
 
+      client.on("data", (chunk) => {
+        buffer = Buffer.concat([buffer, chunk]);
+        processBuffer();
+      });
+
       client.on("timeout", () => {
         if (!resolved) {
           resolved = true;
@@ -556,10 +454,12 @@ const PaymentController = {
     });
   },
 
+  // Robust XML tag extractor (werkt ook met namespaces en multiline)
   parseFinancialTrxResponse(xmlString) {
     const isFinancial =
       xmlString.includes("financialTrxResponse") ||
-      xmlString.includes("<vcs-pos:financialTrxResponse");
+      xmlString.includes("<vcs-pos:financialTrxResponse") ||
+      xmlString.includes(":financialTrxResponse");
 
     if (!isFinancial) {
       return {
@@ -569,10 +469,18 @@ const PaymentController = {
       };
     }
 
+    const stripCdata = (s) => {
+      if (s == null) return s;
+      const trimmed = String(s).trim();
+      const m = trimmed.match(/^<!\[CDATA\[([\s\S]*?)\]\]>$/);
+      return (m ? m[1] : trimmed).trim();
+    };
+
     const getTag = (tag) => {
-      const re = new RegExp(`<${tag}[^>] *> ([^<] *)</${tag} >`);
+      // match <tag>..</tag> en ook <ns:tag>..</ns:tag>
+      const re = new RegExp(`<([a-zA-Z0-9_-]+:)?${tag}[^>]*>([\\s\\S]*?)</([a-zA-Z0-9_-]+:)?${tag}>`, "i");
       const m = xmlString.match(re);
-      return m ? m[1] : null;
+      return m ? stripCdata(m[2]) : null;
     };
 
     const trxResultStr = getTag("trxResult");
@@ -585,9 +493,19 @@ const PaymentController = {
     const cardAppLabel = getTag("cardAppLabel");
     const cardAppId = getTag("cardAppId");
 
+    // optioneel QR/link velden (kan per profiel verschillen)
+    const qrData =
+      getTag("qrData") ||
+      getTag("qrCode") ||
+      getTag("qrCodeData") ||
+      getTag("paymentLink") ||
+      getTag("deepLink") ||
+      getTag("customerReceipt") ||
+      getTag("merchantReceipt") ||
+      null;
+
     const trxResult = trxResultStr != null ? parseInt(trxResultStr, 10) : null;
-    const ep2AuthResult =
-      ep2AuthResultStr != null ? parseInt(ep2AuthResultStr, 10) : null;
+    const ep2AuthResult = ep2AuthResultStr != null ? parseInt(ep2AuthResultStr, 10) : null;
     const amountAuth = amountAuthStr != null ? parseInt(amountAuthStr, 10) : null;
 
     const approved = trxResult === 0;
@@ -595,8 +513,7 @@ const PaymentController = {
     let errorMessage = null;
     if (!approved) {
       errorMessage =
-        `Transactie geweigerd (trxResult=${trxResult}, ep2AuthResult=${ep2AuthResult}, code=${ep2AuthResponseCode || "?"
-        })`;
+        `Transactie geweigerd (trxResult=${trxResult}, ep2AuthResult=${ep2AuthResult}, code=${ep2AuthResponseCode || "?"})`;
     }
 
     return {
@@ -610,12 +527,15 @@ const PaymentController = {
       cardNumber,
       cardAppLabel,
       cardAppId,
+      qrData,
       rawXml: xmlString,
       error: errorMessage,
     };
   },
 
-  // Get Payworld payment status
+  // -------------------------
+  // PAYWORLD API ENDPOINTS
+  // -------------------------
   getPayworldStatus: async (req, res) => {
     const { sessionId } = req.params || {};
     if (!sessionId) {
@@ -640,28 +560,62 @@ const PaymentController = {
       lastEvent: session.lastEvent,
       lastUpdate: session.lastUpdate,
       amountInCents: session.amountInCents,
+      trxSyncNumber: session.trxSyncNumber,
     });
   },
 
-  // Cancel Payworld payment
+  // Dit endpoint stuurt nu effectief een abort naar de A35
   cancelPayworldPayment: async (req, res) => {
     try {
       const { sessionId } = req.params;
 
-      const result = await PaymentService.cancelPayworldPayment(sessionId);
-
-      if (result.success) {
-        res.json({ success: true, message: 'Payworld payment cancelled successfully' });
-      } else {
-        res.status(500).json({ success: false, error: result.message });
+      const session = PaymentController.sessions.get(sessionId);
+      if (!session) {
+        return res.status(404).json({ success: false, error: "Session niet gevonden." });
       }
+
+      // Zet direct op CANCELLED zodat POS UI meteen stopt
+      PaymentController.updateSession(sessionId, {
+        state: "CANCELLED",
+        message: "Annuleren aangevraagd vanaf POS...",
+        lastEvent: "POS_CANCEL_REQUEST",
+      });
+
+      const config = PaymentController.loadConfig();
+      if (!config.ip || !config.port) {
+        return res.status(500).json({
+          success: false,
+          error: "Payworld config ontbreekt (ip/port).",
+        });
+      }
+
+      await PaymentController.sendAbort({ ip: config.ip, port: config.port });
+
+      PaymentController.updateSession(sessionId, {
+        state: "CANCELLED",
+        message: "Abort verstuurd naar Payworld terminal.",
+        lastEvent: "POS_CANCEL_SENT",
+      });
+
+      // optioneel: ook PaymentService laten weten (als je daar DB/state bijhoudt)
+      try {
+        if (PaymentService && typeof PaymentService.cancelPayworldPayment === "function") {
+          await PaymentService.cancelPayworldPayment(sessionId);
+        }
+      } catch (e) {
+        console.warn("[Payworld] PaymentService.cancelPayworldPayment failed (non-blocking):", e.message);
+      }
+
+      return res.json({ success: true, message: "Cancel naar Payworld verstuurd." });
     } catch (error) {
-      console.error('Cancel Payworld payment error:', error);
-      res.status(500).json({ success: false, error: 'Failed to cancel Payworld payment' });
+      console.error("Cancel Payworld payment error:", error);
+      return res.status(500).json({ success: false, error: error.message || "Failed to cancel Payworld payment" });
     }
   },
 
-  // Process Viva payment
+  // -------------------------
+  // VIVA + EMAIL
+  // -------------------------
   processVivaPayment: async (req, res) => {
     try {
       const { amount, merchantId, terminalId, orderReference } = req.body;
@@ -676,9 +630,6 @@ const PaymentController = {
 
       console.log(`💳 Processing Viva payment: €${amount} `);
 
-      // Note: Viva is currently a client-side integration
-      // This endpoint exists for consistency but may need full implementation
-      // For now, return a success response as the client handles the actual payment
       res.json({
         success: true,
         ok: true,
@@ -699,7 +650,6 @@ const PaymentController = {
     }
   },
 
-  // Send receipt via email
   sendReceiptEmail: async (req, res) => {
     try {
       const receiptData = req.body;

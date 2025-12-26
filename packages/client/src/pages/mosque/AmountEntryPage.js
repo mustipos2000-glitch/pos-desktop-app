@@ -1,330 +1,123 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import KioskLayout from '../../components/kiosk/KioskLayout';
-import KioskHeader from '../../components/kiosk/KioskHeader';
-import KioskButton from '../../components/mosque/KioskButton';
-import KioskNumpad from '../../components/kiosk/KioskNumpad';
-import KioskInfoPanel from '../../components/kiosk/KioskInfoPanel';
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { KioskLayout, KioskHeader, KioskNumpad } from "../../components/mosque";
 
-/**
- * AmountEntryPage - A page for entering payment amount using a numpad
- */
 const AmountEntryPage = () => {
   const navigate = useNavigate();
-  const [amount, setAmount] = useState('0');
-  const [selectedInfo, setSelectedInfo] = useState(null);
-  const [isMembershipPayment, setIsMembershipPayment] = useState(false);
-  const [memberFeeAmount, setMemberFeeAmount] = useState(null);
+  const [amount, setAmount] = useState("");
 
-  useEffect(() => {
-    loadSelectedInfo();
-    checkIfMembershipPayment();
-  }, []);
+  const paymentTypeStr = localStorage.getItem("mosquePaymentType");
+  const sadakaType = localStorage.getItem("sadakaType");
 
-  const loadSelectedInfo = () => {
-    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
-    const sadakaType = localStorage.getItem('sadakaType');
-    const sadakaGoalStr = localStorage.getItem('sadakaGoal');
-    const selectedMemberStr = localStorage.getItem('selectedMember');
-    const rentDateTimeStr = localStorage.getItem('rentDateTime');
-
+  const paymentType = useMemo(() => {
     try {
-      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
-      const sadakaGoal = sadakaGoalStr ? JSON.parse(sadakaGoalStr) : null;
-      const selectedMember = selectedMemberStr ? JSON.parse(selectedMemberStr) : null;
-      const rentDateTime = rentDateTimeStr ? JSON.parse(rentDateTimeStr) : null;
-
-      if (paymentType && paymentType.id === 'sadaka') {
-        if (sadakaType === 'named' && selectedMember) {
-          setSelectedInfo({
-            type: 'sadaka-named',
-            member: selectedMember.fullName,
-            goal: sadakaGoal ? sadakaGoal.titleEn : 'Not selected'
-          });
-        } else if (sadakaType === 'anonymous' && sadakaGoal) {
-          setSelectedInfo({
-            type: 'sadaka-anonymous',
-            goal: sadakaGoal.titleEn
-          });
-        }
-      } else if (paymentType && paymentType.id === 'rent' && selectedMember && rentDateTime) {
-        setSelectedInfo({
-          type: 'rent',
-          member: selectedMember.fullName,
-          startDate: rentDateTime.startDate,
-          endDate: rentDateTime.endDate,
-          startTime: rentDateTime.startTime,
-          endTime: rentDateTime.endTime
-        });
-      } else if (selectedMember) {
-        setSelectedInfo({
-          type: 'membership',
-          member: selectedMember.fullName
-        });
-      }
-    } catch (error) {
-      console.error('Error loading selected info:', error);
+      return paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+    } catch {
+      return null;
     }
-  };
+  }, [paymentTypeStr]);
 
-  const checkIfMembershipPayment = () => {
-    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
-    const memberFeeAmountStr = localStorage.getItem('memberFeeAmount');
-    
-    console.log('=== Checking Membership Payment ===');
-    console.log('Payment Type String:', paymentTypeStr);
-    console.log('Member Fee Amount String:', memberFeeAmountStr);
-    
-    try {
-      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
-      console.log('Parsed Payment Type:', paymentType);
-      
-      if (paymentType && paymentType.id === 'membership') {
-        console.log('✅ This is a membership payment');
-        setIsMembershipPayment(true);
-        
-        if (memberFeeAmountStr) {
-          const feeAmount = parseFloat(memberFeeAmountStr);
-          console.log('✅ Member fee amount found:', feeAmount);
-          setMemberFeeAmount(feeAmount);
-        } else {
-          console.log('❌ No member fee amount in localStorage');
-        }
-      } else {
-        console.log('❌ Not a membership payment');
-        setIsMembershipPayment(false);
-      }
-    } catch (error) {
-      console.error('Error checking membership payment:', error);
-      setIsMembershipPayment(false);
-    }
-  };
-
-  const handleClear = () => {
-    setAmount('0');
-  };
-
-  const handleBackspace = () => {
-    if (amount.length === 1) {
-      setAmount('0');
-    } else {
-      setAmount(amount.slice(0, -1));
-    }
-  };
-
+  // Expliciete back (geen loop)
   const handleGoBack = () => {
-    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
-
-    try {
-      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
-
-      if (paymentType && paymentType.id === 'sadaka') {
-        navigate('/mosque/sadaka-goal');
-      } else if (paymentType && paymentType.id === 'rent') {
-        navigate('/mosque/rent-datetime');
-      } else {
-        navigate('/mosque/member-selection');
-      }
-    } catch (error) {
-      console.error('Error parsing payment type:', error);
-      navigate('/mosque/member-selection');
+    if (paymentType?.id === "membership") {
+      navigate("/mosque/member-selection", { replace: true });
+      return;
     }
+    if (paymentType?.id === "sadaka") {
+      if (sadakaType === "anonymous") navigate("/mosque/sadaka-selection", { replace: true });
+      else navigate("/mosque/member-selection", { replace: true });
+      return;
+    }
+    if (paymentType?.id === "rent") {
+      navigate("/mosque/rent-datetime", { replace: true });
+      return;
+    }
+    navigate("/mosque-payment", { replace: true });
   };
 
   const handleNext = () => {
-    if (amount === '0' || amount === '') {
-      alert('Please enter an amount greater than 0');
+    const numeric = parseFloat(String(amount).replace(",", "."));
+    if (!numeric || numeric <= 0) {
+      alert("Please enter a valid amount");
       return;
     }
-
-    localStorage.setItem('paymentAmount', amount);
-    navigate('/mosque/payment-method');
+    localStorage.setItem("paymentAmount", String(numeric));
+    navigate("/mosque/payment-method", { replace: true });
   };
 
-  const handleHalfPayment = () => {
-    if (!memberFeeAmount) {
-      alert('Member fee not available');
-      return;
-    }
-    
-    const halfAmount = (memberFeeAmount / 2).toFixed(2);
-    localStorage.setItem('paymentAmount', halfAmount);
-    localStorage.setItem('paymentSubtype', 'half'); // Store payment subtype
-    navigate('/mosque/payment-method');
-  };
-
-  const handleFullPayment = () => {
-    if (!memberFeeAmount) {
-      alert('Member fee not available');
-      return;
-    }
-    
-    localStorage.setItem('paymentAmount', memberFeeAmount.toString());
-    localStorage.setItem('paymentSubtype', 'full'); // Store payment subtype
-    navigate('/mosque/payment-method');
-  };
-
-  const formatAmount = (value) => {
-    return `€ ${value}`;
-  };
-
-  // Build info panel items
-  const getInfoItems = () => {
-    if (!selectedInfo) return [];
-    
-    const items = [];
-    
-    if (selectedInfo.type === 'sadaka-named') {
-      items.push({ label: 'Type', value: 'Named Sadaka' });
-      items.push({ label: 'Member', value: selectedInfo.member });
-      items.push({ label: 'Goal', value: selectedInfo.goal });
-    } else if (selectedInfo.type === 'sadaka-anonymous') {
-      items.push({ label: 'Type', value: 'Anonymous Sadaka' });
-      items.push({ label: 'Goal', value: selectedInfo.goal });
-    } else if (selectedInfo.type === 'rent') {
-      items.push({ label: 'Type', value: 'Rent Space/Kitchen' });
-      items.push({ label: 'Member', value: selectedInfo.member });
-      items.push({ label: 'From', value: `${selectedInfo.startDate} ${selectedInfo.startTime}` });
-      items.push({ label: 'To', value: `${selectedInfo.endDate} ${selectedInfo.endTime}` });
-    } else if (selectedInfo.type === 'membership') {
-      items.push({ label: 'Type', value: 'Membership Fee' });
-      items.push({ label: 'Member', value: selectedInfo.member });
-      if (memberFeeAmount) {
-        items.push({ label: 'Fee Amount', value: `€ ${memberFeeAmount.toFixed(2)}` });
-      }
-    }
-    
-    return items;
-  };
+  const BigGreenContinueBtn = ({ disabled, onClick }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`
+        w-full rounded-3xl border-4 shadow-2xl transition-all
+        min-h-[170px]
+        flex flex-col items-center justify-center
+        ${
+          disabled
+            ? "bg-green-900/40 border-green-900/60 text-white/50 cursor-not-allowed"
+            : "bg-green-700 hover:bg-green-800 border-green-900 text-white active:scale-[0.99]"
+        }
+      `}
+    >
+      <div className="text-6xl font-extrabold leading-none">✅</div>
+      <div className="text-4xl font-extrabold mt-4">Verder</div>
+      <div className="text-3xl font-semibold opacity-95 mt-2">Continue</div>
+      <div className="text-4xl font-bold mt-3" dir="rtl">متابعة</div>
+    </button>
+  );
 
   return (
-    <KioskLayout maxWidth="3xl">
-      <KioskHeader 
-      title={
-        <span className="flex items-center justify-center">
-          <span>Amount</span>
-          <span className="mx-3">|</span>
-          <span>Voer Bedrag In</span>
-          <span className="mx-3">|</span>
-          <span dir="rtl">أدخل المبلغ</span>
-        </span>
-      }
-        step={2}
-        totalSteps={3}
-        className="mb-4"
+    <KioskLayout>
+      <KioskHeader
+        titleNl="Bedrag ingeven"
+        titleEn="Enter amount"
+        titleAr="أدخل المبلغ"
+        showBack={false}   // we gebruiken de vaste knop links onder
       />
-      <div className="absolute left-2 top-1 w-24">
-        <KioskButton
-          variant="secondary"
-          size="medium"
-          onClick={handleGoBack}
-          fullWidth
-          className=""
-          icon={true}
-        >
-          <img 
-            src="/icon kiosk/terug.png" 
-            alt="Go Back" 
-            className="rounded-3xl"
-          />
-          {/* ← Go Back */}
-        </KioskButton>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-start">
-        {/* Left Column - Info and Amount Display */}
-        <div className="space-y-3 lg:space-y-4">
-          {/* Context Info */}
-          {selectedInfo && (
-            <KioskInfoPanel items={getInfoItems()} />
-          )}
 
-          {/* Amount Display */}
-          <div className="flex justify-center">
-            <div className="bg-pos-bg-secondary border-2 border-pos-border-primary rounded-xl lg:rounded-2xl px-12 py-7 shadow-xl w-full">
-              <div className="text-3xl sm:text-4xl lg:text-5xl font-bold text-pos-text-primary text-center break-all">
-                {isMembershipPayment && memberFeeAmount ? formatAmount(memberFeeAmount.toString()) : formatAmount(amount)}
-              </div>
-              {isMembershipPayment && memberFeeAmount && (
-               <div className="text-center mt-2 text-lg text-pos-text-secondary">
-                <span>Full Membership Fee</span>
-                <span className="mx-3">|</span>
-                <span>Volledig Lidmaatschapsgeld</span>
-                <span className="mx-3">|</span>
-                <span dir="rtl">رسوم العضوية الكاملة</span>
-              </div>
+      {/* Fixed Back button bottom-left */}
+      <button
+        type="button"
+        onClick={handleGoBack}
+        className="
+          fixed left-6 bottom-6 z-50
+          bg-red-700 hover:bg-red-800 text-white
+          rounded-3xl border-4 border-red-900
+          shadow-2xl
+          px-8 py-6
+          min-w-[260px]
+          flex flex-col items-center justify-center
+          active:scale-[0.99]
+          transition
+        "
+      >
+        <div className="text-3xl font-extrabold">Terug</div>
+        <div className="text-2xl font-semibold opacity-95 mt-1">Back</div>
+        <div className="text-3xl font-bold mt-2" dir="rtl">رجوع</div>
+      </button>
 
-              )}
-            </div>
+      <div className="mt-10 pb-40">
+        <div className="bg-white rounded-3xl border-4 border-pos-border-primary shadow-2xl p-8 text-center">
+          <div className="text-2xl font-semibold text-gray-600 mb-3">
+            Bedrag | Amount | المبلغ
           </div>
+          <div className="text-6xl font-extrabold text-black">{amount || "0"} €</div>
         </div>
 
-        {/* Right Column - Numpad OR Payment Buttons */}
-        <div className="w-full">
-          {isMembershipPayment && memberFeeAmount ? (
-            // Membership Payment Buttons
-            <div className="space-y-4">
-              <KioskButton
-                variant="primary"
-                size="large"
-                onClick={handleFullPayment}
-                fullWidth
-              >
-                <div className="text-center p-2">
-              <div className=" text-lg font-bold flex justify-center items-center gap-x-3">
-                  <span>Full Payment</span>
-                  <span className="opacity-60">|</span>
-                  <span>Volledige Betaling</span>
-                  <span className="opacity-60">|</span>
-                  <span dir="rtl">الدفع الكامل</span>
-                </div>     
-               <div className="text-4xl mt-4">€ {memberFeeAmount.toFixed(2)}</div>
-                </div>
-              </KioskButton>
-              
-              <KioskButton
-                variant="secondary"
-                size="large"
-                onClick={handleHalfPayment}
-                fullWidth
-              >
-                <div className="text-center p-2">
-                <div className="text-lg font-bold flex justify-center items-center gap-x-3">
-                    <span>Half Payment</span>
-                    <span className="opacity-60">|</span>
-                    <span>Halve Betaling</span>
-                    <span className="opacity-60">|</span>
-                    <span dir="rtl">الدفع الجزئي</span>
-                  </div>                 
-                   <div className="text-4xl mt-4">€ {(memberFeeAmount / 2).toFixed(2)}</div>
-                </div>
-              </KioskButton>
-            </div>
-          ) : (
-            // Regular Numpad for other payment types
-            <KioskNumpad
-              value={amount}
-              onChange={setAmount}
-              onClear={handleClear}
-              onBackspace={handleBackspace}
-            />
-          )}
+        <div className="mt-10">
+          <KioskNumpad
+            value={amount}
+            onChange={setAmount}
+            onClear={() => setAmount("")}
+            onBackspace={() => setAmount((p) => p.slice(0, -1))}
+          />
         </div>
-      </div>
 
-      {/* Navigation Buttons */}
-      <div className="flex flex-col w-full sm:flex-row justify-center gap-3 sm:gap-4 mt-4 lg:mt-6">
-        
-        {!isMembershipPayment && (
-          <KioskButton
-            variant="success"
-            size="medium"
-            onClick={handleNext}
-            fullWidth
-            className=""
-          >
-            Next →
-          </KioskButton>
-        )}
+        <div className="mt-10">
+          <BigGreenContinueBtn disabled={!amount} onClick={handleNext} />
+        </div>
       </div>
     </KioskLayout>
   );

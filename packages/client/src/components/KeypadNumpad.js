@@ -1,184 +1,104 @@
-import { useState } from 'react';
+import React from "react";
 
-const KeypadNumpad = ({ 
-  onInput, 
-  onEnter, 
-  onBackspace, 
-  onClear, 
-  className = ''
-}) => {
-  const [isShifted, setIsShifted] = useState(false);
-
-  const keys = [
-    ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
-    ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
-    ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'],
-    ['W', 'X', 'C', 'V', 'B', 'N']
-  ];
-
-  const shiftedSymbols = {
-    '1': '&',
-    '2': 'é',
-    '3': '"',
-    '4': '\'',
-    '5': '(',
-    '6': '-',
-    '7': 'è',
-    '8': '_',
-    '9': 'ç',
-    '0': 'à'
+/**
+ * KioskNumpad - Large, touch-optimized numeric keypad
+ *
+ * Backwards compatible & crash-safe:
+ * - supports onChange(newValue) (legacy)
+ * - supports onInput(digit) + value (new usage)
+ * - supports onClear, onBackspace
+ */
+const KioskNumpad = ({ value = "", onChange, onInput, onClear, onBackspace, disabled = false }) => {
+  const safe = (fn, ...args) => {
+    if (typeof fn === "function") fn(...args);
   };
 
-  const handleKeyPress = (key) => {
-    if (onInput) {
-      let inputValue = key;
-      if (isShifted) {
-        if (shiftedSymbols[key]) {
-          inputValue = shiftedSymbols[key];
-        } else if (key.match(/[a-zA-Z]/)) {
-          inputValue = key.toUpperCase();
-        }
-      } else {
-        inputValue = key.toLowerCase();
+  // set full value (preferred for this component)
+  const setValue = (next) => {
+    if (disabled) return;
+
+    // Prefer legacy onChange(nextValue) if provided, else fallback to onInput (digit-based)
+    if (typeof onChange === "function") {
+      onChange(next);
+      return;
+    }
+
+    // Fallback: if only onInput exists, emit the delta (best effort)
+    // Here we just emit last char if it was an append, else do nothing.
+    if (typeof onInput === "function") {
+      // if next is longer and is append
+      if (next.length > value.length) {
+        const appended = next.slice(value.length);
+        // emit each appended char
+        appended.split("").forEach((ch) => safe(onInput, ch));
       }
-      onInput(inputValue);
     }
   };
 
-  const handleShift = () => {
-    setIsShifted(!isShifted);
-  };
-
-  const handleBackspace = () => {
-    if (onBackspace) {
-      onBackspace();
-    }
+  const handleNumberClick = (num) => {
+    const current = String(value ?? "");
+    if (current === "0") setValue(num);
+    else setValue(current + num);
   };
 
   const handleClear = () => {
-    if (onClear) {
-      onClear();
-    }
+    if (disabled) return;
+    if (typeof onClear === "function") return onClear();
+    // fallback: clear via onChange if exists
+    if (typeof onChange === "function") return onChange("");
   };
 
-  const handleEnter = () => {
-    if (onEnter) {
-      onEnter();
-    }
+  const handleBackspace = () => {
+    if (disabled) return;
+    if (typeof onBackspace === "function") return onBackspace();
+    // fallback: backspace via onChange if exists
+    if (typeof onChange === "function") return onChange(String(value ?? "").slice(0, -1));
   };
 
-  const getDisplayKey = (key) => {
-    if (isShifted) {
-      if (shiftedSymbols[key]) {
-        return shiftedSymbols[key];
-      }
-      // For letters, show uppercase when shifted
-      if (key.match(/[a-zA-Z]/)) {
-        return key.toUpperCase();
-      }
-    }
-    return key.toLowerCase();
-  };
+  const buttons = [
+    ["1", "2", "3"],
+    ["4", "5", "6"],
+    ["7", "8", "9"],
+    ["C", "0", "←"],
+  ];
 
   return (
-    <div className={`bg-pos-bg-tertiary px-1 py-1 mx-auto ${className}`}>
-      <div className="space-y-1">
-        {keys.map((row, rowIndex) => (
-          <div key={rowIndex} className="flex gap-1 justify-center">
-            {/* Add Shift button at the beginning of the last letter row */}
-            {rowIndex === 3 && (
+    <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+      {buttons.map((row, rowIndex) => (
+        <React.Fragment key={rowIndex}>
+          {row.map((btn) => {
+            const isSpecial = btn === "C" || btn === "←";
+
+            return (
               <button
-                onClick={handleShift}
-                className={`px-3 h-10 ${isShifted ? 'bg-pos-interactive-primary' : 'bg-pos-bg-primary'} hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors`}
+                key={btn}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (btn === "C") handleClear();
+                  else if (btn === "←") handleBackspace();
+                  else handleNumberClick(btn);
+                }}
+                className={`
+                  text-2xl font-bold py-6 rounded-xl
+                  transition-all duration-150 active:scale-95
+                  border-2 shadow-lg min-h-[70px]
+                  ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+                  ${
+                    isSpecial
+                      ? "bg-pos-interactive-primary text-pos-text-secondary border-pos-border-primary hover:bg-pos-interactive-hover"
+                      : "bg-pos-bg-secondary text-pos-text-primary border-pos-border-primary hover:bg-pos-interactive-hover"
+                  }
+                `}
               >
-                Shift
+                {btn}
               </button>
-            )}
-            
-            {row.map((key) => (
-              <button
-                key={key}
-                onClick={() => handleKeyPress(key)}
-                className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-              >
-                {getDisplayKey(key)}
-              </button>
-            ))}
-            
-            {/* Add decimal point and backspace to the last letter row */}
-            {rowIndex === 3 && (
-              <>
-                <button
-                  onClick={() => handleKeyPress('.')}
-                  className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-                >
-                  .
-                </button>
-                <button
-                  onClick={handleBackspace}
-                  className="px-4 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-                >
-                  ⌫
-                </button>
-              </>
-            )}
-          </div>
-        ))}
-        
-        {/* Function keys row */}
-        <div className="flex gap-1 justify-center">
-          <button
-            onClick={handleClear}
-            className="px-3 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            Clear
-          </button>
-          <button
-            onClick={() => handleKeyPress(',')}
-            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            ,
-          </button>
-          <button
-            onClick={() => handleKeyPress(' ')}
-            className="w-20 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            Space
-          </button>
-          <button
-            onClick={() => handleKeyPress('/')}
-            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            /
-          </button>
-          <button
-            onClick={() => handleKeyPress('*')}
-            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            *
-          </button>
-          <button
-            onClick={() => handleKeyPress('-')}
-            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            -
-          </button>
-          <button
-            onClick={() => handleKeyPress('+')}
-            className="w-10 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            +
-          </button>
-          <button
-            onClick={handleEnter}
-            className="px-3 h-10 bg-pos-bg-primary hover:bg-pos-interactive-primary text-pos-text-primary font-medium border border-pos-border-secondary transition-colors"
-          >
-            Enter
-          </button>
-        </div>
-      </div>
+            );
+          })}
+        </React.Fragment>
+      ))}
     </div>
   );
 };
 
-export default KeypadNumpad;
+export default KioskNumpad;

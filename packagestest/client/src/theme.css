@@ -1,0 +1,220 @@
+/**
+ * POSPOINT Theme - Centralized Color System
+ * 
+ * This file contains all color variables for the POS application.
+ * To change the theme, simply update the CSS variables in the :root section.
+ * All components will automatically reflect the changes.
+ */
+
+/* ========================================
+   DARK THEME (DEFAULT)
+   ======================================== */
+:root {
+  /* ========================================
+     BACKGROUND COLORS
+     ======================================== */
+  --bg-main: #263544;           /* Main application background */
+  --bg-gradient-start: #344963; /* Gradient start color */
+  --bg-gradient-end: #1b2836;   /* Gradient end color */
+  --bg-panel: #445b71;          /* Panels, cards, buttons background */
+  --bg-panel-soft: #445b71;     /* Soft panel variant */
+  --bg-dark: #1b2836;           /* Darker background areas */
+  --bg-accent: #1b2430;         /* Accent background */
+  --bg-overlay: rgba(0,0,0,0.2); /* Overlay backgrounds */
+  --bg-overlay-dark: rgba(0,0,0,0.3); /* Darker overlay */
+  --bg-overlay-darker: rgba(0,0,0,0.5); /* Even darker overlay */
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --border-soft: #1b2430;       /* Soft borders */
+  --border-primary: #3b4f66;    /* Primary borders */
+  --border-accent: rgba(255,255,255,0.35); /* Accent borders */
+  --border-hover: #ffffff;      /* Hover state borders */
+  --border-light: rgba(255,255,255,0.15); /* Light borders */
+  --border-strong: rgba(255,255,255,0.5); /* Strong borders */
+
+  /* ========================================
+     TEXT COLORS
+     ======================================== */
+  --text-main: #f5f5f7;         /* Main text color */
+  --text-secondary: #e5e7eb;    /* Secondary text */
+  --text-muted: #cbd5f5;        /* Muted/placeholder text */
+  --text-disabled: #8b92b0;     /* Disabled text */
+  --text-white: #ffffff;        /* Pure white text */
+
+  /* ========================================
+     INTERACTIVE COLORS (Buttons, Cards, etc.)
+     ======================================== */
+  --interactive-primary: #445b71;           /* Primary interactive elements */
+  --interactive-hover: #5a7189;             /* Hover state */
+  --interactive-active: #3b4f66;            /* Active/pressed state */
+  --interactive-border: rgba(255,255,255,0.35); /* Interactive borders */
+  --interactive-border-hover: #ffffff;      /* Hover border */
+  --interactive-dark: #1e293b;              /* Dark interactive elements (numpad) */
+
+  /* ========================================
+     ACCENT COLORS
+     ======================================== */
+  --accent-blue: #ffffff;       /* Light accent (white) */
+  --accent-red: #ef4444;        /* Error/danger accent */
+
+  /* ========================================
+     STATUS COLORS
+     ======================================== */
+  --status-success: #10b981;    /* Success state */
+  --status-warning: #f59e0b;    /* Warning state */
+  --status-error: #ef4444;      /* Error state */
+  --status-info: #3b82f6;       /* Info state */
+
+  /* ========================================
+     BORDER RADIUS
+     ======================================== */
+  --radius-lg: 14px;            /* Large radius */
+  --radius-md: 10px;            /* Medium radius */
+  --radius-sm: 6px;             /* Small radius */
+  --radius-full: 999px;         /* Full/pill radius */
+
+  /* ========================================
+     SHADOWS
+     ======================================== */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 6px 18px rgba(0,0,0,0.35);
+  --shadow-xl: 0 8px 20px rgba(0,0,0,0.5);
+  --shadow-2xl: 0 10px 24px rgba(0,0,0,0.7);
+
+  /* ========================================
+     TRANSITIONS
+     ======================================== */
+  --transition-fast: 0.05s;
+  --transition-normal: 0.12s;
+  --transition-slow: 0.3s;
+
+  /* ========================================
+     SCROLLBAR COLORS
+     ======================================== */
+  --scrollbar-track: #263544;
+  --scrollbar-thumb: #3b4f66;
+}
+
+/* ========================================
+   LIGHT THEME
+   ======================================== */
+:root:not(.dark) {
+  /* ========================================
+     BACKGROUND COLORS
+     ======================================== */
+  --bg-main: #f5f7fa;           /* Main application background */
+  --bg-gradient-start: #e8ecf1; /* Gradient start color */
+  --bg-gradient-end: #f5f7fa;   /* Gradient end color */
+  --bg-panel: #ffffff;          /* Panels, cards, buttons background */
+  --bg-panel-soft: #f8f9fb;     /* Soft panel variant */
+  --bg-dark: #e5e9ef;           /* Darker background areas */
+  --bg-accent: #f0f3f7;         /* Accent background */
+  --bg-overlay: rgba(0,0,0,0.05); /* Overlay backgrounds */
+  --bg-overlay-dark: rgba(0,0,0,0.1); /* Darker overlay */
+  --bg-overlay-darker: rgba(0,0,0,0.2); /* Even darker overlay */
+
+  /* ========================================
+     BORDER COLORS
+     ======================================== */
+  --border-soft: #e5e9ef;       /* Soft borders */
+  --border-primary: #cbd5e1;    /* Primary borders */
+  --border-accent: rgba(0,0,0,0.15); /* Accent borders */
+  --border-hover: #64748b;      /* Hover state borders */
+  --border-light: rgba(0,0,0,0.08); /* Light borders */
+  --border-strong: rgba(0,0,0,0.25); /* Strong borders */
+
+  /* ========================================
+     TEXT COLORS
+     ======================================== */
+  --text-main: #000000;         /* Main text color - Black */
+  --text-secondary: #1e293b;    /* Secondary text - Dark gray */
+  --text-muted: #475569;        /* Muted/placeholder text - Medium gray */
+  --text-disabled: #94a3b8;     /* Disabled text */
+  --text-white: #ffffff;        /* Pure white text */
+
+  /* ========================================
+     INTERACTIVE COLORS (Buttons, Cards, etc.)
+     ======================================== */
+  --interactive-primary: #e8ecf1;           /* Primary interactive elements */
+  --interactive-hover: #d1d9e3;             /* Hover state */
+  --interactive-active: #b8c4d4;            /* Active/pressed state */
+  --interactive-border: rgba(0,0,0,0.15); /* Interactive borders */
+  --interactive-border-hover: #64748b;      /* Hover border */
+  --interactive-dark: #ffffff;              /* Light interactive elements (numpad in light theme) */
+
+  /* ========================================
+     ACCENT COLORS
+     ======================================== */
+  --accent-blue: #3b82f6;       /* Light accent (blue) */
+  --accent-red: #ef4444;        /* Error/danger accent */
+
+  /* ========================================
+     STATUS COLORS (same for both themes)
+     ======================================== */
+  --status-success: #10b981;    /* Success state */
+  --status-warning: #f59e0b;    /* Warning state */
+  --status-error: #ef4444;      /* Error state */
+  --status-info: #3b82f6;       /* Info state */
+
+  /* ========================================
+     SHADOWS
+     ======================================== */
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+  --shadow-lg: 0 6px 18px rgba(0,0,0,0.12);
+  --shadow-xl: 0 8px 20px rgba(0,0,0,0.15);
+  --shadow-2xl: 0 10px 24px rgba(0,0,0,0.18);
+
+  /* ========================================
+     SCROLLBAR COLORS
+     ======================================== */
+  --scrollbar-track: #f5f7fa;
+  --scrollbar-thumb: #cbd5e1;
+}
+
+/* ========================================
+   UTILITY CLASSES USING CSS VARIABLES
+   ======================================== */
+
+/* Background utilities */
+.bg-main { background-color: var(--bg-main); }
+.bg-panel { background-color: var(--bg-panel); }
+.bg-dark { background-color: var(--bg-dark); }
+.bg-overlay { background-color: var(--bg-overlay); }
+
+/* Text utilities */
+.text-main { color: var(--text-main); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+/* Border utilities */
+.border-soft { border-color: var(--border-soft); }
+.border-accent { border-color: var(--border-accent); }
+.border-hover { border-color: var(--border-hover); }
+
+/* Interactive utilities */
+.interactive-primary { background-color: var(--interactive-primary); }
+.interactive-hover:hover { background-color: var(--interactive-hover); }
+.interactive-active:active { background-color: var(--interactive-active); }
+
+/* Status utilities */
+.status-success { color: var(--status-success); }
+.status-warning { color: var(--status-warning); }
+.status-error { color: var(--status-error); }
+.status-info { color: var(--status-info); }
+
+/* Radius utilities */
+.radius-lg { border-radius: var(--radius-lg); }
+.radius-md { border-radius: var(--radius-md); }
+.radius-sm { border-radius: var(--radius-sm); }
+.radius-full { border-radius: var(--radius-full); }
+
+/* Shadow utilities */
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }
+.shadow-2xl { box-shadow: var(--shadow-2xl); }
