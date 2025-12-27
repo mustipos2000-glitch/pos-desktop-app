@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MosqueApiService from '../../services/mosqueApi';
 import ApiService from '../../services/api';
 
@@ -17,16 +17,12 @@ const Dashboard = () => {
     endDate: new Date().toISOString().split('T')[0]
   });
 
-  useEffect(() => {
-    fetchStats();
-  }, [dateRange]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       setLoading(true);
       
       // Fetch all data, but handle errors gracefully
-      let paymentsResponse, membersResponse, statsByTypeResponse, statsByMethodResponse;
+      let paymentsResponse, membersResponse;
       
       try {
         paymentsResponse = await MosqueApiService.getMosquePayments();
@@ -42,19 +38,8 @@ const Dashboard = () => {
         membersResponse = [];
       }
       
-      try {
-        statsByTypeResponse = await MosqueApiService.getMosquePaymentStatsByType(dateRange.startDate, dateRange.endDate);
-      } catch (error) {
-        console.error('Error fetching stats by type:', error);
-        statsByTypeResponse = { data: {} };
-      }
-      
-      try {
-        statsByMethodResponse = await MosqueApiService.getMosquePaymentStatsByMethod(dateRange.startDate, dateRange.endDate);
-      } catch (error) {
-        console.error('Error fetching stats by method:', error);
-        statsByMethodResponse = { data: {} };
-      }
+      // Note: statsByType and statsByMethod are calculated from payments data below
+      // API calls for these are not needed as we calculate them from the payments
 
       const allPayments = paymentsResponse.data || [];
       const members = membersResponse || [];
@@ -112,7 +97,11 @@ const Dashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [dateRange]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const getPaymentTypeLabel = (type) => {
     const labels = {

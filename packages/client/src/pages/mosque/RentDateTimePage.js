@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
 import { KioskButton } from '../../components/mosque';
@@ -21,16 +21,6 @@ const RentDateTimePage = () => {
     loadSavedDateTime();
     fetchRentalCharge();
   }, []);
-
-  useEffect(() => {
-    // Real-time validation and overlap checking
-    if (startDate && endDate && startHour && endHour) {
-      validateAndCheckOverlap();
-    } else {
-      setValidationError('');
-      setOverlappingBookings([]);
-    }
-  }, [startDate, endDate, startHour, endHour]);
 
   const loadSelectedMember = () => {
     const storedMember = localStorage.getItem('selectedMember');
@@ -76,7 +66,7 @@ const RentDateTimePage = () => {
     }
   };
 
-  const validateAndCheckOverlap = async () => {
+  const validateAndCheckOverlap = useCallback(async () => {
     // Basic validation
     const start = new Date(`${startDate}T${startHour}:00:00`);
     const end = new Date(`${endDate}T${endHour}:00:00`);
@@ -108,7 +98,17 @@ const RentDateTimePage = () => {
     } finally {
       setCheckingOverlap(false);
     }
-  };
+  }, [startDate, endDate, startHour, endHour]);
+
+  useEffect(() => {
+    // Real-time validation and overlap checking
+    if (startDate && endDate && startHour && endHour) {
+      validateAndCheckOverlap();
+    } else {
+      setValidationError('');
+      setOverlappingBookings([]);
+    }
+  }, [startDate, endDate, startHour, endHour, validateAndCheckOverlap]);
 
   const calculateDuration = () => {
     if (!startDate || !endDate || !startHour || !endHour) return { hours: 0, days: 0 };

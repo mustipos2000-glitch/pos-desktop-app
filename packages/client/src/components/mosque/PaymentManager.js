@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MosqueApiService from '../../services/mosqueApi';
 import ApiService from '../../services/api';
 
@@ -14,16 +14,16 @@ const PaymentManager = () => {
     endDate: ''
   });
 
-  useEffect(() => {
-    fetchPayments();
-    fetchMembers();
+  const fetchMembers = useCallback(async () => {
+    try {
+      const response = await ApiService.getMembers();
+      setMembers(response || []);
+    } catch (error) {
+      console.error('Error fetching members:', error);
+    }
   }, []);
 
-  useEffect(() => {
-    fetchPayments();
-  }, [filters]);
-
-  const fetchPayments = async () => {
+  const fetchPayments = useCallback(async () => {
     try {
       setLoading(true);
       let response;
@@ -74,16 +74,16 @@ const PaymentManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  const fetchMembers = async () => {
-    try {
-      const response = await ApiService.getMembers();
-      setMembers(response || []);
-    } catch (error) {
-      console.error('Error fetching members:', error);
-    }
-  };
+  useEffect(() => {
+    fetchPayments();
+    fetchMembers();
+  }, [fetchPayments, fetchMembers]);
+
+  useEffect(() => {
+    fetchPayments();
+  }, [filters, fetchPayments]);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
