@@ -289,7 +289,7 @@ const RentDateTimePage = () => {
                   </h3>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="flex w-full gap-3 sm:gap-4">
                   <div>
                     <label className="block text-base sm:text-lg lg:text-xl font-bold text-pos-text-primary mb-2 sm:mb-3">
                       Start Date
@@ -299,7 +299,7 @@ const RentDateTimePage = () => {
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full px-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full pl-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     />
                   </div>
                   <div>
@@ -332,7 +332,7 @@ const RentDateTimePage = () => {
                   </h3>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="flex w-full gap-3 sm:gap-4">
                   <div>
                     <label className="block text-xl font-bold text-pos-text-primary mb-3">
                       End Date
@@ -342,7 +342,7 @@ const RentDateTimePage = () => {
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
                       min={startDate || new Date().toISOString().split('T')[0]}
-                      className="w-full px-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
+                      className="w-full pl-3 py-5 text-3xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary focus:outline-none focus:border-pos-interactive-hover"
                     />
                   </div>
                   <div>

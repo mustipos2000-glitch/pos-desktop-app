@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ApiService from '../../services/api';
+import CountryFlag from '../../components/CountryFlag';
 
 const MemberSelectionPage = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ const MemberSelectionPage = () => {
   const [newMemberId, setNewMemberId] = useState('');
   const [newFullName, setNewFullName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [phoneError, setPhoneError] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -77,12 +79,12 @@ const MemberSelectionPage = () => {
             console.error('Error parsing payment type:', e);
           }
         }
-      } else {
-        alert('No member fee configured. Please add a member fee in Settings.');
       }
+      // Removed blocking alert - allow users to view/select members even without fee configured
+      // Fee will be checked when actually processing membership payment
     } catch (error) {
       console.error('Error fetching member fee:', error);
-      alert('Failed to load member fee.');
+      // Removed blocking alert - allow users to continue even if fee fetch fails
     }
   };
 
@@ -109,9 +111,81 @@ const MemberSelectionPage = () => {
     }
   };
 
+  const handlePhoneKeyDown = (e) => {
+    // Allow: digits (0-9), +, backspace, delete, arrow keys, tab, etc.
+    const allowedKeys = [
+      'Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown',
+      'Tab', 'Home', 'End', 'Enter'
+    ];
+    
+    // Allow control keys
+    if (e.ctrlKey || e.metaKey || allowedKeys.includes(e.key)) {
+      return;
+    }
+    
+    // Allow digits and +
+    if (/[\d+]/.test(e.key)) {
+      return;
+    }
+    
+    // Allow space, dash, parentheses for formatting
+    if (/[\s\-()]/.test(e.key)) {
+      return;
+    }
+    
+    // Block everything else (letters, special chars, etc.)
+    e.preventDefault();
+  };
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value;
+    
+    // Only allow digits, +, spaces, dashes, and parentheses
+    value = value.replace(/[^\d+\s\-()]/g, '');
+    
+    // Count only digits (excluding +, spaces, dashes, parentheses)
+    const digitCount = value.replace(/[^\d]/g, '').length;
+    
+    // Limit to 15 digits maximum (E.164 standard)
+    if (digitCount > 15) {
+      // Remove excess digits
+      let digits = value.replace(/[^\d]/g, '');
+      digits = digits.substring(0, 15);
+      // Reconstruct with formatting
+      const plus = value.startsWith('+') ? '+' : '';
+      const formatted = value.replace(/[^\d+\s\-()]/g, '').replace(/[^\d]/g, '');
+      value = plus + digits;
+    }
+    
+    // Limit total length to 20 characters (including formatting)
+    if (value.length > 20) {
+      value = value.substring(0, 20);
+    }
+    
+    setNewPhone(value);
+    
+    // Basic phone validation (recalculate digitCount after value modifications)
+    const finalDigitCount = value.replace(/[^\d]/g, '').length;
+    if (value.trim() && finalDigitCount < 7) {
+      setPhoneError('Phone number must be at least 7 digits');
+    } else if (finalDigitCount > 15) {
+      setPhoneError('Phone number must not exceed 15 digits');
+    } else {
+      setPhoneError('');
+    }
+  };
+
   const handleCreateMember = async () => {
     if (!newFullName.trim()) return alert('Please enter a full name');
     if (!newMemberId.trim()) return alert('Please enter a member ID');
+    
+    // Basic phone validation if provided
+    if (newPhone.trim()) {
+      const digitCount = newPhone.replace(/[^\d]/g, '').length;
+      if (digitCount < 7 || digitCount > 15) {
+        return alert('Please enter a valid phone number (7-15 digits)');
+      }
+    }
 
     try {
       setCreating(true);
@@ -160,9 +234,23 @@ const MemberSelectionPage = () => {
   const handleNext = () => {
     if (!selectedMember) return alert('Please select or create a member first');
 
+    // Check for member fee only if processing membership payment
+    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
+    try {
+      const paymentType = paymentTypeStr ? JSON.parse(paymentTypeStr) : null;
+      
+      if (paymentType && paymentType.id === 'membership') {
+        if (!memberFee || !memberFee.member_fee) {
+          alert('No member fee configured. Please add a member fee in Settings before processing membership payments.');
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('Error parsing payment type:', error);
+    }
+
     localStorage.setItem('selectedMember', JSON.stringify(selectedMember));
 
-    const paymentTypeStr = localStorage.getItem('mosquePaymentType');
     const sadakaType = localStorage.getItem('sadakaType');
 
     try {
@@ -406,14 +494,49 @@ const MemberSelectionPage = () => {
 
                     <div>
                       <label className="block text-xl font-semibold text-pos-text-primary mb-2">Phone Number</label>
-                      <input
-                        type="tel"
-                        placeholder="Enter phone number (optional)"
-                        value={newPhone}
-                        onChange={(e) => setNewPhone(e.target.value)}
-                        className="w-full px-6 py-3 text-2xl bg-pos-bg-primary border-2 border-pos-border-primary rounded-xl text-pos-text-primary"
-                        disabled={creating}
-                      />
+                      <div className="relative flex items-center">
+                        <div className="absolute left-4 z-30 flex items-center justify-center mb-2">
+                          <CountryFlag phone={newPhone} />
+                        </div>
+                        <input
+                          type="tel"
+                          placeholder="Enter phone number (optional) e.g. +31612345678"
+                          value={newPhone}
+                          onChange={handlePhoneChange}
+                          onKeyDown={handlePhoneKeyDown}
+                          onPaste={(e) => {
+                            e.preventDefault();
+                            const pasted = e.clipboardData.getData('text');
+                            // Only allow digits, +, spaces, dashes, parentheses
+                            const cleaned = pasted.replace(/[^\d+\s\-()]/g, '');
+                            if (cleaned) {
+                              const digitCount = cleaned.replace(/[^\d]/g, '').length;
+                              if (digitCount <= 15) {
+                                setNewPhone(cleaned.substring(0, 20));
+                                // Basic validation
+                                if (digitCount < 7) {
+                                  setPhoneError('Phone number must be at least 7 digits');
+                                } else {
+                                  setPhoneError('');
+                                }
+                              }
+                            }
+                          }}
+                          maxLength={20}
+                          className={`w-full px-6 py-3 text-2xl bg-pos-bg-primary border-2 rounded-xl text-pos-text-primary ${
+                            phoneError 
+                              ? 'border-red-500 focus:border-red-500' 
+                              : 'border-pos-border-primary focus:border-pos-interactive-hover'
+                          }`}
+                          style={{ 
+                            paddingLeft: newPhone && newPhone.replace(/[^\d+]/g, '').length > 0 ? '4rem' : '1.5rem'
+                          }}
+                          disabled={creating}
+                        />
+                      </div>
+                      {phoneError && (
+                        <p className="text-red-500 text-sm mt-1">{phoneError}</p>
+                      )}
                     </div>
 
                     <div className="pt-2">
