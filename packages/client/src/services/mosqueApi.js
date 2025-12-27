@@ -3,7 +3,7 @@
  * Contains all API methods related to mosque functionality
  */
 class MosqueApiService {
-  static baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+  static baseURL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
   static async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;

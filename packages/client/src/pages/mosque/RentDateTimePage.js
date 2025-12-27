@@ -68,11 +68,11 @@ const RentDateTimePage = () => {
         console.log('✅ Rental charge loaded:', charge);
       } else {
         console.warn('⚠️ No rental charge found in settings');
-        alert('Please configure rental charge in settings first');
+        // Don't show alert on page load - will be checked when user tries to continue
       }
     } catch (error) {
       console.error('Error fetching rental charge:', error);
-      alert('Failed to load rental charge settings');
+      // Don't show alert on page load - will be checked when user tries to continue
     }
   };
 
@@ -146,7 +146,7 @@ const RentDateTimePage = () => {
   };
 
   const handleGoBack = () => {
-    navigate('/mosque/member-selection');
+    navigate('/mosque');
   };
 
   const handleNext = async () => {
@@ -161,7 +161,7 @@ const RentDateTimePage = () => {
     }
 
     if (!rentalCharge) {
-      alert('Rental charge not configured. Please contact administrator.');
+      alert('Please configure rental charge in settings first');
       return;
     }
 
@@ -221,7 +221,7 @@ const RentDateTimePage = () => {
   return (
     <div className="min-h-screen bg-pos-bg-primary flex flex-col">
       {/* Header */}
-      {/* <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
+      <div className="flex-shrink-0 px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
         <div className="text-center">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-pos-text-primary mb-2 sm:mb-3">
             Select Rental Period
@@ -230,8 +230,8 @@ const RentDateTimePage = () => {
             Choose the date and time for space/kitchen rental
           </p>
         </div>
-      </div> */}
-      <div className="absolute left-2 top-1 w-24">
+      </div>
+      <div className="absolute left-2 top-1 w-24 mt-5 ml-5">
         <KioskButton
           variant="secondary"
           size="large"

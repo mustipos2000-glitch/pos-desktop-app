@@ -9,6 +9,7 @@ import RentDateTimePage from '../pages/mosque/RentDateTimePage';
 import AmountEntryPage from '../pages/mosque/AmountEntryPage';
 import PaymentMethodPage from '../pages/mosque/PaymentMethodPage';
 import TicketSelectionPage from '../pages/mosque/TicketSelectionPage';
+import MosqueAdminPanel from '../pages/mosque/MosqueAdminPanel';
 import { MosqueProtectedRoute } from '../components/mosque';
 
 const MosqueApp = () => {
@@ -42,6 +43,9 @@ const MosqueApp = () => {
         
         {/* Final Step */}
         <Route path="/ticket-selection" element={<TicketSelectionPage />} />
+        
+        {/* Admin Panel */}
+        <Route path="/admin" element={<MosqueAdminPanel />} />
         
         {/* Catch-all - redirect to main payment screen */}
         <Route path="*" element={<Navigate to="/mosque" replace />} />

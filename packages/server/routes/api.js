@@ -39,6 +39,7 @@ router.put('/users/:id', UserController.updateUser);
 router.patch('/users/:id/permissions', UserController.updatePermissions);
 router.delete('/users/:id', UserController.deleteUser);
 router.post('/users/verify', UserController.verifyPincode);
+router.post('/users/verify-by-name', UserController.verifyByNameAndPincode);
 
 // Members routes
 router.get('/members', MemberController.getAllMembers);

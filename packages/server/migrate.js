@@ -26,17 +26,35 @@ function runMigrations() {
   console.log('🔄 Checking for pending migrations...');
   
   const migrationsDir = path.join(__dirname, 'migrations');
+  const mosqueMigrationsDir = path.join(__dirname, 'mosque', 'migrations');
   const executedMigrations = getExecutedMigrations();
   
-  // Get all migration files
-  const migrationFiles = fs.readdirSync(migrationsDir)
-    .filter(file => file.endsWith('.js'))
-    .sort(); // Ensure migrations run in order
+  // Get all migration files from both directories
+  let migrationFiles = [];
+  
+  // Main migrations
+  if (fs.existsSync(migrationsDir)) {
+    const mainMigrations = fs.readdirSync(migrationsDir)
+      .filter(file => file.endsWith('.js'))
+      .map(file => ({ file, dir: migrationsDir }));
+    migrationFiles.push(...mainMigrations);
+  }
+  
+  // Mosque migrations
+  if (fs.existsSync(mosqueMigrationsDir)) {
+    const mosqueMigrations = fs.readdirSync(mosqueMigrationsDir)
+      .filter(file => file.endsWith('.js'))
+      .map(file => ({ file, dir: mosqueMigrationsDir }));
+    migrationFiles.push(...mosqueMigrations);
+  }
+  
+  // Sort by filename to ensure migrations run in order
+  migrationFiles.sort((a, b) => a.file.localeCompare(b.file));
 
   let pendingCount = 0;
 
-  for (const file of migrationFiles) {
-    const migrationPath = path.join(migrationsDir, file);
+  for (const { file, dir } of migrationFiles) {
+    const migrationPath = path.join(dir, file);
     const migration = require(migrationPath);
     
     if (!executedMigrations.includes(migration.name)) {

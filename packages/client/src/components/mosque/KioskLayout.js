@@ -32,7 +32,7 @@ const KioskLayout = ({ children, maxWidth = "6xl", className = "" }) => {
         Als je nog lager wil: pt-20 of pt-24.
       */}
       <div
-        className={`w-full ${maxWidthClasses[maxWidth] || "max-w-6xl"} pt-16 pb-10 ${className}`}
+        className={`w-full ${maxWidthClasses[maxWidth] || "max-w-6xl"} pt-10 pb-10 ${className}`}
       >
         {children}
       </div>

@@ -60,6 +60,11 @@ class User {
     const sql = 'SELECT * FROM users WHERE id = ? AND pincode = ?';
     return db.prepare(sql).get(userId, pincode);
   }
+
+  static verifyByNameAndPincode(name, pincode) {
+    const sql = 'SELECT * FROM users WHERE name = ? AND pincode = ?';
+    return db.prepare(sql).get(name, pincode);
+  }
 }
 
 module.exports = User;

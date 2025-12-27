@@ -109,6 +109,26 @@ const UserController = {
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
+  },
+
+  verifyByNameAndPincode: (req, res) => {
+    try {
+      const { name, pincode } = req.body;
+      
+      if (!name || !pincode) {
+        return res.status(400).json({ error: 'Name and pincode are required' });
+      }
+
+      const user = User.verifyByNameAndPincode(name, pincode);
+      
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
+
+      res.json({ success: true, user });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
   }
 };
 

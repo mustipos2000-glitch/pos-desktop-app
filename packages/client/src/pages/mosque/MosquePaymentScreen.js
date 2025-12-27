@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { KioskLayout, KioskHeader, KioskCard } from "../../components/mosque";
+import AdminPasswordModal from "../../components/mosque/AdminPasswordModal";
 
 /**
  * Eerste pagina (start):
@@ -11,6 +12,13 @@ import { KioskLayout, KioskHeader, KioskCard } from "../../components/mosque";
 const MosquePaymentScreen = () => {
   const navigate = useNavigate();
   const [selectedOption, setSelectedOption] = useState(null);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  
+  // Track clicks for admin access
+  const clickCountRef = useRef(0);
+  const clickTimeoutRef = useRef(null);
+  const CLICK_RESET_TIME = 2000; // Reset after 2 seconds of no clicks
+  const REQUIRED_CLICKS = 4;
 
   const options = [
     {
@@ -52,8 +60,57 @@ const MosquePaymentScreen = () => {
     navigate(option.route);
   };
 
+  // Handle hidden admin area click
+  const handleAdminAreaClick = () => {
+    // Clear existing timeout
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+    }
+
+    // Increment click count
+    clickCountRef.current += 1;
+
+    // If we reached the required clicks, show password modal
+    if (clickCountRef.current >= REQUIRED_CLICKS) {
+      clickCountRef.current = 0;
+      setShowPasswordModal(true);
+    } else {
+      // Set timeout to reset click count
+      clickTimeoutRef.current = setTimeout(() => {
+        clickCountRef.current = 0;
+      }, CLICK_RESET_TIME);
+    }
+  };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (clickTimeoutRef.current) {
+        clearTimeout(clickTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handlePasswordSuccess = () => {
+    setShowPasswordModal(false);
+    navigate('/mosque/admin');
+  };
+
   return (
     <KioskLayout maxWidth="7xl">
+      {/* Hidden Admin Access Area - Top Right Corner */}
+      <div
+        onClick={handleAdminAreaClick}
+        className="absolute top-0 right-0 w-20 h-20 z-10"
+        style={{ 
+          // Make it invisible but clickable
+          backgroundColor: 'transparent',
+          // Optional: uncomment for debugging
+          // backgroundColor: 'rgba(255, 0, 0, 0.1)',
+        }}
+        title=""
+      />
+
       <KioskHeader
         titleNl="Kies een optie"
         titleEn="Choose an option"
@@ -74,6 +131,13 @@ const MosquePaymentScreen = () => {
           />
         ))}
       </div>
+
+      {/* Admin Password Modal */}
+      <AdminPasswordModal
+        isOpen={showPasswordModal}
+        onClose={() => setShowPasswordModal(false)}
+        onSuccess={handlePasswordSuccess}
+      />
     </KioskLayout>
   );
 };

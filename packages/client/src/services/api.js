@@ -587,6 +587,20 @@ static async adjustInventory(productId, data) {
     });
   }
 
+  static async createMemberFee(data) {
+    return this.request('/member-fees', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateMemberFee(id, data) {
+    return this.request(`/member-fees/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
   // Rental Charge methods
   static async getRentalCharges() {
     return this.request('/rental-charges');
@@ -594,6 +608,34 @@ static async adjustInventory(productId, data) {
 
   static async getRentalChargeById(id) {
     return this.request(`/rental-charges/${id}`);
+  }
+
+  static async createRentalCharge(data) {
+    return this.request('/rental-charges', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async updateRentalCharge(id, data) {
+    return this.request(`/rental-charges/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  static async deleteRentalCharge(id) {
+    return this.request(`/rental-charges/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // User verification methods
+  static async verifyByNameAndPincode(name, pincode) {
+    return this.request('/users/verify-by-name', {
+      method: 'POST',
+      body: JSON.stringify({ name, pincode }),
+    });
   }
 
   // Rental Booking methods
